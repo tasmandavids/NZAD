@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Olune — Brand Guidelines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --midnight:#1B1A38;
+    --midnight-2:#231F44;
+    --midnight-deep:#14132A;
+    --iris:#6B66C9;
+    --lumen:#B9B5EE;
+    --cream:#F7F4EE;
+    --apricot:#F2B788;
+    --ink:#1F1D30;
+    --slate:#6C6A7E;
+    --mist:#E7E5F1;
+    --line:#DFDCEA;
+
+    --ff-display:"Fraunces", Georgia, serif;
+    --ff-body:"Hanken Grotesk", system-ui, sans-serif;
+
+    --maxw:1080px;
+    --pad:clamp(20px,5vw,64px);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:var(--ff-body);
+    background:var(--cream);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  a{color:var(--iris)}
+  :focus-visible{outline:2px solid var(--iris); outline-offset:3px; border-radius:4px}
+
+  /* ---------- rhythm ---------- */
+  .band{padding:clamp(72px,11vw,128px) var(--pad)}
+  .band--midnight{background:var(--midnight); color:var(--cream)}
+  .band--midnight-grad{
+    background:
+      radial-gradient(120% 90% at 50% 8%, #2A2552 0%, var(--midnight) 46%, var(--midnight-deep) 100%);
+    color:var(--cream);
+  }
+  .inner{max-width:var(--maxw); margin:0 auto}
+  .narrow{max-width:760px}
+
+  /* ---------- eyebrow ---------- */
+  .eyebrow{
+    font-family:var(--ff-body);
+    font-weight:600;
+    font-size:.72rem;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--iris);
+    margin:0 0 1.2rem;
+  }
+  .band--midnight .eyebrow,
+  .band--midnight-grad .eyebrow{color:var(--lumen)}
+
+  /* ---------- type ---------- */
+  h1,h2,h3{font-family:var(--ff-display); font-weight:400; margin:0; letter-spacing:-.01em}
+  .h-section{font-size:clamp(2rem,4.4vw,3.1rem); line-height:1.06; margin-bottom:.5em}
+  .h-lead{font-size:clamp(1.7rem,3.4vw,2.5rem); line-height:1.12; font-weight:300}
+  .sub{color:var(--slate); font-size:1.05rem; max-width:60ch}
+  .band--midnight .sub,
+  .band--midnight-grad .sub{color:#B6B2D4}
+
+  /* ===================== HERO ===================== */
+  .hero{
+    min-height:100svh;
+    display:grid;
+    place-items:center;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+    padding:96px var(--pad);
+  }
+  .stars{position:absolute; inset:0; pointer-events:none}
+  .star{position:absolute; color:var(--lumen); opacity:.0; animation:twinkle 6s ease-in-out infinite}
+  .hero-stack{position:relative; z-index:2}
+  .hero-moon{width:clamp(124px,20vw,184px); height:auto; display:block; margin:0 auto 2.2rem; animation:floatMoon 9s ease-in-out infinite}
+  .wordmark{
+    font-family:var(--ff-display);
+    font-weight:400;
+    font-size:clamp(3.4rem,9vw,6.4rem);
+    line-height:.9;
+    letter-spacing:-.015em;
+    color:var(--cream);
+    margin:0;
+  }
+  .tagline{
+    font-family:var(--ff-display);
+    font-weight:300;
+    font-style:italic;
+    font-size:clamp(1.15rem,2.6vw,1.6rem);
+    color:var(--lumen);
+    margin:1.1rem 0 0;
+  }
+  .hero-meta{
+    margin-top:2.4rem;
+    font-size:.74rem;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:#8A86AE;
+  }
+  .scroll-cue{position:absolute; bottom:26px; left:50%; transform:translateX(-50%); color:#7d79a0; font-size:.7rem; letter-spacing:.22em; text-transform:uppercase; z-index:2}
+
+  /* ===================== ESSENCE ===================== */
+  .essence-statement{
+    font-family:var(--ff-display);
+    font-weight:300;
+    font-size:clamp(1.8rem,4.2vw,3rem);
+    line-height:1.15;
+    letter-spacing:-.01em;
+    margin:0 0 1.4rem;
+  }
+  .essence-statement em{font-style:italic; color:var(--iris)}
+  .attrs{
+    margin-top:clamp(48px,6vw,72px);
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:2px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+  }
+  .attr{background:var(--cream); padding:28px 26px}
+  .attr h3{font-size:1.35rem; margin-bottom:.3em}
+  .attr p{margin:0; font-size:.92rem; color:var(--slate); line-height:1.5}
+
+  /* ===================== MARK ===================== */
+  .mark-grid{display:grid; grid-template-columns:1fr 1fr; gap:clamp(32px,5vw,64px); align-items:center}
+  .mark-stage{
+    background:
+      radial-gradient(120% 120% at 50% 38%, #2C2756 0%, var(--midnight) 55%, var(--midnight-deep) 100%);
+    border-radius:24px;
+    aspect-ratio:1/1;
+    display:grid;
+    place-items:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .mark-stage .moon{width:54%}
+  .construction{display:flex; gap:14px; flex-wrap:wrap; margin-top:1.6rem}
+  .chip{
+    font-size:.82rem; color:var(--slate);
+    border:1px solid var(--line); border-radius:999px;
+    padding:8px 15px; background:#fff;
+  }
+  .chip b{color:var(--ink); font-weight:600}
+
+  /* ===================== LOCKUPS ===================== */
+  .lock-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:22px; margin-top:clamp(32px,4vw,48px)}
+  .lock{
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:44px 32px;
+    display:grid;
+    place-items:center;
+    min-height:200px;
+    position:relative;
+  }
+  .lock--light{background:#fff}
+  .lock--cream{background:var(--cream)}
+  .lock--dark{background:var(--midnight); border-color:transparent}
+  .lock--dark .lockmark, .lock--dark .lock-h{color:var(--cream)}
+  .lock-tag{
+    position:absolute; top:14px; left:16px;
+    font-size:.66rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--slate);
+  }
+  .lock--dark .lock-tag{color:#8A86AE}
+
+  /* horizontal lockup: moon + olune */
+  .lockmark{display:inline-flex; align-items:center; gap:.42em; color:var(--ink)}
+  .lockmark .moon{width:1.32em; height:1.32em; flex:none}
+  .lockmark .lm-word{font-family:var(--ff-display); font-weight:400; font-size:2.6rem; letter-spacing:-.015em; line-height:1}
+  /* vertical lockup */
+  .lockmark--stack{flex-direction:column; gap:.2em}
+  .lockmark--stack .moon{width:2.4em; height:2.4em}
+  /* mark only */
+  .lockmark--markonly .moon{width:3.4em; height:3.4em}
+
+  /* signature: moon as the "o" */
+  .signature-block{
+    margin-top:clamp(40px,5vw,60px);
+    border-top:1px solid var(--line);
+    padding-top:clamp(32px,4vw,44px);
+    display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;
+  }
+  .sig-show{display:inline-flex; align-items:baseline; font-family:var(--ff-display); font-weight:400; font-size:clamp(3rem,7vw,4.6rem); letter-spacing:-.02em; color:var(--ink); line-height:1}
+  .sig-show .moon{width:.86em; height:.86em; transform:translateY(.08em); margin-right:.01em}
+
+  /* clearspace + minimums */
+  .specs{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:48px}
+  .spec{border:1px solid var(--line); border-radius:18px; padding:30px; background:#fff}
+  .spec h3{font-family:var(--ff-body); font-weight:600; font-size:.78rem; letter-spacing:.16em; text-transform:uppercase; color:var(--iris); margin-bottom:16px}
+  .clearbox{
+    --u:14px;
+    display:inline-flex; align-items:center; gap:.42em;
+    padding:var(--u);
+    background:repeating-linear-gradient(45deg,#F0EEF8 0 6px,#fff 6px 12px);
+    border:1px dashed var(--iris); border-radius:8px;
+  }
+  .clearbox .moon{width:42px; height:42px}
+  .clearbox .lm-word{font-family:var(--ff-display); font-size:2rem; line-height:1}
+  .min-row{display:flex; align-items:flex-end; gap:30px; flex-wrap:wrap}
+  .min-item{text-align:center}
+  .min-item .lockmark .lm-word{font-size:1.5rem}
+  .min-item.small .lockmark .lm-word{font-size:.85rem}
+  .min-item .moon{}
+  .min-cap{display:block; font-size:.7rem; color:var(--slate); margin-top:10px; letter-spacing:.04em}
+
+  /* don'ts */
+  .donts{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:48px}
+  .dont{border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#fff}
+  .dont-vis{height:104px; display:grid; place-items:center; background:var(--cream); border-bottom:1px solid var(--line)}
+  .dont-vis .lockmark .lm-word{font-size:1.5rem}
+  .dont-cap{padding:13px 16px; font-size:.86rem; color:var(--ink); display:flex; gap:8px; align-items:flex-start}
+  .dont-cap .x{color:#C2607A; font-weight:700; flex:none}
+
+  /* ===================== COLOUR ===================== */
+  .pal-group + .pal-group{margin-top:36px}
+  .pal-label{font-family:var(--ff-body); font-weight:600; font-size:.74rem; letter-spacing:.16em; text-transform:uppercase; color:var(--slate); margin:0 0 16px}
+  .swatches{display:grid; grid-template-columns:repeat(4,1fr); gap:18px}
+  .sw{border:1px solid var(--line); border-radius:16px; overflow:hidden; background:#fff}
+  .sw-chip{height:120px; position:relative}
+  .sw-body{padding:16px 18px 18px}
+  .sw-name{font-family:var(--ff-display); font-size:1.2rem; margin:0 0 2px}
+  .sw-role{font-size:.78rem; color:var(--slate); margin:0 0 12px; min-height:2.4em; line-height:1.35}
+  .sw-vals{font-family:var(--ff-body); font-size:.78rem; color:var(--ink); display:flex; flex-direction:column; gap:3px}
+  .sw-vals span{display:flex; justify-content:space-between; gap:10px}
+  .sw-vals b{font-weight:600; color:var(--slate); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase}
+  .sw-pin{position:absolute; bottom:10px; left:12px; font-size:.66rem; letter-spacing:.12em; text-transform:uppercase; padding:3px 8px; border-radius:999px; background:rgba(255,255,255,.85); color:var(--ink)}
+
+  /* ===================== TYPE ===================== */
+  .type-row{display:grid; grid-template-columns:1fr 1fr; gap:22px}
+  .type-card{border:1px solid var(--line); border-radius:20px; padding:34px; background:#fff}
+  .type-aa{font-size:clamp(4.5rem,11vw,7rem); line-height:1; margin:0 0 .25em}
+  .type-aa.fr{font-family:var(--ff-display); font-weight:400}
+  .type-aa.hk{font-family:var(--ff-body); font-weight:600}
+  .type-name{font-family:var(--ff-display); font-size:1.5rem; margin:0}
+  .type-role{font-size:.82rem; color:var(--iris); font-weight:600; letter-spacing:.04em; margin:.2em 0 1.2rem}
+  .type-set{font-size:.8rem; color:var(--slate); letter-spacing:.06em; border-top:1px solid var(--line); padding-top:14px; margin-top:14px}
+  .type-sample.fr{font-family:var(--ff-display); font-weight:300; font-size:1.35rem; line-height:1.35; color:var(--ink)}
+  .type-sample.hk{font-family:var(--ff-body); font-size:1rem; line-height:1.55; color:var(--ink)}
+
+  .scale{margin-top:34px; border:1px solid var(--line); border-radius:20px; overflow:hidden}
+  .scale-row{display:grid; grid-template-columns:170px 1fr; gap:20px; align-items:baseline; padding:18px 26px; border-bottom:1px solid var(--line)}
+  .scale-row:last-child{border-bottom:none}
+  .scale-meta{font-size:.72rem; color:var(--slate); letter-spacing:.05em; line-height:1.4}
+  .scale-meta b{display:block; color:var(--ink); font-weight:600; text-transform:uppercase; letter-spacing:.12em; font-size:.68rem; margin-bottom:3px}
+  .scale-demo{overflow:hidden; white-space:nowrap; text-overflow:ellipsis}
+
+  /* ===================== VOICE ===================== */
+  .principles{display:grid; grid-template-columns:repeat(2,1fr); gap:22px; margin-top:clamp(32px,4vw,48px)}
+  .principle{border:1px solid var(--line); border-radius:20px; padding:30px; background:#fff}
+  .principle h3{font-family:var(--ff-display); font-size:1.5rem; margin-bottom:.2em}
+  .principle > p{color:var(--slate); font-size:.95rem; margin:.2em 0 1.3rem}
+  .dodont{display:grid; gap:10px}
+  .dd{display:flex; gap:11px; align-items:flex-start; padding:12px 15px; border-radius:12px; font-size:.92rem; line-height:1.4}
+  .dd--do{background:#EFF1FA}
+  .dd--dont{background:#FBF1F1}
+  .dd .mk{font-weight:700; flex:none; font-size:.78rem; padding-top:.12em}
+  .dd--do .mk{color:var(--iris)}
+  .dd--dont .mk{color:#C2607A}
+  .dd em{font-style:normal; color:var(--slate)}
+
+  /* ===================== APPLICATIONS ===================== */
+  .app-grid{display:grid; grid-template-columns:1.05fr 1.25fr; gap:22px; margin-top:clamp(32px,4vw,48px)}
+  .panel{border:1px solid rgba(255,255,255,.1); border-radius:22px; padding:30px; position:relative; overflow:hidden}
+  .panel-tag{font-size:.68rem; letter-spacing:.18em; text-transform:uppercase; color:#8A86AE; margin:0 0 22px}
+
+  /* app icons */
+  .icon-tile{
+    border-radius:24%;
+    background:radial-gradient(120% 120% at 50% 30%, #2C2756 0%, var(--midnight) 60%, var(--midnight-deep) 100%);
+    display:grid; place-items:center;
+    box-shadow:0 18px 40px -22px rgba(0,0,0,.7);
+  }
+  .icon-tile .moon{width:56%}
+  .icon-row{display:flex; align-items:flex-end; gap:26px; flex-wrap:wrap}
+  .icon-96{width:96px; height:96px}
+  .icon-64{width:64px; height:64px; border-radius:26%}
+  .icon-40{width:40px; height:40px; border-radius:28%}
+  .icon-cap{display:block; text-align:center; margin-top:12px; font-size:.7rem; color:#8A86AE; letter-spacing:.04em}
+
+  /* product UI mock */
+  .ui-card{background:#fff; border-radius:18px; padding:0; overflow:hidden; color:var(--ink); box-shadow:0 24px 50px -28px rgba(20,19,42,.6)}
+  .ui-top{display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid var(--mist)}
+  .ui-brand{display:inline-flex; align-items:center; gap:.4em; font-family:var(--ff-display); font-size:1.1rem}
+  .ui-brand .moon{width:1.2em; height:1.2em}
+  .ui-date{font-size:.78rem; color:var(--slate)}
+  .ui-body{padding:18px 20px}
+  .ui-h{font-family:var(--ff-display); font-size:1.25rem; margin:0 0 14px}
+  .ui-class{display:flex; align-items:center; gap:14px; padding:13px 14px; border:1px solid var(--mist); border-radius:13px; margin-bottom:10px}
+  .ui-time{font-weight:600; font-variant-numeric:tabular-nums; color:var(--iris); font-size:.92rem; width:62px; flex:none}
+  .ui-cl-main{flex:1; min-width:0}
+  .ui-cl-main b{display:block; font-weight:600; font-size:.95rem}
+  .ui-cl-main span{font-size:.8rem; color:var(--slate)}
+  .ui-pill{font-size:.74rem; background:var(--mist); color:var(--ink); padding:5px 11px; border-radius:999px; white-space:nowrap}
+  .ui-actions{display:flex; gap:10px; margin-top:16px}
+  .ui-btn{border:none; cursor:default; font-family:var(--ff-body); font-weight:600; font-size:.92rem; padding:12px 18px; border-radius:11px}
+  .ui-btn--primary{background:var(--iris); color:#fff}
+  .ui-btn--ghost{background:transparent; color:var(--ink); border:1px solid var(--line)}
+
+  /* business card + small ui */
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:22px}
+  .bizcard{
+    aspect-ratio:1.75/1;
+    border-radius:16px;
+    background:radial-gradient(130% 120% at 78% 18%, #2C2756 0%, var(--midnight) 58%, var(--midnight-deep) 100%);
+    padding:24px; color:var(--cream); display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden;
+    box-shadow:0 24px 50px -30px rgba(0,0,0,.8);
+  }
+  .bizcard .lockmark{color:var(--cream)}
+  .bizcard .lockmark .lm-word{font-size:1.4rem}
+  .bizcard .moon{width:1.32em; height:1.32em}
+  .biz-person b{display:block; font-family:var(--ff-display); font-size:1.05rem; font-weight:400}
+  .biz-person span{font-size:.78rem; color:#A9A5CC}
+
+  .mini-stack{display:flex; flex-direction:column; gap:14px; justify-content:center}
+  .toast{display:flex; align-items:center; gap:11px; background:#fff; border-radius:13px; padding:13px 15px; box-shadow:0 16px 36px -24px rgba(20,19,42,.6); color:var(--ink); font-size:.9rem}
+  .toast .dot{width:9px; height:9px; border-radius:50%; background:var(--iris); flex:none}
+  .toast b{font-weight:600}
+  .toast span{color:var(--slate)}
+  .empty{background:var(--midnight-2); border:1px solid rgba(255,255,255,.08); border-radius:13px; padding:20px; text-align:center; color:var(--cream)}
+  .empty .moon{width:34px; height:34px; margin:0 auto 10px; opacity:.9}
+  .empty b{font-family:var(--ff-display); font-weight:400; font-size:1.1rem; display:block}
+  .empty span{font-size:.84rem; color:#A9A5CC}
+
+  /* ===================== FOOTER ===================== */
+  .foot{padding:64px var(--pad); background:var(--midnight-deep); color:#8A86AE; text-align:center}
+  .foot .lockmark{color:var(--cream); justify-content:center; margin-bottom:18px}
+  .foot .lockmark .lm-word{font-size:1.7rem}
+  .foot .moon{width:1.32em; height:1.32em}
+  .foot p{margin:.3em 0; font-size:.82rem; letter-spacing:.04em}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:860px){
+    .mark-grid,.signature-block,.specs,.type-row,.principles,.app-grid,.essence-statement{grid-template-columns:1fr}
+    .lock-grid{grid-template-columns:1fr 1fr}
+    .attrs{grid-template-columns:1fr 1fr}
+    .swatches{grid-template-columns:1fr 1fr}
+    .donts{grid-template-columns:1fr}
+    .row2{grid-template-columns:1fr}
+    .scale-row{grid-template-columns:1fr; gap:6px}
+  }
+  @media (max-width:480px){
+    .lock-grid,.attrs,.swatches{grid-template-columns:1fr}
+    .lockmark .lm-word{font-size:2rem}
+  }
+
+  /* ---------- motion ---------- */
+  @keyframes floatMoon{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  @keyframes twinkle{0%,100%{opacity:.12;transform:scale(.7)}50%{opacity:.9;transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important; scroll-behavior:auto !important}
+    .star{opacity:.5}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== shared moon definition (define once, reuse via <use>) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="moonGrad" x1="0.28" y1="0.05" x2="0.72" y2="1">
+      <stop offset="0" stop-color="#DCD9FA"/>
+      <stop offset="0.5" stop-color="#A6A2E8"/>
+      <stop offset="1" stop-color="#7A75D6"/>
+    </linearGradient>
+    <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7B77D6" stop-opacity="0.5"/>
+      <stop offset="0.6" stop-color="#7B77D6" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#7B77D6" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="moonClip"><circle cx="50" cy="50" r="33"/></clipPath>
+    <g id="olune-moon">
+      <g clip-path="url(#moonClip)">
+        <rect x="16" y="16" width="68" height="68" fill="url(#moonGrad)"/>
+        <circle cx="38.5" cy="41" r="33" fill="#1B1A38"/>
+      </g>
+    </g>
+    <g id="olune-moon-glow">
+      <circle cx="50" cy="50" r="49" fill="url(#moonGlow)"/>
+      <use href="#olune-moon"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero band--midnight-grad">
+  <div class="stars" aria-hidden="true">
+    <svg class="star" style="top:18%;left:16%;width:14px;animation-delay:0s" viewBox="0 0 24 24"><path d="M12 0c.8 6.5 4.7 10.4 12 12-7.3 1.6-11.2 5.5-12 12-.8-6.5-4.7-10.4-12-12C7.3 10.4 11.2 6.5 12 0Z" fill="currentColor"/></svg>
+    <svg class="star" style="top:26%;left:80%;width:18px;animation-delay:1.4s" viewBox="0 0 24 24"><path d="M12 0c.8 6.5 4.7 10.4 12 12-7.3 1.6-11.2 5.5-12 12-.8-6.5-4.7-10.4-12-12C7.3 10.4 11.2 6.5 12 0Z" fill="currentColor"/></svg>
+    <svg class="star" style="top:64%;left:11%;width:10px;animation-delay:2.6s" viewBox="0 0 24 24"><path d="M12 0c.8 6.5 4.7 10.4 12 12-7.3 1.6-11.2 5.5-12 12-.8-6.5-4.7-10.4-12-12C7.3 10.4 11.2 6.5 12 0Z" fill="currentColor"/></svg>
+    <svg class="star" style="top:72%;left:86%;width:12px;animation-delay:3.5s" viewBox="0 0 24 24"><path d="M12 0c.8 6.5 4.7 10.4 12 12-7.3 1.6-11.2 5.5-12 12-.8-6.5-4.7-10.4-12-12C7.3 10.4 11.2 6.5 12 0Z" fill="currentColor"/></svg>
+    <svg class="star" style="top:42%;left:92%;width:9px;animation-delay:4.2s" viewBox="0 0 24 24"><path d="M12 0c.8 6.5 4.7 10.4 12 12-7.3 1.6-11.2 5.5-12 12-.8-6.5-4.7-10.4-12-12C7.3 10.4 11.2 6.5 12 0Z" fill="currentColor"/></svg>
+    <svg class="star" style="top:12%;left:50%;width:8px;animation-delay:5s" viewBox="0 0 24 24"><path d="M12 0c.8 6.5 4.7 10.4 12 12-7.3 1.6-11.2 5.5-12 12-.8-6.5-4.7-10.4-12-12C7.3 10.4 11.2 6.5 12 0Z" fill="currentColor"/></svg>
+  </div>
+
+  <div class="hero-stack">
+    <svg class="hero-moon" viewBox="0 0 100 100" role="img" aria-label="Olune moon mark"><use href="#olune-moon-glow"/></svg>
+    <h1 class="wordmark">olune</h1>
+    <p class="tagline">The calm way to run a studio.</p>
+    <p class="hero-meta">Studio Management Software · Brand Guidelines</p>
+  </div>
+  <div class="scroll-cue">Scroll</div>
+</header>
+
+<!-- ===================== ESSENCE ===================== -->
+<section class="band band--cream">
+  <div class="inner narrow">
+    <p class="eyebrow">The idea</p>
+    <p class="essence-statement">Every studio runs on rhythm. <em>Olune keeps it.</em></p>
+    <p class="sub" style="font-size:1.12rem;line-height:1.65;max-width:62ch">
+      Classes by the hour. Memberships by the month. Terms by the season. The name carries its own moon —
+      and the moon is the cycle a studio lives by. Olune brings the whole orbit of a studio into one place:
+      the schedule, the people, the payments. Less time on admin, more time in the room.
+    </p>
+
+    <div class="attrs">
+      <div class="attr"><h3>Calm</h3><p>Quiet by default. Nothing shouts, nothing rushes.</p></div>
+      <div class="attr"><h3>Considered</h3><p>Every screen earns its place. We remove before we add.</p></div>
+      <div class="attr"><h3>Warm</h3><p>Made for people, named by name. Software with a pulse.</p></div>
+      <div class="attr"><h3>Precise</h3><p>Numbers add up. Times line up. Trust is in the detail.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MARK ===================== -->
+<section class="band band--cream" style="background:#FBFAF6">
+  <div class="inner">
+    <div class="mark-grid">
+      <div class="mark-stage">
+        <svg class="moon" viewBox="0 0 100 100" role="img" aria-label="Olune mark"><use href="#olune-moon-glow"/></svg>
+      </div>
+      <div>
+        <p class="eyebrow">The mark</p>
+        <h2 class="h-section">A waxing moon</h2>
+        <p class="sub" style="font-size:1.05rem">
+          The symbol is the moon that gives Olune its name — the “o” in <em>olune</em>, drawn as a waxing moon.
+          It’s built from a single disc and its shadow: nothing more. The dark side is always Midnight,
+          the lit side always Moonlight. It reads at any size, from a favicon to a foyer sign.
+        </p>
+        <div class="construction">
+          <span class="chip"><b>One circle</b>, one shadow</span>
+          <span class="chip">Dark side · <b>Midnight</b></span>
+          <span class="chip">Lit side · <b>Moonlight gradient</b></span>
+          <span class="chip">No outline · no inner detail</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== LOCKUPS ===================== -->
+<section class="band band--cream">
+  <div class="inner">
+    <p class="eyebrow">Logo</p>
+    <h2 class="h-section">Lockups</h2>
+    <p class="sub">The mark and the wordmark, together and apart. Use the horizontal lockup as the default. Reach for the mark alone only where space is tight or the name already appears nearby.</p>
+
+    <div class="lock-grid">
+      <div class="lock lock--light">
+        <span class="lock-tag">Primary · horizontal</span>
+        <span class="lockmark"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span>
+      </div>
+      <div class="lock lock--dark">
+        <span class="lock-tag">Primary · reversed</span>
+        <span class="lockmark"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon-glow"/></svg><span class="lm-word">olune</span></span>
+      </div>
+      <div class="lock lock--cream">
+        <span class="lock-tag">Stacked</span>
+        <span class="lockmark lockmark--stack"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span>
+      </div>
+      <div class="lock lock--dark">
+        <span class="lock-tag">Mark only</span>
+        <span class="lockmark lockmark--markonly"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon-glow"/></svg></span>
+      </div>
+    </div>
+
+    <!-- signature treatment -->
+    <div class="signature-block">
+      <div>
+        <p class="eyebrow">Signature treatment</p>
+        <h3 style="font-size:1.6rem;margin-bottom:.4em">The moon is the “o”</h3>
+        <p class="sub" style="font-size:1rem">Where the brand wants a quiet flourish — a cover, a loading screen, a hero — let the moon stand in for the leading letter. Keep it to one place at a time.</p>
+      </div>
+      <div style="text-align:center">
+        <span class="sig-show"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg>lune</span>
+      </div>
+    </div>
+
+    <!-- clearspace + minimum -->
+    <div class="specs">
+      <div class="spec">
+        <h3>Clear space</h3>
+        <span class="clearbox"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span>
+        <p class="sub" style="font-size:.86rem;margin-top:16px">Keep clear space equal to the width of the moon on every side. Nothing crowds the logo.</p>
+      </div>
+      <div class="spec">
+        <h3>Minimum size</h3>
+        <div class="min-row">
+          <div class="min-item">
+            <span class="lockmark"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true" style="width:1.32em;height:1.32em"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span>
+            <span class="min-cap">Lockup · 104px min width</span>
+          </div>
+          <div class="min-item small">
+            <span class="lockmark"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true" style="width:1.32em;height:1.32em"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span>
+            <span class="min-cap">Below this, use the mark alone</span>
+          </div>
+          <div class="min-item">
+            <span class="lockmark lockmark--markonly"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true" style="width:2em;height:2em"><use href="#olune-moon"/></svg></span>
+            <span class="min-cap">Mark · 20px min</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- don'ts -->
+    <div class="donts">
+      <div class="dont">
+        <div class="dont-vis"><span class="lockmark" style="color:#C76B8A"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true" style="width:1.32em;height:1.32em;filter:hue-rotate(120deg) saturate(1.6)"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span></div>
+        <div class="dont-cap"><span class="x">✕</span> Don’t recolour the moon or wordmark.</div>
+      </div>
+      <div class="dont">
+        <div class="dont-vis"><span class="lockmark" style="transform:scaleX(1.5)"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true" style="width:1.32em;height:1.32em"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span></div>
+        <div class="dont-cap"><span class="x">✕</span> Don’t stretch or condense.</div>
+      </div>
+      <div class="dont">
+        <div class="dont-vis"><span class="lockmark" style="text-shadow:2px 3px 4px rgba(0,0,0,.4)"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true" style="width:1.32em;height:1.32em;filter:drop-shadow(2px 3px 3px rgba(0,0,0,.4))"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span></div>
+        <div class="dont-cap"><span class="x">✕</span> Don’t add shadows or effects.</div>
+      </div>
+      <div class="dont">
+        <div class="dont-vis"><span class="lockmark" style="transform:rotate(-12deg)"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true" style="width:1.32em;height:1.32em"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span></div>
+        <div class="dont-cap"><span class="x">✕</span> Don’t rotate or tilt.</div>
+      </div>
+      <div class="dont">
+        <div class="dont-vis" style="font-family:var(--ff-body)"><span class="lockmark"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true" style="width:1.32em;height:1.32em"><use href="#olune-moon"/></svg><span class="lm-word" style="font-family:var(--ff-body);font-weight:700">olune</span></span></div>
+        <div class="dont-cap"><span class="x">✕</span> Don’t reset the wordmark in another typeface.</div>
+      </div>
+      <div class="dont">
+        <div class="dont-vis" style="background:linear-gradient(45deg,#7a5,#fa3,#5af)"><span class="lockmark"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true" style="width:1.32em;height:1.32em"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span></div>
+        <div class="dont-cap"><span class="x">✕</span> Don’t place on busy or low-contrast backgrounds.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== COLOUR ===================== -->
+<section class="band band--midnight">
+  <div class="inner">
+    <p class="eyebrow">Colour</p>
+    <h2 class="h-section" style="color:var(--cream)">A night, a moon, a sunrise</h2>
+    <p class="sub" style="max-width:60ch">Midnight grounds everything. Iris is the brand’s voice — the colour people remember. Apricot is the single warm note, used like a sunrise: rarely, and on purpose.</p>
+
+    <div style="margin-top:clamp(40px,5vw,60px)">
+      <div class="pal-group">
+        <p class="pal-label">Core</p>
+        <div class="swatches">
+          <div class="sw">
+            <div class="sw-chip" style="background:var(--midnight)"><span class="sw-pin">Primary</span></div>
+            <div class="sw-body">
+              <p class="sw-name">Midnight</p>
+              <p class="sw-role">Night sky. Primary surface and text on light.</p>
+              <div class="sw-vals"><span><b>Hex</b>#1B1A38</span><span><b>RGB</b>27·26·56</span></div>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:var(--iris)"><span class="sw-pin">Signature</span></div>
+            <div class="sw-body">
+              <p class="sw-name">Iris</p>
+              <p class="sw-role">Moonglow. Buttons, links, key accents.</p>
+              <div class="sw-vals"><span><b>Hex</b>#6B66C9</span><span><b>RGB</b>107·102·201</span></div>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:var(--lumen)"></div>
+            <div class="sw-body">
+              <p class="sw-name">Lumen</p>
+              <p class="sw-role">Moonlight. Tints and highlights on dark.</p>
+              <div class="sw-vals"><span><b>Hex</b>#B9B5EE</span><span><b>RGB</b>185·181·238</span></div>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:var(--apricot)"><span class="sw-pin">Accent</span></div>
+            <div class="sw-body">
+              <p class="sw-name">Apricot</p>
+              <p class="sw-role">Dawn. One warm note, used sparingly.</p>
+              <div class="sw-vals"><span><b>Hex</b>#F2B788</span><span><b>RGB</b>242·183·136</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pal-group">
+        <p class="pal-label">Surface &amp; text</p>
+        <div class="swatches">
+          <div class="sw">
+            <div class="sw-chip" style="background:var(--cream); border-bottom:1px solid var(--line)"></div>
+            <div class="sw-body">
+              <p class="sw-name">Halo Cream</p>
+              <p class="sw-role">Warm light background.</p>
+              <div class="sw-vals"><span><b>Hex</b>#F7F4EE</span><span><b>RGB</b>247·244·238</span></div>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:var(--mist); border-bottom:1px solid var(--line)"></div>
+            <div class="sw-body">
+              <p class="sw-name">Mist</p>
+              <p class="sw-role">Dividers, borders, subtle fills.</p>
+              <div class="sw-vals"><span><b>Hex</b>#E7E5F1</span><span><b>RGB</b>231·229·241</span></div>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:var(--ink)"></div>
+            <div class="sw-body">
+              <p class="sw-name">Ink</p>
+              <p class="sw-role">Primary text on light surfaces.</p>
+              <div class="sw-vals"><span><b>Hex</b>#1F1D30</span><span><b>RGB</b>31·29·48</span></div>
+            </div>
+          </div>
+          <div class="sw">
+            <div class="sw-chip" style="background:var(--slate)"></div>
+            <div class="sw-body">
+              <p class="sw-name">Slate</p>
+              <p class="sw-role">Secondary text and captions.</p>
+              <div class="sw-vals"><span><b>Hex</b>#6C6A7E</span><span><b>RGB</b>108·106·126</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TYPE ===================== -->
+<section class="band band--cream">
+  <div class="inner">
+    <p class="eyebrow">Typography</p>
+    <h2 class="h-section">Two voices</h2>
+    <p class="sub">A soft serif for the moments that carry feeling, a clean grotesk for everything you touch. Fraunces sets the tone; Hanken Grotesk does the work.</p>
+
+    <div class="type-row" style="margin-top:clamp(32px,4vw,48px)">
+      <div class="type-card">
+        <p class="type-aa fr">Aa</p>
+        <p class="type-name">Fraunces</p>
+        <p class="type-role">Display &amp; wordmark</p>
+        <p class="type-sample fr">A waxing moon over a quiet studio.</p>
+        <p class="type-set">Light 300 · Regular 400 · Medium 500 — set large, with restraint.</p>
+      </div>
+      <div class="type-card">
+        <p class="type-aa hk">Aa</p>
+        <p class="type-name">Hanken Grotesk</p>
+        <p class="type-role">Interface &amp; body</p>
+        <p class="type-sample hk">Every label, button, and number in the product is set in Hanken Grotesk — warm, legible, and unfussy at small sizes.</p>
+        <p class="type-set">Regular 400 · Medium 500 · Semibold 600 · Bold 700</p>
+      </div>
+    </div>
+
+    <div class="scale">
+      <div class="scale-row">
+        <div class="scale-meta"><b>Display</b>Fraunces · 300<br>−1.5% tracking</div>
+        <div class="scale-demo" style="font-family:var(--ff-display);font-weight:300;font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-.015em">Run your studio, not your admin</div>
+      </div>
+      <div class="scale-row">
+        <div class="scale-meta"><b>Heading</b>Fraunces · 400</div>
+        <div class="scale-demo" style="font-family:var(--ff-display);font-weight:400;font-size:clamp(1.5rem,3vw,2rem)">This week at the studio</div>
+      </div>
+      <div class="scale-row">
+        <div class="scale-meta"><b>Subhead</b>Hanken · 600</div>
+        <div class="scale-demo" style="font-family:var(--ff-body);font-weight:600;font-size:1.15rem">Tuesday · 6 classes · 74 booked</div>
+      </div>
+      <div class="scale-row">
+        <div class="scale-meta"><b>Body</b>Hanken · 400 · 17/1.6</div>
+        <div class="scale-demo" style="font-family:var(--ff-body);font-weight:400;font-size:1.0625rem;white-space:normal">Take attendance, send a reminder, and settle the till — all before the next class walks in.</div>
+      </div>
+      <div class="scale-row">
+        <div class="scale-meta"><b>Label</b>Hanken · 600 · uppercase<br>20% tracking</div>
+        <div class="scale-demo" style="font-family:var(--ff-body);font-weight:600;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--iris)">Memberships</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VOICE ===================== -->
+<section class="band band--cream" style="background:#FBFAF6">
+  <div class="inner">
+    <p class="eyebrow">Voice &amp; tone</p>
+    <h2 class="h-section">How Olune speaks</h2>
+    <p class="sub">Like a calm colleague who has done this a thousand times. Plain words, no panic, never a wall of exclamation marks. The interface should feel like it’s on your side.</p>
+
+    <div class="principles">
+      <div class="principle">
+        <h3>Calm, not frantic</h3>
+        <p>Quiet is a feature. An empty day is rest, not a problem to solve.</p>
+        <div class="dodont">
+          <div class="dd dd--do"><span class="mk">Do</span><span>No classes today. Enjoy the quiet.</span></div>
+          <div class="dd dd--dont"><span class="mk">Not</span><span><em>You have 0 classes!!! Add one now.</em></span></div>
+        </div>
+      </div>
+      <div class="principle">
+        <h3>Plain, not technical</h3>
+        <p>Name things by what people do, never by how the system is built.</p>
+        <div class="dodont">
+          <div class="dd dd--do"><span class="mk">Do</span><span>Take payment</span></div>
+          <div class="dd dd--dont"><span class="mk">Not</span><span><em>Initiate transaction processing</em></span></div>
+        </div>
+      </div>
+      <div class="principle">
+        <h3>Warm, not corporate</h3>
+        <p>People have names. Use them. Speak to one human at a time.</p>
+        <div class="dodont">
+          <div class="dd dd--do"><span class="mk">Do</span><span>Welcome back, Maya.</span></div>
+          <div class="dd dd--dont"><span class="mk">Not</span><span><em>User session authenticated.</em></span></div>
+        </div>
+      </div>
+      <div class="principle">
+        <h3>Confident, not loud</h3>
+        <p>When it works, say so once. Trust doesn’t need volume.</p>
+        <div class="dodont">
+          <div class="dd dd--do"><span class="mk">Do</span><span>Saved.</span></div>
+          <div class="dd dd--dont"><span class="mk">Not</span><span><em>Success!! Your changes were saved successfully!!!</em></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== APPLICATIONS ===================== -->
+<section class="band band--midnight-grad">
+  <div class="inner">
+    <p class="eyebrow">In the wild</p>
+    <h2 class="h-section" style="color:var(--cream)">Olune, applied</h2>
+    <p class="sub">The system at work — an app icon, the product itself, and the small touches around it.</p>
+
+    <div class="app-grid">
+      <div class="panel" style="background:var(--midnight-2)">
+        <p class="panel-tag">App icon</p>
+        <div class="icon-row">
+          <div>
+            <div class="icon-tile icon-96"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg></div>
+            <span class="icon-cap">96 px</span>
+          </div>
+          <div>
+            <div class="icon-tile icon-64"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg></div>
+            <span class="icon-cap">64 px</span>
+          </div>
+          <div>
+            <div class="icon-tile icon-40"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg></div>
+            <span class="icon-cap">40 px</span>
+          </div>
+        </div>
+        <p class="sub" style="font-size:.86rem;margin-top:26px;color:#A9A5CC">On the dark tile the moon’s shadow disappears into Midnight, leaving only the lit crescent.</p>
+      </div>
+
+      <div class="panel" style="background:var(--midnight-2)">
+        <p class="panel-tag">Product · Today</p>
+        <div class="ui-card">
+          <div class="ui-top">
+            <span class="ui-brand"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg>olune</span>
+            <span class="ui-date">Tue 16 June</span>
+          </div>
+          <div class="ui-body">
+            <h3 class="ui-h">Today</h3>
+            <div class="ui-class">
+              <span class="ui-time">9:30</span>
+              <span class="ui-cl-main"><b>Beginner Ballet</b><span>Studio 1 · Antoinette</span></span>
+              <span class="ui-pill">14 booked</span>
+            </div>
+            <div class="ui-class">
+              <span class="ui-time">6:00</span>
+              <span class="ui-cl-main"><b>Vinyasa Flow</b><span>Studio 2 · Maya</span></span>
+              <span class="ui-pill">12 booked</span>
+            </div>
+            <div class="ui-actions">
+              <button class="ui-btn ui-btn--primary" type="button" tabindex="-1">Take attendance</button>
+              <button class="ui-btn ui-btn--ghost" type="button" tabindex="-1">Add class</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="bizcard">
+        <span class="lockmark"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg><span class="lm-word">olune</span></span>
+        <div class="biz-person">
+          <b>Front desk</b>
+          <span>hello@olune.app · olune.app</span>
+        </div>
+      </div>
+      <div class="mini-stack">
+        <div class="toast"><span class="dot"></span><span><b>Maya</b> booked Vinyasa Flow&nbsp;·&nbsp;<span>6:00 pm</span></span></div>
+        <div class="empty">
+          <svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon"/></svg>
+          <b>No one’s booked in yet</b>
+          <span>Share your timetable to fill the room.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="foot">
+  <span class="lockmark"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><use href="#olune-moon-glow"/></svg><span class="lm-word">olune</span></span>
+  <p>Brand guidelines · Version 1 · June 2026</p>
+  <p>Colour, type, and logo for the Olune studio-management product.</p>
+</footer>
+
+</body>
+</html>

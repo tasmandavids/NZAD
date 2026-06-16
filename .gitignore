@@ -1,6 +1,17 @@
+<<<<<<< HEAD
 # dependencies
 node_modules/
 .vscode/
 .idea/
 .wix/
 jsconfig.json
+=======
+node_modules
+/.next
+/out
+.env*.local
+.DS_Store
+*.log
+.vercel
+next-env.d.ts
+>>>>>>> a59226f (Initial commit)

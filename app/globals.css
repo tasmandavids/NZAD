@@ -1,0 +1,61 @@
+@import "tailwindcss";
+@import "../styles/micro-interactions.css";
+
+/* Map Tailwind v4 utilities to the tenant's runtime CSS variables.
+   bg-brand, text-brand-hot, bg-surface, text-ink, etc. all follow the studio. */
+@theme {
+  /* Dynamic tenant tokens */
+  --color-brand: var(--brand);
+  --color-brand-hot: var(--brand-hot);
+  --color-brand-deep: var(--brand-deep);
+  --color-base: var(--base);
+  --color-surface: var(--surface);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+
+  /* Static Olune palette — used on marketing pages */
+  --color-midnight: #1b1a38;
+  --color-iris: #6b66c9;
+  --color-lumen: #b9b5ee;
+  --color-apricot: #f2b788;
+  --color-halo: #f7f4ee;
+  --color-mist: #e7e5f1;
+  --color-slate: #6c6a7e;
+
+  /* Legacy aliases mapped to Olune palette (keeps existing classnames working) */
+  --color-void: #1b1a38;
+  --color-chalk: #f7f4ee;
+  --color-crimson: #6b66c9;
+  --color-ember: #b9b5ee;
+  --color-oxblood: #3d3a8a;
+
+  /* Fonts */
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-serif: "Fraunces", Georgia, serif;
+}
+
+/* Fallback tokens — used before the layout injects a tenant's values
+   (e.g. the marketing root domain, or a brand-new studio). */
+:root {
+  --brand: #6b66c9;
+  --brand-hot: #8884d8;
+  --brand-deep: #3d3a8a;
+  --base: #1b1a38;
+  --surface: #24234a;
+  --text: #f7f4ee;
+  --muted: #6c6a7e;
+  --hair: rgba(247, 244, 238, 0.10);
+  --glow: 0.22;
+  --vignette: 0.55;
+  --grain: 0.05;
+  --font-display: "Fraunces", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", system-ui, sans-serif;
+}
+
+body {
+  background: var(--base);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}

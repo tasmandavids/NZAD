@@ -1,0 +1,243 @@
+<!--
+  Olune — Onboarding Wizard (LIVE PREVIEW)
+  =========================================
+  A runnable stand-in for components/onboarding/OnboardingWizard.tsx.
+  Step through: ① account → ② studio name + subdomain (live availability)
+  → ③ brand colour (live identity preview) → done. The production version
+  wires step ① to Supabase signUp and ③ to the create_studio_for_user RPC.
+  Taken subdomains in this demo: demo, test, studio, app, admin.
+-->
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Olune · Start your studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#C8102E; --brand-hot:#FF2D3C; --brand-deep:#6E0B1A;
+    --base:#08080A; --surface:#131316; --text:#F4F2EE; --muted:#8B8B92; --hair:rgba(244,242,238,.12);
+    --ease:cubic-bezier(.16,1,.3,1); font-family:'Archivo','Helvetica Neue',Arial,sans-serif;
+  }
+  *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--base); color:var(--text); -webkit-font-smoothing:antialiased; min-height:100vh; display:grid; place-items:center; padding:2.5rem 1.25rem; overflow-x:hidden; }
+  .glow{ position:fixed; inset:0; z-index:0; pointer-events:none; background:radial-gradient(60vmax 50vmax at 50% 0%, color-mix(in srgb,var(--brand-deep) 55%, transparent), transparent 70%); }
+  a{ color:inherit; }
+
+  /* glowing button */
+  @property --angle{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
+  .btn{ position:relative; isolation:isolate; display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.8rem 1.5rem; border-radius:999px; background:var(--surface); color:var(--text); font-weight:600; cursor:pointer; border:none; font-family:inherit; font-size:.92rem; transition:transform .35s var(--ease), opacity .2s; }
+  .btn::before{ content:""; position:absolute; inset:0; z-index:-1; padding:1.5px; border-radius:inherit; background:conic-gradient(from var(--angle), var(--brand-deep), var(--brand-hot), var(--brand), var(--brand-deep)); -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; opacity:.55; transition:opacity .35s; }
+  .btn:hover{ transform:translateY(-2px); } .btn:hover::before{ opacity:1; animation:spin 2.4s linear infinite; }
+  @keyframes spin{ to{ --angle:360deg; } }
+  .btn--solid{ background:var(--brand); color:#fff; } .btn--solid::before{ opacity:0; }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; transform:none; } .btn:disabled::before{ animation:none; opacity:.3; }
+  .btn--ghost{ background:transparent; } .btn--ghost::before{ opacity:.4; }
+
+  /* fields */
+  .field{ width:100%; padding:.8rem 1rem; border-radius:12px; color:var(--text); background:color-mix(in srgb,var(--base) 50%, transparent); border:1px solid var(--hair); outline:none; font-family:inherit; font-size:.95rem; transition:border-color .3s var(--ease), box-shadow .3s var(--ease), background .3s; }
+  .field::placeholder{ color:var(--muted); }
+  .field:hover{ border-color:color-mix(in srgb,var(--brand) 40%, var(--hair)); }
+  .field:focus{ border-color:var(--brand); background:color-mix(in srgb,var(--base) 72%, transparent); box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%, transparent); }
+
+  .shell{ position:relative; z-index:1; width:100%; max-width:440px; }
+  .top{ text-align:center; margin-bottom:1.6rem; }
+  .top .mk{ display:inline-grid; place-items:center; width:34px; height:34px; border-radius:9px; background:var(--brand); color:#fff; font-weight:900; }
+  .top b{ display:block; margin-top:.5rem; font-weight:800; letter-spacing:.02em; }
+
+  .progress{ display:flex; align-items:center; justify-content:center; gap:.5rem; margin-bottom:1.4rem; }
+  .progress span{ font-size:.72rem; color:var(--muted); transition:color .3s; }
+  .progress span.on{ color:var(--brand-hot); }
+  .progress .ln{ width:24px; height:1px; background:var(--hair); transition:background .3s; }
+  .progress .ln.on{ background:var(--brand); }
+
+  .card{ position:relative; border:1px solid var(--hair); background:var(--surface); border-radius:24px; padding:1.8rem; box-shadow:0 30px 80px -30px rgba(0,0,0,.85); overflow:hidden; }
+  .step{ display:none; }
+  .step.active{ display:block; }
+  h1{ font-size:1.5rem; font-weight:900; letter-spacing:-.01em; } .lede{ margin-top:.3rem; font-size:.88rem; color:var(--muted); }
+  .stack{ margin-top:1.4rem; display:flex; flex-direction:column; gap:.7rem; }
+  .row{ display:flex; gap:.6rem; margin-top:1.4rem; }
+  .hint{ margin-top:.4rem; height:1.1em; font-size:.78rem; }
+  .hint .ok{ color:var(--brand-hot); } .hint .no{ color:#ff7a7a; } .hint .mut{ color:var(--muted); }
+  .muted{ color:var(--muted); }
+
+  .slug{ display:flex; align-items:center; overflow:hidden; border-radius:12px; border:1px solid var(--hair); background:color-mix(in srgb,var(--base) 50%, transparent); transition:border-color .3s; }
+  .slug:focus-within{ border-color:var(--brand); }
+  .slug input{ flex:1; min-width:0; background:transparent; border:none; outline:none; color:var(--text); font-family:inherit; font-size:.95rem; padding:.8rem .9rem; }
+  .slug .suf{ padding:0 .9rem; color:var(--muted); font-size:.9rem; white-space:nowrap; }
+
+  .preview{ margin-top:1.3rem; border:1px solid var(--hair); border-radius:16px; padding:1.2rem; background:#0A0A0B; }
+  .preview .pv-top{ display:flex; align-items:center; gap:.6rem; }
+  .preview .pv-mk{ width:30px; height:30px; display:grid; place-items:center; border:1.4px solid var(--p,#C8102E); color:#fff; font-weight:900; font-size:.8rem; transition:border-color .35s; }
+  .preview .pv-nm{ font-size:.86rem; font-weight:800; color:#fff; }
+  .preview .pv-btn{ margin-top:.9rem; display:inline-block; padding:.45rem 1rem; border-radius:999px; font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:var(--p,#C8102E); transition:background .35s; }
+
+  .swatches{ margin-top:1.3rem; display:flex; align-items:center; gap:.7rem; }
+  .swatches .sw{ width:32px; height:32px; border-radius:50%; cursor:pointer; transition:transform .2s; border:none; }
+  .swatches .sw:hover{ transform:scale(1.12); }
+  .swatches input[type=color]{ margin-left:auto; width:40px; height:32px; border:1px solid var(--hair); border-radius:9px; background:none; padding:2px; cursor:pointer; }
+
+  .done{ text-align:center; }
+  .done .check{ margin:0 auto; width:56px; height:56px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:1.6rem; background:var(--brand); animation:pop .4s var(--ease); }
+  @keyframes pop{ 0%{transform:scale(0)} 60%{transform:scale(1.12)} 100%{transform:scale(1)} }
+
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <div class="shell">
+    <div class="top"><span class="mk">O</span><b>Olune</b></div>
+
+    <div class="progress" id="prog">
+      <span data-i="0">Account</span><span class="ln" data-l="0"></span>
+      <span data-i="1">Studio</span><span class="ln" data-l="1"></span>
+      <span data-i="2">Brand</span>
+    </div>
+
+    <div class="card">
+      <!-- ① ACCOUNT -->
+      <section class="step active" data-step="account">
+        <h1>Start your studio</h1>
+        <p class="lede">Create your owner account to begin.</p>
+        <div class="stack">
+          <input class="field" id="email" type="email" placeholder="you@studio.co.nz" />
+          <input class="field" id="password" type="password" placeholder="Create a password" />
+        </div>
+        <div class="row"><button class="btn btn--solid" style="width:100%" id="toStudio">Create account</button></div>
+        <p class="lede" style="text-align:center;margin-top:1rem">Already have one? <a href="#" style="color:var(--text);text-decoration:underline">Log in</a></p>
+      </section>
+
+      <!-- ② STUDIO -->
+      <section class="step" data-step="studio">
+        <h1>Name your studio</h1>
+        <p class="lede">This is what your dancers and whānau will see.</p>
+        <div class="stack">
+          <input class="field" id="studioName" type="text" placeholder="New Zealand Academy of Dance" />
+          <div>
+            <div class="slug"><input id="slug" placeholder="your-studio" /><span class="suf">.olune.app</span></div>
+            <p class="hint" id="slugHint"></p>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn btn--ghost" id="backToAccount">Back</button>
+          <button class="btn btn--solid" style="flex:1" id="toBrand" disabled>Continue</button>
+        </div>
+      </section>
+
+      <!-- ③ BRAND -->
+      <section class="step" data-step="brand">
+        <h1>Make it yours</h1>
+        <p class="lede">Pick a brand colour — refine everything later.</p>
+        <div class="preview" id="preview">
+          <div class="pv-top"><span class="pv-mk" id="pvMk">S</span><span class="pv-nm" id="pvNm">Your studio</span></div>
+          <span class="pv-btn">Book a trial</span>
+        </div>
+        <div class="swatches" id="swatches">
+          <input type="color" id="customColor" value="#C8102E" />
+        </div>
+        <div class="row">
+          <button class="btn btn--ghost" id="backToStudio">Back</button>
+          <button class="btn btn--solid" style="flex:1" id="create">Create studio</button>
+        </div>
+      </section>
+
+      <!-- DONE -->
+      <section class="step done" data-step="done">
+        <div class="check" id="check">✓</div>
+        <h1 style="margin-top:1rem" id="welcome">Welcome to your studio</h1>
+        <p class="lede">Your studio is live. Taking you to your dashboard…</p>
+        <button class="btn btn--solid" style="margin-top:1.4rem" id="enter">Enter dashboard →</button>
+      </section>
+    </div>
+  </div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const TAKEN = ['demo','test','studio','app','admin'];
+  const PRESETS = ['#C8102E','#5B5BFF','#C9A227','#E84A8A','#13B6A4'];
+  const ORDER = ['account','studio','brand','done'];
+
+  const state = { brand:'#C8102E', name:'', slug:'', slugEdited:false, slugOk:false };
+  const $ = id => document.getElementById(id);
+  const stepEls = [...document.querySelectorAll('.step')];
+
+  /* progress */
+  function setProgress(idx){
+    document.querySelectorAll('#prog span[data-i]').forEach(s=>s.classList.toggle('on', +s.dataset.i <= idx));
+    document.querySelectorAll('#prog .ln').forEach(l=>l.classList.toggle('on', +l.dataset.l < idx));
+  }
+
+  /* step transitions */
+  let current='account', busy=false;
+  function show(name, dir){
+    if(busy || name===current) return;
+    const from = stepEls.find(s=>s.dataset.step===current);
+    const to   = stepEls.find(s=>s.dataset.step===name);
+    const i = ORDER.indexOf(name); setProgress(Math.min(i,2));
+    if(reduce){ from.classList.remove('active'); to.classList.add('active'); current=name; return; }
+    busy=true;
+    from.animate([{opacity:1,transform:'translateX(0)'},{opacity:0,transform:`translateX(${dir*-24}px)`}],{duration:200,easing:'ease'}).finished.then(()=>{
+      from.classList.remove('active'); to.classList.add('active');
+      to.animate([{opacity:0,transform:`translateX(${dir*24}px)`},{opacity:1,transform:'translateX(0)'}],{duration:260,easing:'cubic-bezier(.16,1,.3,1)'}).finished.then(()=>{ busy=false; current=name; });
+    });
+  }
+
+  /* slugify + availability */
+  const slugify = s => s.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+  let slugTimer;
+  function checkSlug(){
+    const s = state.slug; const hint=$('slugHint'); state.slugOk=false; $('toBrand').disabled=true;
+    if(!/^[a-z0-9-]{3,32}$/.test(s)){ hint.innerHTML = s? '<span class="no">Use 3+ lowercase letters, numbers or hyphens</span>':'<span class="mut">&nbsp;</span>'; return; }
+    hint.innerHTML='<span class="mut">Checking…</span>';
+    clearTimeout(slugTimer);
+    slugTimer=setTimeout(()=>{
+      if(TAKEN.includes(s)){ hint.innerHTML='<span class="no">✗ That subdomain is taken</span>'; }
+      else { hint.innerHTML=`<span class="ok">✓ ${s}.olune.app is available</span>`; state.slugOk=true; $('toBrand').disabled=false; }
+    }, 450);
+  }
+
+  $('studioName').addEventListener('input', e=>{ state.name=e.target.value; if(!state.slugEdited){ state.slug=slugify(e.target.value); $('slug').value=state.slug; checkSlug(); } });
+  $('slug').addEventListener('input', e=>{ state.slugEdited=true; state.slug=slugify(e.target.value); e.target.value=state.slug; checkSlug(); });
+
+  /* brand swatches + preview */
+  const sw = $('swatches');
+  PRESETS.forEach(c=>{ const b=document.createElement('button'); b.className='sw'; b.style.background=c; b.setAttribute('aria-label',c);
+    b.addEventListener('click',()=>setBrand(c)); sw.insertBefore(b, $('customColor')); });
+  $('customColor').addEventListener('input', e=>setBrand(e.target.value));
+  function setBrand(c){
+    state.brand=c; $('customColor').value=c;
+    $('preview').style.setProperty('--p', c);
+    document.querySelectorAll('.sw').forEach(s=> s.style.boxShadow = s.style.background && rgbEq(s.style.background,c) ? '0 0 0 2px var(--surface),0 0 0 4px #fff':'none');
+  }
+  function rgbEq(a,b){ const t=document.createElement('div'); t.style.color=b; document.body.appendChild(t); const n=getComputedStyle(t).color; t.remove(); const u=document.createElement('div'); u.style.color=a; document.body.appendChild(u); const m=getComputedStyle(u).color; u.remove(); return n===m; }
+
+  function syncBrandStep(){
+    const initial=(state.name.trim()[0]||'S').toUpperCase();
+    $('pvMk').textContent=initial; $('pvNm').textContent=state.name||'Your studio';
+    setBrand(state.brand);
+  }
+
+  /* nav buttons */
+  $('toStudio').addEventListener('click', ()=>{ $('toStudio').textContent='Creating…'; setTimeout(()=>{ $('toStudio').textContent='Create account'; show('studio',1); }, 500); });
+  $('backToAccount').addEventListener('click', ()=>show('account',-1));
+  $('toBrand').addEventListener('click', ()=>{ syncBrandStep(); show('brand',1); });
+  $('backToStudio').addEventListener('click', ()=>show('studio',-1));
+  $('create').addEventListener('click', ()=>{
+    $('create').textContent='Creating your studio…'; $('create').disabled=true;
+    setTimeout(()=>{
+      $('check').style.background=state.brand; $('enter').style.background=state.brand;
+      $('welcome').textContent=`Welcome to ${state.name||'your studio'}`;
+      show('done',1);
+    }, 900);
+  });
+  $('enter').addEventListener('click', ()=>location.reload());
+
+  checkSlug();
+</script>
+</body>
+</html>

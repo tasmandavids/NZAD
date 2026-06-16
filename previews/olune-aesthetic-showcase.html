@@ -1,0 +1,305 @@
+<!--
+  Olune — Aesthetic Showcase (LIVE)
+  ==================================
+  Demonstrates all three deliverables together:
+    1. Curtain-wipe page transitions  → click Home / Programmes / Enrol
+    2. Interactive particle field      → glowing red dust, reacts to your mouse
+    3. Premium micro-interactions      → glowing button borders, input focus,
+                                          custom scrollbar (the policies box)
+  The particles use canvas-2D here for rock-solid reliability; the production
+  file (ParticleBackground.tsx) renders the same look in WebGL via React Three
+  Fiber. Transitions here are hand-timed; production uses Framer Motion.
+-->
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Olune · Aesthetic Showcase</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#C8102E; --brand-hot:#FF2D3C; --brand-deep:#6E0B1A;
+    --base:#08080A; --surface:#131316; --text:#F4F2EE; --muted:#8B8B92;
+    --hair:rgba(244,242,238,.12);
+    --ease:cubic-bezier(.16,1,.3,1);
+    --display:'Archivo','Helvetica Neue',Arial,sans-serif;
+    --serif:'Cormorant Garamond',Georgia,serif;
+  }
+  *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--base); color:var(--text); font-family:var(--display); -webkit-font-smoothing:antialiased; min-height:100vh; overflow-x:hidden; }
+  ::selection{ background:var(--brand); color:#fff; }
+  a{ color:inherit; text-decoration:none; }
+
+  /* particle canvas */
+  #fx{ position:fixed; inset:0; z-index:0; display:block; }
+
+  /* ───── custom scrollbar ───── */
+  *{ scrollbar-width:thin; scrollbar-color:var(--brand) transparent; }
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:linear-gradient(var(--brand-deep),var(--brand)); border:2px solid var(--base); border-radius:999px; }
+  ::-webkit-scrollbar-thumb:hover{ background:linear-gradient(var(--brand),var(--brand-hot)); }
+
+  /* ───── glowing button border ───── */
+  @property --angle{ syntax:'<angle>'; inherits:false; initial-value:0deg; }
+  .btn-glow{ position:relative; isolation:isolate; display:inline-flex; align-items:center; gap:.5rem; padding:.85rem 1.7rem; border-radius:999px; background:var(--surface); color:var(--text); font-weight:600; letter-spacing:.02em; cursor:pointer; border:none; font-family:inherit; transition:transform .35s var(--ease), color .35s; }
+  .btn-glow::before{ content:""; position:absolute; inset:0; z-index:-1; padding:1.5px; border-radius:inherit;
+    background:conic-gradient(from var(--angle), var(--brand-deep), var(--brand-hot), var(--brand), var(--brand-deep));
+    -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude; opacity:.55; transition:opacity .35s; }
+  .btn-glow::after{ content:""; position:absolute; inset:0; z-index:-2; border-radius:inherit; box-shadow:0 0 0 0 transparent; transition:box-shadow .45s var(--ease); }
+  .btn-glow:hover{ transform:translateY(-2px); }
+  .btn-glow:hover::before{ opacity:1; animation:spin 2.4s linear infinite; }
+  .btn-glow:hover::after{ box-shadow:0 10px 44px -6px color-mix(in srgb,var(--brand-hot) 60%, transparent); }
+  .btn-glow:active{ transform:translateY(0) scale(.98); }
+  @keyframes spin{ to{ --angle:360deg; } }
+  .btn-glow--solid{ background:var(--brand); color:#fff; } .btn-glow--solid::before{ opacity:0; }
+
+  /* ───── premium inputs ───── */
+  .field{ width:100%; padding:.8rem 1rem; border-radius:12px; color:var(--text); background:color-mix(in srgb,var(--base) 50%, transparent); border:1px solid var(--hair); outline:none; font-family:inherit; font-size:.95rem; transition:border-color .3s var(--ease), box-shadow .3s var(--ease), background .3s; }
+  .field::placeholder{ color:var(--muted); }
+  .field:hover{ border-color:color-mix(in srgb,var(--brand) 40%, var(--hair)); }
+  .field:focus{ border-color:var(--brand); background:color-mix(in srgb,var(--base) 72%, transparent); box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%, transparent); }
+
+  /* ───── nav ───── */
+  .nav{ position:fixed; inset:0 0 auto 0; z-index:20; display:flex; align-items:center; justify-content:space-between; padding:1.3rem clamp(1.25rem,4vw,3.5rem); }
+  .brand{ display:flex; align-items:center; gap:.6rem; }
+  .brand .mk{ width:34px; height:34px; display:grid; place-items:center; border:1.5px solid var(--brand); font-weight:900; }
+  .brand b{ font-weight:800; letter-spacing:.01em; }
+  .links{ display:flex; gap:1.8rem; }
+  .links a{ font-size:.82rem; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); position:relative; padding:.3rem 0; transition:color .3s var(--ease); }
+  .links a::after{ content:""; position:absolute; left:0; bottom:0; height:1.5px; width:0; background:var(--brand-hot); transition:width .35s var(--ease); }
+  .links a:hover, .links a.on{ color:var(--text); } .links a:hover::after, .links a.on::after{ width:100%; }
+
+  /* ───── stage / pages ───── */
+  .stage{ position:relative; z-index:10; min-height:100vh; display:grid; place-items:center; padding:7rem clamp(1.25rem,5vw,4rem) 4rem; }
+  .page{ display:none; width:100%; max-width:1080px; }
+  .page.active{ display:block; }
+  .page.enter > *{ opacity:0; transform:translateY(20px); animation:rise .7s var(--ease) forwards; }
+  .page.enter > *:nth-child(2){ animation-delay:.06s } .page.enter > *:nth-child(3){ animation-delay:.12s } .page.enter > *:nth-child(4){ animation-delay:.18s }
+  @keyframes rise{ to{ opacity:1; transform:translateY(0); } }
+
+  .eyebrow{ display:inline-flex; align-items:center; gap:.8rem; font-size:.68rem; letter-spacing:.34em; text-transform:uppercase; color:var(--muted); margin-bottom:1.4rem; }
+  .eyebrow .l{ width:46px; height:1px; background:var(--brand); }
+  .hero-title{ font-weight:900; text-transform:uppercase; letter-spacing:-.02em; line-height:.92; font-size:clamp(2.8rem,9vw,7.5rem); color:#fff; }
+  .hero-title .g{ font-family:var(--serif); font-style:italic; font-weight:600; text-transform:none; color:var(--brand-hot); text-shadow:0 0 40px color-mix(in srgb,var(--brand-hot) 45%, transparent); }
+  .sub{ margin-top:1.4rem; max-width:46ch; color:var(--text); opacity:.82; font-size:clamp(1rem,1.6vw,1.18rem); line-height:1.6; }
+  .cta{ margin-top:2.2rem; display:flex; flex-wrap:wrap; gap:1rem; }
+
+  .ptitle{ font-size:clamp(2rem,5vw,3.2rem); font-weight:900; text-transform:uppercase; line-height:1; color:#fff; }
+  .ptitle em{ font-family:var(--serif); font-style:italic; font-weight:600; text-transform:none; color:var(--brand-hot); }
+  .cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:1.2rem; margin-top:2.2rem; }
+  .pcard{ position:relative; overflow:hidden; border:1px solid var(--hair); background:color-mix(in srgb,var(--surface) 70%, transparent); backdrop-filter:blur(6px); border-radius:18px; padding:1.8rem 1.5rem; min-height:230px; display:flex; flex-direction:column; justify-content:flex-end; transition:transform .5s var(--ease), border-color .5s var(--ease); }
+  .pcard:hover{ transform:translateY(-8px); border-color:color-mix(in srgb,var(--brand) 60%, transparent); }
+  .pcard::before{ content:""; position:absolute; inset:0; opacity:0; transition:opacity .5s var(--ease); background:radial-gradient(120% 80% at 50% 0%, color-mix(in srgb,var(--brand) 18%, transparent), transparent 70%); }
+  .pcard:hover::before{ opacity:1; }
+  .pcard > *{ position:relative; }
+  .pcard .tag{ font-size:.66rem; letter-spacing:.2em; text-transform:uppercase; color:var(--brand); font-weight:700; }
+  .pcard h3{ font-size:1.6rem; font-weight:800; text-transform:uppercase; margin-top:.4rem; }
+  .pcard p{ font-size:.85rem; color:var(--muted); margin-top:.4rem; }
+
+  .formwrap{ display:grid; grid-template-columns:1.1fr .9fr; gap:1.6rem; margin-top:2rem; align-items:start; }
+  .formcard{ border:1px solid var(--hair); background:color-mix(in srgb,var(--surface) 75%, transparent); backdrop-filter:blur(8px); border-radius:20px; padding:1.8rem; }
+  .formcard .row{ margin-bottom:1rem; } .formcard label{ display:block; font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:.4rem; }
+  .ok{ margin-top:.4rem; font-size:.85rem; color:var(--brand-hot); height:1.1em; }
+  .policies{ border:1px solid var(--hair); border-radius:20px; padding:1.4rem; background:color-mix(in srgb,var(--surface) 60%, transparent); }
+  .policies h4{ font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:.8rem; }
+  .policies .scroll{ max-height:240px; overflow-y:auto; padding-right:.8rem; font-size:.85rem; color:var(--text); opacity:.82; line-height:1.7; }
+  .policies .scroll p{ margin-bottom:.9rem; }
+
+  /* ───── curtain ───── */
+  .curtain{ position:fixed; inset:0; z-index:50; display:flex; pointer-events:none; }
+  .curtain .slat{ height:100%; flex:1; transform:scaleY(0); }
+
+  @media (max-width:820px){ .links{ display:none; } .cards{ grid-template-columns:1fr; } .formwrap{ grid-template-columns:1fr; } }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; } .page.enter > *{ opacity:1 !important; transform:none !important; } }
+</style>
+</head>
+<body>
+
+  <canvas id="fx"></canvas>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a class="brand" href="#"><span class="mk">N</span><b>NZ Academy of Dance</b></a>
+    <div class="links">
+      <a data-go="home" class="on">Home</a>
+      <a data-go="programmes">Programmes</a>
+      <a data-go="enrol">Enrol</a>
+    </div>
+    <button class="btn-glow" data-go="enrol">Book a trial</button>
+  </nav>
+
+  <!-- STAGE -->
+  <div class="stage">
+    <!-- HOME -->
+    <section class="page active enter" id="home">
+      <div class="eyebrow"><span class="l"></span>New Zealand Academy of Dance — Aotearoa</div>
+      <h1 class="hero-title">Where movement<br>becomes <span class="g">art.</span></h1>
+      <p class="sub">From a child’s first plié to the national stage — training in ballet, contemporary, jazz, hip-hop and tap, with one home for every dancer and their whānau.</p>
+      <div class="cta">
+        <button class="btn-glow btn-glow--solid" data-go="enrol">Book a free trial →</button>
+        <button class="btn-glow" data-go="programmes">Explore programmes</button>
+      </div>
+    </section>
+
+    <!-- PROGRAMMES -->
+    <section class="page enter" id="programmes">
+      <h2 class="ptitle">Our <em>programmes</em></h2>
+      <p class="sub">Eight disciplines, every level, one stage.</p>
+      <div class="cards">
+        <article class="pcard"><span class="tag">01 / Classical</span><h3>Ballet</h3><p>Graded RAD syllabus from pre-primary through to pointe and beyond.</p></article>
+        <article class="pcard"><span class="tag">02 / Street</span><h3>Hip-Hop</h3><p>Foundations, grooves and choreography for juniors to teens.</p></article>
+        <article class="pcard"><span class="tag">03 / Expressive</span><h3>Contemporary</h3><p>Technique, improvisation and performance for open levels.</p></article>
+      </div>
+    </section>
+
+    <!-- ENROL -->
+    <section class="page enter" id="enrol">
+      <h2 class="ptitle">Reserve a <em>trial</em></h2>
+      <p class="sub">A taste of the studio, no commitment. Focus the fields to feel the interaction.</p>
+      <div class="formwrap">
+        <div class="formcard">
+          <div class="row"><label>Dancer’s name</label><input class="field" type="text" placeholder="e.g. Aroha Williams" /></div>
+          <div class="row"><label>Parent email</label><input class="field" type="email" placeholder="you@example.co.nz" /></div>
+          <div class="row"><label>Discipline</label><input class="field" type="text" placeholder="Ballet, Hip-Hop…" /></div>
+          <button class="btn-glow btn-glow--solid" id="reserve">Reserve my spot</button>
+          <p class="ok" id="ok"></p>
+        </div>
+        <div class="policies">
+          <h4>Studio policies</h4>
+          <div class="scroll">
+            <p>Trial classes are complimentary and run for the full session length. Please arrive ten minutes early so our front desk can settle your dancer in.</p>
+            <p>Term fees are billed in advance and may be paid by auto-pay. Costumes for the end-of-year showcase are invoiced separately in term three.</p>
+            <p>Absences reported more than 24 hours ahead may be credited toward a make-up class, subject to availability in an equivalent level.</p>
+            <p>Our studios are a phones-down, encouragement-up space. We celebrate effort over outcome and progress over perfection.</p>
+            <p>Withdrawals require two weeks’ written notice. Medical holds are available on request with a supporting note.</p>
+            <p>Scroll this box — the bar is themed to your brand, like everything else in Olune.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- CURTAIN -->
+  <div class="curtain" id="curtain">
+    <div class="slat" style="background:#0A0A0B"></div>
+    <div class="slat" style="background:var(--brand)"></div>
+    <div class="slat" style="background:#0A0A0B"></div>
+    <div class="slat" style="background:var(--brand)"></div>
+    <div class="slat" style="background:#0A0A0B"></div>
+  </div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ════════════ 1 · PARTICLE FIELD (canvas-2D, additive) ════════════ */
+  const cv = document.getElementById('fx'), ctx = cv.getContext('2d');
+  let W, H, DPR = Math.min(devicePixelRatio || 1, 2);
+  const mouse = { x: -9999, y: -9999 };
+
+  // soft glow sprite (drawn once)
+  const sprite = document.createElement('canvas'); sprite.width = sprite.height = 64;
+  const sctx = sprite.getContext('2d');
+  const g = sctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, 'rgba(255,80,90,0.95)'); g.addColorStop(0.4, 'rgba(220,30,52,0.45)'); g.addColorStop(1, 'rgba(220,30,52,0)');
+  sctx.fillStyle = g; sctx.fillRect(0, 0, 64, 64);
+
+  let particles = [];
+  function build(){
+    const n = Math.round(Math.min(150, (W * H) / 14000));
+    particles = Array.from({ length: n }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.25, vy: (Math.random() - 0.5) * 0.25,
+      r: Math.random() * 26 + 8, seed: Math.random() * 6.28, sp: Math.random() * 0.6 + 0.3,
+    }));
+  }
+  function resize(){
+    W = innerWidth; H = innerHeight;
+    cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0); build();
+  }
+  addEventListener('resize', resize); resize();
+  addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  addEventListener('pointerleave', () => { mouse.x = mouse.y = -9999; });
+
+  function frame(t){
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(8,8,10,0.22)';        // trail
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';   // additive glow
+    const time = t * 0.001;
+    for (const p of particles){
+      // drift
+      p.x += p.vx + Math.sin(time * 0.3 + p.seed) * 0.05;
+      p.y += p.vy + Math.cos(time * 0.25 + p.seed) * 0.05;
+      // part around cursor
+      const dx = p.x - mouse.x, dy = p.y - mouse.y, dist = Math.hypot(dx, dy);
+      if (dist < 150){ const f = (1 - dist / 150) * 4; p.x += (dx / dist) * f; p.y += (dy / dist) * f; }
+      // wrap
+      if (p.x < -40) p.x = W + 40; if (p.x > W + 40) p.x = -40;
+      if (p.y < -40) p.y = H + 40; if (p.y > H + 40) p.y = -40;
+      // twinkle
+      const a = 0.5 + 0.5 * Math.sin(time * p.sp + p.seed);
+      ctx.globalAlpha = 0.25 + a * 0.5;
+      ctx.drawImage(sprite, p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+    }
+    ctx.globalAlpha = 1;
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  if (reduce){ frame(0); } else { requestAnimationFrame(frame); }
+  // pause when tab hidden (battery)
+  let raf = true;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) raf = false;
+    else if (!reduce && !raf){ raf = true; requestAnimationFrame(frame); }
+  });
+
+  /* ════════════ 2 · CURTAIN PAGE TRANSITIONS ════════════ */
+  const curtain = document.getElementById('curtain');
+  const slats = [...curtain.children];
+  const EASE = 'cubic-bezier(.16,1,.3,1)';
+  let busy = false, current = 'home';
+
+  function showPage(id){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const el = document.getElementById(id);
+    el.classList.add('active');
+    el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter'); // replay entrance
+    document.querySelectorAll('.links a').forEach(a => a.classList.toggle('on', a.dataset.go === id));
+    current = id;
+  }
+
+  async function goTo(id){
+    if (busy || id === current) return;
+    if (reduce){ showPage(id); return; }
+    busy = true;
+    // cover
+    await Promise.all(slats.map((s, i) => {
+      s.style.transformOrigin = 'bottom';
+      return s.animate([{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }],
+        { duration: 320, delay: i * 45, easing: EASE, fill: 'forwards' }).finished;
+    }));
+    showPage(id);
+    // reveal
+    await Promise.all(slats.map((s, i) => {
+      s.style.transformOrigin = 'top';
+      return s.animate([{ transform: 'scaleY(1)' }, { transform: 'scaleY(0)' }],
+        { duration: 320, delay: i * 45, easing: EASE, fill: 'forwards' }).finished;
+    }));
+    busy = false;
+  }
+
+  document.querySelectorAll('[data-go]').forEach(el =>
+    el.addEventListener('click', e => { e.preventDefault(); goTo(el.dataset.go); }));
+
+  /* ════════════ 3 · tiny form feedback ════════════ */
+  document.getElementById('reserve').addEventListener('click', () => {
+    document.getElementById('ok').textContent = '✓ Spot reserved — check your email.';
+  });
+</script>
+</body>
+</html>

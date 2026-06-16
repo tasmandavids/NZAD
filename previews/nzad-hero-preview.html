@@ -1,0 +1,553 @@
+<!--
+  New Zealand Academy of Dance — Landing Hero (LIVE PREVIEW)
+  ----------------------------------------------------------
+  This is a self-contained, dependency-free preview so you can SEE and FEEL
+  the aesthetic immediately (it runs anywhere, no build step).
+
+  Concept ........ A darkened theatre. A single red spotlight breathes on an
+                   empty stage. Type carries the thesis: heavy grotesque (raw
+                   athletic power) meets an elegant serif italic (grace) — the
+                   two halves of dance.
+  Palette ........ Void #0A0A0B · Ink #131316 · Chalk #F4F2EE · White #FFFFFF
+                   Crimson #C8102E · Oxblood #6E0B1A · Ember #FF2D3C
+  Motion ......... Mouse + scroll parallax on the spotlight · staggered load
+                   reveal · scroll-triggered reveals · hover micro-interactions
+                   All disabled under prefers-reduced-motion.
+
+  The cinematic *video* background is simulated here with CSS (spotlight + film
+  grain + vignette + drifting haze). The <video> swap-in point is marked below.
+  The production React/Next.js + Framer Motion version is in Hero.tsx.
+-->
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>New Zealand Academy of Dance</title>
+
+<!-- Type: one cohesive grotesque superfamily (Archivo) + an elegant serif italic accent (Cormorant Garamond) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@1,500;1,600&display=swap" rel="stylesheet">
+
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+     ============================================================ */
+  :root{
+    --void:    #0A0A0B;   /* true black stage */
+    --ink:     #131316;   /* raised surfaces */
+    --ink-2:   #1b1b1f;
+    --chalk:   #F4F2EE;   /* off-white text (warmer than pure white) */
+    --white:   #FFFFFF;
+    --crimson: #C8102E;   /* primary red */
+    --oxblood: #6E0B1A;   /* deep red, for the glow's core */
+    --ember:   #FF2D3C;   /* hot red, hover + highlights */
+    --muted:   #8b8b92;   /* secondary text */
+    --hair:    rgba(244,242,238,.12); /* hairlines */
+
+    --display: 'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --serif:   'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+
+    --ease: cubic-bezier(.16,1,.3,1);   /* expressive ease-out */
+    --gutter: clamp(1.25rem, 4vw, 4rem);
+    --maxw: 1320px;
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    font-family:var(--display);
+    background:var(--void);
+    color:var(--chalk);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    line-height:1.5;
+  }
+
+  ::selection{ background:var(--crimson); color:var(--white); }
+
+  a{ color:inherit; text-decoration:none; }
+
+  :focus-visible{ outline:2px solid var(--ember); outline-offset:3px; border-radius:2px; }
+
+  /* ============================================================
+     SCROLL PROGRESS BAR
+     ============================================================ */
+  .progress{
+    position:fixed; inset:0 auto auto 0; height:2px; width:0%;
+    background:linear-gradient(90deg,var(--oxblood),var(--ember));
+    z-index:200; transition:width .1s linear;
+    box-shadow:0 0 12px rgba(255,45,60,.6);
+  }
+
+  /* ============================================================
+     FILM GRAIN + VIGNETTE (cinematic texture)
+     ============================================================ */
+  .grain{
+    position:fixed; inset:-50%; width:200%; height:200%;
+    pointer-events:none; z-index:150; opacity:.05;
+    mix-blend-mode:overlay;
+    animation:grain 1.2s steps(3) infinite;
+  }
+  @keyframes grain{
+    0%{transform:translate(0,0)} 33%{transform:translate(-3%,2%)}
+    66%{transform:translate(2%,-2%)} 100%{transform:translate(0,0)}
+  }
+  .vignette{
+    position:fixed; inset:0; pointer-events:none; z-index:140;
+    background:radial-gradient(120% 120% at 50% 35%, transparent 45%, rgba(0,0,0,.55) 100%);
+  }
+
+  /* ============================================================
+     NAV
+     ============================================================ */
+  .nav{
+    position:fixed; inset:0 0 auto 0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:1.4rem var(--gutter);
+    transition:background .4s var(--ease), padding .4s var(--ease), border-color .4s var(--ease);
+    border-bottom:1px solid transparent;
+  }
+  .nav.scrolled{
+    background:rgba(10,10,11,.72);
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    padding-top:.9rem; padding-bottom:.9rem;
+    border-bottom:1px solid var(--hair);
+  }
+  .brand{ display:flex; align-items:center; gap:.7rem; }
+  .monogram{
+    width:38px; height:38px; display:grid; place-items:center;
+    border:1.5px solid var(--crimson); color:var(--chalk);
+    font-weight:900; font-size:1rem; letter-spacing:.02em;
+    position:relative; overflow:hidden;
+  }
+  .monogram::after{
+    content:""; position:absolute; inset:0;
+    background:var(--crimson); transform:translateY(101%);
+    transition:transform .45s var(--ease); z-index:-1;
+  }
+  .brand:hover .monogram::after{ transform:translateY(0); }
+  .wordmark{ display:flex; flex-direction:column; line-height:1; }
+  .wordmark b{ font-weight:800; font-size:.95rem; letter-spacing:.04em; }
+  .wordmark span{ font-size:.6rem; letter-spacing:.34em; color:var(--muted); margin-top:.28rem; text-transform:uppercase; }
+
+  .nav-links{ display:flex; align-items:center; gap:2.2rem; }
+  .nav-links a{
+    font-size:.82rem; font-weight:500; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--chalk); position:relative; padding:.2rem 0;
+  }
+  .nav-links a::after{
+    content:""; position:absolute; left:0; bottom:-2px; height:1.5px; width:0;
+    background:var(--ember); transition:width .35s var(--ease);
+  }
+  .nav-links a:hover::after{ width:100%; }
+
+  .login{
+    display:inline-flex; align-items:center; gap:.5rem;
+    font-size:.8rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+    border:1px solid var(--hair); padding:.6rem 1.1rem; border-radius:999px;
+    transition:border-color .35s var(--ease), color .35s var(--ease), background .35s var(--ease);
+  }
+  .login:hover{ border-color:var(--crimson); background:rgba(200,16,46,.08); }
+  .login .dot{ width:7px; height:7px; border-radius:50%; background:var(--ember); box-shadow:0 0 8px var(--ember); }
+
+  /* ============================================================
+     HERO STAGE
+     ============================================================ */
+  .hero{
+    position:relative; min-height:100svh; display:flex; align-items:center;
+    padding:8rem var(--gutter) 4rem; overflow:hidden; isolation:isolate;
+  }
+
+  /* --- THE CINEMATIC BACKGROUND (CSS-simulated) ---
+     >>> In production, drop a <video> here and keep .spotlight/.haze as overlays. <<< */
+  .stage{ position:absolute; inset:0; z-index:-3; background:var(--void); }
+
+  /* drifting red stage haze (large, blurred, slow) */
+  .haze{ position:absolute; border-radius:50%; filter:blur(60px); opacity:.5; will-change:transform; }
+  .haze.a{ width:60vmax; height:60vmax; left:-15vmax; top:-20vmax;
+           background:radial-gradient(circle, rgba(110,11,26,.9), transparent 62%); }
+  .haze.b{ width:45vmax; height:45vmax; right:-10vmax; bottom:-18vmax;
+           background:radial-gradient(circle, rgba(200,16,46,.55), transparent 64%);
+           animation:float 14s ease-in-out infinite alternate; }
+
+  /* the spotlight — follows the cursor, the signature element */
+  .spotlight{
+    position:absolute; inset:0; z-index:-2; will-change:transform;
+    background:radial-gradient(38vmax 38vmax at 50% 42%,
+              rgba(255,45,60,.22) 0%, rgba(200,16,46,.14) 32%, transparent 64%);
+    animation:breathe 7s ease-in-out infinite;
+  }
+  /* faint light streaks / stage rigging glow */
+  .streak{ position:absolute; z-index:-2; opacity:.4; mix-blend-mode:screen; filter:blur(2px); }
+  .streak.s1{ top:0; left:32%; width:1px; height:75vh;
+              background:linear-gradient(180deg, rgba(255,45,60,.55), transparent);
+              transform:rotate(8deg); transform-origin:top; }
+  .streak.s2{ top:0; right:26%; width:1px; height:62vh;
+              background:linear-gradient(180deg, rgba(255,45,60,.4), transparent);
+              transform:rotate(-6deg); transform-origin:top; }
+
+  @keyframes breathe{ 0%,100%{opacity:.85} 50%{opacity:1} }
+  @keyframes float{ from{transform:translate(0,0)} to{transform:translate(-4vmax,3vmax)} }
+
+  /* stage floor reflection line */
+  .floor{
+    position:absolute; left:0; right:0; bottom:0; height:42vh; z-index:-2;
+    background:linear-gradient(180deg, transparent, rgba(200,16,46,.06) 60%, rgba(0,0,0,.4));
+    border-bottom:1px solid rgba(200,16,46,.18);
+  }
+
+  /* --- HERO CONTENT --- */
+  .hero-inner{ position:relative; width:100%; max-width:var(--maxw); margin:0 auto; }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:.9rem;
+    font-size:clamp(.62rem,1.4vw,.72rem); letter-spacing:.36em; text-transform:uppercase;
+    color:var(--muted); margin-bottom:clamp(1.4rem,3vw,2.2rem);
+  }
+  .eyebrow .line{ width:clamp(28px,6vw,56px); height:1px; background:var(--crimson); }
+
+  .hero-title{
+    font-weight:900; text-transform:uppercase; letter-spacing:-.02em;
+    line-height:.92; color:var(--white);
+    font-size:clamp(3.1rem, 11.5vw, 11rem);
+    text-shadow:0 0 80px rgba(0,0,0,.6);
+  }
+  .hero-title .grace{
+    font-family:var(--serif); font-style:italic; font-weight:600;
+    text-transform:none; letter-spacing:0; color:var(--ember);
+    font-size:1.06em; /* slightly larger to let grace breathe */
+    text-shadow:0 0 44px rgba(255,45,60,.45);
+    padding-left:.04em;
+  }
+
+  .hero-sub{
+    max-width:46ch; margin-top:clamp(1.4rem,3vw,2.2rem);
+    font-size:clamp(1rem,1.7vw,1.22rem); font-weight:400; color:var(--chalk);
+    opacity:.86; line-height:1.65;
+  }
+
+  .cta-row{ display:flex; flex-wrap:wrap; gap:1rem; margin-top:clamp(2rem,4vw,2.8rem); }
+
+  .btn{
+    position:relative; display:inline-flex; align-items:center; gap:.7rem;
+    font-weight:700; font-size:.92rem; letter-spacing:.04em; text-transform:uppercase;
+    padding:1.05rem 1.9rem; border-radius:999px; cursor:pointer; overflow:hidden;
+    transition:transform .4s var(--ease), box-shadow .4s var(--ease), color .35s var(--ease);
+    border:1px solid transparent;
+  }
+  .btn .arrow{ transition:transform .4s var(--ease); }
+  .btn:hover .arrow{ transform:translateX(5px); }
+
+  .btn-primary{ background:var(--crimson); color:var(--white); box-shadow:0 10px 40px -12px rgba(200,16,46,.7); }
+  .btn-primary::after{
+    content:""; position:absolute; inset:0; background:var(--ember);
+    transform:translateX(-101%); transition:transform .45s var(--ease); z-index:0;
+  }
+  .btn-primary:hover{ transform:translateY(-3px); box-shadow:0 18px 50px -10px rgba(255,45,60,.75); }
+  .btn-primary:hover::after{ transform:translateX(0); }
+  .btn-primary > *{ position:relative; z-index:1; }
+
+  .btn-ghost{ color:var(--chalk); border-color:var(--hair); }
+  .btn-ghost:hover{ border-color:var(--chalk); transform:translateY(-3px); }
+
+  /* discipline marquee — more characteristic than a generic stat counter */
+  .marquee{
+    position:absolute; left:0; right:0; bottom:0; z-index:1;
+    border-top:1px solid var(--hair); padding:1.1rem 0;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+            mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+    overflow:hidden;
+  }
+  .marquee-track{ display:flex; gap:3rem; width:max-content; animation:scroll 34s linear infinite; }
+  .marquee-track span{
+    font-size:.82rem; letter-spacing:.28em; text-transform:uppercase; color:var(--muted);
+    display:inline-flex; align-items:center; gap:3rem; white-space:nowrap;
+  }
+  .marquee-track span::after{ content:"✦"; color:var(--crimson); font-size:.7rem; }
+  @keyframes scroll{ to{ transform:translateX(-50%); } }
+
+  /* scroll cue */
+  .scroll-cue{
+    position:absolute; right:var(--gutter); bottom:clamp(5rem,9vh,7rem); z-index:1;
+    display:flex; flex-direction:column; align-items:center; gap:.7rem;
+    font-size:.6rem; letter-spacing:.3em; text-transform:uppercase; color:var(--muted);
+    writing-mode:vertical-rl;
+  }
+  .scroll-cue .bar{ width:1px; height:46px; background:linear-gradient(var(--ember),transparent); }
+
+  /* ============================================================
+     LOAD-IN ANIMATION (staggered)
+     ============================================================ */
+  .rise{ opacity:0; transform:translateY(34px); }
+  body.ready .rise{ animation:rise .95s var(--ease) forwards; }
+  body.ready .rise.d1{ animation-delay:.15s } body.ready .rise.d2{ animation-delay:.3s }
+  body.ready .rise.d3{ animation-delay:.45s } body.ready .rise.d4{ animation-delay:.6s }
+  body.ready .rise.d5{ animation-delay:.75s }
+  @keyframes rise{ to{ opacity:1; transform:translateY(0); } }
+
+  /* per-word headline reveal */
+  .hero-title .word{ display:inline-block; opacity:0; transform:translateY(.5em); }
+  body.ready .hero-title .word{ animation:rise .9s var(--ease) forwards; }
+  body.ready .hero-title .word:nth-child(1){ animation-delay:.25s }
+  body.ready .hero-title .word:nth-child(2){ animation-delay:.35s }
+  body.ready .hero-title .word:nth-child(3){ animation-delay:.45s }
+  body.ready .hero-title .word:nth-child(4){ animation-delay:.6s }
+
+  /* ============================================================
+     PORTALS SECTION (demonstrates scroll reveal + hover)
+     ============================================================ */
+  .portals{ position:relative; padding:clamp(5rem,12vh,9rem) var(--gutter); max-width:var(--maxw); margin:0 auto; }
+  .section-head{ display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:1.5rem; margin-bottom:3.4rem; }
+  .section-head h2{
+    font-size:clamp(2rem,5vw,3.6rem); font-weight:900; text-transform:uppercase;
+    letter-spacing:-.01em; line-height:1; color:var(--white);
+  }
+  .section-head h2 em{ font-family:var(--serif); font-style:italic; font-weight:600; text-transform:none; color:var(--ember); }
+  .section-head p{ color:var(--muted); max-width:34ch; font-size:.98rem; }
+
+  .grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:1.25rem; }
+  .card{
+    position:relative; background:var(--ink); border:1px solid var(--hair);
+    padding:2rem 1.6rem 1.6rem; min-height:300px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    overflow:hidden; transition:transform .5s var(--ease), border-color .5s var(--ease);
+    /* reveal state */
+    opacity:0; transform:translateY(40px);
+  }
+  .card.in-view{ animation:rise .8s var(--ease) forwards; }
+  .card.in-view:nth-child(2){ animation-delay:.1s } .card.in-view:nth-child(3){ animation-delay:.2s } .card.in-view:nth-child(4){ animation-delay:.3s }
+  .card::before{ /* red wash on hover */
+    content:""; position:absolute; inset:0; z-index:0;
+    background:radial-gradient(120% 80% at 50% 0%, rgba(200,16,46,.16), transparent 70%);
+    opacity:0; transition:opacity .5s var(--ease);
+  }
+  .card:hover{ transform:translateY(-8px); border-color:rgba(200,16,46,.6); }
+  .card:hover::before{ opacity:1; }
+  .card > *{ position:relative; z-index:1; }
+
+  .card .num{ font-size:.7rem; letter-spacing:.2em; color:var(--crimson); font-weight:700; }
+  .card .icon{ width:46px; height:46px; color:var(--ember); margin:1.2rem 0; }
+  .card h3{ font-size:1.35rem; font-weight:800; text-transform:uppercase; letter-spacing:.01em; margin-bottom:.5rem; }
+  .card p.desc{ font-size:.9rem; color:var(--muted); line-height:1.55; }
+  .card .enter{
+    margin-top:1.4rem; display:inline-flex; align-items:center; gap:.5rem;
+    font-size:.78rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--chalk);
+  }
+  .card .enter svg{ transition:transform .4s var(--ease); }
+  .card:hover .enter svg{ transform:translateX(5px); }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width:1024px){
+    .grid{ grid-template-columns:repeat(2,1fr); }
+    .nav-links{ display:none; }
+  }
+  @media (max-width:600px){
+    .grid{ grid-template-columns:1fr; }
+    .scroll-cue{ display:none; }
+    .hero{ padding-top:7rem; }
+  }
+
+  /* ============================================================
+     ACCESSIBILITY — honour reduced motion (quality floor)
+     ============================================================ */
+  @media (prefers-reduced-motion:reduce){
+    *{ animation:none !important; transition:none !important; }
+    .rise,.hero-title .word,.card{ opacity:1 !important; transform:none !important; }
+    html{ scroll-behavior:auto; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="progress" id="progress"></div>
+
+  <!-- film grain (SVG turbulence) + vignette -->
+  <svg class="grain" xmlns="http://www.w3.org/2000/svg">
+    <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/></filter>
+    <rect width="100%" height="100%" filter="url(#noise)"/>
+  </svg>
+  <div class="vignette"></div>
+
+  <!-- ============================ NAV ============================ -->
+  <nav class="nav" id="nav">
+    <a class="brand" href="#" aria-label="New Zealand Academy of Dance — home">
+      <span class="monogram">N</span>
+      <span class="wordmark"><b>NZ Academy of Dance</b><span>Ōtautahi · Canterbury</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="#">Programmes</a>
+      <a href="#">Studios</a>
+      <a href="#portals">Portals</a>
+      <a href="#">Performances</a>
+      <a href="#">About</a>
+    </div>
+    <a href="#portals" class="login"><span class="dot"></span>Member login</a>
+  </nav>
+
+  <!-- ============================ HERO ============================ -->
+  <header class="hero">
+    <!-- cinematic background layers (swap .stage for a <video> in production) -->
+    <div class="stage" id="stage">
+      <!--
+        PRODUCTION VIDEO SWAP-IN:
+        <video autoplay muted loop playsinline poster="/hero-poster.jpg" class="stage-video">
+          <source src="/hero.webm" type="video/webm">
+          <source src="/hero.mp4"  type="video/mp4">
+        </video>
+        Keep .spotlight / .haze / .vignette as overlays on top for the red wash.
+      -->
+      <div class="haze a" id="hazeA"></div>
+      <div class="haze b"></div>
+      <div class="streak s1"></div>
+      <div class="streak s2"></div>
+      <div class="spotlight" id="spotlight"></div>
+      <div class="floor"></div>
+    </div>
+
+    <div class="hero-inner">
+      <div class="eyebrow rise d1"><span class="line"></span>New Zealand Academy of Dance — Aotearoa</div>
+
+      <h1 class="hero-title">
+        <span class="word">Where</span>
+        <span class="word">movement</span><br>
+        <span class="word">becomes</span>
+        <span class="word grace">art.</span>
+      </h1>
+
+      <p class="hero-sub rise d3">
+        From a child’s first plié to the national stage — training in ballet,
+        contemporary, jazz, hip-hop and tap, with one online home for every
+        dancer and their whānau.
+      </p>
+
+      <div class="cta-row rise d4">
+        <a href="#" class="btn btn-primary">Book a free trial <span class="arrow">→</span></a>
+        <a href="#" class="btn btn-ghost">Explore programmes</a>
+      </div>
+    </div>
+
+    <div class="scroll-cue rise d5">Scroll<span class="bar"></span></div>
+
+    <!-- discipline marquee -->
+    <div class="marquee">
+      <div class="marquee-track" aria-hidden="true">
+        <span>Ballet</span><span>Contemporary</span><span>Jazz</span><span>Hip-Hop</span>
+        <span>Tap</span><span>Lyrical</span><span>Acro</span><span>Pointe</span>
+        <span>Ballet</span><span>Contemporary</span><span>Jazz</span><span>Hip-Hop</span>
+        <span>Tap</span><span>Lyrical</span><span>Acro</span><span>Pointe</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================ PORTALS ============================ -->
+  <section class="portals" id="portals">
+    <div class="section-head">
+      <h2>One platform.<br>Four <em>doors</em>.</h2>
+      <p>Everyone who touches the studio gets a space built for exactly what they do — and nothing they don’t.</p>
+    </div>
+
+    <div class="grid">
+      <!-- Student -->
+      <article class="card">
+        <div>
+          <span class="num">01 / Dancers</span>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.4"/><path d="M12 7.4v6m0 0-3.5 5m3.5-5 3.5 5M7.5 10.5 12 12l4.5-1.5"/></svg>
+          <h3>For dancers</h3>
+          <p class="desc">Your timetable, practice videos and music, skill badges and a direct line to your tutors.</p>
+        </div>
+        <span class="enter">Enter <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+      </article>
+
+      <!-- Parent -->
+      <article class="card">
+        <div>
+          <span class="num">02 / Whānau</span>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9.5 20v-5a2.5 2.5 0 0 1 5 0v5"/></svg>
+          <h3>For parents</h3>
+          <p class="desc">Auto-pay billing, the family calendar, one-tap absences, costume orders and live feedback.</p>
+        </div>
+        <span class="enter">Enter <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+      </article>
+
+      <!-- Teacher -->
+      <article class="card">
+        <div>
+          <span class="num">03 / Tutors</span>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H4zM4 16l-1 3h18l-1-3M9 9l2 2 4-4"/></svg>
+          <h3>For tutors</h3>
+          <p class="desc">Digital roll call, lesson-plan uploads, evaluations and messaging — class-ready in seconds.</p>
+        </div>
+        <span class="enter">Enter <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+      </article>
+
+      <!-- Admin -->
+      <article class="card">
+        <div>
+          <span class="num">04 / Studio</span>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9m5 11V4m5 16v-7m5 7V8"/></svg>
+          <h3>Studio admin</h3>
+          <p class="desc">Finance reporting, payroll, capacity heat-maps, marketing campaigns and drag-and-drop scheduling.</p>
+        </div>
+        <span class="enter">Enter <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+      </article>
+    </div>
+  </section>
+
+<script>
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* trigger staggered load-in */
+  window.addEventListener('load', () => document.body.classList.add('ready'));
+  // fallback so content never gets stuck hidden
+  setTimeout(() => document.body.classList.add('ready'), 400);
+
+  /* sticky nav + scroll progress */
+  const nav = document.getElementById('nav');
+  const progress = document.getElementById('progress');
+  const onScroll = () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (window.scrollY / h * 100) + '%';
+  };
+  window.addEventListener('scroll', onScroll, { passive:true });
+  onScroll();
+
+  /* scroll-triggered card reveals */
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); } });
+  }, { threshold:.18 });
+  document.querySelectorAll('.card').forEach(c => io.observe(c));
+
+  /* mouse + scroll PARALLAX on the spotlight & haze (the signature motion) */
+  if (!reduce){
+    const spotlight = document.getElementById('spotlight');
+    const hazeA = document.getElementById('hazeA');
+    const stage = document.getElementById('stage');
+    let tx = 0, ty = 0, cx = 0, cy = 0;
+
+    window.addEventListener('pointermove', (e) => {
+      tx = (e.clientX / window.innerWidth  - .5);
+      ty = (e.clientY / window.innerHeight - .5);
+    });
+
+    (function loop(){
+      cx += (tx - cx) * 0.06;          // smooth lerp toward target
+      cy += (ty - cy) * 0.06;
+      const scroll = window.scrollY;
+      // spotlight chases the cursor; haze drifts gently the opposite way
+      spotlight.style.transform = `translate(${cx*60}px, ${cy*50 + scroll*0.15}px)`;
+      hazeA.style.transform     = `translate(${cx*-30}px, ${cy*-24 - scroll*0.06}px)`;
+      stage.style.transform     = `translateY(${scroll*0.1}px)`; // subtle bg scroll parallax
+      requestAnimationFrame(loop);
+    })();
+  }
+</script>
+</body>
+</html>

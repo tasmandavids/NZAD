@@ -1,0 +1,117 @@
+/* ============================================================================
+   Premium micro-interactions
+   Import AFTER Tailwind:  @import "./micro-interactions.css";  (in globals.css)
+   Everything uses the tenant tokens (--brand, --brand-hot, --brand-deep, …),
+   so it reskins per studio automatically.
+   ========================================================================== */
+
+/* ───────────────────────── Custom scrollbar ───────────────────────── */
+* {
+  scrollbar-width: thin;                              /* Firefox */
+  scrollbar-color: var(--brand) transparent;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--brand-deep), var(--brand));
+  border: 2px solid var(--base);                      /* inset look */
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(var(--brand), var(--brand-hot));
+}
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* ─────────────── Animated glowing button border ───────────────
+   .btn-glow → resting gradient ring; on hover it rotates + casts a soft glow.
+   The rotation needs @property (Chromium/Safari/Firefox recent); without it
+   the ring is simply a static gradient — graceful degradation. */
+@property --angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.btn-glow {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.7rem;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.35s;
+}
+.btn-glow::before {                                   /* gradient ring */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from var(--angle),
+    var(--brand-deep), var(--brand-hot), var(--brand), var(--brand-deep)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.55;
+  transition: opacity 0.35s;
+}
+.btn-glow::after {                                    /* soft outer glow */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 transparent;
+  transition: box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-glow:hover { transform: translateY(-2px); }
+.btn-glow:hover::before {
+  opacity: 1;
+  animation: btn-spin 2.4s linear infinite;
+}
+.btn-glow:hover::after {
+  box-shadow: 0 10px 44px -6px color-mix(in srgb, var(--brand-hot) 60%, transparent);
+}
+.btn-glow:active { transform: translateY(0) scale(0.98); }
+@keyframes btn-spin { to { --angle: 360deg; } }
+
+/* Solid variant: filled brand button with the same glow on hover */
+.btn-glow--solid { background: var(--brand); color: #fff; }
+.btn-glow--solid::before { opacity: 0; }              /* no ring on the solid one */
+
+/* ───────────────────────── Input focus states ───────────────────────── */
+.field-premium {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--base) 50%, transparent);
+  border: 1px solid var(--hair);
+  outline: none;
+  transition: border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.3s;
+}
+.field-premium::placeholder { color: var(--muted); }
+.field-premium:hover { border-color: color-mix(in srgb, var(--brand) 40%, var(--hair)); }
+.field-premium:focus {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--base) 70%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 18%, transparent);  /* soft focus ring */
+}
+
+/* Respect users who prefer less motion */
+@media (prefers-reduced-motion: reduce) {
+  .btn-glow:hover::before { animation: none; }
+  .btn-glow, .field-premium { transition: none; }
+}

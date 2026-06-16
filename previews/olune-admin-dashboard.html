@@ -1,0 +1,334 @@
+<!--
+  Olune — Admin "God-Mode" Dashboard (LIVE PREVIEW)
+  ==================================================
+  A runnable stand-in for the React components in components/admin/dashboard/.
+  • Stat cards count up + draw sparklines (≈ StatCard.tsx + Framer Motion).
+  • Capacity heatmap = CSS grid coloured by fill (≈ CapacityHeatmap.tsx).
+  • Schedule builder uses the native HTML5 drag API here; the production file
+    uses @hello-pangea/dnd. Drag the class chips into a Studio × time slot.
+  All colours are the tenant tokens (red/black/white by default).
+-->
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Olune · Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#C8102E; --brand-hot:#FF2D3C; --brand-deep:#6E0B1A;
+    --base:#0A0A0B; --surface:#131316; --surface-2:#1A1A1F; --elev:#202026;
+    --text:#F4F2EE; --muted:#8B8B92; --hair:rgba(244,242,238,.10);
+    --heat-empty:color-mix(in srgb, var(--text) 7%, var(--surface));
+    --ease:cubic-bezier(.16,1,.3,1);
+    font-family:'Archivo','Helvetica Neue',Arial,sans-serif;
+  }
+  *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--base); color:var(--text); -webkit-font-smoothing:antialiased; min-height:100vh; }
+  :focus-visible{ outline:2px solid var(--brand-hot); outline-offset:2px; border-radius:4px; }
+  button{ font-family:inherit; cursor:pointer; }
+  .tabnum{ font-variant-numeric:tabular-nums; }
+
+  .app{ display:grid; grid-template-columns:236px 1fr; min-height:100vh; }
+
+  /* ───────── rail ───────── */
+  .rail{ border-right:1px solid var(--hair); background:var(--surface); padding:1.1rem .8rem; display:flex; flex-direction:column; gap:.3rem; }
+  .rail .logo{ display:flex; align-items:center; gap:.6rem; padding:.4rem .5rem 1.1rem; }
+  .rail .logo .mk{ width:30px; height:30px; border-radius:8px; background:var(--brand); color:#fff; display:grid; place-items:center; font-weight:900; }
+  .rail .logo b{ font-size:1rem; font-weight:800; } .rail .logo span{ font-size:.55rem; color:var(--muted); letter-spacing:.18em; text-transform:uppercase; display:block; margin-top:1px; }
+  .nav-item{ display:flex; align-items:center; gap:.7rem; padding:.6rem .65rem; border-radius:10px; color:var(--muted); font-size:.85rem; font-weight:500; border:1px solid transparent; transition:.2s var(--ease); text-decoration:none; }
+  .nav-item svg{ width:17px; height:17px; flex:none; }
+  .nav-item:hover{ color:var(--text); background:var(--surface-2); }
+  .nav-item.active{ color:var(--text); background:color-mix(in srgb,var(--brand) 16%, transparent); border-color:color-mix(in srgb,var(--brand) 40%, transparent); }
+  .rail .spacer{ flex:1; }
+  .switch{ display:flex; align-items:center; gap:.6rem; padding:.6rem; border:1px solid var(--hair); border-radius:10px; }
+  .switch .dot{ width:26px; height:26px; border-radius:6px; background:var(--brand); display:grid; place-items:center; color:#fff; font-weight:800; font-size:.75rem; }
+  .switch b{ font-size:.78rem; display:block; } .switch span{ font-size:.6rem; color:var(--muted); }
+
+  /* ───────── main ───────── */
+  .main{ min-width:0; }
+  .topbar{ display:flex; align-items:center; gap:1rem; padding:1rem 1.6rem; border-bottom:1px solid var(--hair); position:sticky; top:0; background:color-mix(in srgb,var(--base) 86%, transparent); backdrop-filter:blur(12px); z-index:30; }
+  .crumb{ font-size:.85rem; color:var(--muted); } .crumb b{ color:var(--text); font-weight:600; }
+  .topbar .new{ margin-left:auto; background:var(--brand); color:#fff; border:none; border-radius:999px; padding:.55rem 1.1rem; font-size:.82rem; font-weight:700; transition:.25s var(--ease); display:inline-flex; align-items:center; gap:.4rem; }
+  .topbar .new:hover{ background:var(--brand-hot); transform:translateY(-1px); }
+
+  .wrap{ max-width:1040px; margin:0 auto; padding:1.8rem 1.6rem 4rem; }
+  .pagehead{ display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:.5rem; margin-bottom:1.6rem; }
+  .pagehead .g{ font-size:.85rem; color:var(--muted); } .pagehead h1{ font-size:1.6rem; font-weight:900; letter-spacing:-.01em; }
+  .pagehead .date{ font-size:.85rem; color:var(--muted); }
+
+  .reveal{ opacity:0; transform:translateY(22px); animation:rise .7s var(--ease) forwards; }
+  @keyframes rise{ to{ opacity:1; transform:translateY(0); } }
+
+  /* ───────── stat cards ───────── */
+  .cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1.4rem; }
+  .card{ position:relative; overflow:hidden; border:1px solid var(--hair); background:var(--surface); border-radius:18px; padding:1.25rem; transition:transform .4s var(--ease); }
+  .card:hover{ transform:translateY(-4px); }
+  .card::after{ content:""; position:absolute; inset:0; opacity:0; transition:opacity .5s var(--ease);
+    background:radial-gradient(120% 80% at 100% 0%, color-mix(in srgb,var(--brand) 14%, transparent), transparent 70%); }
+  .card:hover::after{ opacity:1; }
+  .card > *{ position:relative; }
+  .card-top{ display:flex; align-items:flex-start; justify-content:space-between; }
+  .card-label{ font-size:.7rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .card-val{ margin-top:.7rem; display:flex; align-items:flex-end; gap:.7rem; }
+  .card-val .num{ font-size:2.3rem; font-weight:900; letter-spacing:-.02em; }
+  .chip{ margin-bottom:.35rem; display:inline-flex; align-items:center; gap:.25rem; border:1px solid var(--hair); border-radius:999px; padding:.15rem .5rem; font-size:.72rem; font-weight:600; }
+  .chip i{ color:var(--brand-hot); font-style:normal; }
+  .chip.flat{ color:var(--muted); }
+  .card-hint{ margin-top:.3rem; font-size:.72rem; color:var(--muted); }
+
+  /* ───────── panel shared ───────── */
+  .panel{ border:1px solid var(--hair); background:var(--surface); border-radius:18px; padding:1.4rem; margin-bottom:1.4rem; }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.1rem; }
+  .panel-head h2{ font-size:1.1rem; font-weight:800; } .panel-head .ps{ font-size:.82rem; color:var(--muted); }
+
+  /* ───────── heatmap ───────── */
+  .legend{ display:flex; align-items:center; gap:.5rem; font-size:.72rem; color:var(--muted); }
+  .legend .bar{ height:9px; width:120px; border-radius:999px; background:linear-gradient(90deg,var(--heat-empty),var(--brand) 80%,var(--brand-deep)); }
+  .heat{ display:grid; gap:6px; }
+  .heat .hrow{ display:grid; grid-template-columns:46px repeat(6,minmax(0,1fr)); gap:6px; }
+  .heat .hh{ text-align:center; font-size:.66rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding-bottom:2px; }
+  .heat .ht{ display:flex; align-items:center; justify-content:flex-end; padding-right:6px; font-size:.62rem; color:var(--muted); }
+  .cell{ aspect-ratio:4/3; border-radius:9px; display:grid; place-items:center; box-shadow:inset 0 0 0 1px var(--hair); transition:transform .25s var(--ease); }
+  .cell.has{ cursor:pointer; } .cell.has:hover{ transform:scale(1.07); z-index:4; }
+  .cell.full{ box-shadow:inset 0 0 0 1.6px var(--brand-hot); }
+  .cell .cv{ font-size:.6rem; font-weight:700; }
+  .cell-anim{ opacity:0; transform:scale(.85); animation:cellin .4s var(--ease) forwards; }
+  @keyframes cellin{ to{ opacity:1; transform:scale(1); } }
+
+  .tip{ position:fixed; z-index:80; pointer-events:none; background:var(--elev); border:1px solid var(--hair); border-radius:10px; padding:.5rem .7rem; font-size:.74rem; box-shadow:0 16px 40px -16px rgba(0,0,0,.7); opacity:0; transform:translateY(4px); transition:opacity .15s, transform .15s; }
+  .tip.show{ opacity:1; transform:translateY(0); }
+  .tip b{ display:block; } .tip span{ color:var(--muted); }
+
+  /* ───────── schedule builder ───────── */
+  .tray{ display:flex; flex-wrap:wrap; gap:.5rem; min-height:64px; border:1px dashed var(--hair); border-radius:12px; padding:.7rem; margin-bottom:1.2rem; transition:border-color .2s var(--ease), background .2s var(--ease); }
+  .tray.over{ border-color:var(--brand); background:color-mix(in srgb,var(--brand) 7%, transparent); }
+  .tray .empty{ align-self:center; font-size:.78rem; color:var(--muted); }
+  .chip-class{ user-select:none; cursor:grab; border:1px solid var(--hair); background:var(--base); border-radius:10px; padding:.5rem .7rem; transition:transform .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease); }
+  .chip-class:hover{ transform:translateY(-2px); }
+  .chip-class.dragging{ opacity:.4; }
+  .chip-class.landed{ animation:pop .35s var(--ease); }
+  @keyframes pop{ 0%{ transform:scale(.9); } 60%{ transform:scale(1.04); } 100%{ transform:scale(1); } }
+  .cc-top{ display:flex; align-items:center; gap:.5rem; } .cc-top .d{ width:9px; height:9px; border-radius:50%; background:var(--brand); }
+  .cc-top b{ font-size:.82rem; } .cc-sub{ margin-top:.15rem; padding-left:17px; font-size:.68rem; color:var(--muted); }
+
+  .board{ display:grid; grid-template-columns:104px repeat(4,minmax(0,1fr)); gap:6px; }
+  .board .bh{ text-align:center; font-size:.66rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding-bottom:2px; }
+  .board .room{ display:flex; align-items:center; font-size:.82rem; font-weight:700; }
+  .slot{ min-height:66px; border-radius:10px; padding:6px; box-shadow:inset 0 0 0 1px var(--hair); background:color-mix(in srgb,var(--text) 3%, var(--surface)); transition:background .2s var(--ease); }
+  .slot.over{ background:color-mix(in srgb,var(--brand) 16%, var(--surface)); }
+  .slot .chip-class{ width:100%; }
+
+  /* ───────── responsive ───────── */
+  @media (max-width:980px){
+    .app{ grid-template-columns:1fr; }
+    .rail{ flex-direction:row; align-items:center; overflow-x:auto; border-right:none; border-bottom:1px solid var(--hair); padding:.7rem 1rem; }
+    .rail .logo{ padding:.2rem .6rem .2rem 0; } .rail .logo span{ display:none; } .rail .spacer,.switch{ display:none; } .nav-item span{ display:none; }
+    .cards{ grid-template-columns:1fr; } .heat .hrow{ grid-template-columns:40px repeat(6,minmax(0,1fr)); } .board{ grid-template-columns:80px repeat(4,minmax(0,1fr)); }
+  }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } .reveal,.cell-anim{ opacity:1 !important; transform:none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- RAIL -->
+  <aside class="rail">
+    <div class="logo"><span class="mk">O</span><div><b>Olune</b><span>Studio admin</span></div></div>
+    <a class="nav-item active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Dashboard</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><span>Schedule</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3"/><path d="M5 21v-1a7 7 0 0 1 14 0v1"/></svg><span>Classes</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Finance</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="6.5" cy="11.5" r="2.5"/><circle cx="17" cy="15" r="2.5"/><path d="M2 21c2-4 6-4 8-2"/></svg><span>Appearance</span></a>
+    <div class="spacer"></div>
+    <div class="switch"><span class="dot">N</span><div><b>NZ Academy of Dance</b><span>Admin</span></div></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <span class="crumb"><b>Dashboard</b></span>
+      <button class="new"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>New class</button>
+    </div>
+
+    <div class="wrap">
+      <div class="pagehead reveal" style="animation-delay:.02s">
+        <div><p class="g">Good evening,</p><h1>New Zealand Academy of Dance</h1></div>
+        <p class="date" id="today"></p>
+      </div>
+
+      <!-- 1 — STATS -->
+      <div class="cards">
+        <div class="card reveal" style="animation-delay:.08s">
+          <div class="card-top"><span class="card-label">Active students</span><span class="spark" data-stat="students"></span></div>
+          <div class="card-val"><span class="num tabnum" data-target="412" data-format="number">0</span><span class="chip"><i>↑</i>6.2%</span></div>
+          <p class="card-hint">vs last term</p>
+        </div>
+        <div class="card reveal" style="animation-delay:.16s">
+          <div class="card-top"><span class="card-label">Revenue this month</span><span class="spark" data-stat="revenue"></span></div>
+          <div class="card-val"><span class="num tabnum" data-target="38640" data-format="currency">0</span><span class="chip"><i>↑</i>11.8%</span></div>
+          <p class="card-hint">NZD · paid invoices</p>
+        </div>
+        <div class="card reveal" style="animation-delay:.24s">
+          <div class="card-top"><span class="card-label">Classes today</span><span class="spark" data-stat="today"></span></div>
+          <div class="card-val"><span class="num tabnum" data-target="17" data-format="number">0</span><span class="chip flat">● now</span></div>
+          <p class="card-hint">across 3 studios</p>
+        </div>
+      </div>
+
+      <!-- 2 — HEATMAP -->
+      <section class="panel reveal" style="animation-delay:.3s">
+        <div class="panel-head">
+          <div><h2>Class capacity</h2><p class="ps">This week, by studio time slot.</p></div>
+          <div class="legend"><span>Empty</span><span class="bar"></span><span>Full</span></div>
+        </div>
+        <div class="heat" id="heat"></div>
+      </section>
+
+      <!-- 3 — SCHEDULE BUILDER -->
+      <section class="panel reveal" style="animation-delay:.36s">
+        <div class="panel-head">
+          <div><h2>Schedule builder</h2><p class="ps">Drag a class into a studio + time slot.</p></div>
+          <span class="ps" id="counts"></span>
+        </div>
+        <div class="tray" id="tray" data-zone="tray"></div>
+        <div class="board" id="board"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById('today').textContent =
+    new Date().toLocaleDateString('en-NZ',{weekday:'long',day:'numeric',month:'long'});
+
+  /* ───────── stat cards: sparkline + count-up ───────── */
+  const SPARK = {
+    students:[320,332,351,360,372,389,401,412],
+    revenue:[22,24,27,29,31,33,36,38.6],
+    today:[12,15,14,16,13,17,15,17],
+  };
+  function sparkSVG(data){
+    const w=92,h=30,p=2,min=Math.min(...data),max=Math.max(...data),span=(max-min)||1;
+    const pts=data.map((d,i)=>{const x=p+(i/(data.length-1))*(w-2*p);const y=h-p-((d-min)/span)*(h-2*p);return `${x.toFixed(1)},${y.toFixed(1)}`;});
+    const last=pts[pts.length-1].split(',');
+    return `<svg width="${w}" height="${h}"><polyline points="${pts.join(' ')}" fill="none" stroke="var(--brand-hot)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${last[0]}" cy="${last[1]}" r="3" fill="var(--brand-hot)"/></svg>`;
+  }
+  document.querySelectorAll('.spark').forEach(el=> el.innerHTML = sparkSVG(SPARK[el.dataset.stat]));
+
+  const nzd = new Intl.NumberFormat('en-NZ',{style:'currency',currency:'NZD',maximumFractionDigits:0});
+  function countUp(el){
+    const target=+el.dataset.target, fmt=el.dataset.format, dur=reduce?0:1100, t0=performance.now();
+    const ease=t=>1-Math.pow(1-t,3);
+    (function step(now){
+      const t=Math.min(1,(now-t0)/dur), v=target*ease(t);
+      el.textContent = fmt==='currency'? nzd.format(v) : Math.round(v).toLocaleString();
+      if(t<1) requestAnimationFrame(step);
+    })(t0);
+  }
+  setTimeout(()=>document.querySelectorAll('.num').forEach(countUp), 250);
+
+  /* ───────── capacity heatmap ───────── */
+  const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat'], TIMES=['15:30','16:30','17:30','18:30','19:30'];
+  const HEAT=[
+    ['h','Ballet Jr','Studio A',0,0,14,16],['h','Tap Beg.','Studio B',0,1,8,18],['h','Hip-Hop Teens','Studio A',0,2,22,22],['h','Contemporary','Studio C',0,3,11,20],
+    ['h','Jazz Int.','Studio B',1,1,17,20],['h','Acro','Studio C',1,2,19,20],['h','Pointe','Studio A',1,3,9,12],
+    ['h','Hip-Hop Jr','Studio C',2,0,20,20],['h','Lyrical','Studio B',2,1,6,16],['h','Ballet Sr','Studio A',2,2,16,18],
+    ['h','Jazz Beg.','Studio A',3,0,12,18],['h','Tap Int.','Studio C',3,2,7,16],['h','Contemporary','Studio B',3,3,18,20],
+    ['h','Ballet Jr','Studio A',4,1,15,16],['h','Comp Squad','Studio B',4,3,24,24],
+    ['h','Acro','Studio C',5,0,13,20],['h','Open Stretch','Studio A',5,1,4,25],['h','Hip-Hop Teens','Studio B',5,2,21,22],
+  ];
+  const grid={}; HEAT.forEach(c=>grid[`${c[3]}-${c[4]}`]=c);
+  const heatEl=document.getElementById('heat'); let cellDelay=0;
+  // header row
+  let head='<div class="hrow"><div></div>'+DAYS.map(d=>`<div class="hh">${d}</div>`).join('')+'</div>';
+  heatEl.insertAdjacentHTML('beforeend', head);
+  TIMES.forEach((time,row)=>{
+    let r=`<div class="hrow"><div class="ht">${time}</div>`;
+    DAYS.forEach((_,col)=>{
+      const c=grid[`${col}-${row}`];
+      if(!c){ r+=`<div class="cell" style="background:color-mix(in srgb,var(--text) 3%, var(--surface))"></div>`; return; }
+      const ratio=c[5]/c[6], pct=Math.round(ratio*100), full=ratio>=1;
+      const bg=full?'var(--brand-deep)':`color-mix(in srgb, var(--brand) ${pct}%, var(--heat-empty))`;
+      const txt=ratio>0.5?'#fff':'var(--text)';
+      const delay=reduce?0:(cellDelay++ *14);
+      r+=`<div class="cell has ${full?'full':''} cell-anim" style="background:${bg};animation-delay:${delay}ms"
+            data-tip="${c[1]} · ${c[2]}|${c[5]}/${c[6]} enrolled${full?' · FULL':''}">
+            <span class="cv" style="color:${txt}">${c[5]}/${c[6]}</span></div>`;
+    });
+    r+='</div>'; heatEl.insertAdjacentHTML('beforeend', r);
+  });
+  // tooltip
+  const tip=document.getElementById('tip');
+  heatEl.addEventListener('mouseover',e=>{ const c=e.target.closest('.cell.has'); if(!c)return;
+    const [a,b]=c.dataset.tip.split('|'); tip.innerHTML=`<b>${a}</b><span>${b}</span>`; tip.classList.add('show'); });
+  heatEl.addEventListener('mousemove',e=>{ tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY+14)+'px'; });
+  heatEl.addEventListener('mouseout',e=>{ if(e.target.closest('.cell.has')) tip.classList.remove('show'); });
+
+  /* ───────── schedule builder (native HTML5 drag) ───────── */
+  const CLASSES=[
+    {id:'c1',name:'Ballet Jr',sub:'Grade 2 · 60m'},{id:'c2',name:'Hip-Hop Teens',sub:'Teens · 60m'},
+    {id:'c3',name:'Contemporary',sub:'Open · 75m'},{id:'c4',name:'Tap Beginners',sub:'Beginner · 45m'},
+    {id:'c5',name:'Jazz Int.',sub:'Intermediate · 60m'},
+  ];
+  const ROOMS=['Studio A','Studio B','Studio C'], SLOTS=['3:30 pm','4:30 pm','5:30 pm','6:30 pm'];
+  const tray=document.getElementById('tray'), board=document.getElementById('board');
+
+  function chipEl(c){
+    const el=document.createElement('div');
+    el.className='chip-class'; el.draggable=true; el.dataset.id=c.id;
+    el.innerHTML=`<div class="cc-top"><span class="d"></span><b>${c.name}</b></div><div class="cc-sub">${c.sub}</div>`;
+    el.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain',c.id); e.dataTransfer.effectAllowed='move'; requestAnimationFrame(()=>el.classList.add('dragging')); });
+    el.addEventListener('dragend',()=>el.classList.remove('dragging'));
+    return el;
+  }
+  // build tray chips
+  CLASSES.forEach(c=>tray.appendChild(chipEl(c)));
+  // build board
+  let bh='<div></div>'+SLOTS.map(s=>`<div class="bh">${s}</div>`).join('');
+  board.insertAdjacentHTML('beforeend', bh);
+  ROOMS.forEach((room,ri)=>{
+    board.insertAdjacentHTML('beforeend', `<div class="room">${room}</div>`);
+    SLOTS.forEach((_,si)=>{
+      const cell=document.createElement('div');
+      cell.className='slot'; cell.dataset.zone=`${ri}:${si}`;
+      board.appendChild(cell);
+    });
+  });
+
+  function updateCounts(){
+    const placed=document.querySelectorAll('.slot .chip-class').length;
+    const un=tray.querySelectorAll('.chip-class').length;
+    document.getElementById('counts').textContent=`${placed} placed · ${un} unscheduled`;
+    tray.querySelector('.empty')?.remove();
+    if(un===0) tray.insertAdjacentHTML('beforeend','<span class="empty">All classes scheduled 🎉</span>');
+  }
+  updateCounts();
+
+  function wireZone(zone){
+    zone.addEventListener('dragover',e=>{ e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave',()=>zone.classList.remove('over'));
+    zone.addEventListener('drop',e=>{
+      e.preventDefault(); zone.classList.remove('over');
+      const id=e.dataTransfer.getData('text/plain');
+      const chip=document.querySelector(`.chip-class[data-id="${id}"]`); if(!chip)return;
+      const isSlot=zone.dataset.zone!=='tray';
+      // a slot holds one class — bump any existing chip back to the tray
+      if(isSlot){ const occupant=zone.querySelector('.chip-class'); if(occupant && occupant!==chip) tray.appendChild(occupant); }
+      zone.appendChild(chip);
+      if(!reduce){ chip.classList.remove('landed'); void chip.offsetWidth; chip.classList.add('landed'); }
+      updateCounts();
+    });
+  }
+  wireZone(tray);
+  document.querySelectorAll('.slot').forEach(wireZone);
+</script>
+</body>
+</html>

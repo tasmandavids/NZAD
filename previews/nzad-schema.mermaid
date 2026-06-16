@@ -1,0 +1,152 @@
+%% New Zealand Academy of Dance — Core Relational Schema (PostgreSQL / Supabase)
+%% Focus: how Users (Parents · Students · Teachers · Admins) ↔ Classes ↔ Payments connect.
+%% Gamification, messaging, payroll & campaigns are supporting tables (described in chat).
+erDiagram
+    PROFILES {
+        uuid id PK "= auth.users.id"
+        enum role "admin·teacher·parent·student"
+        text full_name
+        text phone
+        uuid family_id FK "nullable"
+    }
+    FAMILIES {
+        uuid id PK
+        text household_name
+        text billing_email
+        text stripe_customer_id
+        bool autopay_enabled
+    }
+    STUDENTS {
+        uuid profile_id PK "FK→PROFILES"
+        uuid family_id FK
+        date date_of_birth
+        text level
+        text medical_notes
+    }
+    TEACHERS {
+        uuid profile_id PK "FK→PROFILES"
+        text bio
+        text[] specialties
+        numeric hourly_rate
+    }
+    GUARDIANSHIPS {
+        uuid parent_id FK "→PROFILES"
+        uuid student_id FK "→STUDENTS"
+        text relationship
+        bool is_primary
+    }
+
+    DISCIPLINES {
+        uuid id PK
+        text name "Ballet·Jazz·Hip-Hop…"
+    }
+    TERMS {
+        uuid id PK
+        text name
+        date starts_on
+        date ends_on
+    }
+    ROOMS {
+        uuid id PK
+        text name
+        int capacity
+    }
+    CLASSES {
+        uuid id PK
+        text name
+        uuid discipline_id FK
+        uuid teacher_id FK
+        uuid room_id FK
+        uuid term_id FK
+        int capacity
+        int day_of_week
+        time start_time
+        numeric price
+    }
+    ENROLLMENTS {
+        uuid id PK
+        uuid student_id FK
+        uuid class_id FK
+        enum status "active·waitlisted·dropped"
+        timestamptz enrolled_at
+    }
+    CLASS_SESSIONS {
+        uuid id PK
+        uuid class_id FK
+        date session_date
+        enum status "scheduled·cancelled·done"
+    }
+    ATTENDANCE {
+        uuid id PK
+        uuid session_id FK
+        uuid student_id FK
+        enum status "present·absent·late·excused"
+        uuid marked_by FK "→TEACHERS"
+    }
+
+    INVOICES {
+        uuid id PK
+        uuid family_id FK
+        uuid term_id FK
+        numeric subtotal
+        numeric gst "15% NZ"
+        numeric total
+        enum status "draft·sent·paid·overdue"
+        date due_date
+        text stripe_invoice_id
+    }
+    INVOICE_ITEMS {
+        uuid id PK
+        uuid invoice_id FK
+        uuid enrollment_id FK "nullable"
+        enum type "tuition·costume·reg·fee"
+        text description
+        int quantity
+        numeric unit_price
+    }
+    PAYMENT_METHODS {
+        uuid id PK
+        uuid family_id FK
+        text brand
+        text last4
+        bool is_default
+        text stripe_pm_id
+    }
+    PAYMENTS {
+        uuid id PK
+        uuid invoice_id FK
+        uuid family_id FK
+        uuid method_id FK
+        numeric amount
+        enum status "succeeded·pending·failed·refunded"
+        text stripe_payment_intent_id
+        timestamptz paid_at
+    }
+
+    %% ---------- IDENTITY (the four user types) ----------
+    PROFILES   ||--o| STUDENTS       : "is a"
+    PROFILES   ||--o| TEACHERS       : "is a"
+    FAMILIES   ||--o{ PROFILES       : "members"
+    FAMILIES   ||--o{ STUDENTS       : "enrols"
+    PROFILES   ||--o{ GUARDIANSHIPS  : "guardian of"
+    STUDENTS   ||--o{ GUARDIANSHIPS  : "guarded by"
+
+    %% ---------- CURRICULUM & SCHEDULING ----------
+    DISCIPLINES ||--o{ CLASSES        : "categorises"
+    TERMS       ||--o{ CLASSES        : "runs in"
+    ROOMS       ||--o{ CLASSES        : "hosts"
+    TEACHERS    ||--o{ CLASSES        : "teaches"
+    CLASSES     ||--o{ ENROLLMENTS    : "filled by"
+    STUDENTS    ||--o{ ENROLLMENTS    : "enrolled in"
+    CLASSES     ||--o{ CLASS_SESSIONS : "occurs as"
+    CLASS_SESSIONS ||--o{ ATTENDANCE  : "recorded in"
+    STUDENTS    ||--o{ ATTENDANCE     : "marked for"
+
+    %% ---------- BILLING & PAYMENTS ----------
+    FAMILIES    ||--o{ INVOICES       : "billed"
+    TERMS       ||--o{ INVOICES       : "for"
+    INVOICES    ||--o{ INVOICE_ITEMS  : "contains"
+    ENROLLMENTS ||--o| INVOICE_ITEMS  : "billed as"
+    INVOICES    ||--o{ PAYMENTS       : "settled by"
+    FAMILIES    ||--o{ PAYMENT_METHODS: "saves"
+    PAYMENT_METHODS ||--o{ PAYMENTS   : "charged via"

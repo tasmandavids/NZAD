@@ -1,0 +1,308 @@
+<!--
+  Olune — Admin → Appearance (LIVE)
+  ==================================
+  A working stand-in for components/admin/BrandingEditor.tsx inside the portal.
+  • The admin chrome (rail, top bar) uses FIXED Olune-dark UI tokens (--ui-*).
+  • The preview pane uses the TENANT's tokens (--brand, --base, …), scoped to
+    #preview only — exactly how the real component keeps the chrome still while
+    the studio's public site reskins. In production these tokens are written to
+    a studio_branding row and injected on <html> server-side.
+-->
+<!DOCTYPE html>
+<html lang="en-NZ">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Olune · Appearance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@1,600&display=swap" rel="stylesheet">
+<style>
+  /* ---- fixed Olune product UI palette (never changes per tenant) ---- */
+  :root{
+    --ui-bg:#0A0A0B; --ui-surface:#131316; --ui-surface-2:#1A1A1E; --ui-elev:#202026;
+    --ui-text:#F4F2EE; --ui-muted:#8B8B92; --ui-hair:rgba(244,242,238,.10);
+    --ui-brand:#C8102E; --ui-brand-hot:#FF2D3C;
+    --ease:cubic-bezier(.16,1,.3,1);
+    font-family:'Archivo','Helvetica Neue',Arial,sans-serif;
+  }
+  *,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--ui-bg); color:var(--ui-text); -webkit-font-smoothing:antialiased; min-height:100vh; }
+  :focus-visible{ outline:2px solid var(--ui-brand-hot); outline-offset:2px; border-radius:4px; }
+  button{ font-family:inherit; cursor:pointer; }
+  input,select{ font-family:inherit; }
+
+  .app{ display:grid; grid-template-columns:236px 1fr; min-height:100vh; }
+
+  /* ============================== LEFT RAIL ============================== */
+  .rail{ border-right:1px solid var(--ui-hair); background:var(--ui-surface); padding:1.1rem .8rem; display:flex; flex-direction:column; gap:.3rem; }
+  .rail .logo{ display:flex; align-items:center; gap:.6rem; padding:.4rem .5rem 1.1rem; }
+  .rail .logo .mk{ width:30px; height:30px; border-radius:8px; background:var(--ui-brand); color:#fff; display:grid; place-items:center; font-weight:900; font-size:.9rem; }
+  .rail .logo b{ font-size:1rem; font-weight:800; letter-spacing:.01em; }
+  .rail .logo span{ font-size:.55rem; color:var(--ui-muted); letter-spacing:.18em; text-transform:uppercase; display:block; margin-top:1px; }
+  .nav-item{ display:flex; align-items:center; gap:.7rem; padding:.6rem .65rem; border-radius:10px; color:var(--ui-muted); font-size:.85rem; font-weight:500; border:1px solid transparent; transition:.2s var(--ease); text-decoration:none; }
+  .nav-item svg{ width:17px; height:17px; flex:none; }
+  .nav-item:hover{ color:var(--ui-text); background:var(--ui-surface-2); }
+  .nav-item.active{ color:var(--ui-text); background:color-mix(in srgb,var(--ui-brand) 16%, transparent); border-color:color-mix(in srgb,var(--ui-brand) 40%, transparent); }
+  .rail .spacer{ flex:1; }
+  .studio-switch{ display:flex; align-items:center; gap:.6rem; padding:.6rem; border:1px solid var(--ui-hair); border-radius:10px; }
+  .studio-switch .dot{ width:26px; height:26px; border-radius:6px; background:var(--ui-brand); display:grid; place-items:center; color:#fff; font-weight:800; font-size:.75rem; }
+  .studio-switch .nm{ line-height:1.2; overflow:hidden; }
+  .studio-switch .nm b{ font-size:.78rem; display:block; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+  .studio-switch .nm span{ font-size:.6rem; color:var(--ui-muted); }
+
+  /* ============================== MAIN ============================== */
+  .main{ display:flex; flex-direction:column; min-width:0; }
+  .topbar{ display:flex; align-items:center; gap:1rem; padding:1rem 1.6rem; border-bottom:1px solid var(--ui-hair); position:sticky; top:0; background:color-mix(in srgb,var(--ui-bg) 86%, transparent); backdrop-filter:blur(12px); z-index:20; }
+  .crumb{ font-size:.85rem; color:var(--ui-muted); }
+  .crumb b{ color:var(--ui-text); font-weight:600; }
+  .topbar .save{ margin-left:auto; background:var(--ui-brand); color:#fff; border:none; border-radius:999px; padding:.6rem 1.3rem; font-size:.85rem; font-weight:700; transition:.25s var(--ease); }
+  .topbar .save:hover{ background:var(--ui-brand-hot); transform:translateY(-1px); }
+  .topbar .save:disabled{ opacity:.6; transform:none; }
+
+  .content{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,440px); gap:2rem; padding:1.8rem 1.6rem; align-items:start; }
+
+  .form{ display:flex; flex-direction:column; gap:1.8rem; max-width:520px; }
+  .form h1{ font-size:1.3rem; font-weight:800; }
+  .form .sub{ font-size:.85rem; color:var(--ui-muted); margin-top:.15rem; }
+  .group{ display:flex; flex-direction:column; gap:.7rem; }
+  .group > .lbl{ font-size:.64rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ui-muted); }
+  .field{ display:flex; flex-direction:column; gap:.35rem; }
+  .field label{ font-size:.8rem; color:var(--ui-muted); }
+  .field input[type=text], .field input[type=url], .field select{
+    width:100%; background:var(--ui-bg); border:1px solid var(--ui-hair); color:var(--ui-text);
+    padding:.6rem .75rem; border-radius:10px; font-size:.88rem; }
+  .field input:focus, .field select:focus{ border-color:var(--ui-brand); outline:none; }
+
+  .colour-row{ display:flex; align-items:center; gap:.8rem; }
+  .colour-row input[type=color]{ width:48px; height:40px; border:1px solid var(--ui-hair); border-radius:10px; background:none; padding:3px; }
+  .colour-row code{ font-size:.85rem; color:var(--ui-muted); }
+  .derived{ margin-left:auto; display:flex; gap:.4rem; }
+  .derived i{ width:26px; height:26px; border-radius:7px; border:1px solid var(--ui-hair); }
+
+  .presets{ display:flex; flex-wrap:wrap; gap:.5rem; }
+  .preset{ display:flex; align-items:center; gap:.5rem; background:var(--ui-surface-2); border:1px solid var(--ui-hair); border-radius:999px; padding:.4rem .8rem; font-size:.78rem; color:var(--ui-text); transition:.2s var(--ease); }
+  .preset:hover{ border-color:var(--ui-muted); transform:translateY(-1px); }
+  .preset .sw{ width:13px; height:13px; border-radius:50%; }
+
+  .seg{ display:inline-flex; background:var(--ui-bg); border:1px solid var(--ui-hair); border-radius:999px; padding:3px; }
+  .seg button{ border:none; background:none; color:var(--ui-muted); font-size:.8rem; font-weight:600; padding:.45rem 1rem; border-radius:999px; transition:.2s var(--ease); }
+  .seg button.on{ background:var(--ui-brand); color:#fff; }
+
+  .two{ display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; }
+
+  /* ============================== PREVIEW PANE ============================== */
+  .preview-wrap{ position:sticky; top:5.2rem; }
+  .preview-wrap .cap{ font-size:.64rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ui-muted); margin-bottom:.6rem; display:flex; align-items:center; gap:.5rem; }
+  .preview-wrap .cap .live{ width:7px; height:7px; border-radius:50%; background:#3ddc84; box-shadow:0 0 8px #3ddc84; }
+
+  /* the preview carries the TENANT tokens (set via JS on #preview) */
+  #preview{ border:1px solid var(--ui-hair); border-radius:18px; overflow:hidden; box-shadow:0 30px 70px -30px rgba(0,0,0,.8); }
+  .pv{ position:relative; padding:1.6rem 1.5rem 1.7rem; background:var(--base); color:var(--text); overflow:hidden; isolation:isolate; transition:background .5s var(--ease), color .5s var(--ease); }
+  .pv .glow{ position:absolute; inset:0; z-index:-1; animation:breathe 7s ease-in-out infinite;
+    background:radial-gradient(60% 60% at 50% 30%, color-mix(in srgb,var(--brand-hot) calc(var(--glow,.22)*100%), transparent), transparent 70%); }
+  @keyframes breathe{0%,100%{opacity:.8}50%{opacity:1}}
+  .pv-nav{ display:flex; align-items:center; gap:.55rem; margin-bottom:1.5rem; }
+  .pv-nav .pm{ width:30px; height:30px; display:grid; place-items:center; border:1.4px solid var(--brand); font-weight:900; font-size:.85rem; color:var(--text); transition:border-color .5s var(--ease); }
+  .pv-nav .wm b{ font-size:.8rem; font-weight:800; display:block; line-height:1.1; }
+  .pv-nav .wm span{ font-size:.52rem; letter-spacing:.26em; text-transform:uppercase; color:var(--muted); }
+  .pv h2{ font-size:clamp(1.7rem,3.4vw,2.4rem); font-weight:900; text-transform:uppercase; line-height:.95; letter-spacing:-.01em; }
+  .pv h2 em{ font-family:'Cormorant Garamond',serif; font-style:italic; font-weight:600; text-transform:none; color:var(--brand-hot); transition:color .5s var(--ease); }
+  .pv p{ font-size:.8rem; color:var(--muted); margin-top:.7rem; max-width:34ch; line-height:1.5; }
+  .pv .cta{ display:flex; gap:.55rem; margin-top:1.2rem; }
+  .pv .b1{ background:var(--brand); color:#fff; border-radius:999px; padding:.55rem 1.1rem; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; transition:background .5s var(--ease); }
+  .pv .b2{ border:1px solid var(--hair); color:var(--text); border-radius:999px; padding:.55rem 1.1rem; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+  .pv .strip{ margin-top:1.4rem; padding-top:.9rem; border-top:1px solid var(--hair); display:flex; gap:1.1rem; font-size:.58rem; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); }
+  .pv .strip span::after{ content:"✦"; color:var(--brand); margin-left:1.1rem; }
+
+  /* toast */
+  .toast{ position:fixed; right:1.4rem; bottom:1.4rem; background:var(--ui-elev); border:1px solid var(--ui-hair); border-left:3px solid #3ddc84;
+    padding:.8rem 1.1rem; border-radius:12px; font-size:.85rem; display:flex; align-items:center; gap:.6rem; box-shadow:0 20px 50px -20px rgba(0,0,0,.7);
+    transform:translateY(140%); transition:transform .45s var(--ease); z-index:60; }
+  .toast.show{ transform:translateY(0); }
+  .toast .ck{ color:#3ddc84; }
+
+  /* ============================== RESPONSIVE ============================== */
+  @media (max-width:980px){
+    .app{ grid-template-columns:1fr; }
+    .rail{ flex-direction:row; align-items:center; border-right:none; border-bottom:1px solid var(--ui-hair); overflow-x:auto; padding:.7rem 1rem; }
+    .rail .logo{ padding:.2rem .6rem .2rem 0; } .rail .logo span{ display:none; }
+    .rail .spacer,.studio-switch{ display:none; }
+    .nav-item span{ display:none; } .nav-item{ padding:.6rem; }
+    .content{ grid-template-columns:1fr; }
+    .preview-wrap{ position:static; }
+  }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- LEFT RAIL -->
+  <aside class="rail">
+    <div class="logo"><span class="mk">O</span><div><b>Olune</b><span>Studio admin</span></div></div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg><span>Dashboard</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><span>Schedule</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3"/><path d="M5 21v-1a7 7 0 0 1 14 0v1"/></svg><span>Classes</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><span>Finance</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Messages</span></a>
+    <a class="nav-item active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="6.5" cy="11.5" r="2.5"/><circle cx="17" cy="15" r="2.5"/><path d="M2 21c2-4 6-4 8-2"/></svg><span>Appearance</span></a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5c.07-.3.1-.66.1-1z"/></svg><span>Settings</span></a>
+    <div class="spacer"></div>
+    <div class="studio-switch"><span class="dot" id="switchMono">N</span><div class="nm"><b id="switchName">NZ Academy of Dance</b><span>Trial · switch</span></div></div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <span class="crumb">Settings · <b>Appearance</b></span>
+      <button class="save" id="saveBtn">Save changes</button>
+    </div>
+
+    <div class="content">
+      <!-- FORM -->
+      <div class="form">
+        <div><h1>Appearance</h1><div class="sub">How your public site and family portals look. Changes preview instantly; Save makes them live.</div></div>
+
+        <div class="group">
+          <span class="lbl">Identity</span>
+          <div class="field"><label>Studio name</label><input type="text" id="inName" value="New Zealand Academy of Dance" /></div>
+          <div class="field"><label>Tagline</label><input type="text" id="inTag" value="Ōtautahi · Canterbury" /></div>
+          <div class="field"><label>Logo URL <span style="opacity:.6">(optional)</span></label><input type="url" id="inLogo" placeholder="https://…/logo.svg" /></div>
+        </div>
+
+        <div class="group">
+          <span class="lbl">Brand colour</span>
+          <div class="colour-row">
+            <input type="color" id="inColor" value="#C8102E" aria-label="Brand colour" />
+            <code id="hex">#C8102E</code>
+            <div class="derived" title="Derived shades"><i id="swBrand"></i><i id="swHot"></i><i id="swDeep"></i></div>
+          </div>
+          <div class="presets" id="presets"></div>
+        </div>
+
+        <div class="two">
+          <div class="group">
+            <span class="lbl">Base</span>
+            <div class="seg" id="baseSeg">
+              <button data-base="dark" class="on">Dark stage</button>
+              <button data-base="light">Light studio</button>
+            </div>
+          </div>
+          <div class="group">
+            <span class="lbl">Display font</span>
+            <div class="field"><select id="inFont"><option>Archivo</option><option>Inter</option><option>Sora</option><option>Outfit</option><option>Manrope</option></select></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREVIEW -->
+      <div class="preview-wrap">
+        <div class="cap"><span class="live"></span>Live preview · your public site</div>
+        <div id="preview">
+          <div class="pv">
+            <div class="glow"></div>
+            <div class="pv-nav">
+              <span class="pm" id="pvMono">N</span>
+              <div class="wm"><b id="pvName">New Zealand Academy of Dance</b><span id="pvTag">Ōtautahi · Canterbury</span></div>
+            </div>
+            <h2 id="pvHead">Where movement<br>becomes <em>art.</em></h2>
+            <p>From a child’s first plié to the national stage — one home for every dancer and their whānau.</p>
+            <div class="cta"><span class="b1">Book a free trial</span><span class="b2">Programmes</span></div>
+            <div class="strip"><span>Ballet</span><span>Jazz</span><span>Hip-Hop</span><span>Tap</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><span class="ck">✓</span><span>Branding saved — your site is live.</span></div>
+
+<script>
+  const PRESETS = [
+    { label:'Crimson', brand:'#C8102E', base:'dark',  name:'New Zealand Academy of Dance', tag:'Ōtautahi · Canterbury' },
+    { label:'Voltage', brand:'#5B5BFF', base:'dark',  name:'Voltage Street Dance',         tag:'Tāmaki Makaurau · Auckland' },
+    { label:'Aurum',   brand:'#C9A227', base:'dark',  name:'Aurelia Ballet Conservatoire', tag:'Te Whanganui-a-Tara · Wellington' },
+    { label:'Bloom',   brand:'#E84A8A', base:'light', name:'Bloom Dance & Movement',       tag:'Tauranga · Bay of Plenty' },
+    { label:'Jade',    brand:'#13B6A4', base:'dark',  name:'Greenstone Contemporary',      tag:'Tāhuna · Queenstown' },
+  ];
+  const BASES = {
+    dark:  { base:'#0A0A0B', surface:'#131316', text:'#F4F2EE', muted:'#8B8B92', hair:'rgba(244,242,238,.12)', glow:.22 },
+    light: { base:'#F6F4F0', surface:'#FFFFFF', text:'#16161C', muted:'#6C6C75', hair:'rgba(20,20,28,.12)',     glow:.14 },
+  };
+
+  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+  function hexToHsl(hex){
+    let r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+    const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0,l=(mx+mn)/2;
+    if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);
+      switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4;}h/=6;}
+    return{h:h*360,s:s*100,l:l*100};
+  }
+  function derive(hex){
+    const{h,s,l}=hexToHsl(hex);const H=Math.round(h);
+    return{ hot:`hsl(${H} ${Math.round(clamp(s+8,0,100))}% ${Math.round(clamp(l+12,0,72))}%)`,
+            deep:`hsl(${H} ${Math.round(clamp(s,0,100))}% ${Math.round(clamp(l-22,10,100))}%)` };
+  }
+
+  const preview = document.getElementById('preview');
+  const state = { brand:'#C8102E', base:'dark', name:'New Zealand Academy of Dance', tag:'Ōtautahi · Canterbury', font:'Archivo' };
+
+  function render(){
+    const d = derive(state.brand), base = BASES[state.base];
+    const s = preview.style;
+    s.setProperty('--brand', state.brand); s.setProperty('--brand-hot', d.hot); s.setProperty('--brand-deep', d.deep);
+    s.setProperty('--base', base.base); s.setProperty('--surface', base.surface);
+    s.setProperty('--text', base.text); s.setProperty('--muted', base.muted);
+    s.setProperty('--hair', base.hair); s.setProperty('--glow', base.glow);
+    document.querySelector('#preview .pv h2').style.fontFamily = state.font + ', sans-serif';
+    document.querySelector('#preview .pv-nav .wm b').style.fontFamily = state.font + ', sans-serif';
+    // derived swatches
+    document.getElementById('swBrand').style.background = state.brand;
+    document.getElementById('swHot').style.background = d.hot;
+    document.getElementById('swDeep').style.background = d.deep;
+    // identity text
+    const initial = (state.name.trim()[0] || 'S').toUpperCase();
+    document.getElementById('pvName').textContent = state.name || 'Your studio';
+    document.getElementById('pvTag').textContent = state.tag;
+    document.getElementById('pvMono').textContent = initial;
+    document.getElementById('switchName').textContent = state.name || 'Your studio';
+    document.getElementById('switchMono').textContent = initial;
+    document.getElementById('hex').textContent = state.brand.toUpperCase();
+    document.getElementById('inColor').value = state.brand;
+  }
+
+  // presets
+  const presetsEl = document.getElementById('presets');
+  PRESETS.forEach(p=>{
+    const el=document.createElement('button'); el.className='preset';
+    el.innerHTML=`<span class="sw" style="background:${p.brand}"></span>${p.label}`;
+    el.addEventListener('click',()=>{ Object.assign(state,{brand:p.brand,base:p.base,name:p.name,tag:p.tag});
+      document.getElementById('inName').value=p.name; document.getElementById('inTag').value=p.tag;
+      document.querySelectorAll('#baseSeg button').forEach(b=>b.classList.toggle('on',b.dataset.base===p.base));
+      render(); });
+    presetsEl.appendChild(el);
+  });
+
+  // inputs
+  document.getElementById('inColor').addEventListener('input',e=>{ state.brand=e.target.value; render(); });
+  document.getElementById('inName').addEventListener('input',e=>{ state.name=e.target.value; render(); });
+  document.getElementById('inTag').addEventListener('input',e=>{ state.tag=e.target.value; render(); });
+  document.getElementById('inFont').addEventListener('change',e=>{ state.font=e.target.value; render(); });
+  document.querySelectorAll('#baseSeg button').forEach(b=>b.addEventListener('click',()=>{
+    state.base=b.dataset.base; document.querySelectorAll('#baseSeg button').forEach(x=>x.classList.toggle('on',x===b)); render();
+  }));
+
+  // save → toast (in production this calls the saveBranding server action)
+  const toast=document.getElementById('toast'), saveBtn=document.getElementById('saveBtn');
+  saveBtn.addEventListener('click',()=>{
+    saveBtn.disabled=true; saveBtn.textContent='Saving…';
+    setTimeout(()=>{ saveBtn.disabled=false; saveBtn.textContent='Save changes';
+      toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2600); }, 650);
+  });
+
+  render();
+</script>
+</body>
+</html>
