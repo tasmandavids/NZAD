@@ -6,6 +6,8 @@ import { headers } from "next/headers";
 import { resolveStudio } from "@/lib/tenant";
 import { createClient } from "@/lib/supabase/server";
 import { getBranding } from "@/lib/branding";
+import { getPublishedHome } from "@/lib/site/queries";
+import { PublicSite } from "@/components/site/PublicSite";
 import { ParticleBackground } from "@/components/landing/ParticleBackground";
 import Hero from "@/components/marketing/Hero";
 import OluneLanding from "@/components/marketing/OluneLanding";
@@ -19,7 +21,13 @@ export default async function HomePage() {
     return <OluneLanding />;
   }
 
-  // Studio subdomain — show that studio's branded hero.
+  // If the studio has built and published a custom homepage, render it.
+  const home = await getPublishedHome(studio.id);
+  if (home) {
+    return <PublicSite studio={{ id: studio.id, name: studio.name }} page={home} />;
+  }
+
+  // Fallback — studio hasn't published a homepage yet: branded hero.
   const supabase = await createClient();
   const branding = await getBranding(supabase, studio.id);
 

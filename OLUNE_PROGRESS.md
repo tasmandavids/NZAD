@@ -315,19 +315,103 @@ Closed out all four carried-over priorities from Session 8. Clean `tsc --noEmit`
 
 ---
 
+## ✅ SESSION 10 — COMPLETE (2026-06-16)
+
+**New direction (Tasman):** ship per-studio website editability ASAP — clients build their own fully-custom public pages. **Decision (Tasman, via clarifying Q):** **custom block system** (no 3rd-party page builder — max control, zero external dependency, fully decoupled from the portal) + **full multi-page** site builder. Built the foundation + a working end-to-end vertical slice. Clean `tsc --noEmit`.
+
+### Architecture
+- The public website is entirely separate from the authenticated portal: a page is an ordered array of content **blocks** stored as JSON, rendered on the public host route with the studio's existing branding tokens. Nothing in billing/scheduling/webhooks imports it, so functionality is untouched.
+
+### DB + block model
+- `supabase/migrations/0021_site_pages.sql` (new) — `site_pages` (studio_id, slug, title, blocks jsonb, status draft|published, is_home, show_in_nav, nav_label, nav_order, seo_title, seo_description). Partial unique index = one home per studio. RLS: admin full access; **anon read of published pages** (so logged-out prospects see the site).
+- `lib/site/blocks.ts` (new) — single source of truth: `BlockType` union, per-type **default props** + **field schema** (drives the editor's auto-generated forms), `BLOCK_LIBRARY`/`BLOCK_MAP`, `makeBlock`, `normalizeBlocks`. 9 block types: hero, richText, features, classGrid (data-driven), gallery, testimonials, cta, faq, contact.
+- `lib/site/props.ts` (new) — typed accessors (`str/num/bool/list`) so block components read loose JSON props without `any`.
+- `lib/site/queries.ts` (new) — public reads: `getPublishedHome`, `getPublishedPage`, `getNavLinks`, `getSiteClasses`.
+
+### Public rendering + routing
+- `components/site/BlockRenderer.tsx` (new) — server component rendering all 9 block types with branding tokens; `classGrid` reads pre-fetched classes from context (no fetching inside the renderer).
+- `components/site/SiteChrome.tsx` (new) — public header (logo/name + nav from published pages + Sign in) and footer.
+- `components/site/PublicSite.tsx` (new) — assembles branding + nav + classes + blocks.
+- `app/page.tsx` — studio home now renders the published `is_home` page if one exists; **falls back** to the old branded Hero otherwise (no regression for studios that haven't built a site).
+- `app/[siteSlug]/page.tsx` (new) — catch-all sub-pages (`/about`, etc.) with `generateMetadata` (SEO title/description). Static routes (`/portal`, `/login`, `/enrol`, `/onboarding`, `/programmes`, `/api`) take precedence; unknown slugs `notFound()`.
+
+### Admin editor (`/portal/admin/site`)
+- `app/portal/admin/site/actions.ts` (new) — `createPage`, `updatePageMeta`, `savePageBlocks` (server-side `normalizeBlocks` validation), `publishPage`/`unpublishPage`, `setHomePage` (demote-then-promote for the partial unique index), `deletePage`. Admin-guarded, Zod-validated, slugified with a RESERVED_SLUGS guard.
+- `app/portal/admin/site/page.tsx` + `components/admin/site/SiteManager.tsx` (new) — page list with create (incl. "create as homepage"), publish/unpublish, set-home, delete-with-confirm, and Edit links.
+- `app/portal/admin/site/[pageId]/page.tsx` + `components/admin/site/PageEditor.tsx` (new) — the visual editor: drag-to-reorder block list (`@hello-pangea/dnd`), add-block menu from `BLOCK_LIBRARY`, **auto-generated inspector** from each block's field schema (scalar + list fields w/ add/remove/reorder items), **live preview** via `BlockRenderer` (mock classes), page-settings drawer (title/slug/nav/SEO), Save draft + Publish.
+- `components/portal/PortalShell.tsx` — added **Website** nav item.
+
+### Also fixed (pre-existing latent type errors surfaced by the fuller recheck)
+- `components/portal/PortalShell.tsx` — `usePathname()` is `string | null` in Next 15 → `pathname={pathname ?? ""}` at both call sites.
+- `app/login/page.tsx` — `useSearchParams()` is nullable → `useSearchParams()?.get("next")`.
+- (These were hidden by the TS incremental cache; the new files forced a full recheck. Build is now genuinely green from a cold `--incremental false` run.)
+
+### Migrations to apply: 0021
+### TypeScript: Clean build (`tsc --noEmit --incremental false` → no errors)
+
+---
+
+## ✅ SESSION 11 — COMPLETE (2026-06-16)
+
+Closed out Session 10's Priority 1 (image uploads) + Priority 2 (starter homepage). Clean `tsc --noEmit --incremental false`.
+
+### Priority 1 — Image uploads for the site builder ✅
+- `supabase/migrations/0022_site_images_storage.sql` (new) — creates the **public** `site-images` storage bucket (idempotent upsert) + RLS on `storage.objects`: public read of the bucket; insert/update/delete restricted to the studio's own admins (`current_user_role()='admin'` AND first path segment = `current_studio()`). Files are namespaced `site-images/<studio_id>/<random>.<ext>`.
+- `app/portal/admin/site/upload-actions.ts` (new) — `createSiteImageUploadUrl(contentType, sizeBytes)`: admin-guarded server action that validates the MIME type (jpg/png/webp/gif/svg/avif) + size (≤8 MB), mints a **signed upload URL** via the service-role admin client, returns `{ path, token, publicUrl }`. Bytes never pass through the Next server — the browser uploads straight to Storage.
+- `components/admin/site/ImageInput.tsx` (new) — reusable upload-or-paste control: thumbnail preview, Upload/Replace/Remove buttons, manual-URL fallback input. Uploads via the browser client's `uploadToSignedUrl(path, token, file)`. Surfaces validation/upload errors inline.
+- `components/admin/site/PageEditor.tsx` — inspector now renders `<ImageInput>` for `type:"image"` fields, both **scalar** (hero background) and **list items** (gallery images). Other field types unchanged.
+
+**Decision:** signed-upload URL (service-role) over direct authenticated-client upload — works even if the storage-RLS DDL in 0022 can't be applied in a given environment (the signed token authorises the write). The RLS policies are defence-in-depth + enable a direct-upload fallback.
+
+### Priority 2 — Starter homepage template ✅
+- `app/portal/admin/site/actions.ts` — new `createStarterHomepage()`: admin-guarded; refuses if a homepage already exists; seeds a draft `is_home` page with the default block stack **hero → features → classGrid → testimonials → cta → contact** (built via `makeBlock`, so each block carries its sensible default props). `show_in_nav=false` (home isn't a nav item).
+- `components/admin/site/SiteManager.tsx` — when the studio has no homepage, a prominent "Create starter homepage" banner calls the action and routes straight into the editor. Empty-state copy updated.
+
+### Migrations to apply: 0022
+### Env: no new vars (reuses `SUPABASE_SERVICE_ROLE_KEY` for the signed-upload mint).
+### TypeScript: Clean build (`tsc --noEmit --incremental false` → no errors)
+
+---
+
+## ✅ SESSION 12 — COMPLETE (2026-06-17)
+
+Closed out Session 10/11's Priority 1 (site-builder polish) and Priority 2 (image management niceties). Clean `tsc --noEmit --incremental false`.
+
+### Priority 1 — Site builder polish ✅
+- **(a) Move up/down + (b) Duplicate** — `components/admin/site/PageEditor.tsx`: each block row now has ↑ / ↓ (disabled at ends), ⧉ duplicate (inserts a deep-cloned copy right after, fresh id, auto-selected), and ✕ delete — alongside the existing drag handle (mobile-friendly). New `moveBlock`/`duplicateBlock` handlers; `cloneBlock` added to `lib/site/blocks.ts`.
+- **(c) Unsaved-changes guard** — `beforeunload` listener while `dirty` (tab close / reload / external nav) **plus** a `confirm()` on the "← Pages" back link (router pushes don't fire `beforeunload`).
+- **(d) Per-block background/spacing** — content blocks (richText, features, classGrid, gallery, testimonials, faq, contact) flagged `appearance: true`. Shared `APPEARANCE_FIELDS` (`_bg`: page / surface / brand-tint; `_spacing`: compact / normal / spacious) render in a new "Appearance" inspector section. `BlockRenderer` wraps those blocks in `<BlockShell>` applying the bg (`bg-surface` / brand `color-mix` tint) + vertical padding. `APPEARANCE_DEFAULTS` preserves each block's original look; `makeBlock` seeds new blocks, `PageEditor.seedAppearance` seeds DB blocks that predate the feature. Hero & CTA keep bespoke banner styling (no shell).
+- **(e) richText links/lists** — `BlockRenderer.renderRichBody` is a tiny dependency-free markdown-lite parser: blank-line paragraphs, `- `/`* ` bullets, `1. ` numbered lists, `**bold**`, `[text](url)` links (external → `target=_blank rel=noopener`). Default body copy + field help document the syntax.
+- **New field type:** `select` (with `options`) added to the block field schema + rendered as `<select>` (used by appearance + richText alignment).
+
+### Priority 2 — Image management ✅
+- **(a) next/image** — `next.config.ts` sets `images.remotePatterns` for the Supabase Storage public host (derived from `NEXT_PUBLIC_SUPABASE_URL`, path `/storage/v1/object/public/**`). Gallery images render via a new `FillImage` helper: `next/image` (`fill` + `sizes`) for our Storage host, plain `<img>` fallback for arbitrary pasted external URLs (not in `remotePatterns`, so optimisation would 500 on them).
+- **(b) Orphan cleanup** — new `deleteSiteImage(publicUrl)` server action (`upload-actions.ts`): admin-guarded, **only** deletes when the object lives under the caller's own `<studioId>/` namespace (foreign / external URLs are no-ops). `ImageInput` calls it best-effort on **replace** (after the new upload succeeds) and on **remove**.
+- **(c) Client-side downscale** — `ImageInput.maybeDownscale` downscales raster uploads (jpeg/png/webp) to ≤1920px longest edge via `createImageBitmap` + canvas (q 0.85) before upload; SVG/GIF and already-small images pass through; any failure falls back to the original file.
+
+### Files touched
+- `lib/site/blocks.ts` — `select` field type + `SelectOption`; `BlockDef.appearance`; `APPEARANCE_FIELDS` + `APPEARANCE_DEFAULTS`; `cloneBlock`; `makeBlock` seeds appearance; richText default copy/help; `appearance: true` on 7 content blocks.
+- `components/site/BlockRenderer.tsx` — `BlockShell`, `renderInline`/`renderRichBody`, `FillImage` (+ `next/image`), all 7 content blocks wrapped in `BlockShell`; removed the old `SECTION` constant.
+- `components/admin/site/PageEditor.tsx` — move/duplicate/guard handlers + row buttons; appearance section + `select` rendering; `seedAppearance`.
+- `components/admin/site/ImageInput.tsx` — downscale + replace/remove cleanup.
+- `app/portal/admin/site/upload-actions.ts` — `deleteSiteImage` + `bucketPathForStudio`.
+- `next.config.ts` — `images.remotePatterns`.
+
+### Migrations: none this session.
+### TypeScript: Clean build (`tsc --noEmit --incremental false` → no errors).
+
+---
+
 ## 🔄 NEXT SESSION — Start here
 
-### Priority 1: Tests / end-to-end verification of money flows
-- The billing surface is now broad (enrollment intents, subscriptions, shop, events, sweeps, mirrored invoices, idempotency) with no automated tests. Add a minimal harness (Vitest + mocked Stripe + a Supabase test schema, or a `stripe listen` runbook) asserting: webhook idempotency short-circuits, the sweep releases the right rows, discounts compute correctly.
+### Priority 1: Templates beyond the homepage (carried from Session 11 P3)
+- Extend the `createStarterHomepage` concept to seed common sub-pages (About, Classes, Contact) and/or offer 2–3 visual themes (block stacks + default copy, now able to set per-block `_bg`/`_spacing`) at create time.
 
-### Priority 2: Refund / cancellation flows
-- No refund path exists. Cancelling a paid event ticket, order, or enrollment doesn't issue a Stripe refund or restock. Add admin-initiated refunds (`stripe.refunds.create`) that reverse `event_tickets`/`orders`/`invoices` state and restore stock/capacity.
+### Priority 2: richText editor ergonomics (optional polish on Session 12 P1e)
+- The richText body is a plain textarea with markdown-lite syntax. Consider a lightweight toolbar (bold / link / list insert) or a small WYSIWYG so non-technical clients don't have to learn the syntax. The renderer already supports the output.
 
-### Priority 3: Reporting / revenue dashboard depth
-- `invoices` + `payments` now capture one-off, enrollment, and subscription income uniformly. The admin billing chart could break revenue down by source (tuition vs merch vs tickets vs subscriptions) and surface MRR from the `subscriptions` table.
-
-### Priority 4: Notification delivery channels
-- Notifications are in-app only (the bell). The `Message.channel` enum and the spec call for EMAIL/SMS. Wire an email provider (Resend/Postmark) + SMS (Twilio) for `class_reminder`, `payment_failed`, `birthday_greeting`, driven off the existing `notifications` rows.
+### Priority 3 (carried from Session 9): Tests, refunds, revenue reporting, email/SMS
+- Still open from the billing work: automated tests for the money flows; admin-initiated Stripe refunds + restock/capacity restore; revenue-by-source reporting + MRR; EMAIL/SMS notification delivery (Resend/Twilio) off the existing `notifications` rows.
 
 ---
 
@@ -353,8 +437,13 @@ Closed out all four carried-over priorities from Session 8. Clean `tsc --noEmit`
 - Currency is unified to **NZD** studio-wide (charges + display + GST). Migration `0016` must be applied (adds `profiles.birthday`, fixes the enrollment trigger).
 - ✅ **Fixed (Session 8):** the cron (`/api/cron/notifications`) is now **per-studio timezone-aware** (migration 0017 adds `studios.timezone`; settable in admin Settings → Localization). The 08:00-UTC cron computes each studio's local today/tomorrow for reminders, birthdays and overdue sweeps.
 - **Session 8 — migrations 0017 + 0018 must be applied to Supabase** before per-studio timezones and reusable class Prices work.
+- ✅ **Session 10 (site builder):** per-studio public websites are a **custom block system** (Tasman's choice over Puck/Builder.io — no external dependency). Pages = JSON block arrays in `site_pages` (migration **0021**). Public render at `/` (home) + `/[siteSlug]`; admin editor at `/portal/admin/site`. The public site is fully decoupled — no portal/billing code imports it. Studios with no published homepage fall back to the old branded Hero, so there's no regression. **Apply migration 0021** before the Website tab works. Block image fields are URL-only for now (Storage upload is next-session Priority 1).
 - ✅ **Session 9:** sibling/family discount now optionally extends to shop orders + event tickets via the per-studio opt-in `family_discount_on_retail` (migration 0019, toggle in admin Settings → Billing). Off by default. Uses `familyDiscountInfo` in `lib/discounts.ts` ("buyer has an active-enrolled student"), distinct from the enrollment-specific `siblingDiscountInfo`.
 - ✅ **Session 9:** stale Stripe Prices are archived when tuition changes (`getOrCreateClassPrice`), and per-class Products are archived on class/series delete. All non-fatal — Stripe failures only `console.warn`.
 - ✅ **Session 9:** new hourly sweep `/api/cron/sweep-unpaid` releases abandoned reservations (pending orders, reserved tickets, unpaid enrollment invoices) after a grace window (default 2h, `?hours=N`). It re-checks each PaymentIntent before acting so in-flight/succeeded payments are never released. **Reserve-then-pay is still the model** — this is cleanup, not pay-to-confirm.
 - ✅ **Session 9:** Stripe webhook is now idempotent via the `stripe_events` ledger (migration 0020). Replays short-circuit with 200. **Fail-open:** if the ledger table is missing (un-migrated env), the handler logs and still processes — so apply 0020, but a missing migration won't silently drop events.
 - **Session 9 — migrations 0019 + 0020 must be applied to Supabase** before the retail discount toggle and webhook idempotency ledger work.
+- ✅ **Session 11:** site-builder `image` fields now upload to Supabase Storage (public `site-images` bucket, migration **0022**) via a service-role **signed upload URL** (`app/portal/admin/site/upload-actions.ts`) — admin-guarded, MIME + 8 MB validated, files namespaced `site-images/<studio_id>/<file>`. The inspector's `<ImageInput>` does upload-or-paste with a preview. **Apply migration 0022** and ensure `SUPABASE_SERVICE_ROLE_KEY` is set before image upload works (without the key the control shows "uploads not configured" and the manual-URL field still works). Images are `<img>` (not `next/image`) for now — see next-session Priority 2 for optimisation + orphan cleanup.
+- ✅ **Session 11:** studios with no homepage get a one-click **"Create starter homepage"** (`createStarterHomepage`) that seeds a full draft block stack; publish to go live.
+- ✅ **Session 12 (site polish):** blocks now support move ↑/↓, duplicate, and per-block appearance (`_bg` / `_spacing`, content blocks only — hero/CTA excepted). richText body is **markdown-lite** (paragraphs, `-`/`1.` lists, `**bold**`, `[links](url)`). Editor warns on unsaved navigate-away. **No migration** — `_bg`/`_spacing` live inside the existing `blocks` JSON; old blocks are seeded with their original defaults on load so there's no visual change until edited.
+- ✅ **Session 12 (images):** gallery uses `next/image` **only** for our Supabase Storage host (configured in `next.config.ts` `images.remotePatterns`, derived from `NEXT_PUBLIC_SUPABASE_URL`); arbitrary pasted URLs fall back to plain `<img>` (they're not allow-listed, so optimising them would 500). Replacing/removing an uploaded image now deletes the old object (`deleteSiteImage`, scoped to the studio's own namespace), and raster uploads are downscaled to ≤1920px client-side before upload. **If you change Supabase projects, no code change needed** — the host is read from env at build.

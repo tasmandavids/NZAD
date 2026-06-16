@@ -33,6 +33,7 @@ const NAV: Record<Role, NavItem[]> = {
     { href: "/portal/admin/messages",  label: "Messages" },
     { href: "/portal/admin/events",    label: "Events" },
     { href: "/portal/admin/shop",      label: "Shop" },
+    { href: "/portal/admin/site",      label: "Website" },
     { href: "/portal/admin/branding",  label: "Appearance" },
     { href: "/portal/admin/settings",  label: "Settings" },
   ],
@@ -163,7 +164,7 @@ export function PortalShell({
           role={role}
           studioName={studioName}
           userName={userName}
-          pathname={pathname}
+          pathname={pathname ?? ""}
         />
       </aside>
 
@@ -201,7 +202,7 @@ export function PortalShell({
                 role={role}
                 studioName={studioName}
                 userName={userName}
-                pathname={pathname}
+                pathname={pathname ?? ""}
                 onNavClick={() => setMobileOpen(false)}
               />
             </motion.div>

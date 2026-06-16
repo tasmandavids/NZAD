@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const next = useSearchParams().get("next") ?? "/portal";
+  const next = useSearchParams()?.get("next") ?? "/portal";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);

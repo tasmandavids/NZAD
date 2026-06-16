@@ -1,0 +1,472 @@
+// ============================================================================
+//  components/site/BlockRenderer.tsx
+//  Server component. Renders an ordered array of site-builder blocks using the
+//  studio's branding tokens (--brand, --base, text-ink, etc.). Pure
+//  presentation — no client JS. `classGrid` reads from the pre-fetched
+//  `classes` passed by the page (avoids data-fetching inside the renderer).
+// ============================================================================
+
+import type { ReactNode } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { formatMoney } from "@/lib/currency";
+import { str, num, list } from "@/lib/site/props";
+import { APPEARANCE_DEFAULTS, type Block, type BlockProps, type BlockType } from "@/lib/site/blocks";
+import type { SiteClass } from "@/lib/site/queries";
+
+export type RenderContext = { classes: SiteClass[] };
+
+export function BlockRenderer({
+  blocks,
+  context,
+}: {
+  blocks: Block[];
+  context: RenderContext;
+}) {
+  if (!blocks.length) {
+    return (
+      <div className="grid min-h-[40vh] place-items-center px-6 text-center text-muted">
+        <p>This page has no content yet.</p>
+      </div>
+    );
+  }
+  return (
+    <>
+      {blocks.map((b) => (
+        <BlockSwitch key={b.id} block={b} context={context} />
+      ))}
+    </>
+  );
+}
+
+function BlockSwitch({ block, context }: { block: Block; context: RenderContext }) {
+  switch (block.type) {
+    case "hero":        return <Hero p={block.props} />;
+    case "richText":    return <RichText p={block.props} />;
+    case "features":    return <Features p={block.props} />;
+    case "classGrid":   return <ClassGrid p={block.props} classes={context.classes} />;
+    case "gallery":     return <Gallery p={block.props} />;
+    case "testimonials":return <Testimonials p={block.props} />;
+    case "cta":         return <Cta p={block.props} />;
+    case "faq":         return <Faq p={block.props} />;
+    case "contact":     return <Contact p={block.props} />;
+    default:            return null;
+  }
+}
+
+const WRAP = "mx-auto w-full max-w-5xl";
+
+// ─── Appearance shell (per-block background + vertical spacing) ──────────────────
+const SPACING: Record<string, string> = {
+  compact: "py-10 sm:py-12",
+  normal: "py-16 sm:py-20",
+  spacious: "py-24 sm:py-32",
+};
+
+function BlockShell({
+  p,
+  type,
+  className = "",
+  children,
+}: {
+  p: BlockProps;
+  type: BlockType;
+  className?: string;
+  children: ReactNode;
+}) {
+  const def = APPEARANCE_DEFAULTS[type] ?? { _bg: "base", _spacing: "normal" };
+  const bg = str(p, "_bg", def._bg);
+  const spacing = str(p, "_spacing", def._spacing);
+  const bgClass = bg === "surface" ? "bg-surface" : "";
+  const style =
+    bg === "tint" ? { background: "color-mix(in srgb, var(--brand) 8%, var(--base))" } : undefined;
+  return (
+    <section className={`px-6 ${SPACING[spacing] ?? SPACING.normal} ${bgClass} ${className}`.trim()} style={style}>
+      {children}
+    </section>
+  );
+}
+
+// ─── Markdown-lite inline + block rendering for the richText body ────────────────
+//  Supports: blank-line paragraphs, `- `/`* ` bullets, `1. ` numbered lists,
+//  **bold**, and [text](url) links. Deliberately tiny — no external dep.
+function renderInline(text: string, kp: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const regex = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)\s]+)\)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let i = 0;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    if (m[1] !== undefined) {
+      nodes.push(
+        <strong key={`${kp}-b${i}`} className="font-semibold text-ink">
+          {m[1]}
+        </strong>,
+      );
+    } else if (m[2] !== undefined && m[3] !== undefined) {
+      const href = m[3];
+      const external = /^https?:\/\//.test(href);
+      nodes.push(
+        <Link
+          key={`${kp}-l${i}`}
+          href={href}
+          className="text-brand underline underline-offset-2 transition hover:opacity-80"
+          {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        >
+          {m[2]}
+        </Link>,
+      );
+    }
+    last = m.index + m[0].length;
+    i++;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+function renderRichBody(body: string): ReactNode {
+  const lines = body.split("\n");
+  const out: ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+  const isBullet = (l: string) => /^\s*[-*]\s+/.test(l);
+  const isNumber = (l: string) => /^\s*\d+\.\s+/.test(l);
+  while (i < lines.length) {
+    if (lines[i].trim() === "") {
+      i++;
+      continue;
+    }
+    if (isBullet(lines[i])) {
+      const items: string[] = [];
+      while (i < lines.length && isBullet(lines[i])) items.push(lines[i++].replace(/^\s*[-*]\s+/, ""));
+      const k = key++;
+      out.push(
+        <ul key={k} className="list-disc space-y-1 pl-6">
+          {items.map((it, idx) => (
+            <li key={idx}>{renderInline(it, `u${k}-${idx}`)}</li>
+          ))}
+        </ul>,
+      );
+      continue;
+    }
+    if (isNumber(lines[i])) {
+      const items: string[] = [];
+      while (i < lines.length && isNumber(lines[i])) items.push(lines[i++].replace(/^\s*\d+\.\s+/, ""));
+      const k = key++;
+      out.push(
+        <ol key={k} className="list-decimal space-y-1 pl-6">
+          {items.map((it, idx) => (
+            <li key={idx}>{renderInline(it, `o${k}-${idx}`)}</li>
+          ))}
+        </ol>,
+      );
+      continue;
+    }
+    const para: string[] = [];
+    while (i < lines.length && lines[i].trim() !== "" && !isBullet(lines[i]) && !isNumber(lines[i])) {
+      para.push(lines[i++]);
+    }
+    const k = key++;
+    out.push(<p key={k}>{renderInline(para.join(" "), `p${k}`)}</p>);
+  }
+  return out;
+}
+
+// ─── next/image: optimise our own Storage uploads; leave arbitrary URLs alone ────
+const SUPA_HOST = (() => {
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").host;
+  } catch {
+    return "";
+  }
+})();
+
+function isOptimizable(url: string): boolean {
+  try {
+    return !!SUPA_HOST && new URL(url).host === SUPA_HOST;
+  } catch {
+    return false;
+  }
+}
+
+/** Fills its (positioned, sized) parent. next/image for our Storage host,
+ *  plain <img> for arbitrary pasted URLs (which aren't in remotePatterns). */
+function FillImage({ src, alt, sizes }: { src: string; alt: string; sizes: string }) {
+  if (isOptimizable(src)) {
+    return <Image src={src} alt={alt} fill sizes={sizes} className="object-cover" />;
+  }
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" />;
+}
+
+// ─── Hero ─────────────────────────────────────────────────────────────────────
+function Hero({ p }: { p: BlockProps }) {
+  const align = str(p, "align", "center") === "left" ? "items-start text-left" : "items-center text-center";
+  const img = str(p, "imageUrl");
+  return (
+    <section
+      className="relative overflow-hidden px-6 py-28 sm:py-36"
+      style={
+        img
+          ? { backgroundImage: `url(${img})`, backgroundSize: "cover", backgroundPosition: "center" }
+          : { background: "linear-gradient(135deg, var(--brand-deep), var(--base))" }
+      }
+    >
+      {img && <div className="absolute inset-0 bg-black/45" />}
+      <div className={`relative mx-auto flex max-w-3xl flex-col gap-5 ${align}`}>
+        {str(p, "eyebrow") && (
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-hot">
+            {str(p, "eyebrow")}
+          </span>
+        )}
+        <h1 className="text-4xl font-black tracking-tight text-white sm:text-6xl" style={{ fontFamily: "var(--font-display)" }}>
+          {str(p, "heading")}
+        </h1>
+        {str(p, "subheading") && (
+          <p className="max-w-xl text-lg text-white/80">{str(p, "subheading")}</p>
+        )}
+        <div className={`mt-2 flex flex-wrap gap-3 ${align.includes("center") ? "justify-center" : ""}`}>
+          {str(p, "primaryLabel") && (
+            <Link
+              href={str(p, "primaryHref", "#")}
+              className="rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:brightness-110"
+            >
+              {str(p, "primaryLabel")}
+            </Link>
+          )}
+          {str(p, "secondaryLabel") && (
+            <Link
+              href={str(p, "secondaryHref", "#")}
+              className="rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              {str(p, "secondaryLabel")}
+            </Link>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Rich text ─────────────────────────────────────────────────────────────────
+function RichText({ p }: { p: BlockProps }) {
+  const center = str(p, "align", "left") === "center";
+  const body = str(p, "body");
+  return (
+    <BlockShell p={p} type="richText">
+      <div className={`${WRAP} ${center ? "text-center" : ""}`}>
+        {str(p, "heading") && (
+          <h2 className="text-3xl font-bold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+            {str(p, "heading")}
+          </h2>
+        )}
+        {body && (
+          <div className={`mt-4 space-y-4 text-lg leading-relaxed text-muted ${center ? "mx-auto max-w-2xl" : "max-w-3xl"}`}>
+            {renderRichBody(body)}
+          </div>
+        )}
+      </div>
+    </BlockShell>
+  );
+}
+
+// ─── Features ──────────────────────────────────────────────────────────────────
+function Features({ p }: { p: BlockProps }) {
+  const items = list(p, "items");
+  return (
+    <BlockShell p={p} type="features">
+      <div className={WRAP}>
+        {str(p, "heading") && (
+          <h2 className="mb-10 text-center text-3xl font-bold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+            {str(p, "heading")}
+          </h2>
+        )}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((it, i) => (
+            <div key={i} className="rounded-2xl border border-[--hair] bg-base p-6">
+              <div className="mb-3 text-2xl text-brand">{it.icon}</div>
+              <h3 className="text-lg font-semibold text-ink">{it.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{it.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </BlockShell>
+  );
+}
+
+// ─── Class grid (data-driven) ───────────────────────────────────────────────────
+function ClassGrid({ p, classes }: { p: BlockProps; classes: SiteClass[] }) {
+  const limit = num(p, "limit", 6);
+  const shown = classes.slice(0, limit);
+  return (
+    <BlockShell p={p} type="classGrid">
+      <div className={WRAP}>
+        <div className="mb-10 text-center">
+          {str(p, "heading") && (
+            <h2 className="text-3xl font-bold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+              {str(p, "heading")}
+            </h2>
+          )}
+          {str(p, "subheading") && <p className="mt-2 text-muted">{str(p, "subheading")}</p>}
+        </div>
+        {shown.length === 0 ? (
+          <p className="text-center text-muted">Classes coming soon.</p>
+        ) : (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {shown.map((c) => (
+              <div key={c.id} className="rounded-2xl border border-[--hair] bg-surface p-6">
+                <h3 className="text-lg font-semibold text-ink">{c.name}</h3>
+                <p className="mt-1 text-sm text-muted">
+                  {[c.discipline, c.level].filter(Boolean).join(" · ") || "All levels"}
+                </p>
+                {c.priceCents > 0 && (
+                  <p className="mt-4 text-sm font-semibold text-brand">{formatMoney(c.priceCents)} / month</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </BlockShell>
+  );
+}
+
+// ─── Gallery ───────────────────────────────────────────────────────────────────
+function Gallery({ p }: { p: BlockProps }) {
+  const items = list(p, "items").filter((it) => it.imageUrl);
+  return (
+    <BlockShell p={p} type="gallery">
+      <div className={WRAP}>
+        {str(p, "heading") && (
+          <h2 className="mb-10 text-center text-3xl font-bold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+            {str(p, "heading")}
+          </h2>
+        )}
+        {items.length === 0 ? (
+          <p className="text-center text-muted">Add image URLs to populate the gallery.</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((it, i) => (
+              <figure key={i} className="overflow-hidden rounded-2xl border border-[--hair]">
+                <div className="relative h-56 w-full">
+                  <FillImage
+                    src={it.imageUrl}
+                    alt={it.caption || ""}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                </div>
+                {it.caption && <figcaption className="bg-surface px-3 py-2 text-xs text-muted">{it.caption}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        )}
+      </div>
+    </BlockShell>
+  );
+}
+
+// ─── Testimonials ──────────────────────────────────────────────────────────────
+function Testimonials({ p }: { p: BlockProps }) {
+  const items = list(p, "items");
+  return (
+    <BlockShell p={p} type="testimonials">
+      <div className={WRAP}>
+        {str(p, "heading") && (
+          <h2 className="mb-10 text-center text-3xl font-bold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+            {str(p, "heading")}
+          </h2>
+        )}
+        <div className="grid gap-6 md:grid-cols-2">
+          {items.map((it, i) => (
+            <blockquote key={i} className="rounded-2xl border border-[--hair] bg-base p-6">
+              <p className="text-lg italic leading-relaxed text-ink">“{it.quote}”</p>
+              <footer className="mt-4 text-sm font-semibold text-brand">— {it.author}</footer>
+            </blockquote>
+          ))}
+        </div>
+      </div>
+    </BlockShell>
+  );
+}
+
+// ─── CTA ───────────────────────────────────────────────────────────────────────
+function Cta({ p }: { p: BlockProps }) {
+  return (
+    <section className="px-6 py-20">
+      <div
+        className="mx-auto flex max-w-4xl flex-col items-center gap-5 rounded-3xl px-8 py-14 text-center"
+        style={{ background: "linear-gradient(135deg, var(--brand), var(--brand-deep))" }}
+      >
+        <h2 className="text-3xl font-bold text-white sm:text-4xl" style={{ fontFamily: "var(--font-display)" }}>
+          {str(p, "heading")}
+        </h2>
+        {str(p, "subheading") && <p className="max-w-xl text-white/85">{str(p, "subheading")}</p>}
+        {str(p, "buttonLabel") && (
+          <Link
+            href={str(p, "buttonHref", "#")}
+            className="mt-2 rounded-full bg-white px-7 py-3 text-sm font-semibold text-[color:var(--brand-deep)] transition hover:brightness-95"
+          >
+            {str(p, "buttonLabel")}
+          </Link>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─── FAQ ───────────────────────────────────────────────────────────────────────
+function Faq({ p }: { p: BlockProps }) {
+  const items = list(p, "items");
+  return (
+    <BlockShell p={p} type="faq">
+      <div className="mx-auto w-full max-w-3xl">
+        {str(p, "heading") && (
+          <h2 className="mb-8 text-center text-3xl font-bold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+            {str(p, "heading")}
+          </h2>
+        )}
+        <div className="divide-y divide-[--hair] rounded-2xl border border-[--hair] bg-surface">
+          {items.map((it, i) => (
+            <details key={i} className="group p-5">
+              <summary className="cursor-pointer list-none font-semibold text-ink marker:hidden">
+                {it.question}
+              </summary>
+              <p className="mt-3 text-sm leading-relaxed text-muted">{it.answer}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </BlockShell>
+  );
+}
+
+// ─── Contact ───────────────────────────────────────────────────────────────────
+function Contact({ p }: { p: BlockProps }) {
+  const rows: Array<[string, string]> = [
+    ["Address", str(p, "address")],
+    ["Phone", str(p, "phone")],
+    ["Email", str(p, "email")],
+    ["Hours", str(p, "hours")],
+  ];
+  return (
+    <BlockShell p={p} type="contact">
+      <div className="mx-auto w-full max-w-2xl">
+        {str(p, "heading") && (
+          <h2 className="mb-8 text-center text-3xl font-bold text-ink" style={{ fontFamily: "var(--font-display)" }}>
+            {str(p, "heading")}
+          </h2>
+        )}
+        <dl className="space-y-4 rounded-2xl border border-[--hair] bg-base p-6">
+          {rows.filter(([, v]) => v).map(([label, value]) => (
+            <div key={label} className="flex flex-col gap-0.5 border-b border-[--hair] pb-3 last:border-0 last:pb-0">
+              <dt className="text-xs font-semibold uppercase tracking-widest text-muted">{label}</dt>
+              <dd className="whitespace-pre-line text-ink">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </BlockShell>
+  );
+}
