@@ -13,6 +13,7 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { googleFontsStylesheetUrl } from "@/lib/fonts";
 import { getBranding, brandingToCssVars, DEFAULT_BRANDING } from "@/lib/branding";
 import type { CSSProperties } from "react";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Olune — Run your whole studio from one calm place",
@@ -43,7 +44,10 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {fontsUrl && <link href={fontsUrl} rel="stylesheet" />}
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
