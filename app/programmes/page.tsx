@@ -6,6 +6,7 @@
 
 import { headers } from "next/headers";
 import { resolveStudio } from "@/lib/tenant";
+import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 
 export default async function ProgrammesPage() {
   const host = (await headers()).get("host");
@@ -32,6 +33,9 @@ export default async function ProgrammesPage() {
           <a href="/" className="btn-glow px-6 py-3 text-sm">
             Back to home
           </a>
+        </div>
+        <div className="mt-12 flex justify-center">
+          <PoweredByOlune />
         </div>
       </div>
     </div>

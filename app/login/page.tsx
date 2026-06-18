@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { OluneLogo } from "@/components/brand/OluneLogo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,7 +28,11 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-screen place-items-center bg-base px-5 text-ink">
-      <form onSubmit={signIn} className="w-full max-w-sm rounded-3xl border border-[--hair] bg-surface p-7 shadow-2xl">
+      <div className="w-full max-w-sm">
+        <div className="mb-8 flex justify-center">
+          <OluneLogo variant="stacked" size="md" />
+        </div>
+        <form onSubmit={signIn} className="rounded-3xl border border-[--hair] bg-surface p-7 shadow-2xl">
         <h1 className="text-2xl font-black tracking-tight">Welcome back</h1>
         <p className="mt-1 text-sm text-muted">Sign in to your studio.</p>
         {error && <p className="mt-4 rounded-lg border border-[--hair] bg-base/50 px-3 py-2 text-sm text-red-400">{error}</p>}
@@ -48,6 +53,7 @@ export default function LoginPage() {
           </a>
         </p>
       </form>
+      </div>
     </div>
   );
 }

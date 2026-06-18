@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { signOut } from "@/app/portal/actions";
+import { OluneMark } from "@/components/brand/OluneLogo";
+import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 
 const NAV = [
   { href: "/platform", label: "Overview", exact: true },
@@ -36,9 +38,7 @@ function Sidebar({
     <div className="flex h-full flex-col">
       <div className="border-b border-[--hair] p-5">
         <div className="mb-1 flex items-center gap-2.5">
-          <span className="grid h-8 w-8 shrink-0 place-items-center border border-ink-black/15 bg-paper text-xs font-black text-ink-black">
-            O
-          </span>
+          <OluneMark className="h-8 w-8 shrink-0" />
           <div>
             <h2 className="text-sm font-black text-ink">Olune Platform</h2>
             <p className="text-[0.62rem] uppercase tracking-widest text-muted">Operator console</p>
@@ -65,6 +65,7 @@ function Sidebar({
       </nav>
 
       <div className="border-t border-[--hair] p-4">
+        <PoweredByOlune className="mb-3" />
         <p className="mb-2 truncate text-xs font-medium text-ink">{operatorName ?? "Operator"}</p>
         <form action={signOut}>
           <button type="submit" className="text-xs text-muted transition-colors hover:text-ink">
@@ -94,7 +95,10 @@ export function PlatformShell({
 
       <div className="fixed inset-x-0 top-0 z-50 md:hidden">
         <div className="flex items-center justify-between border-b border-[--hair] bg-surface/95 px-4 py-3 backdrop-blur">
-          <span className="text-sm font-black text-ink">Olune Platform</span>
+          <div className="flex items-center gap-2">
+            <OluneMark className="h-7 w-7 shrink-0" />
+            <span className="text-sm font-black text-ink">Olune Platform</span>
+          </div>
           <button
             onClick={() => setMobileOpen((o) => !o)}
             className="grid h-8 w-8 place-items-center text-muted"

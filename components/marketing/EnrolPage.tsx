@@ -8,13 +8,16 @@
 
 import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 
 export default function EnrolPage({
   studioName,
   tagline,
+  logoUrl = null,
 }: {
   studioName: string;
   tagline: string | null;
+  logoUrl?: string | null;
 }) {
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState("");
@@ -42,6 +45,14 @@ export default function EnrolPage({
       <div className="w-full max-w-md">
         {/* Studio identity */}
         <div className="mb-8 text-center">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={studioName}
+              className="mx-auto mb-4 h-12 w-auto max-w-[200px] object-contain"
+            />
+          ) : null}
           <p className="text-xs uppercase tracking-widest text-muted">
             {tagline ?? studioName}
           </p>
@@ -161,6 +172,10 @@ export default function EnrolPage({
             </motion.form>
           )}
         </AnimatePresence>
+
+        <div className="mt-10 flex justify-center">
+          <PoweredByOlune />
+        </div>
       </div>
     </div>
   );

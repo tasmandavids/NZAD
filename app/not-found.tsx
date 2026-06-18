@@ -5,6 +5,8 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { resolveStudio } from "@/lib/tenant";
+import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
+import { OluneLogo } from "@/components/brand/OluneLogo";
 
 export default async function NotFound() {
   const host = (await headers()).get("host");
@@ -14,6 +16,11 @@ export default async function NotFound() {
   return (
     <div className="grid min-h-screen place-items-center bg-base px-6 text-ink">
       <div className="max-w-md text-center">
+        {!studio && (
+          <div className="mb-8 flex justify-center">
+            <OluneLogo variant="stacked" size="md" />
+          </div>
+        )}
         <p className="text-sm font-semibold uppercase tracking-widest text-brand">404</p>
         <h1 className="mt-2 text-2xl font-bold">Page not found</h1>
         {!studio ? (
@@ -49,6 +56,9 @@ export default async function NotFound() {
             </Link>
           </>
         )}
+        <div className="mt-10 flex justify-center">
+          <PoweredByOlune />
+        </div>
       </div>
     </div>
   );

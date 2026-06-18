@@ -7,6 +7,7 @@
 import Link from "next/link";
 import type { SiteSettings } from "@/lib/types";
 import type { NavLink } from "@/lib/site/queries";
+import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 import { SiteHeader } from "./SiteHeader";
 
 export function SiteChrome({
@@ -106,9 +107,7 @@ export function SiteChrome({
               <p className="text-xs text-muted">{siteSettings.regionLabel}</p>
             )}
             {siteSettings.showPoweredBy !== false && (
-              <p className="text-xs text-muted">
-                Powered by <span className="font-semibold text-ink">Olune</span>
-              </p>
+              <PoweredByOlune />
             )}
           </div>
         </div>

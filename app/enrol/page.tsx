@@ -24,6 +24,7 @@ export default async function EnrolRoute() {
     <EnrolPage
       studioName={studio?.name ?? "Olune Studio"}
       tagline={branding.tagline}
+      logoUrl={branding.logoUrl}
     />
   );
 }

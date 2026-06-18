@@ -62,3 +62,19 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
+
+@keyframes floatMoon {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[floatMoon_9s_ease-in-out_infinite\] {
+    animation: none !important;
+  }
+}

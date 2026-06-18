@@ -6,7 +6,7 @@
 //  Studio identity is public-readable (see RLS), so this works pre-login.
 // ============================================================================
 
-import { createClient } from "./supabase/server";
+import { createPublicClient } from "./supabase/public";
 import type { Studio } from "./types";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
@@ -30,7 +30,7 @@ export function slugFromHost(host: string | null): string | null {
 /** Resolve the studio for a host. Returns null on the marketing root / unknown host. */
 export async function resolveStudio(host: string | null): Promise<Studio | null> {
   if (!host) return null;
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const slug = slugFromHost(host);
 
   const query = supabase.from("studios").select("*");

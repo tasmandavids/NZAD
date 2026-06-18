@@ -4,7 +4,7 @@
 //  pages and public catalog data to anonymous visitors.
 // ============================================================================
 
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { normalizeBlocks, type Block } from "./blocks";
 import { normalizePageBackground, type PageBackground } from "./background";
 
@@ -68,7 +68,7 @@ export type SiteStaff = {
 
 /** Published homepage for a studio (the page flagged is_home). */
 export async function getPublishedHome(studioId: string): Promise<PublicPage | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("site_pages")
     .select("id, slug, title, blocks, background, seo_title, seo_description")
@@ -84,7 +84,7 @@ export async function getPublishedPage(
   studioId: string,
   slug: string,
 ): Promise<PublicPage | null> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("site_pages")
     .select("id, slug, title, blocks, background, seo_title, seo_description")
@@ -97,7 +97,7 @@ export async function getPublishedPage(
 
 /** Navigation links from published, in-nav pages (home first). */
 export async function getNavLinks(studioId: string): Promise<NavLink[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("site_pages")
     .select("slug, title, nav_label, is_home, show_in_nav, nav_order")
@@ -116,7 +116,7 @@ export async function getNavLinks(studioId: string): Promise<NavLink[]> {
 
 /** Active classes for site blocks (public-readable via RLS). */
 export async function getSiteClasses(studioId: string, limit = 6): Promise<SiteClass[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("classes")
     .select("id, name, discipline, level, stream, room, day_of_week, start_time, end_time, price_cents")
@@ -129,7 +129,7 @@ export async function getSiteClasses(studioId: string, limit = 6): Promise<SiteC
 
 /** All classes for schedule/tabs blocks. */
 export async function getSiteScheduleClasses(studioId: string): Promise<SiteClass[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("classes")
     .select("id, name, discipline, level, stream, room, day_of_week, start_time, end_time, price_cents")
@@ -142,7 +142,7 @@ export async function getSiteScheduleClasses(studioId: string): Promise<SiteClas
 
 /** Published events for the news feed block. */
 export async function getSiteEvents(studioId: string, limit = 12): Promise<SiteEvent[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("events")
     .select("id, name, description, event_date, category, image_url, venue_name")
@@ -164,7 +164,7 @@ export async function getSiteEvents(studioId: string, limit = 12): Promise<SiteE
 
 /** Active products for the shop block. */
 export async function getSiteProducts(studioId: string, limit = 24): Promise<SiteProduct[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("products")
     .select("id, name, description, price_cents, image_url, category, stock_qty")
@@ -186,7 +186,7 @@ export async function getSiteProducts(studioId: string, limit = 24): Promise<Sit
 
 /** Published staff for the people grid block. */
 export async function getSiteStaff(studioId: string, limit = 24): Promise<SiteStaff[]> {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("staff")
     .select("id, name, role, bio, photo_url")

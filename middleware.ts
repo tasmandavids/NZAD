@@ -1,18 +1,15 @@
 // ============================================================================
 //  middleware.ts · Phase 2 — role-based portal routing.
-//  Runs on /portal/** and /login (see `config.matcher`).
-//    1. Refreshes the Supabase session.
-//    2. No session + portal route        → kick to /login?next=…
-//    3. Signed in, no studio yet          → /onboarding
-//    4. Signed in + wrong portal segment  → bounce to THEIR /portal/<role>
-//    5. Signed in + on /login or /portal  → forward to THEIR /portal/<role>
+//  Runs on almost all routes (see `config.matcher`) to:
+//    1. Refresh the Supabase session (or clear stale auth cookies).
+//    2. On /portal/**, /platform/**, /login — enforce auth routing.
 //  Row-level access is still enforced in Postgres (RLS); this is just routing.
 // ============================================================================
 
 import { NextResponse, type NextRequest } from "next/server";
-import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkPlatformOperator } from "@/lib/platform/operator-edge";
+import { refreshSession } from "@/lib/supabase/middleware";
 
 type Role = "admin" | "teacher" | "parent" | "student";
 
@@ -24,33 +21,19 @@ const ROLE_HOME: Record<Role, string> = {
 };
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
-        },
-      },
-    },
-  );
-
-  // getUser() (not getSession()) — it revalidates the token against Supabase.
-  const { data: { user } } = await supabase.auth.getUser();
+  const { supabase, response, user: sessionUser } = await refreshSession(request);
 
   const { pathname } = request.nextUrl;
   const inPortal = pathname === "/portal" || pathname.startsWith("/portal/");
   const inPlatform = pathname === "/platform" || pathname.startsWith("/platform/");
+  const inLogin = pathname === "/login";
+
+  // Session refresh only — no routing rules on public pages.
+  if (!inPortal && !inPlatform && !inLogin) {
+    return response;
+  }
+
+  const user = sessionUser;
 
   // Platform console — Olune operators only.
   if (inPlatform) {
@@ -69,7 +52,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // (2) Unauthenticated → can't be in a portal.
+  // Unauthenticated → can't be in a portal.
   if (inPortal && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -80,7 +63,7 @@ export async function middleware(request: NextRequest) {
   if (user) {
     const role = await getRole(supabase, user.id);
 
-    // (3) Signed up but hasn't created/joined a studio yet.
+    // Signed up but hasn't created/joined a studio yet.
     if (!role) {
       if (inPortal) return NextResponse.redirect(new URL("/onboarding", request.url));
       return response;
@@ -88,7 +71,7 @@ export async function middleware(request: NextRequest) {
 
     const home = ROLE_HOME[role];
 
-    // (5) On /login or bare /portal → forward to role home (honour ?next= for platform).
+    // On /login or bare /portal → forward to role home (honour ?next= for platform).
     if (pathname === "/login" || pathname === "/portal" || pathname === "/portal/") {
       const next = request.nextUrl.searchParams.get("next");
       if (next?.startsWith("/platform") && (await checkPlatformOperator(supabase, user.id, user.email))) {
@@ -97,7 +80,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(home, request.url));
     }
 
-    // (4) Wandered into another role's portal → bounce to their own.
+    // Wandered into another role's portal → bounce to their own.
     if (inPortal && !pathname.startsWith(home)) {
       return NextResponse.redirect(new URL(home, request.url));
     }
@@ -128,6 +111,8 @@ async function getRole(supabase: SupabaseClient, userId: string): Promise<Role |
 }
 
 export const config = {
-  // Only run where routing decisions are needed.
-  matcher: ["/portal/:path*", "/platform/:path*", "/login"],
+  // Refresh auth session on all page routes; skip static assets.
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

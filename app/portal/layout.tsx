@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { PlatformAnnouncementsBanner } from "@/components/admin/PlatformAnnouncementsBanner";
+import { getBranding } from "@/lib/branding";
 import type { Role } from "@/lib/types";
 
 export default async function PortalLayout({
@@ -51,10 +52,13 @@ export default async function PortalLayout({
     .slice(0, 3)
     .map(({ id, title, body, severity }) => ({ id, title, body, severity }));
 
+  const branding = await getBranding(supabase, profile.studio_id);
+
   return (
     <PortalShell
       role={profile.role as Role}
       studioName={studio?.name ?? "Your studio"}
+      logoUrl={branding.logoUrl}
       userName={profile.full_name}
     >
       {profile.role === "admin" && announcements.length > 0 && (

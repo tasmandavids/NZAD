@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { NavLink } from "@/lib/site/queries";
+import { OluneMark } from "@/components/brand/OluneLogo";
 
 export function SiteHeader({
   studioName,
@@ -50,6 +51,9 @@ export function SiteHeader({
           >
             {portalLabel}
           </Link>
+          <span title="Powered by Olune" aria-label="Powered by Olune">
+            <OluneMark className="h-7 w-7 opacity-80" />
+          </span>
         </nav>
 
         <button

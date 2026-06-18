@@ -14,6 +14,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { signOut } from "@/app/portal/actions";
 import type { Role } from "@/lib/types";
 import { NotificationBell } from "@/components/admin/notifications/NotificationBell";
+import { OluneLogo } from "@/components/brand/OluneLogo";
+import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 
 interface NavItem {
   href: string;
@@ -56,9 +58,38 @@ const ROLE_BADGE: Record<Role, string> = {
 };
 
 // ── Sidebar nav content (shared between desktop and mobile drawer) ──────────
+function StudioAvatar({
+  studioName,
+  logoUrl,
+}: {
+  studioName: string;
+  logoUrl: string | null;
+}) {
+  if (logoUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={logoUrl}
+        alt=""
+        className="h-8 w-8 shrink-0 rounded-lg border border-[--hair] bg-surface object-contain p-0.5"
+      />
+    );
+  }
+
+  return (
+    <span
+      className="grid h-8 w-8 shrink-0 place-items-center border text-xs font-black text-ink"
+      style={{ borderColor: "var(--brand)" }}
+    >
+      {studioName[0]?.toUpperCase() ?? "S"}
+    </span>
+  );
+}
+
 function SidebarContent({
   role,
   studioName,
+  logoUrl,
   userName,
   pathname,
   onNavClick,
@@ -67,6 +98,7 @@ function SidebarContent({
 }: {
   role: Role;
   studioName: string;
+  logoUrl: string | null;
   userName: string | null;
   pathname: string;
   onNavClick?: () => void;
@@ -86,12 +118,7 @@ function SidebarContent({
       <div className="border-b border-[--hair] p-5">
         <div className="mb-1 flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span
-              className="grid h-8 w-8 shrink-0 place-items-center border text-xs font-black text-ink"
-              style={{ borderColor: "var(--brand)" }}
-            >
-              {studioName[0]?.toUpperCase() ?? "S"}
-            </span>
+            <StudioAvatar studioName={studioName} logoUrl={logoUrl} />
             <h2 className="truncate text-sm font-black text-ink">{studioName}</h2>
           </div>
           {onToggleCollapse && (
@@ -141,6 +168,7 @@ function SidebarContent({
 
       {/* User + sign out */}
       <div className="border-t border-[--hair] p-4">
+        <PoweredByOlune className="mb-4" />
         <p className="mb-2.5 truncate text-xs font-medium text-ink">
           {userName ?? "You"}
         </p>
@@ -161,11 +189,13 @@ function SidebarContent({
 export function PortalShell({
   role,
   studioName,
+  logoUrl = null,
   userName,
   children,
 }: {
   role: Role;
   studioName: string;
+  logoUrl?: string | null;
   userName: string | null;
   children: React.ReactNode;
 }) {
@@ -253,6 +283,7 @@ export function PortalShell({
           <SidebarContent
             role={role}
             studioName={studioName}
+            logoUrl={logoUrl}
             userName={userName}
             pathname={pathname ?? ""}
             collapsed={collapsed}
@@ -265,12 +296,7 @@ export function PortalShell({
       <div className="fixed inset-x-0 top-0 z-50 md:hidden">
         <div className="flex items-center justify-between border-b border-[--hair] bg-surface/95 px-4 py-3 backdrop-blur">
           <div className="flex items-center gap-2">
-            <span
-              className="grid h-7 w-7 place-items-center border text-xs font-black text-ink"
-              style={{ borderColor: "var(--brand)" }}
-            >
-              {studioName[0]?.toUpperCase() ?? "S"}
-            </span>
+            <StudioAvatar studioName={studioName} logoUrl={logoUrl} />
             <span className="text-sm font-black text-ink">{studioName}</span>
           </div>
           <button
@@ -294,6 +320,7 @@ export function PortalShell({
               <SidebarContent
                 role={role}
                 studioName={studioName}
+                logoUrl={logoUrl}
                 userName={userName}
                 pathname={pathname ?? ""}
                 onNavClick={() => setMobileOpen(false)}
@@ -307,7 +334,8 @@ export function PortalShell({
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar with notification bell (admin only) */}
         {showBell && (
-          <div className="flex items-center justify-end border-b border-[--hair] bg-surface px-5 py-2">
+          <div className="flex items-center justify-between border-b border-[--hair] bg-surface px-5 py-2">
+            <OluneLogo size="xs" className="hidden sm:inline-flex" />
             <NotificationBell />
           </div>
         )}

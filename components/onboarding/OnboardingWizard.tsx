@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { derivePalette } from "@/lib/branding";
+import { OluneLogo } from "@/components/brand/OluneLogo";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -104,6 +105,9 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
   return (
     <div className="grid min-h-screen place-items-center bg-base px-5 py-12 text-ink">
       <div className="w-full max-w-md">
+        <div className="mb-8 flex justify-center">
+          <OluneLogo variant="stacked" size="md" />
+        </div>
         {/* progress */}
         {step !== "done" && (
           <div className="mb-8 flex items-center justify-center gap-2">

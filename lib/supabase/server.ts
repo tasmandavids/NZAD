@@ -27,6 +27,10 @@ export async function createClient() {
           }
         },
       },
+      auth: {
+        // Middleware owns token refresh — avoid duplicate refresh races in RSC.
+        autoRefreshToken: false,
+      },
     },
   );
 }

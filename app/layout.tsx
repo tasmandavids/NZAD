@@ -9,14 +9,15 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { resolveStudio } from "@/lib/tenant";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { googleFontsStylesheetUrl } from "@/lib/fonts";
 import { getBranding, brandingToCssVars, DEFAULT_BRANDING } from "@/lib/branding";
 import type { CSSProperties } from "react";
 
 export const metadata: Metadata = {
-  title: "Olune",
-  description: "The studio platform that wears your brand.",
+  title: "Olune — Run your whole studio from one calm place",
+  description:
+    "The studio management system for projects, finances, and live client websites — all in real time.",
 };
 
 export default async function RootLayout({
@@ -27,7 +28,7 @@ export default async function RootLayout({
   const host = (await headers()).get("host");
   const studio = await resolveStudio(host);
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const branding = studio
     ? await getBranding(supabase, studio.id)
     : { ...DEFAULT_BRANDING };
