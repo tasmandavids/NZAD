@@ -24,12 +24,22 @@ One account with access to both the Olune operator console and a demo studio.
 The account must be created in Supabase once per environment:
 
 ```bash
-# 1. Apply platform migration (if not already)
+# 1. Apply migrations (if not already)
 npm run db:push
-
-# 2. Create the user (needs service role key in .env.local)
-node --env-file=.env.local scripts/seed-platform-admin.mjs
 ```
+
+If you see `gen_random_bytes does not exist` on an old local file named
+`0026_studio_member_registration.sql`, **delete that file** and pull the latest
+`0027_studio_member_registration.sql` from the repo instead.
+
+```bash
+# 2. Create the user (needs service role key in .env.local)
+npm run seed:platform-admin
+# or: node --env-file=.env.local scripts/seed-platform-admin.mjs
+```
+
+The seed script lives on branch `cursor/platform-admin-system-d1b9` (or `main` after merge).
+If you get `Cannot find module .../seed-platform-admin.mjs`, run `git pull` first.
 
 ### Vercel / production
 
