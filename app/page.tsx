@@ -33,7 +33,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <ParticleBackground />
+      <ParticleBackground variant="light" />
       <Hero studioName={studio.name} tagline={branding.tagline} />
     </>
   );

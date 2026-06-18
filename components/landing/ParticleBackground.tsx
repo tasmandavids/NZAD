@@ -50,18 +50,19 @@ const VERT = /* glsl */ `
 const FRAG = /* glsl */ `
   uniform vec3 uColor;     // Iris
   uniform vec3 uColorDeep; // deep iris
+  uniform float uIntensity;
   varying float vGlow;
 
   void main() {
     float d = distance(gl_PointCoord, vec2(0.5));
     if (d > 0.5) discard;
-    float a = smoothstep(0.5, 0.0, d);          // soft round falloff
+    float a = smoothstep(0.5, 0.0, d);
     vec3 col = mix(uColorDeep, uColor, a + vGlow);
-    gl_FragColor = vec4(col, a * (0.5 + vGlow));
+    gl_FragColor = vec4(col, a * (0.5 + vGlow) * uIntensity);
   }
 `;
 
-function Dust() {
+function Dust({ light }: { light?: boolean }) {
   const points = useRef<THREE.Points>(null);
   const material = useRef<THREE.ShaderMaterial>(null);
   const mouse = useRef(new THREE.Vector2(0, 0));
@@ -85,11 +86,12 @@ function Dust() {
     () => ({
       uTime: { value: 0 },
       uMouse: { value: new THREE.Vector2(0, 0) },
-      uColor: { value: new THREE.Color("#6B66C9") },     // Iris
-      uColorDeep: { value: new THREE.Color("#3D3A8A") }, // deep iris
+      uColor: { value: new THREE.Color(light ? "#8B86D4" : "#6B66C9") },
+      uColorDeep: { value: new THREE.Color(light ? "#6B66C9" : "#3D3A8A") },
       uSize: { value: 900 },
+      uIntensity: { value: light ? 0.35 : 1 },
     }),
-    [],
+    [light],
   );
 
   useFrame((state) => {
@@ -122,21 +124,26 @@ function Dust() {
   );
 }
 
-export function ParticleBackground() {
+export function ParticleBackground({ variant = "light" }: { variant?: "dark" | "light" }) {
+  const light = variant === "light";
+
   return (
-    <div className="fixed inset-0 -z-10 bg-midnight">
+    <div className={`fixed inset-0 -z-10 ${light ? "bg-ivory" : "bg-midnight"}`}>
       <Canvas
         camera={{ position: [0, 0, 7], fov: 60 }}
         dpr={[1, 2]}
         gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
       >
-        <color attach="background" args={["#1B1A38"]} />
-        <Dust />
+        <color attach="background" args={[light ? "#FAF8F3" : "#1B1A38"]} />
+        <Dust light={light} />
       </Canvas>
-      {/* vignette for depth */}
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(120% 120% at 50% 40%, transparent 45%, rgba(0,0,0,.6) 100%)" }}
+        style={{
+          background: light
+            ? "radial-gradient(120% 120% at 50% 40%, transparent 55%, rgba(0,0,0,.04) 100%)"
+            : "radial-gradient(120% 120% at 50% 40%, transparent 45%, rgba(0,0,0,.6) 100%)",
+        }}
       />
     </div>
   );

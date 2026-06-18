@@ -15,11 +15,12 @@ import { brandingToCssVars } from "@/lib/branding";
 import { saveBranding } from "@/app/portal/admin/branding/actions";
 
 const PRESETS: { label: string; brandColor: string; base: ThemeBase }[] = [
-  { label: "Crimson", brandColor: "#C8102E", base: "dark" },
-  { label: "Voltage", brandColor: "#5B5BFF", base: "dark" },
-  { label: "Aurum", brandColor: "#C9A227", base: "dark" },
+  { label: "Iris", brandColor: "#6B66C9", base: "light" },
+  { label: "Crimson", brandColor: "#C8102E", base: "light" },
+  { label: "Voltage", brandColor: "#5B5BFF", base: "light" },
+  { label: "Aurum", brandColor: "#C9A227", base: "light" },
   { label: "Bloom", brandColor: "#E84A8A", base: "light" },
-  { label: "Jade", brandColor: "#13B6A4", base: "dark" },
+  { label: "Jade", brandColor: "#13B6A4", base: "light" },
 ];
 
 const FONTS = ["Fraunces", "Cormorant Garamond", "Archivo", "Inter", "Sora", "Outfit", "Manrope", "Hanken Grotesk"];

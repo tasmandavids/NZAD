@@ -13,7 +13,7 @@ export const DEFAULT_BRANDING: Branding = {
   tagline: null,
   logoUrl: null,
   brandColor: "#6B66C9",  // Iris
-  base: "dark",
+  base: "light",
   fontDisplay: "Fraunces",
   fontBody: "Hanken Grotesk",
   siteSettings: { ...DEFAULT_SITE_SETTINGS },
@@ -62,9 +62,9 @@ const BASES: Record<ThemeBase, Record<string, string>> = {
     hair: "rgba(247,244,238,.10)", glow: ".22", vignette: ".55", grain: ".05",
   },
   light: {
-    // Halo Cream base — warm daylight
-    base: "#F7F4EE", surface: "#FFFFFF", text: "#1F1D30", muted: "#6C6A7E",
-    hair: "rgba(31,29,48,.10)", glow: ".16", vignette: ".10", grain: ".03",
+    // Ivory + paper — warm daylight with crisp black type
+    base: "#FAF8F3", surface: "#FFFFFF", text: "#0A0A0A", muted: "#6C6A7E",
+    hair: "rgba(10,10,10,.08)", glow: ".12", vignette: ".06", grain: ".02",
   },
 };
 

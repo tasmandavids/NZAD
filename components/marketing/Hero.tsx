@@ -119,11 +119,10 @@ export default function Hero({
   return (
     <header
       ref={ref}
-      className="relative isolate flex min-h-[100svh] items-center overflow-hidden bg-void px-[clamp(1.25rem,4vw,4rem)] pb-16 pt-32 text-chalk"
+      className="relative isolate flex min-h-[100svh] items-center overflow-hidden bg-gradient-to-b from-paper via-ivory to-paper px-[clamp(1.25rem,4vw,4rem)] pb-16 pt-32 text-ink-black"
     >
       {/* ===================== CINEMATIC BACKGROUND ===================== */}
       <motion.div style={{ y: yBg }} className="absolute inset-0 -z-10">
-        {/* Real video loop. Poster shows instantly for a fast LCP. */}
         <video
           ref={videoRef}
           autoPlay
@@ -131,24 +130,21 @@ export default function Hero({
           loop
           playsInline
           poster="/hero-poster.jpg"
-          className="h-full w-full object-cover opacity-70"
+          className="h-full w-full object-cover opacity-25"
         >
           <source src="/hero.webm" type="video/webm" />
           <source src="/hero.mp4" type="video/mp4" />
         </video>
 
-        {/* Iris "moonlight" wash layered over the footage (the signature). */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(38vmax 38vmax at 50% 42%, rgba(107,102,201,.22), rgba(107,102,201,.12) 32%, transparent 64%)",
+              "radial-gradient(38vmax 38vmax at 50% 42%, rgba(107,102,201,.12), rgba(107,102,201,.06) 32%, transparent 64%)",
           }}
         />
-        {/* Cinematic vignette + floor reflection. */}
         <div
-          className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(120% 120% at 50% 35%, transparent 45%, rgba(0,0,0,.6) 100%)" }}
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-paper/70 via-ivory/50 to-paper/80"
         />
       </motion.div>
 
@@ -163,21 +159,21 @@ export default function Hero({
         {/* Eyebrow */}
         <motion.div
           variants={rise}
-          className="mb-[clamp(1.4rem,3vw,2.2rem)] inline-flex items-center gap-4 text-[clamp(.62rem,1.4vw,.72rem)] uppercase tracking-[0.36em] text-muted"
+          className="mb-[clamp(1.4rem,3vw,2.2rem)] inline-flex items-center gap-4 text-[clamp(.62rem,1.4vw,.72rem)] font-medium uppercase tracking-[0.36em] text-slate"
         >
           <span className="h-px w-[clamp(28px,6vw,56px)] bg-iris" />
           {studioName}
         </motion.div>
 
-        {/* Headline — heavy grotesque (power) + serif italic accent (grace). */}
-        <h1 className="font-display text-[clamp(3.1rem,11.5vw,11rem)] font-light uppercase leading-[0.92] tracking-[-0.015em] text-white">
+        {/* Headline */}
+        <h1 className="font-display text-[clamp(3.1rem,11.5vw,11rem)] font-light uppercase leading-[0.92] tracking-[-0.015em] text-ink-black">
           <motion.span variants={word} className="inline-block">Where</motion.span>{" "}
           <motion.span variants={word} className="inline-block">movement</motion.span>
           <br />
           <motion.span variants={word} className="inline-block">becomes</motion.span>{" "}
           <motion.span
             variants={word}
-            className="inline-block font-serif text-[1.06em] font-light normal-case italic text-lumen [text-shadow:0_0_60px_rgba(107,102,201,.55)]"
+            className="inline-block font-serif text-[1.06em] font-light normal-case italic text-iris"
           >
             art.
           </motion.span>
@@ -186,19 +182,19 @@ export default function Hero({
         {/* Sub-head */}
         <motion.p
           variants={rise}
-          className="mt-[clamp(1.4rem,3vw,2.2rem)] max-w-[46ch] text-[clamp(1rem,1.7vw,1.22rem)] leading-relaxed text-chalk/85"
+          className="mt-[clamp(1.4rem,3vw,2.2rem)] max-w-[46ch] text-[clamp(1rem,1.7vw,1.22rem)] leading-relaxed text-ink-black/75"
         >
           {tagline ?? "From a first plié to the stage — every class, every dancer, every family, all in one place."}
         </motion.p>
 
-        {/* CTAs — micro-interactions live on the whileHover/whileTap props. */}
+        {/* CTAs */}
         <motion.div variants={rise} className="mt-[clamp(2rem,4vw,2.8rem)] flex flex-wrap gap-4">
           <motion.a
             href="/enrol"
             whileHover={{ y: -3 }}
             whileTap={{ scale: 0.97 }}
             transition={{ type: "spring", stiffness: 400, damping: 22 }}
-            className="group inline-flex items-center gap-3 rounded-full bg-iris px-8 py-[1.05rem] text-sm font-semibold uppercase tracking-wide text-white shadow-[0_10px_40px_-12px_rgba(107,102,201,.65)] transition-colors hover:bg-lumen hover:text-midnight"
+            className="group inline-flex items-center gap-3 rounded-full bg-ink-black px-8 py-[1.05rem] text-sm font-semibold uppercase tracking-wide text-paper shadow-[0_10px_40px_-12px_rgba(0,0,0,.25)] transition-colors hover:bg-iris"
           >
             Book a free trial
             <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
@@ -209,7 +205,7 @@ export default function Hero({
             whileHover={{ y: -3 }}
             whileTap={{ scale: 0.97 }}
             transition={{ type: "spring", stiffness: 400, damping: 22 }}
-            className="inline-flex items-center rounded-full border border-white/15 px-8 py-[1.05rem] text-sm font-bold uppercase tracking-wide text-chalk transition-colors hover:border-chalk"
+            className="inline-flex items-center rounded-full border border-ink-black/20 bg-paper/80 px-8 py-[1.05rem] text-sm font-bold uppercase tracking-wide text-ink-black backdrop-blur-sm transition-colors hover:border-ink-black/40 hover:bg-paper"
           >
             Explore programmes
           </motion.a>
@@ -217,8 +213,7 @@ export default function Hero({
       </motion.div>
 
       {/* ===================== DISCIPLINE MARQUEE ===================== */}
-      {/* More characteristic of a dance school than a generic stat counter. */}
-      <div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden border-t border-white/10 py-[1.1rem] [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+      <div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden border-t border-ink-black/10 bg-paper/60 py-[1.1rem] backdrop-blur-sm [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
         <motion.div
           className="flex w-max gap-12"
           animate={reduce ? undefined : { x: ["0%", "-50%"] }}
@@ -227,7 +222,7 @@ export default function Hero({
           {[...DISCIPLINES, ...DISCIPLINES].map((d, i) => (
             <span
               key={i}
-              className="flex items-center gap-12 whitespace-nowrap text-sm uppercase tracking-[0.28em] text-muted after:text-xs after:text-iris after:content-['✦']"
+              className="flex items-center gap-12 whitespace-nowrap text-sm font-medium uppercase tracking-[0.28em] text-slate after:text-xs after:text-iris after:content-['✦']"
             >
               {d}
             </span>
@@ -240,13 +235,13 @@ export default function Hero({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.9 }}
-        className="absolute bottom-[clamp(5rem,9vh,7rem)] right-[clamp(1.25rem,4vw,4rem)] z-10 hidden flex-col items-center gap-3 text-[0.6rem] uppercase tracking-[0.3em] text-muted [writing-mode:vertical-rl] sm:flex"
+        className="absolute bottom-[clamp(5rem,9vh,7rem)] right-[clamp(1.25rem,4vw,4rem)] z-10 hidden flex-col items-center gap-3 text-[0.6rem] uppercase tracking-[0.3em] text-slate [writing-mode:vertical-rl] sm:flex"
       >
         Scroll
         <motion.span
           animate={reduce ? undefined : { scaleY: [1, 0.4, 1], originY: 0 }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-          className="h-12 w-px bg-gradient-to-b from-lumen to-transparent"
+          className="h-12 w-px bg-gradient-to-b from-iris to-transparent"
         />
       </motion.div>
     </header>

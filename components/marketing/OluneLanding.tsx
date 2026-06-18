@@ -44,31 +44,30 @@ const FEATURES = [
 
 export default function OluneLanding() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-void text-chalk">
-      {/* Particle field same as studio pages — keeps the brand consistent */}
-      <ParticleBackground />
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-paper via-ivory to-paper text-ink-black">
+      <ParticleBackground variant="light" />
 
       {/* ── NAV ─────────────────────────────────────────────────────────── */}
       <nav className="relative z-20 flex items-center justify-between px-[clamp(1.25rem,4vw,4rem)] py-7">
-        <span className="font-display text-base font-medium tracking-tight text-white">
+        <span className="font-display text-base font-semibold tracking-tight text-ink-black">
           olune
         </span>
         <div className="flex items-center gap-6">
           <a
             href="/platform"
-            className="text-xs uppercase tracking-widest text-muted transition-colors hover:text-chalk"
+            className="text-xs font-medium uppercase tracking-widest text-slate transition-colors hover:text-ink-black"
           >
             Platform
           </a>
           <a
             href="/login"
-            className="text-xs uppercase tracking-widest text-muted transition-colors hover:text-chalk"
+            className="text-xs font-medium uppercase tracking-widest text-slate transition-colors hover:text-ink-black"
           >
             Sign in
           </a>
           <a
             href="/onboarding"
-            className="rounded-full border border-white/15 px-5 py-2 text-xs font-bold uppercase tracking-wide text-chalk transition-colors hover:border-chalk"
+            className="rounded-full border border-ink-black/15 bg-paper px-5 py-2 text-xs font-bold uppercase tracking-wide text-ink-black shadow-sm transition-colors hover:border-ink-black/30 hover:bg-ivory"
           >
             Get started
           </a>
@@ -85,20 +84,20 @@ export default function OluneLanding() {
         {/* Eyebrow */}
         <motion.div
           variants={rise}
-          className="mb-[clamp(1.4rem,3vw,2rem)] inline-flex items-center gap-4 text-[clamp(.62rem,1.4vw,.72rem)] uppercase tracking-[0.36em] text-muted"
+          className="mb-[clamp(1.4rem,3vw,2rem)] inline-flex items-center gap-4 text-[clamp(.62rem,1.4vw,.72rem)] font-medium uppercase tracking-[0.36em] text-slate"
         >
           <span className="h-px w-[clamp(28px,6vw,56px)] bg-iris" />
           The dance studio platform
         </motion.div>
 
         {/* Headline */}
-        <h1 className="font-display text-[clamp(3rem,11vw,10.5rem)] font-light uppercase leading-[0.92] tracking-[-0.015em] text-white">
+        <h1 className="font-display text-[clamp(3rem,11vw,10.5rem)] font-light uppercase leading-[0.92] tracking-[-0.015em] text-ink-black">
           <motion.span variants={rise} className="block">
             Your brand.
           </motion.span>
           <motion.span variants={rise} className="block">
             Your{" "}
-            <span className="font-serif text-[1.06em] font-light normal-case italic text-lumen [text-shadow:0_0_60px_rgba(107,102,201,.55)]">
+            <span className="font-serif text-[1.06em] font-light normal-case italic text-iris">
               studio.
             </span>
           </motion.span>
@@ -107,7 +106,7 @@ export default function OluneLanding() {
         {/* Sub-head */}
         <motion.p
           variants={rise}
-          className="mt-[clamp(1.4rem,3vw,2.2rem)] max-w-[46ch] text-[clamp(1rem,1.7vw,1.2rem)] leading-relaxed text-chalk/80"
+          className="mt-[clamp(1.4rem,3vw,2.2rem)] max-w-[46ch] text-[clamp(1rem,1.7vw,1.2rem)] leading-relaxed text-ink-black/75"
         >
           Olune is a white-label management platform for dance studios — scheduling,
           roll call, parent portals and invoicing, dressed entirely in your colours.
@@ -123,7 +122,7 @@ export default function OluneLanding() {
             whileHover={{ y: -3 }}
             whileTap={{ scale: 0.97 }}
             transition={{ type: "spring", stiffness: 400, damping: 22 }}
-            className="group inline-flex items-center gap-3 rounded-full bg-iris px-8 py-[1.05rem] text-sm font-semibold uppercase tracking-wide text-white shadow-[0_10px_40px_-12px_rgba(107,102,201,.65)] transition-colors hover:bg-lumen hover:text-midnight"
+            className="group inline-flex items-center gap-3 rounded-full bg-ink-black px-8 py-[1.05rem] text-sm font-semibold uppercase tracking-wide text-paper shadow-[0_10px_40px_-12px_rgba(0,0,0,.25)] transition-colors hover:bg-iris"
           >
             Start your studio
             <span className="transition-transform duration-300 group-hover:translate-x-1.5">→</span>
@@ -134,7 +133,7 @@ export default function OluneLanding() {
             whileHover={{ y: -3 }}
             whileTap={{ scale: 0.97 }}
             transition={{ type: "spring", stiffness: 400, damping: 22 }}
-            className="inline-flex items-center rounded-full border border-white/15 px-8 py-[1.05rem] text-sm font-bold uppercase tracking-wide text-chalk transition-colors hover:border-chalk"
+            className="inline-flex items-center rounded-full border border-ink-black/20 bg-paper/80 px-8 py-[1.05rem] text-sm font-bold uppercase tracking-wide text-ink-black backdrop-blur-sm transition-colors hover:border-ink-black/40 hover:bg-paper"
           >
             Sign in to your studio
           </motion.a>
@@ -148,7 +147,7 @@ export default function OluneLanding() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-10 inline-flex items-center gap-4 text-[0.68rem] uppercase tracking-[0.3em] text-muted"
+          className="mb-10 inline-flex items-center gap-4 text-[0.68rem] font-medium uppercase tracking-[0.3em] text-slate"
         >
           <span className="h-px w-8 bg-iris" />
           Everything a studio needs
@@ -162,20 +161,20 @@ export default function OluneLanding() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.55, delay: i * 0.07, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 backdrop-blur-sm"
+              className="rounded-2xl border border-ink-black/[0.08] bg-paper p-6 shadow-[0_2px_24px_-8px_rgba(0,0,0,.08)]"
             >
               <span className="mb-4 block text-xl text-iris">{f.icon}</span>
-              <p className="mb-2 text-sm font-bold uppercase tracking-wide text-chalk">
+              <p className="mb-2 text-sm font-bold uppercase tracking-wide text-ink-black">
                 {f.label}
               </p>
-              <p className="text-sm leading-relaxed text-muted">{f.desc}</p>
+              <p className="text-sm leading-relaxed text-slate">{f.desc}</p>
             </motion.div>
           ))}
         </div>
       </div>
 
-      {/* ── DISCIPLINE MARQUEE (same as studio hero — keeps brand language) ── */}
-      <div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden border-t border-white/10 py-[1.1rem] [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+      {/* ── MARQUEE ──────────────────────────────────────────────────────── */}
+      <div className="absolute inset-x-0 bottom-0 z-10 overflow-hidden border-t border-ink-black/10 bg-paper/60 py-[1.1rem] backdrop-blur-sm [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
         <motion.div
           className="flex w-max gap-12"
           animate={{ x: ["0%", "-50%"] }}
@@ -189,7 +188,7 @@ export default function OluneLanding() {
           ].map((d, i) => (
             <span
               key={i}
-              className="flex items-center gap-12 whitespace-nowrap text-sm uppercase tracking-[0.28em] text-muted after:text-xs after:text-iris after:content-['✦']"
+              className="flex items-center gap-12 whitespace-nowrap text-sm font-medium uppercase tracking-[0.28em] text-slate after:text-xs after:text-iris after:content-['✦']"
             >
               {d}
             </span>

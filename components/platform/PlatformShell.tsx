@@ -36,7 +36,7 @@ function Sidebar({
     <div className="flex h-full flex-col">
       <div className="border-b border-[--hair] p-5">
         <div className="mb-1 flex items-center gap-2.5">
-          <span className="grid h-8 w-8 shrink-0 place-items-center border border-white/20 bg-void text-xs font-black text-chalk">
+          <span className="grid h-8 w-8 shrink-0 place-items-center border border-ink-black/15 bg-paper text-xs font-black text-ink-black">
             O
           </span>
           <div>

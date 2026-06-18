@@ -19,12 +19,15 @@
   --color-lumen: #b9b5ee;
   --color-apricot: #f2b788;
   --color-halo: #f7f4ee;
+  --color-ivory: #faf8f3;
+  --color-paper: #ffffff;
+  --color-ink-black: #0a0a0a;
   --color-mist: #e7e5f1;
   --color-slate: #6c6a7e;
 
-  /* Legacy aliases mapped to Olune palette (keeps existing classnames working) */
-  --color-void: #1b1a38;
-  --color-chalk: #f7f4ee;
+  /* Legacy aliases — remapped for the light-first platform palette */
+  --color-void: #faf8f3;
+  --color-chalk: #0a0a0a;
   --color-crimson: #6b66c9;
   --color-ember: #b9b5ee;
   --color-oxblood: #3d3a8a;
@@ -41,14 +44,14 @@
   --brand: #6b66c9;
   --brand-hot: #8884d8;
   --brand-deep: #3d3a8a;
-  --base: #1b1a38;
-  --surface: #24234a;
-  --text: #f7f4ee;
+  --base: #faf8f3;
+  --surface: #ffffff;
+  --text: #0a0a0a;
   --muted: #6c6a7e;
-  --hair: rgba(247, 244, 238, 0.10);
-  --glow: 0.22;
-  --vignette: 0.55;
-  --grain: 0.05;
+  --hair: rgba(10, 10, 10, 0.08);
+  --glow: 0.12;
+  --vignette: 0.06;
+  --grain: 0.02;
   --font-display: "Fraunces", system-ui, sans-serif;
   --font-body: "Hanken Grotesk", system-ui, sans-serif;
 }

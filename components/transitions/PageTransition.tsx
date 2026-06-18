@@ -46,7 +46,7 @@ function CurtainReveal() {
           key={i}
           className="h-full flex-1"
           style={{
-            background: i % 2 ? "var(--brand)" : "#0A0A0B",
+            background: i % 2 ? "var(--brand)" : "var(--base)",
             transformOrigin: "top",
           }}
           initial={{ scaleY: 1 }}

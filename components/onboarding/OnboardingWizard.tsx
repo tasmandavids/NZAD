@@ -185,13 +185,12 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
                     <p className="mt-1 text-sm text-muted">Pick a brand colour — you can refine everything later.</p>
 
                     {/* live identity preview */}
-                    <div className="mt-5 rounded-2xl border border-[--hair] p-5"
-                      style={{ background: "#0A0A0B" }}>
+                    <div className="mt-5 rounded-2xl border border-[--hair] bg-base p-5">
                       <div className="flex items-center gap-2">
-                        <span className="grid h-8 w-8 place-items-center border text-sm font-black" style={{ borderColor: brand, color: "#fff" }}>{initial}</span>
-                        <span className="text-sm font-bold text-white">{studioName || "Your studio"}</span>
+                        <span className="grid h-8 w-8 place-items-center border text-sm font-black text-ink" style={{ borderColor: brand }}>{initial}</span>
+                        <span className="text-sm font-bold text-ink">{studioName || "Your studio"}</span>
                       </div>
-                      <button className="mt-4 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white" style={{ background: brand }}>Book a trial</button>
+                      <button className="mt-4 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-paper" style={{ background: brand }}>Book a trial</button>
                     </div>
 
                     <div className="mt-5 flex items-center gap-3">
