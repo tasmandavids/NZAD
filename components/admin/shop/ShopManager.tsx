@@ -5,7 +5,7 @@
 //  Left tab: Products grid. Right tab: Recent orders.
 // ============================================================================
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   createProduct,
@@ -15,6 +15,7 @@ import {
   deleteProduct,
   type ProductFormData,
 } from "@/app/portal/admin/shop/actions";
+import { refundSale } from "@/app/portal/admin/billing/refund-actions";
 
 interface Product {
   id:          string;
@@ -30,11 +31,12 @@ interface Product {
 }
 
 interface Order {
-  id:          string;
-  total_cents: number;
-  status:      string;
-  created_at:  string;
-  user_id:     string;
+  id:                       string;
+  total_cents:              number;
+  status:                   string;
+  created_at:               string;
+  user_id:                  string;
+  stripe_payment_intent_id: string | null;
   profiles: { first_name: string | null; last_name: string | null } | { first_name: string | null; last_name: string | null }[] | null;
 }
 
@@ -66,8 +68,44 @@ const BLANK: ProductFormData = {
   active:      true,
 };
 
-export function ShopManager({ products: initial, recentOrders }: Props) {
+function OrderRefundButton({ order, onDone }: { order: Order; onDone: (id: string) => void }) {
+  const [pending, startTransition] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+
+  if (order.status !== "paid") return <span className="text-muted">—</span>;
+  if (!order.stripe_payment_intent_id) {
+    return <span className="text-[0.7rem] text-muted">No card payment</span>;
+  }
+
+  const onClick = () => {
+    setErr(null);
+    if (!confirm(`Refund ${formatPrice(order.total_cents)} for this order? This restores stock and cannot be undone.`)) {
+      return;
+    }
+    startTransition(async () => {
+      const res = await refundSale("order", order.id);
+      if (res.ok) onDone(order.id);
+      else setErr(res.error);
+    });
+  };
+
+  return (
+    <div className="flex flex-col items-start gap-0.5">
+      <button
+        onClick={onClick}
+        disabled={pending}
+        className="rounded-lg border border-[--hair] px-2.5 py-1 text-[0.7rem] font-semibold text-red-500 hover:bg-red-500/10 disabled:opacity-50"
+      >
+        {pending ? "Refunding…" : "Refund"}
+      </button>
+      {err && <span className="text-[0.65rem] text-red-500">{err}</span>}
+    </div>
+  );
+}
+
+export function ShopManager({ products: initial, recentOrders: initialOrders }: Props) {
   const [products,   setProducts]   = useState(initial);
+  const [orders,     setOrders]      = useState<Order[]>(initialOrders);
   const [activeTab,  setActiveTab]  = useState<"products" | "orders">("products");
   const [search,     setSearch]     = useState("");
   const [catFilter,  setCatFilter]  = useState("all");
@@ -152,6 +190,9 @@ export function ShopManager({ products: initial, recentOrders }: Props) {
     if (res.ok) setProducts((prev) => prev.filter((x) => x.id !== p.id));
   }
 
+  const markOrderRefunded = (id: string) =>
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: "refunded" } : o)));
+
   return (
     <div className="h-full overflow-auto">
       <div className="mx-auto max-w-6xl px-6 py-8">
@@ -179,7 +220,7 @@ export function ShopManager({ products: initial, recentOrders }: Props) {
                 activeTab === tab ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink"
               }`}
             >
-              {tab === "products" ? `Products (${products.length})` : `Recent Orders (${recentOrders.length})`}
+              {tab === "products" ? `Products (${products.length})` : `Recent Orders (${orders.length})`}
             </button>
           ))}
         </div>
@@ -289,15 +330,16 @@ export function ShopManager({ products: initial, recentOrders }: Props) {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Total</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted"></th>
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.length === 0 ? (
+                {orders.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-muted">No orders yet.</td>
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted">No orders yet.</td>
                   </tr>
                 ) : (
-                  recentOrders.map((o) => {
+                  orders.map((o) => {
                     const p = Array.isArray(o.profiles) ? o.profiles[0] : o.profiles;
                     const name = p
                       ? [p.first_name, p.last_name].filter(Boolean).join(" ") || "Unknown"
@@ -313,6 +355,9 @@ export function ShopManager({ products: initial, recentOrders }: Props) {
                         </td>
                         <td className="px-4 py-3 text-muted">
                           {new Date(o.created_at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <OrderRefundButton order={o} onDone={markOrderRefunded} />
                         </td>
                       </tr>
                     );

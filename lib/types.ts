@@ -11,6 +11,28 @@ export interface Studio {
   status: string;
 }
 
+export type SiteLocation = {
+  name: string;
+  detail: string;
+};
+
+/** Footer / chrome settings stored in studio_branding.site_settings. */
+export type SiteSettings = {
+  footerTagline?: string;
+  showPoweredBy?: boolean;
+  portalLabel?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  regionLabel?: string;
+  locations?: SiteLocation[];
+};
+
+export const DEFAULT_SITE_SETTINGS: SiteSettings = {
+  showPoweredBy: true,
+  portalLabel: "Portal",
+  locations: [],
+};
+
 export interface Branding {
   studioId: string;
   tagline: string | null;
@@ -19,6 +41,7 @@ export interface Branding {
   base: ThemeBase;
   fontDisplay: string;
   fontBody: string;
+  siteSettings: SiteSettings;
 }
 
 export interface Palette {

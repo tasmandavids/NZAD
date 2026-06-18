@@ -5,7 +5,7 @@
 //  Steps: Basic Info → Venue → Tickets & Pricing → Review & Publish
 // ============================================================================
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   createEvent,
@@ -13,8 +13,11 @@ import {
   publishEvent,
   cancelEvent,
   deleteEvent,
+  getEventTickets,
   type EventFormData,
+  type TicketRow,
 } from "@/app/portal/admin/events/actions";
+import { refundSale } from "@/app/portal/admin/billing/refund-actions";
 
 interface Event {
   id:             string;
@@ -90,6 +93,48 @@ function WizardStepIndicator({ current }: { current: WizardStep }) {
   );
 }
 
+const TICKET_STATUS_BADGE: Record<string, string> = {
+  reserved:  "bg-yellow-500/10 text-yellow-600",
+  paid:      "bg-green-500/10 text-green-600",
+  cancelled: "bg-red-500/10 text-red-500",
+  refunded:  "bg-gray-500/10 text-gray-500",
+};
+
+function TicketRefundButton({ ticket, onDone }: { ticket: TicketRow; onDone: (id: string) => void }) {
+  const [pending, startTransition] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+
+  if (ticket.status !== "paid") return <span className="text-xs text-muted">—</span>;
+  if (!ticket.stripe_payment_intent_id) {
+    return <span className="text-[0.7rem] text-muted">No card payment</span>;
+  }
+
+  const onClick = () => {
+    setErr(null);
+    if (!confirm(`Refund ${formatPrice(ticket.total_cents)} for ${ticket.buyerName}? This frees the seat(s) and cannot be undone.`)) {
+      return;
+    }
+    startTransition(async () => {
+      const res = await refundSale("ticket", ticket.id);
+      if (res.ok) onDone(ticket.id);
+      else setErr(res.error);
+    });
+  };
+
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <button
+        onClick={onClick}
+        disabled={pending}
+        className="rounded-lg border border-[--hair] px-2.5 py-1 text-[0.7rem] font-semibold text-red-500 hover:bg-red-500/10 disabled:opacity-50"
+      >
+        {pending ? "Refunding…" : "Refund"}
+      </button>
+      {err && <span className="max-w-[12rem] text-right text-[0.65rem] text-red-500">{err}</span>}
+    </div>
+  );
+}
+
 // ── Main component ───────────────────────────────────────────────────────────
 
 export function EventsManager({ events: initial }: { events: Event[] }) {
@@ -101,6 +146,29 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState<string | null>(null);
   const [viewTickets, setViewTickets] = useState<Event | null>(null);
+  const [tickets,      setTickets]      = useState<TicketRow[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [ticketsError, setTicketsError] = useState<string | null>(null);
+
+  async function openTickets(ev: Event) {
+    setViewTickets(ev);
+    setTickets([]);
+    setTicketsError(null);
+    setTicketsLoading(true);
+    const res = await getEventTickets(ev.id);
+    setTicketsLoading(false);
+    if (res.ok) setTickets(res.tickets);
+    else setTicketsError(res.error);
+  }
+
+  function closeTickets() {
+    setViewTickets(null);
+    setTickets([]);
+    setTicketsError(null);
+  }
+
+  const markTicketRefunded = (id: string) =>
+    setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: "refunded" } : t)));
 
   function openCreate() {
     setEditTarget(null);
@@ -263,6 +331,12 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                       >
                         Edit
                       </button>
+                      <button
+                        onClick={() => openTickets(ev)}
+                        className="rounded-lg border border-[--hair] px-3 py-1.5 text-xs text-ink hover:bg-base"
+                      >
+                        Tickets
+                      </button>
                       {ev.status === "published" && (
                         <button
                           onClick={() => handleCancel(ev.id)}
@@ -298,9 +372,17 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                     <p className="text-sm font-medium text-ink">{ev.name}</p>
                     <p className="text-xs text-muted">{formatDate(ev.event_date)} · {ev.sold_tickets} tickets sold</p>
                   </div>
-                  <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${STATUS_BADGE[ev.status]}`}>
-                    {ev.status}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => openTickets(ev)}
+                      className="rounded-lg border border-[--hair] px-3 py-1 text-xs text-ink hover:bg-base"
+                    >
+                      Tickets
+                    </button>
+                    <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${STATUS_BADGE[ev.status]}`}>
+                      {ev.status}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -503,6 +585,63 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                     </>
                   )}
                 </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Ticket viewer / refund panel ──────────────────────────────────── */}
+      <AnimatePresence>
+        {viewTickets && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+              onClick={closeTickets}
+            />
+            <motion.div
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.35 }}
+              className="fixed right-0 top-0 z-50 flex h-full w-full max-w-lg flex-col bg-surface shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-ink truncate">{viewTickets.name}</h2>
+                  <p className="text-xs text-muted">Tickets &amp; refunds</p>
+                </div>
+                <button onClick={closeTickets} className="text-muted hover:text-ink text-lg">✕</button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto px-6 py-5">
+                {ticketsLoading ? (
+                  <p className="py-10 text-center text-sm text-muted">Loading tickets…</p>
+                ) : ticketsError ? (
+                  <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-500">{ticketsError}</p>
+                ) : tickets.length === 0 ? (
+                  <p className="py-10 text-center text-sm text-muted">No tickets purchased yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {tickets.map((t) => (
+                      <li
+                        key={t.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-[--hair] bg-base px-4 py-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-ink truncate">{t.buyerName}</p>
+                          <p className="text-xs text-muted">
+                            {t.quantity} × · {formatPrice(t.total_cents)} ·{" "}
+                            {new Date(t.purchased_at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+                          </p>
+                          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${TICKET_STATUS_BADGE[t.status] ?? ""}`}>
+                            {t.status}
+                          </span>
+                        </div>
+                        <TicketRefundButton ticket={t} onDone={markTicketRefunded} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </motion.div>
           </>

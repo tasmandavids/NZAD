@@ -5,7 +5,8 @@
 // ============================================================================
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Branding, Palette, ThemeBase } from "./types";
+import type { Branding, Palette, SiteSettings, ThemeBase } from "./types";
+import { DEFAULT_SITE_SETTINGS } from "./types";
 
 export const DEFAULT_BRANDING: Branding = {
   studioId: "",
@@ -15,6 +16,7 @@ export const DEFAULT_BRANDING: Branding = {
   base: "dark",
   fontDisplay: "Fraunces",
   fontBody: "Hanken Grotesk",
+  siteSettings: { ...DEFAULT_SITE_SETTINGS },
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -88,8 +90,27 @@ export function brandingToCssVars(b: Branding): Record<string, string> {
   };
 }
 
-/** Read a studio's branding (public-readable by RLS). Falls back to defaults
- *  so a brand-new studio still renders. */
+/** Parse site_settings jsonb from the DB. */
+export function parseSiteSettings(raw: unknown): SiteSettings {
+  if (!raw || typeof raw !== "object") return { ...DEFAULT_SITE_SETTINGS };
+  const o = raw as Record<string, unknown>;
+  const locations = Array.isArray(o.locations)
+    ? o.locations
+        .filter((l): l is Record<string, string> => !!l && typeof l === "object")
+        .map((l) => ({ name: String(l.name ?? ""), detail: String(l.detail ?? "") }))
+        .filter((l) => l.name)
+    : [];
+  return {
+    footerTagline: typeof o.footerTagline === "string" ? o.footerTagline : undefined,
+    showPoweredBy: typeof o.showPoweredBy === "boolean" ? o.showPoweredBy : DEFAULT_SITE_SETTINGS.showPoweredBy,
+    portalLabel: typeof o.portalLabel === "string" ? o.portalLabel : DEFAULT_SITE_SETTINGS.portalLabel,
+    contactEmail: typeof o.contactEmail === "string" ? o.contactEmail : undefined,
+    contactPhone: typeof o.contactPhone === "string" ? o.contactPhone : undefined,
+    regionLabel: typeof o.regionLabel === "string" ? o.regionLabel : undefined,
+    locations,
+  };
+}
+
 export async function getBranding(
   supabase: SupabaseClient,
   studioId: string,
@@ -110,5 +131,6 @@ export async function getBranding(
     base: data.base,
     fontDisplay: data.font_display,
     fontBody: data.font_body,
+    siteSettings: parseSiteSettings(data.site_settings),
   };
 }

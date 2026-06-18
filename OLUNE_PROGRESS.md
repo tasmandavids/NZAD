@@ -402,16 +402,139 @@ Closed out Session 10/11's Priority 1 (site-builder polish) and Priority 2 (imag
 
 ---
 
+## ✅ SESSION 13 — COMPLETE (2026-06-17)
+
+Closed out Session 12's Priority 1 (templates beyond the homepage) and Priority 2 (richText toolbar). Clean `tsc --noEmit --incremental false`.
+
+### Priority 1 — Site templates beyond the homepage ✅
+- `lib/site/templates.ts` (new) — single source of truth for page templates. `PageTemplate` type (meta + ordered block recipe with per-block prop overrides) + `buildTemplateBlocks()` (turns a recipe into real `Block`s via `makeBlock`, so each block still gets its defaults + appearance props, then applies defined overrides). Pure data — no server-only imports, safe on client + server.
+  - **3 home themes:** `home-classic` (the old starter stack: hero → features → classGrid → testimonials → cta → contact), `home-showcase` (image-led: bold hero → classGrid → gallery → testimonials[tint] → cta → contact), `home-minimal` (hero → richText[spacious, centered] → classGrid → cta).
+  - **3 sub-page templates:** `page-about` (hero → richText → features → testimonials → cta), `page-classes` (hero → classGrid[limit 24] → faq → cta), `page-contact` (hero → contact → faq). Each carries title/slug/navLabel/showInNav + SEO title/description.
+  - Exports `SITE_TEMPLATES`, `TEMPLATE_MAP`, `HOME_TEMPLATES`, `PAGE_TEMPLATES`.
+- `app/portal/admin/site/actions.ts` — new `createPageFromTemplate(templateId)` (admin-guarded; one-home-per-studio guard for home templates; slugify + RESERVED_SLUGS check for sub-pages; seeds meta + blocks; 23505 → friendly "already exists"). `createStarterHomepage()` kept as a thin backward-compatible alias → `createPageFromTemplate("home-classic")`. Removed the old inline `STARTER_STACK`.
+- `components/admin/site/SiteManager.tsx` — replaced the single "Create starter homepage" banner with a **"Choose a homepage style"** 3-card grid (shown only when no homepage exists) + an always-visible **"Add a page from a template"** grid (About/Classes/Contact). New `TemplateCard` presentational component; `onUseTemplate(id)` routes straight into the editor on success. Empty-state copy updated.
+
+### Priority 2 — richText editor toolbar ✅
+- `lib/site/blocks.ts` — `FieldDef` gains an optional `toolbar?: boolean`; set `toolbar: true` on the richText `body` field.
+- `components/admin/site/PageEditor.tsx` — new `RichTextArea` component rendered for `textarea` fields flagged `toolbar`. Selection-aware toolbar: **B** (wraps selection in `**…**`), **🔗 Link** (inserts `[text](url)` and drops the caret over the URL), **• List** / **1. List** (prefix every selected line with `- ` / `N. `). Caret/selection is restored after the controlled re-render via a `pendingSel` ref + `useEffect`. Inserts the exact markdown-lite syntax `BlockRenderer.renderRichBody` already parses (no renderer change needed). Textarea switched to monospace for legible syntax. Plain `textarea` path unchanged for non-toolbar fields.
+
+### Migrations: none this session (templates live entirely in the existing `blocks` JSON; toolbar is editor-only).
+### TypeScript: Clean build (`tsc --noEmit --incremental false` → no errors).
+
+---
+
+## ✅ SESSION 14 — COMPLETE (2026-06-17)
+
+Tackled the billing items carried from Session 9/12 P3: **admin-initiated Stripe refunds** (with stock/capacity restore) and **revenue-by-source reporting + MRR**. Clean `tsc --noEmit --incremental false`.
+
+### Priority 1 — Admin-initiated Stripe refunds ✅
+- `supabase/migrations/0023_refunds.sql` (new) — adds `refunded_at`, `refund_amount_cents`, `stripe_refund_id` to `invoices`, `orders`, `event_tickets`; adds `stripe_refund_id` to `payments`. New `restock_on_order_refund()` trigger restores `products.stock_qty` when an order flips `paid → refunded` (mirror of the 0010 decrement trigger). Event-ticket capacity needs no new trigger — the 0009 `sync_event_sold_tickets` already only counts `reserved`/`paid`, so a `refunded` ticket frees the seat automatically. Adds `'refunded'` as a valid `invoices.status` (the column is free-text).
+- `app/portal/admin/billing/refund-actions.ts` (new) — `refundSale(kind, id, amountCents?)`: admin-guarded + studio-scoped. Loads the sale (invoice/order/ticket; ticket studio resolved via `events!inner`), guards `status='paid'` + not-already-refunded + has a PaymentIntent, issues `stripe.refunds.create` (supports partial via `amountCents`), flips the row to `refunded` (fires the triggers), and records a **negative** `payments` ledger row (idempotent on `stripe_refund_id`). If Stripe succeeds but the DB update fails it surfaces the reconciliation gap rather than swallowing it.
+- `app/api/webhooks/stripe/route.ts` — new `charge.refunded` case reconciles **dashboard-initiated** refunds: matches the local row by `stripe_payment_intent_id` across invoices→orders→tickets, flips to `refunded`, inserts the negative ledger row. Idempotent on `stripe_refund_id` (no double-count with the admin action).
+- `components/admin/billing/BillingDashboard.tsx` — `Refund` button on every paid invoice row (confirm dialog, inline error, optimistic row→refunded), new `refunded` status badge + filter option. (Order/ticket refunds use the same `refundSale` action; UI buttons in ShopManager/EventsManager are a quick follow-up — see next session.)
+
+### Priority 2 — Revenue-by-source reporting + MRR ✅
+- `app/portal/admin/billing/page.tsx` — now fetches trailing-12-month paid **invoices** (tuition + auto-pay mirror), paid **orders** (merch), paid **event_tickets** (events), and active **subscriptions**. Computes a `SourceBreakdown` + normalised **MRR** (yearly plans ÷ 12). Refunded rows leave `paid` status so they're netted out automatically. Added `stripePaymentIntentId` to `InvoiceRow` so the refund button only shows when a card payment exists.
+- `BillingDashboard` — new **MRR** stat card (`N active auto-pay`) + a **"Revenue by source"** stacked bar (Tuition / Merchandise / Events) with per-segment legend + 12-month total.
+
+### Migrations to apply: 0023
+### Env: no new vars (refunds reuse `STRIPE_SECRET_KEY`; webhook reconciliation needs the `charge.refunded` event enabled on the Stripe endpoint).
+### TypeScript: Clean build (`tsc --noEmit --incremental false` → no errors)
+
+---
+
+## ✅ SESSION 15 — COMPLETE (2026-06-18)
+
+Closed out Session 14's Priority 1 — **refund buttons in ShopManager + EventsManager**. Clean `tsc --noEmit --incremental false`.
+
+### Refund button — ShopManager (orders) ✅
+- `app/portal/admin/shop/page.tsx` — orders query now also selects `stripe_payment_intent_id`.
+- `components/admin/shop/ShopManager.tsx` — `Order` interface gains `stripe_payment_intent_id`; `recentOrders` prop is now held in local state (`orders`) so a refund can flip the row optimistically. New `OrderRefundButton` (mirrors `BillingDashboard.RefundButton`): shows only for `paid` orders with a PaymentIntent, confirm dialog, inline error, calls `refundSale("order", id)` → `markOrderRefunded`. Added a trailing Actions column to the recent-orders table (header + cell; colspan bumped 4→5).
+
+### Refund button — EventsManager (per-ticket) ✅
+- **Design:** EventsManager only loaded event-level rows, so refunds operate on individual tickets via a new per-event ticket viewer (reuses the pre-existing-but-unused `viewTickets` state).
+- `app/portal/admin/events/actions.ts` — new `getEventTickets(eventId)` server action (admin-guarded, studio-scoped via `events!inner(studio_id)`; joins `profiles!event_tickets_user_id_fkey` for the buyer name) + exported `TicketRow` type.
+- `components/admin/events/EventsManager.tsx` — new **Tickets** button on every event row (upcoming + past) opens a right-hand slide-over that lazy-loads tickets, lists buyer / qty / amount / date / status, and shows a `TicketRefundButton` (only for `paid` tickets w/ a PaymentIntent) calling `refundSale("ticket", id)` → `markTicketRefunded`. Loading + error + empty states handled. Ticket status badge map added.
+
+### Notes
+- Both buttons issue **full** refunds (no partial UI yet — `refundSale` still accepts `amountCents` if a partial input is added later). Stock restore (orders, via 0023 trigger) and seat release (tickets, via 0009 sync trigger) happen automatically when the row flips to `refunded`.
+- No migration this session; reuses migration 0023 (refund columns) which must already be applied.
+
+### TypeScript: Clean build (`tsc --noEmit --incremental false` → no errors)
+
+---
+
+## ✅ SESSION 16 — COMPLETE (2026-06-18)
+
+Tackled NEXT-SESSION Priority 1: stood up an automated **test harness** and built the **EMAIL/SMS delivery layer**. Clean `tsc --noEmit --incremental false`; `npm test` → 36 passing.
+
+### Part A — Vitest test harness ✅
+- **Packages installed:** `vitest@2.1.9` (devDependency). No jsdom — tests are pure-function / mocked-Supabase, Node environment only.
+- `vitest.config.ts` (new) — Node env, `include: tests/**/*.test.ts`, `@/*` alias mirrors tsconfig (→ repo root) so test imports match app imports.
+- `package.json` — added `"test": "vitest run"` + `"test:watch": "vitest"`.
+- `tests/helpers/supabaseMock.ts` (new) — minimal chainable Supabase mock: `.from(table)` returns a builder that is chainable (every filter returns `this`), awaitable (resolves to the table's `list` response — drives `.in()/.eq()` count queries + plain selects), and exposes `.single()`. Lets the discount helpers run every branch with zero DB.
+- **24 money-flow unit tests:**
+  - `tests/currency.test.ts` — `formatMoney` (incl. nullish guard), `gstComponentCents` (15% inclusive math + rounding), currency constants.
+  - `tests/branding.test.ts` — `derivePalette` (hot/deep derivation + lightness clamp on near-white), `brandingToCssVars` (full var set, light vs dark surfaces), `getBranding` (defaults fallback + snake_case→shape mapping, via the mock).
+  - `tests/discounts.test.ts` — `siblingDiscountInfo` + `familyDiscountInfo` + `siblingDiscountedCents`: every branch (free class, pct 0, no siblings/kids, siblings-not-active, applies + rounding, retail opt-in gate).
+
+### Part B — EMAIL/SMS notification delivery ✅
+- **Decision:** delivery is a **separate outbound fan-out** over the existing `notifications` rows (the in-app row already exists the moment a trigger/cron creates it). A new deliver-cron flushes un-delivered rows. Providers use **REST via `fetch`** (Resend for email, Twilio for SMS) — **no new SDK dependencies**. Everything **no-ops gracefully** when keys are unset, so dev/test environments are unaffected.
+- `supabase/migrations/0024_notification_delivery.sql` (new) — adds `delivered_at`, `email_sent_at`, `sms_sent_at`, `delivery_attempts` (default 0), `delivery_error` to `notifications` + a partial index over the un-delivered queue. No RLS change (deliver cron is service-role).
+- `lib/notify/config.ts` (new) — single place that reads delivery env; `getEmailConfig`/`getSmsConfig` (null when unset) + `isEmailConfigured`/`isSmsConfigured`.
+- `lib/notify/messages.ts` (new, **pure/IO-free**) — `channelsForType(type)` routing (class_reminder + waitlist_promoted → email+SMS; enrollment_confirmed/payment_failed/invoice_overdue/birthday_greeting → email; message_received + unknown → in-app only), `renderNotificationEmail` (HTML-escaped, abs-link CTA via `NEXT_PUBLIC_APP_URL`), `renderNotificationSms` (joined + 320-char truncation).
+- `lib/notify/providers.ts` (new, server-only) — `sendEmail` (Resend `POST /emails`) + `sendSms` (Twilio `POST /Messages.json`, Basic auth). Discriminated `SendResult`: `{ok}` / `{ok:false,skipped:true}` (not configured) / `{ok:false,error}`.
+- `app/api/cron/deliver-notifications/route.ts` (new) — GET, service-role, `CRON_SECRET`-auth (fails closed in prod), `?limit=N` (default 200). Pulls `delivered_at is null` oldest-first, resolves recipient email/phone in one `profiles` query, sends per `channelsForType`. Terminal (mark delivered) when: no outbound channels, no recipient address, or provider unconfigured (skipped). Real send errors stay queued and retry up to `MAX_ATTEMPTS=3`, then give up keeping the last error. Returns a per-run summary.
+- `vercel.json` — added `*/15 * * * *` cron → `/api/cron/deliver-notifications`.
+- `.env.local.example` — documented `NEXT_PUBLIC_APP_URL` (for abs links) + optional `RESEND_API_KEY`/`RESEND_FROM` + `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM`.
+- **12 delivery unit tests** (`tests/notify.test.ts`) — channel routing, email render (escaping, abs link, no-link CTA omission), SMS render (join + truncation), config gates (require ALL keys).
+
+### Migrations to apply: 0024
+### Env (optional — delivery no-ops without them): `NEXT_PUBLIC_APP_URL`, `RESEND_API_KEY`, `RESEND_FROM`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`
+### TypeScript: Clean build (`tsc --noEmit --incremental false` → no errors). Tests: `npm test` → 36 passing.
+
+---
+
+## ✅ SESSION 17 — COMPLETE (2026-06-18)
+
+Advanced NEXT-SESSION Priority 1 by doing its DB-free half: **extracted the Stripe webhook's branch-selection + Stripe-object normalisation into a pure, fully unit-tested helper module.** No live DB needed, so this was the right slice to land autonomously. Clean `tsc --noEmit --incremental false`; `npm test` → **58 passing** (was 36; +22 new).
+
+### Pure webhook helpers ✅
+- `lib/webhooks/stripe-events.ts` (new, **pure / IO-free**) — extracts every *decision* the webhook route made inline:
+  - `classifyPaymentIntent(meta)` → discriminated `PaymentIntentTarget` (`invoice` / `order` / `ticket` / `none`). Encodes the route's precedence (invoice → order → ticket), the `supabase_user_id ?? user_id` payer fallback, and treats empty/whitespace metadata strings as absent so a stray `invoice_id=""` can't shadow a real `order_id`.
+  - `expandedId(ref)` → id from a Stripe expandable reference (string | `{id}` | null). Backs `subscriptionIdFromInvoice`, `paymentIntentIdFromInvoice`, and the refund PI lookup — replaces the four hand-rolled `typeof x === "string" ? … : x?.id ?? null` ladders.
+  - `invoiceAmountCents(inv)` → `amount_paid ?? total ?? 0` (preserves a real `0`).
+  - `subscriptionStatusFor(eventType, sub)` → `deleted` ⇒ `"canceled"`, else mirror status; `subscriptionPeriodEndEpoch` / `subscriptionPeriodEndIso` → top-level `current_period_end` with the newer per-item fallback.
+  - `refundDescriptor(charge)` → `{ paymentIntentId, refundId (charge.id fallback so the idempotency key is always defined), refundedCents }`.
+- `app/api/webhooks/stripe/route.ts` — refactored all five `case` blocks to call the helpers. **Behaviour-preserving** (same DB writes, same log lines, same precedence); the route now reads as persistence-only.
+- `tests/webhooks.test.ts` (new) — **22 tests** covering every branch: classification precedence + payer fallback + empty-string guard + `none`; `expandedId` string/object/null/empty; invoice normalisers incl. the `amount_paid: 0` edge; subscription status mapping; period-end top-level vs item-level vs null vs ISO; refund descriptor incl. expanded PI, charge-id fallback, and missing PI.
+
+### Notes / decisions
+- **Why not the rest of Priority 1 (true integration tests):** webhook idempotency replay, refund netting + restock/seat-release triggers, and waitlist auto-promotion all exercise **SQL triggers**, which need a live Postgres/Supabase — unavailable in this autonomous sandbox. Extracting the pure logic (the route's explicit follow-up) was the verifiable slice; the trigger-level tests still need a disposable Supabase + seed script next.
+- **Why not Priority 3 (partial-refund UI) this session:** `refundSale` already accepts `amountCents`, but a partial refund flips the row to `refunded`, and `billing/page.tsx` nets revenue by *excluding refunded rows* (`.eq("status","paid")`) rather than subtracting `refund_amount_cents`. Shipping the partial UI without first reworking that netting would silently drop the **full** sale from revenue + the monthly chart on any partial refund — a financial-reporting bug. Netting rework must land first (see Priority 3 below).
+
+### Migrations to apply: none this session.
+### Env: no new vars.
+### TypeScript: Clean build (`tsc --noEmit --incremental false` → no errors). Tests: `npm test` → 58 passing.
+
+---
+
 ## 🔄 NEXT SESSION — Start here
 
-### Priority 1: Templates beyond the homepage (carried from Session 11 P3)
-- Extend the `createStarterHomepage` concept to seed common sub-pages (About, Classes, Contact) and/or offer 2–3 visual themes (block stacks + default copy, now able to set per-block `_bg`/`_spacing`) at create time.
+### Priority 1: Integration tests for the money flows (carried, now narrowed further)
+- ✅ **Session 17** landed the DB-free half: the webhook's branch-selection + Stripe-object normalisation is now in pure `lib/webhooks/stripe-events.ts` with 22 unit tests. Still open: end-to-end / integration tests that need a **live DB or a Supabase test harness** — webhook idempotency (`stripe_events` 23505 replay short-circuit), refund netting + restock/seat-release triggers, and waitlist auto-promotion (the 0012 trigger). First step: a disposable Supabase (local `supabase start` or a test project) + a seed script, then drive the webhook route + SQL triggers against it. The pure helpers can now be composed into a thin route-level test that mocks only the Supabase client.
 
-### Priority 2: richText editor ergonomics (optional polish on Session 12 P1e)
-- The richText body is a plain textarea with markdown-lite syntax. Consider a lightweight toolbar (bold / link / list insert) or a small WYSIWYG so non-technical clients don't have to learn the syntax. The renderer already supports the output.
+### Priority 2: Wire delivery end-to-end + verify
+- The delivery layer is built but unproven against real providers. Set `RESEND_*` + `TWILIO_*` in a staging env, apply migration 0024, trigger a `class_reminder`/`enrollment_confirmed`, and confirm `email_sent_at`/`sms_sent_at` get stamped. Add a per-studio + per-user **delivery preference** (opt-out / channel choice) — currently routing is global per type. Also consider per-studio `RESEND_FROM` (branded sender) instead of one app-wide from address.
 
-### Priority 3 (carried from Session 9): Tests, refunds, revenue reporting, email/SMS
-- Still open from the billing work: automated tests for the money flows; admin-initiated Stripe refunds + restock/capacity restore; revenue-by-source reporting + MRR; EMAIL/SMS notification delivery (Resend/Twilio) off the existing `notifications` rows.
+### Priority 3: Partial-refund UI (quick follow-up to Session 15)
+- `refundSale(kind, id, amountCents?)` already supports partial refunds, but `OrderRefundButton`/`TicketRefundButton`/`RefundButton` all issue full refunds. Add an optional amount input. NB: per the Session 14 note, a partial refund still flips the row to `refunded`, which removes it entirely from source-revenue netting — switch to subtracting `refund_amount_cents` if partials become common.
+
+### Priority 4: richText WYSIWYG (optional polish on Session 13 P2)
+- The toolbar inserts markdown-lite syntax into a (now monospace) textarea. If clients find raw syntax intimidating, consider a true contentEditable/WYSIWYG surface. `BlockRenderer.renderRichBody` is the serialization target.
+
+### Priority 5: Template niceties
+- Small live thumbnail/preview per template card (reuse `BlockRenderer` scaled down). Let admins save their own page as a reusable template.
 
 ---
 
@@ -446,4 +569,7 @@ Closed out Session 10/11's Priority 1 (site-builder polish) and Priority 2 (imag
 - ✅ **Session 11:** site-builder `image` fields now upload to Supabase Storage (public `site-images` bucket, migration **0022**) via a service-role **signed upload URL** (`app/portal/admin/site/upload-actions.ts`) — admin-guarded, MIME + 8 MB validated, files namespaced `site-images/<studio_id>/<file>`. The inspector's `<ImageInput>` does upload-or-paste with a preview. **Apply migration 0022** and ensure `SUPABASE_SERVICE_ROLE_KEY` is set before image upload works (without the key the control shows "uploads not configured" and the manual-URL field still works). Images are `<img>` (not `next/image`) for now — see next-session Priority 2 for optimisation + orphan cleanup.
 - ✅ **Session 11:** studios with no homepage get a one-click **"Create starter homepage"** (`createStarterHomepage`) that seeds a full draft block stack; publish to go live.
 - ✅ **Session 12 (site polish):** blocks now support move ↑/↓, duplicate, and per-block appearance (`_bg` / `_spacing`, content blocks only — hero/CTA excepted). richText body is **markdown-lite** (paragraphs, `-`/`1.` lists, `**bold**`, `[links](url)`). Editor warns on unsaved navigate-away. **No migration** — `_bg`/`_spacing` live inside the existing `blocks` JSON; old blocks are seeded with their original defaults on load so there's no visual change until edited.
+- ✅ **Session 14 (refunds):** `refundSale()` always flips the row to `refunded` even for a partial refund (`amountCents < total`), so source-revenue netting treats a partial refund as a full removal. If partial refunds become common, switch to subtracting `refund_amount_cents` rather than excluding by status. **Apply migration 0023** and enable the `charge.refunded` event on the Stripe webhook endpoint so dashboard-initiated refunds reconcile.
 - ✅ **Session 12 (images):** gallery uses `next/image` **only** for our Supabase Storage host (configured in `next.config.ts` `images.remotePatterns`, derived from `NEXT_PUBLIC_SUPABASE_URL`); arbitrary pasted URLs fall back to plain `<img>` (they're not allow-listed, so optimising them would 500). Replacing/removing an uploaded image now deletes the old object (`deleteSiteImage`, scoped to the studio's own namespace), and raster uploads are downscaled to ≤1920px client-side before upload. **If you change Supabase projects, no code change needed** — the host is read from env at build.
+- ✅ **Session 16 (tests):** `npm test` runs Vitest (`vitest.config.ts`, Node env, `tests/**/*.test.ts`, `@/*` alias). Current coverage is **pure-logic only** — discounts, currency/GST, branding, and notification routing/render — via a chainable Supabase mock (`tests/helpers/supabaseMock.ts`). Webhook/refund/waitlist **integration** tests still need a live DB (next-session Priority 1). Tests are excluded from the Next build (they live under `tests/`, not `app/`).
+- ✅ **Session 16 (EMAIL/SMS delivery):** outbound delivery runs off the existing `notifications` rows via `/api/cron/deliver-notifications` (15-min Vercel cron, service-role, `CRON_SECRET`). Routing per type in `lib/notify/messages.ts` (`channelsForType`); providers are **REST `fetch`** — Resend (email) + Twilio (SMS), **no SDK deps** — and **no-op when keys are unset**. **Apply migration 0024** (delivery columns on `notifications`). Set `NEXT_PUBLIC_APP_URL` (for absolute links) + `RESEND_API_KEY`/`RESEND_FROM` + `TWILIO_*` to actually send; without them in-app notifications are unaffected and rows are marked delivered (skipped). Routing is **global per type** — no per-user opt-out yet (next-session Priority 2). Real send errors retry up to 3 cron passes before giving up.

@@ -5,7 +5,10 @@
 // ============================================================================
 
 import { createClient } from "@/lib/supabase/server";
+import { getBranding } from "@/lib/branding";
 import SiteManager, { type SitePageRow } from "@/components/admin/site/SiteManager";
+import { WebsiteSetupWizard } from "@/components/admin/site/WebsiteSetupWizard";
+import { PublicSiteUrlBanner } from "@/components/admin/site/PublicSiteUrlBanner";
 
 export default async function SitePagesPage() {
   const supabase = await createClient();
@@ -18,6 +21,14 @@ export default async function SitePagesPage() {
     .select("studio_id")
     .eq("id", user!.id)
     .single();
+
+  const { data: studio } = profile?.studio_id
+    ? await supabase.from("studios").select("name").eq("id", profile.studio_id).single()
+    : { data: null };
+
+  const branding = profile?.studio_id
+    ? await getBranding(supabase, profile.studio_id)
+    : null;
 
   const { data: pages } = profile?.studio_id
     ? await supabase
@@ -40,5 +51,22 @@ export default async function SitePagesPage() {
     updatedAt: p.updated_at as string,
   }));
 
-  return <SiteManager pages={rows} />;
+  if (rows.length === 0 && studio?.name) {
+    return (
+      <div className="space-y-4">
+        <PublicSiteUrlBanner />
+        <WebsiteSetupWizard
+          studioName={studio.name as string}
+          defaultTagline={branding?.tagline ?? null}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <PublicSiteUrlBanner />
+      <SiteManager pages={rows} />
+    </div>
+  );
 }

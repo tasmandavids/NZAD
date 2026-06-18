@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { resolveStudio } from "@/lib/tenant";
 import { createClient } from "@/lib/supabase/server";
+import { googleFontsStylesheetUrl } from "@/lib/fonts";
 import { getBranding, brandingToCssVars, DEFAULT_BRANDING } from "@/lib/branding";
 import type { CSSProperties } from "react";
 
@@ -32,18 +33,14 @@ export default async function RootLayout({
     : { ...DEFAULT_BRANDING };
 
   const vars = brandingToCssVars(branding) as CSSProperties;
+  const fontsUrl = googleFontsStylesheetUrl(branding.fontDisplay, branding.fontBody);
 
   return (
     <html lang="en-NZ" data-base={branding.base} style={vars}>
       <head>
-        {/* Default brand fonts — Fraunces (display/serif) + Hanken Grotesk (body/UI).
-            Loaded by name so a studio can swap via its branding row without a code change. */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
+        {fontsUrl && <link href={fontsUrl} rel="stylesheet" />}
       </head>
       <body>{children}</body>
     </html>

@@ -89,7 +89,7 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
         .eq("studio_id", studioId);
     }
     go("done");
-    setTimeout(() => { router.push("/portal/admin"); router.refresh(); }, 1300);
+    setTimeout(() => { router.push("/portal/admin/site"); router.refresh(); }, 1300);
   }
 
   const stepIndex = { account: 0, studio: 1, brand: 2, done: 3 }[step];
@@ -154,7 +154,7 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
                     <h1 className="text-2xl font-black tracking-tight">Name your studio</h1>
                     <p className="mt-1 text-sm text-muted">This is what your dancers and whānau will see.</p>
                     <div className="mt-6 space-y-4">
-                      <input className="field-premium" type="text" placeholder="New Zealand Academy of Dance"
+                      <input className="field-premium" type="text" placeholder="Sunrise Dance Studio"
                         value={studioName} onChange={(e) => setStudioName(e.target.value)} autoFocus />
                       <div>
                         <div className="flex items-center overflow-hidden rounded-xl border border-[--hair] bg-base/40 focus-within:border-[--brand]">

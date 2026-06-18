@@ -9,12 +9,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   createPage,
-  createStarterHomepage,
+  createPageFromTemplate,
   publishPage,
   unpublishPage,
   setHomePage,
   deletePage,
 } from "@/app/portal/admin/site/actions";
+import { HOME_TEMPLATES, PAGE_TEMPLATES } from "@/lib/site/templates";
 
 export type SitePageRow = {
   id: string;
@@ -50,10 +51,10 @@ export default function SiteManager({ pages }: { pages: SitePageRow[] }) {
       router.push(`/portal/admin/site/${res.data.id}`);
     });
 
-  const onSeedStarter = () =>
+  const onUseTemplate = (templateId: string) =>
     startTransition(async () => {
       setError(null);
-      const res = await createStarterHomepage();
+      const res = await createPageFromTemplate(templateId);
       if (!res.ok) {
         setError(res.error);
         return;
@@ -120,27 +121,39 @@ export default function SiteManager({ pages }: { pages: SitePageRow[] }) {
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       {!hasHome && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-brand/30 bg-brand/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <section className="space-y-3 rounded-2xl border border-brand/30 bg-brand/5 p-5">
           <div>
-            <h2 className="font-semibold text-ink">Start with a ready-made homepage</h2>
+            <h2 className="font-semibold text-ink">Choose a homepage style</h2>
             <p className="text-sm text-muted">
-              Seeds a complete layout — hero, features, class showcase, testimonials, call-to-action
-              and contact — that you can edit and publish.
+              Pick a ready-made layout to start from — every block is fully editable, and you publish
+              when you&apos;re ready.
             </p>
           </div>
-          <button
-            onClick={onSeedStarter}
-            disabled={pending}
-            className="btn-glow btn-glow--solid shrink-0 px-5 py-2 text-sm disabled:opacity-50"
-          >
-            {pending ? "Creating…" : "Create starter homepage"}
-          </button>
-        </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {HOME_TEMPLATES.map((t) => (
+              <TemplateCard key={t.id} label={t.label} description={t.description} disabled={pending} onClick={() => onUseTemplate(t.id)} />
+            ))}
+          </div>
+        </section>
       )}
+
+      <section className="space-y-3 rounded-2xl border border-[--hair] bg-surface p-5">
+        <div>
+          <h2 className="font-semibold text-ink">Add a page from a template</h2>
+          <p className="text-sm text-muted">
+            Start a common page with sensible copy and layout already in place.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {PAGE_TEMPLATES.map((t) => (
+            <TemplateCard key={t.id} label={t.label} description={t.description} disabled={pending} onClick={() => onUseTemplate(t.id)} />
+          ))}
+        </div>
+      </section>
 
       {pages.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[--hair] p-10 text-center text-muted">
-          No pages yet. Create a starter homepage above, or build one from scratch.
+          No pages yet. Pick a template above, or build one from scratch with “+ New page”.
         </div>
       ) : (
         <ul className="space-y-3">
@@ -227,6 +240,29 @@ export default function SiteManager({ pages }: { pages: SitePageRow[] }) {
         </ul>
       )}
     </div>
+  );
+}
+
+function TemplateCard({
+  label,
+  description,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  description: string;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex h-full flex-col gap-1 rounded-xl border border-[--hair] bg-surface p-4 text-left transition hover:border-brand disabled:opacity-50"
+    >
+      <span className="font-semibold text-ink">{label}</span>
+      <span className="text-xs text-muted">{description}</span>
+    </button>
   );
 }
 

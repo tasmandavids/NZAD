@@ -23,12 +23,12 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative">
-      {/* content rises in as the curtains lift */}
+      {/* Keep content visible without JS — only animate when motion is allowed */}
       <motion.main
         key={pathname}
-        initial={reduce ? false : { opacity: 0, y: 14 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: EASE, delay: reduce ? 0 : 0.32 }}
+        initial={false}
+        animate={reduce ? undefined : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: EASE, delay: 0.32 }}
       >
         {children}
       </motion.main>

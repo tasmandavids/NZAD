@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 async function getAdminStudio() {
   const supabase = await createClient();
@@ -145,21 +146,32 @@ export async function addStudent(input: unknown): Promise<ActionResult> {
   const parsed = StudentSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
 
-  const { error, supabase, studioId } = await getAdminStudio();
+  const { error, studioId } = await getAdminStudio();
   if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
 
-  // Supabase Auth is the identity source; for admin-added students we create an
-  // auth user via the admin API (requires service-role key). In this starter we
-  // insert a profile stub with a generated UUID and no auth.users link so the
-  // admin can manage their roster before the student logs in.
-  // NOTE: studio admins cannot call supabase.auth.admin.* from the client SDK.
-  // A real implementation would use a Supabase Edge Function.
-  // For now, we generate a profile row to satisfy the admin roster.
-  const newId = crypto.randomUUID();
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return {
+      ok: false,
+      error: "Adding students requires SUPABASE_SERVICE_ROLE_KEY in .env.local (Supabase → Settings → API).",
+    };
+  }
 
   const d = parsed.data;
-  const { error: dbError } = await supabase.from("profiles").insert({
-    id:        newId,
+  const authEmail = d.email || `${crypto.randomUUID()}@students.olune.local`;
+
+  const { data: authData, error: authErr } = await admin.auth.admin.createUser({
+    email: authEmail,
+    email_confirm: true,
+    user_metadata: { full_name: d.fullName },
+  });
+  if (authErr) return { ok: false, error: authErr.message };
+
+  const userId = authData.user.id;
+  const { error: dbError } = await admin.from("profiles").upsert({
+    id:        userId,
     studio_id: studioId,
     role:      "student",
     full_name: d.fullName,

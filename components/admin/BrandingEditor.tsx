@@ -22,7 +22,7 @@ const PRESETS: { label: string; brandColor: string; base: ThemeBase }[] = [
   { label: "Jade", brandColor: "#13B6A4", base: "dark" },
 ];
 
-const FONTS = ["Archivo", "Inter", "Sora", "Outfit", "Manrope"];
+const FONTS = ["Fraunces", "Cormorant Garamond", "Archivo", "Inter", "Sora", "Outfit", "Manrope", "Hanken Grotesk"];
 
 export function BrandingEditor({ initial }: { initial: Branding }) {
   const [b, setB] = useState<Branding>(initial);
@@ -44,6 +44,7 @@ export function BrandingEditor({ initial }: { initial: Branding }) {
         base: b.base,
         fontDisplay: b.fontDisplay,
         fontBody: b.fontBody,
+        siteSettings: b.siteSettings,
       });
       setStatus(res.ok ? "Saved" : res.error);
       setTimeout(() => setStatus(null), 2500);
@@ -152,6 +153,103 @@ export function BrandingEditor({ initial }: { initial: Branding }) {
               {FONTS.map((f) => <option key={f}>{f}</option>)}
             </select>
           </div>
+          <div className="space-y-2">
+            <h2 className="text-xs uppercase tracking-widest text-muted">Body font</h2>
+            <select
+              value={b.fontBody}
+              onChange={(e) => set("fontBody", e.target.value)}
+              className="w-full rounded-lg border border-[--hair] bg-base/40 px-3 py-2 text-sm"
+            >
+              {FONTS.map((f) => <option key={f}>{f}</option>)}
+            </select>
+          </div>
+        </section>
+
+        {/* Website chrome (footer / portal) */}
+        <section className="space-y-3">
+          <h2 className="text-xs uppercase tracking-widest text-muted">Website chrome</h2>
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">Footer tagline</span>
+            <textarea
+              rows={2}
+              value={b.siteSettings.footerTagline ?? ""}
+              onChange={(e) =>
+                setB((prev) => ({
+                  ...prev,
+                  siteSettings: { ...prev.siteSettings, footerTagline: e.target.value || undefined },
+                }))
+              }
+              className="w-full rounded-lg border border-[--hair] bg-base/40 px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">Portal button label</span>
+            <input
+              value={b.siteSettings.portalLabel ?? "Portal"}
+              onChange={(e) =>
+                setB((prev) => ({
+                  ...prev,
+                  siteSettings: { ...prev.siteSettings, portalLabel: e.target.value },
+                }))
+              }
+              className="w-full rounded-lg border border-[--hair] bg-base/40 px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">Contact email</span>
+            <input
+              type="email"
+              value={b.siteSettings.contactEmail ?? ""}
+              onChange={(e) =>
+                setB((prev) => ({
+                  ...prev,
+                  siteSettings: { ...prev.siteSettings, contactEmail: e.target.value || undefined },
+                }))
+              }
+              className="w-full rounded-lg border border-[--hair] bg-base/40 px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">Contact phone</span>
+            <input
+              value={b.siteSettings.contactPhone ?? ""}
+              onChange={(e) =>
+                setB((prev) => ({
+                  ...prev,
+                  siteSettings: { ...prev.siteSettings, contactPhone: e.target.value || undefined },
+                }))
+              }
+              className="w-full rounded-lg border border-[--hair] bg-base/40 px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block text-muted">Region label (footer)</span>
+            <input
+              value={b.siteSettings.regionLabel ?? ""}
+              onChange={(e) =>
+                setB((prev) => ({
+                  ...prev,
+                  siteSettings: { ...prev.siteSettings, regionLabel: e.target.value || undefined },
+                }))
+              }
+              placeholder="Aotearoa, New Zealand"
+              className="w-full rounded-lg border border-[--hair] bg-base/40 px-3 py-2"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={b.siteSettings.showPoweredBy !== false}
+              onChange={(e) =>
+                setB((prev) => ({
+                  ...prev,
+                  siteSettings: { ...prev.siteSettings, showPoweredBy: e.target.checked },
+                }))
+              }
+              className="h-4 w-4 accent-[--brand]"
+            />
+            <span className="text-ink">Show &quot;Powered by Olune&quot; in footer</span>
+          </label>
         </section>
 
         {status && (

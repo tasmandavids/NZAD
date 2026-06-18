@@ -127,6 +127,57 @@ export async function cancelEvent(eventId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+export type TicketRow = {
+  id:                       string;
+  quantity:                 number;
+  total_cents:              number;
+  status:                   string;
+  purchased_at:             string;
+  stripe_payment_intent_id: string | null;
+  buyerName:                string;
+};
+
+/**
+ * List the tickets for one event (admin-only, studio-scoped via the parent
+ * event). Used by the per-event ticket viewer + refund panel.
+ */
+export async function getEventTickets(
+  eventId: string,
+): Promise<{ ok: true; tickets: TicketRow[] } | { ok: false; error: string }> {
+  const { error, supabase, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown" };
+
+  const { data, error: dbErr } = await supabase
+    .from("event_tickets")
+    .select(
+      "id, quantity, total_cents, status, purchased_at, stripe_payment_intent_id, events!inner(studio_id), profiles!event_tickets_user_id_fkey(first_name, last_name)",
+    )
+    .eq("event_id", eventId)
+    .eq("events.studio_id", studioId)
+    .order("purchased_at", { ascending: false });
+
+  if (dbErr) return { ok: false, error: dbErr.message };
+
+  const tickets: TicketRow[] = (data ?? []).map((t) => {
+    const prof = (Array.isArray(t.profiles) ? t.profiles[0] : t.profiles) as
+      | { first_name: string | null; last_name: string | null }
+      | null;
+    const buyerName =
+      prof ? [prof.first_name, prof.last_name].filter(Boolean).join(" ") || "Unknown" : "Unknown";
+    return {
+      id:                       t.id,
+      quantity:                 t.quantity,
+      total_cents:              t.total_cents,
+      status:                   t.status,
+      purchased_at:             t.purchased_at,
+      stripe_payment_intent_id: t.stripe_payment_intent_id,
+      buyerName,
+    };
+  });
+
+  return { ok: true, tickets };
+}
+
 export async function deleteEvent(eventId: string): Promise<ActionResult> {
   const { error, supabase, studioId } = await getAdminStudio();
   if (error || !studioId) return { ok: false, error: error ?? "Unknown" };

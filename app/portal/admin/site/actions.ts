@@ -9,7 +9,14 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { normalizeBlocks, makeBlock, type BlockType } from "@/lib/site/blocks";
+import { normalizeBlocks } from "@/lib/site/blocks";
+import { TEMPLATE_MAP, buildTemplateBlocks } from "@/lib/site/templates";
+import { derivePalette } from "@/lib/branding";
+import {
+  buildSetupPages,
+  validateSetupInput,
+  type SetupHomeId,
+} from "@/lib/site/setup";
 
 export type ActionResult<T = null> =
   | { ok: true; data: T }
@@ -104,43 +111,50 @@ export async function createPage(input: unknown): Promise<ActionResult<{ id: str
   return { ok: true, data: { id: data.id as string } };
 }
 
-// ─── STARTER HOMEPAGE ─────────────────────────────────────────────────────────
+// ─── CREATE FROM TEMPLATE ───────────────────────────────────────────────────
 
-// A sensible default block stack so a studio gets a complete site in one click.
-const STARTER_STACK: BlockType[] = [
-  "hero",
-  "features",
-  "classGrid",
-  "testimonials",
-  "cta",
-  "contact",
-];
+export async function createPageFromTemplate(
+  templateId: string,
+): Promise<ActionResult<{ id: string }>> {
+  const template = TEMPLATE_MAP[templateId];
+  if (!template) return { ok: false, error: "Unknown template." };
 
-export async function createStarterHomepage(): Promise<ActionResult<{ id: string }>> {
   const { error, supabase, studioId } = await getAdminStudio();
   if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
 
-  // Don't clobber an existing homepage.
-  const { data: existingHome } = await supabase
-    .from("site_pages")
-    .select("id")
-    .eq("studio_id", studioId)
-    .eq("is_home", true)
-    .maybeSingle();
-  if (existingHome) {
-    return { ok: false, error: "You already have a homepage. Edit it instead." };
+  const isHome = !!template.isHome;
+
+  // One home per studio — refuse rather than clobber an existing homepage.
+  if (isHome) {
+    const { data: existingHome } = await supabase
+      .from("site_pages")
+      .select("id")
+      .eq("studio_id", studioId)
+      .eq("is_home", true)
+      .maybeSingle();
+    if (existingHome) {
+      return { ok: false, error: "You already have a homepage. Edit it instead." };
+    }
   }
 
-  const blocks = STARTER_STACK.map((type) => makeBlock(type));
+  const slug = isHome ? "home" : slugify(template.slug || template.title);
+  if (!isHome && (RESERVED_SLUGS.has(slug) || !slug)) {
+    return { ok: false, error: `"${slug}" is a reserved or invalid URL.` };
+  }
+
+  const blocks = buildTemplateBlocks(template.blocks);
 
   const { data, error: dbErr } = await supabase
     .from("site_pages")
     .insert({
       studio_id: studioId,
-      title: "Home",
-      slug: "home",
-      is_home: true,
-      show_in_nav: false,
+      title: template.title,
+      slug,
+      is_home: isHome,
+      show_in_nav: template.showInNav ?? false,
+      nav_label: template.navLabel || null,
+      seo_title: template.seoTitle || null,
+      seo_description: template.seoDescription || null,
       blocks,
       status: "draft",
     })
@@ -148,12 +162,121 @@ export async function createStarterHomepage(): Promise<ActionResult<{ id: string
     .single();
 
   if (dbErr) {
-    if (dbErr.code === "23505") return { ok: false, error: "A homepage already exists." };
+    if (dbErr.code === "23505") {
+      return {
+        ok: false,
+        error: isHome ? "A homepage already exists." : "A page with that URL already exists.",
+      };
+    }
     return { ok: false, error: dbErr.message };
   }
 
   refresh();
   return { ok: true, data: { id: data.id as string } };
+}
+
+// Backwards-compatible alias: seeds the "Classic" homepage theme.
+export async function createStarterHomepage(): Promise<ActionResult<{ id: string }>> {
+  return createPageFromTemplate("home-classic");
+}
+
+// ─── WEBSITE SETUP (wizard) ───────────────────────────────────────────────────
+
+const SetupSchema = z.object({
+  homeTemplateId: z.enum(["home-classic", "home-showcase", "home-minimal", "home-bold"]),
+  pageTemplateIds: z.array(z.string()).default([]),
+  tagline: z.string().max(120).optional().nullable(),
+  fontDisplay: z.string().max(60),
+  fontBody: z.string().max(60),
+  publishHome: z.coerce.boolean().optional(),
+});
+
+export async function setupStudioWebsite(input: unknown): Promise<ActionResult<{ homePageId: string; pageIds: string[] }>> {
+  const parsed = SetupSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const { error, supabase, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+
+  const { data: studio } = await supabase.from("studios").select("name").eq("id", studioId).single();
+  if (!studio?.name) return { ok: false, error: "Could not load studio." };
+
+  const { data: existingPages } = await supabase
+    .from("site_pages")
+    .select("id")
+    .eq("studio_id", studioId)
+    .limit(1);
+  if (existingPages?.length) {
+    return { ok: false, error: "Your website already has pages. Use the page manager to add more." };
+  }
+
+  const setupInput = {
+    homeTemplateId: parsed.data.homeTemplateId as SetupHomeId,
+    pageTemplateIds: parsed.data.pageTemplateIds,
+    studioName: studio.name as string,
+    tagline: parsed.data.tagline,
+    fontDisplay: parsed.data.fontDisplay,
+    fontBody: parsed.data.fontBody,
+  };
+
+  const validationError = validateSetupInput(setupInput);
+  if (validationError) return { ok: false, error: validationError };
+
+  let drafts;
+  try {
+    drafts = buildSetupPages(setupInput);
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Could not build pages." };
+  }
+
+  const palette = derivePalette(
+    (await supabase.from("studio_branding").select("brand_color").eq("studio_id", studioId).single())
+      .data?.brand_color ?? "#6B66C9",
+  );
+
+  const { error: brandErr } = await supabase.from("studio_branding").upsert({
+    studio_id: studioId,
+    tagline: parsed.data.tagline ?? null,
+    font_display: parsed.data.fontDisplay,
+    font_body: parsed.data.fontBody,
+    brand_hot: palette.brandHot,
+    brand_deep: palette.brandDeep,
+    updated_at: new Date().toISOString(),
+  });
+  if (brandErr) return { ok: false, error: brandErr.message };
+
+  const pageIds: string[] = [];
+  let homePageId = "";
+
+  for (const draft of drafts) {
+    const status = draft.isHome && parsed.data.publishHome !== false ? "published" : "draft";
+    const { data, error: dbErr } = await supabase
+      .from("site_pages")
+      .insert({
+        studio_id: studioId,
+        title: draft.title,
+        slug: draft.slug,
+        is_home: draft.isHome,
+        show_in_nav: draft.showInNav,
+        nav_label: draft.navLabel,
+        seo_title: draft.seoTitle,
+        seo_description: draft.seoDescription,
+        blocks: draft.blocks,
+        status,
+      })
+      .select("id")
+      .single();
+
+    if (dbErr) return { ok: false, error: dbErr.message };
+    const id = data.id as string;
+    pageIds.push(id);
+    if (draft.isHome) homePageId = id;
+  }
+
+  refresh();
+  return { ok: true, data: { homePageId, pageIds } };
 }
 
 // ─── UPDATE META ────────────────────────────────────────────────────────────────
@@ -254,8 +377,13 @@ async function setStatus(pageId: string, status: "draft" | "published"): Promise
   return { ok: true, data: null };
 }
 
-export const publishPage = (pageId: string) => setStatus(pageId, "published");
-export const unpublishPage = (pageId: string) => setStatus(pageId, "draft");
+export async function publishPage(pageId: string): Promise<ActionResult> {
+  return setStatus(pageId, "published");
+}
+
+export async function unpublishPage(pageId: string): Promise<ActionResult> {
+  return setStatus(pageId, "draft");
+}
 
 // ─── SET HOME ───────────────────────────────────────────────────────────────────
 

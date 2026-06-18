@@ -29,7 +29,7 @@ export default async function ShopPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("orders")
-      .select("id, total_cents, status, created_at, user_id, profiles!orders_user_id_fkey(first_name, last_name)")
+      .select("id, total_cents, status, created_at, user_id, stripe_payment_intent_id, profiles!orders_user_id_fkey(first_name, last_name)")
       .eq("studio_id", profile.studio_id)
       .order("created_at", { ascending: false })
       .limit(20),

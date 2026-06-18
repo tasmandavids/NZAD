@@ -6,7 +6,7 @@
 //  inspector for the selected block. Right: live preview (BlockRenderer).
 // ============================================================================
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -405,7 +405,7 @@ export default function PageEditor({ page }: { page: EditablePage }) {
         {/* Live preview */}
         <div className="min-w-0 flex-1 overflow-y-auto bg-base">
           <div className="pointer-events-none">
-            <BlockRenderer blocks={blocks} context={{ classes: PREVIEW_CLASSES }} />
+            <BlockRenderer blocks={blocks} context={PREVIEW_CONTEXT} />
           </div>
         </div>
       </div>
@@ -487,6 +487,12 @@ function ScalarField({
             </option>
           ))}
         </select>
+      ) : field.type === "textarea" && field.toolbar ? (
+        <RichTextArea
+          value={str}
+          placeholder={field.placeholder}
+          onChange={(v) => onSet(field.key, v)}
+        />
       ) : field.type === "textarea" ? (
         <textarea
           value={str}
@@ -520,6 +526,112 @@ function ScalarField({
       )}
       {field.help && <span className="mt-1 block text-xs text-muted">{field.help}</span>}
     </label>
+  );
+}
+
+// ─── RichTextArea (markdown-lite textarea with a formatting toolbar) ──────────
+//  Inserts the same markdown-lite syntax BlockRenderer understands, so
+//  non-technical clients don't have to learn it by hand. Selection-aware:
+//  wraps/links the highlighted text, or inserts a sensible placeholder.
+
+function RichTextArea({
+  value,
+  placeholder,
+  onChange,
+}: {
+  value: string;
+  placeholder?: string;
+  onChange: (v: string) => void;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  // After a controlled re-render we restore the caret/selection here.
+  const pendingSel = useRef<[number, number] | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (pendingSel.current && el) {
+      const [s, e] = pendingSel.current;
+      el.focus();
+      el.setSelectionRange(s, e);
+      pendingSel.current = null;
+    }
+  });
+
+  const apply = (next: string, selStart: number, selEnd: number) => {
+    pendingSel.current = [selStart, selEnd];
+    onChange(next);
+  };
+
+  // Wrap the current selection (or a placeholder) in a token like **…**.
+  const wrap = (token: string, fallback: string) => {
+    const el = ref.current;
+    if (!el) return;
+    const s = el.selectionStart;
+    const e = el.selectionEnd;
+    const sel = value.slice(s, e) || fallback;
+    const next = value.slice(0, s) + token + sel + token + value.slice(e);
+    apply(next, s + token.length, s + token.length + sel.length);
+  };
+
+  // Insert a [text](url) link, leaving the caret over the url for editing.
+  const insertLink = () => {
+    const el = ref.current;
+    if (!el) return;
+    const s = el.selectionStart;
+    const e = el.selectionEnd;
+    const text = value.slice(s, e) || "link text";
+    const url = "https://";
+    const inserted = `[${text}](${url})`;
+    const next = value.slice(0, s) + inserted + value.slice(e);
+    const urlStart = s + 1 + text.length + 2; // past "[text]("
+    apply(next, urlStart, urlStart + url.length);
+  };
+
+  // Prefix every line touched by the selection with a list marker.
+  const prefixLines = (kind: "bullet" | "number") => {
+    const el = ref.current;
+    if (!el) return;
+    const s = el.selectionStart;
+    const e = el.selectionEnd;
+    const lineStart = value.lastIndexOf("\n", s - 1) + 1;
+    const after = value.indexOf("\n", e);
+    const lineEnd = after === -1 ? value.length : after;
+    const lines = value.slice(lineStart, lineEnd).split("\n");
+    const transformed = lines
+      .map((ln, i) => (kind === "bullet" ? `- ${ln}` : `${i + 1}. ${ln}`))
+      .join("\n");
+    const next = value.slice(0, lineStart) + transformed + value.slice(lineEnd);
+    apply(next, lineStart, lineStart + transformed.length);
+  };
+
+  const btn =
+    "rounded-md border border-[--hair] bg-surface px-2 py-1 text-xs font-medium text-ink transition hover:border-brand hover:text-brand";
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1.5">
+        <button type="button" onClick={() => wrap("**", "bold text")} title="Bold" className={`${btn} font-bold`}>
+          B
+        </button>
+        <button type="button" onClick={insertLink} title="Insert link" className={btn}>
+          🔗 Link
+        </button>
+        <button type="button" onClick={() => prefixLines("bullet")} title="Bullet list" className={btn}>
+          • List
+        </button>
+        <button type="button" onClick={() => prefixLines("number")} title="Numbered list" className={btn}>
+          1. List
+        </button>
+      </div>
+      <textarea
+        ref={ref}
+        value={value}
+        rows={6}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="field-premium font-mono text-xs leading-relaxed"
+      />
+    </div>
   );
 }
 
@@ -665,9 +777,27 @@ function PageSettings({
   );
 }
 
-// Placeholder classes so the classGrid block previews with content.
-const PREVIEW_CLASSES = [
-  { id: "p1", name: "Ballet — Beginners", discipline: "Ballet", level: "Beginner", priceCents: 12000 },
-  { id: "p2", name: "Contemporary", discipline: "Contemporary", level: "All levels", priceCents: 14000 },
-  { id: "p3", name: "Hip Hop Juniors", discipline: "Hip Hop", level: "Juniors", priceCents: 11000 },
-];
+// Placeholder data so dynamic blocks preview with content in the editor.
+const PREVIEW_CONTEXT = {
+  classes: [
+    { id: "p1", name: "Ballet — Beginners", discipline: "Ballet", level: "Beginner", stream: "Beginners", room: "Studio 1", dayOfWeek: 1, startTime: "16:00:00", endTime: "17:00:00", priceCents: 12000 },
+    { id: "p2", name: "Contemporary", discipline: "Contemporary", level: "All levels", stream: "Juniors", room: "Studio 2", dayOfWeek: 2, startTime: "17:00:00", endTime: "18:00:00", priceCents: 14000 },
+    { id: "p3", name: "Hip Hop Juniors", discipline: "Hip Hop", level: "Juniors", stream: "Juniors", room: "Studio 1", dayOfWeek: 3, startTime: "16:30:00", endTime: "17:30:00", priceCents: 11000 },
+  ],
+  scheduleClasses: [
+    { id: "p1", name: "Ballet — Beginners", discipline: "Ballet", level: "Beginner", stream: "Beginners", room: "Studio 1", dayOfWeek: 1, startTime: "16:00:00", endTime: "17:00:00", priceCents: 12000 },
+    { id: "p2", name: "Contemporary", discipline: "Contemporary", level: "All levels", stream: "Juniors", room: "Studio 2", dayOfWeek: 1, startTime: "17:00:00", endTime: "18:00:00", priceCents: 14000 },
+  ],
+  events: [
+    { id: "e1", name: "Welcome!", description: "Tech is back in the mix!", eventDate: new Date().toISOString(), category: "news", imageUrl: null, venueName: null },
+    { id: "e2", name: "Term 3 dates announced", description: "Classes resume Monday 14 July.", eventDate: new Date().toISOString(), category: "term_dates", imageUrl: null, venueName: null },
+  ],
+  products: [
+    { id: "pr1", name: "Studio T-shirt", description: "Cotton tee with logo", priceCents: 3500, imageUrl: null, category: "Merchandise", stockQty: 10 },
+    { id: "pr2", name: "Ballet leotard", description: "Required uniform", priceCents: 4500, imageUrl: null, category: "Uniform", stockQty: 5 },
+  ],
+  staff: [
+    { id: "s1", name: "Jane Instructor", role: "Ballet Director", bio: "RAD certified with 20 years experience.", photoUrl: null },
+    { id: "s2", name: "Alex Teacher", role: "Contemporary", bio: "Former company dancer.", photoUrl: null },
+  ],
+};

@@ -50,7 +50,7 @@ drop policy if exists "leads_staff_read" on public.leads;
 create policy "leads_staff_read" on public.leads
   for select using (
     studio_id = public.current_studio()
-    and public.current_user_role() in ('admin', 'staff')
+    and public.current_user_role() in ('admin', 'teacher')
   );
 
 grant select, insert, update, delete on public.leads to authenticated;

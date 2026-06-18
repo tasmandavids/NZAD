@@ -1,15 +1,23 @@
 // ============================================================================
 //  components/site/PublicSite.tsx
-//  Server component that assembles a full public page for a studio:
-//  branding logo + nav + the page's blocks, wrapped in SiteChrome.
+//  Server component that assembles a full public page for a studio.
 // ============================================================================
 
 import { createClient } from "@/lib/supabase/server";
 import { getBranding } from "@/lib/branding";
-import { getNavLinks, getSiteClasses, type PublicPage } from "@/lib/site/queries";
+import {
+  getNavLinks,
+  getSiteClasses,
+  getSiteScheduleClasses,
+  getSiteEvents,
+  getSiteProducts,
+  getSiteStaff,
+  pageDataNeeds,
+  type PublicPage,
+} from "@/lib/site/queries";
+import { EMPTY_RENDER_CONTEXT } from "@/lib/site/render-context";
 import { SiteChrome } from "./SiteChrome";
 import { BlockRenderer } from "./BlockRenderer";
-import { num } from "@/lib/site/props";
 
 export async function PublicSite({
   studio,
@@ -19,21 +27,39 @@ export async function PublicSite({
   page: PublicPage;
 }) {
   const supabase = await createClient();
+  const needs = pageDataNeeds(page.blocks);
 
-  // How many classes does this page actually need? (max limit across classGrids)
-  const classGridLimit = page.blocks
-    .filter((b) => b.type === "classGrid")
-    .reduce((max, b) => Math.max(max, num(b.props, "limit", 6)), 0);
-
-  const [branding, nav, classes] = await Promise.all([
+  const [branding, nav, classes, scheduleClasses, events, products, staff] = await Promise.all([
     getBranding(supabase, studio.id),
     getNavLinks(studio.id),
-    classGridLimit > 0 ? getSiteClasses(studio.id, classGridLimit) : Promise.resolve([]),
+    needs.classLimit > 0
+      ? getSiteClasses(studio.id, needs.classLimit)
+      : Promise.resolve(EMPTY_RENDER_CONTEXT.classes),
+    needs.needsSchedule || needs.classLimit > 0
+      ? getSiteScheduleClasses(studio.id)
+      : Promise.resolve(EMPTY_RENDER_CONTEXT.scheduleClasses),
+    needs.eventLimit > 0
+      ? getSiteEvents(studio.id, needs.eventLimit)
+      : Promise.resolve(EMPTY_RENDER_CONTEXT.events),
+    needs.productLimit > 0
+      ? getSiteProducts(studio.id, needs.productLimit)
+      : Promise.resolve(EMPTY_RENDER_CONTEXT.products),
+    needs.staffLimit > 0
+      ? getSiteStaff(studio.id, needs.staffLimit)
+      : Promise.resolve(EMPTY_RENDER_CONTEXT.staff),
   ]);
 
+  const context = { classes, scheduleClasses, events, products, staff };
+
   return (
-    <SiteChrome studioName={studio.name} logoUrl={branding.logoUrl} nav={nav}>
-      <BlockRenderer blocks={page.blocks} context={{ classes }} />
+    <SiteChrome
+      studioName={studio.name}
+      logoUrl={branding.logoUrl}
+      tagline={branding.tagline}
+      siteSettings={branding.siteSettings}
+      nav={nav}
+    >
+      <BlockRenderer blocks={page.blocks} context={context} />
     </SiteChrome>
   );
 }

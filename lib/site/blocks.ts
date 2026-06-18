@@ -14,11 +14,20 @@
 
 export type BlockType =
   | "hero"
+  | "pageHeader"
+  | "statsRow"
+  | "classStreams"
+  | "classTabs"
   | "richText"
   | "features"
   | "classGrid"
+  | "schedule"
   | "gallery"
   | "testimonials"
+  | "newsFeed"
+  | "peopleGrid"
+  | "shopGrid"
+  | "locations"
   | "cta"
   | "faq"
   | "contact";
@@ -57,6 +66,8 @@ export type FieldDef = {
   type: FieldType;
   placeholder?: string;
   help?: string;
+  /** For `textarea` fields: show the markdown-lite formatting toolbar. */
+  toolbar?: boolean;
   /** For `select` fields: the available options. */
   options?: SelectOption[];
   /** For `list` fields: the schema of each item. */
@@ -104,11 +115,20 @@ export const APPEARANCE_FIELDS: FieldDef[] = [
 
 /** Default appearance per block type (preserves the original look of each). */
 export const APPEARANCE_DEFAULTS: Partial<Record<BlockType, { _bg: string; _spacing: string }>> = {
+  pageHeader: { _bg: "base", _spacing: "compact" },
+  statsRow: { _bg: "base", _spacing: "compact" },
+  classStreams: { _bg: "base", _spacing: "normal" },
+  classTabs: { _bg: "base", _spacing: "normal" },
   richText: { _bg: "base", _spacing: "normal" },
   features: { _bg: "surface", _spacing: "normal" },
   classGrid: { _bg: "base", _spacing: "normal" },
+  schedule: { _bg: "base", _spacing: "normal" },
   gallery: { _bg: "base", _spacing: "normal" },
   testimonials: { _bg: "surface", _spacing: "normal" },
+  newsFeed: { _bg: "base", _spacing: "normal" },
+  peopleGrid: { _bg: "base", _spacing: "normal" },
+  shopGrid: { _bg: "base", _spacing: "normal" },
+  locations: { _bg: "surface", _spacing: "normal" },
   faq: { _bg: "base", _spacing: "normal" },
   contact: { _bg: "surface", _spacing: "normal" },
 };
@@ -130,6 +150,7 @@ export const BLOCK_LIBRARY: BlockDef[] = [
       secondaryHref: "/programmes",
       imageUrl: "",
       align: "center",
+      variant: "academy",
     },
     fields: [
       { key: "eyebrow", label: "Eyebrow", type: "text" },
@@ -140,7 +161,132 @@ export const BLOCK_LIBRARY: BlockDef[] = [
       { key: "secondaryLabel", label: "Secondary button label", type: "text" },
       { key: "secondaryHref", label: "Secondary button link", type: "text" },
       { key: "imageUrl", label: "Background image URL", type: "image", help: "Optional. Leave blank for a clean gradient." },
-      { key: "align", label: "Alignment (left/center)", type: "text" },
+      {
+        key: "align",
+        label: "Alignment",
+        type: "select",
+        options: [
+          { value: "center", label: "Center" },
+          { value: "left", label: "Left" },
+        ],
+      },
+      {
+        key: "variant",
+        label: "Style",
+        type: "select",
+        options: [
+          { value: "academy", label: "Academy (full-bleed dark)" },
+          { value: "default", label: "Default gradient" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "pageHeader",
+    label: "Page header",
+    appearance: true,
+    description: "Inner-page hero with eyebrow, title and subtitle.",
+    defaultProps: {
+      eyebrow: "Our story",
+      heading: "About us",
+      subheading: "Who we are and why we do what we do.",
+      align: "center",
+    },
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+      { key: "subheading", label: "Subheading", type: "textarea" },
+      {
+        key: "align",
+        label: "Alignment",
+        type: "select",
+        options: [
+          { value: "center", label: "Center" },
+          { value: "left", label: "Left" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "statsRow",
+    label: "Stats row",
+    appearance: true,
+    description: "Horizontal strip of badge stats (syllabi, age ranges, etc.).",
+    defaultProps: {
+      items: [
+        { label: "R.A.D. · B.B.O. · NZAMD", sublabel: "Certified syllabi" },
+        { label: "World-class", sublabel: "Training" },
+        { label: "All ages welcome", sublabel: "3 yrs to adult" },
+        { label: "Exceptional", sublabel: "Faculty" },
+      ],
+    },
+    fields: [
+      {
+        key: "items",
+        label: "Stats",
+        type: "list",
+        itemDefault: { label: "Label", sublabel: "Sublabel" },
+        itemFields: [
+          { key: "label", label: "Label", type: "text" },
+          { key: "sublabel", label: "Sublabel", type: "text" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "classStreams",
+    label: "Class streams",
+    appearance: true,
+    description: "Age/category cards linking to class pages.",
+    defaultProps: {
+      heading: "Our classes",
+      eyebrow: "What we offer",
+      items: [
+        { title: "Beginners", subtitle: "3–5 yrs", href: "/classes" },
+        { title: "Juniors", subtitle: "5–12 yrs", href: "/classes" },
+        { title: "Seniors", subtitle: "12+ yrs", href: "/classes" },
+        { title: "Adults", subtitle: "All ages", href: "/classes" },
+        { title: "Companies", subtitle: "Audition", href: "/classes" },
+        { title: "Senior Swans", subtitle: "55+", href: "/classes" },
+      ],
+      viewAllLabel: "View all classes",
+      viewAllHref: "/classes",
+    },
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+      {
+        key: "items",
+        label: "Streams",
+        type: "list",
+        itemDefault: { title: "Stream", subtitle: "Age range", href: "/classes", imageUrl: "" },
+        itemFields: [
+          { key: "title", label: "Title", type: "text" },
+          { key: "subtitle", label: "Subtitle", type: "text" },
+          { key: "href", label: "Link", type: "text" },
+          { key: "imageUrl", label: "Image URL", type: "image" },
+        ],
+      },
+      { key: "viewAllLabel", label: "View-all button label", type: "text" },
+      { key: "viewAllHref", label: "View-all link", type: "text" },
+    ],
+  },
+  {
+    type: "classTabs",
+    label: "Class tabs",
+    appearance: true,
+    description: "Tabbed class streams with detail panel (live class data).",
+    defaultProps: {
+      eyebrow: "Streams 2026",
+      heading: "Our classes",
+      subheading: "From tiny first steps to elite performance training.",
+      limit: 50,
+    },
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+      { key: "subheading", label: "Subheading", type: "textarea" },
+      { key: "limit", label: "Max classes to load", type: "number" },
     ],
   },
   {
@@ -159,6 +305,7 @@ export const BLOCK_LIBRARY: BlockDef[] = [
         key: "body",
         label: "Body",
         type: "textarea",
+        toolbar: true,
         help: "Markdown-lite: blank line = new paragraph · `- ` bullets · `1. ` numbered · **bold** · [text](url).",
       },
       {
@@ -217,6 +364,24 @@ export const BLOCK_LIBRARY: BlockDef[] = [
     ],
   },
   {
+    type: "schedule",
+    label: "Schedule",
+    appearance: true,
+    description: "Weekly timetable with day and studio filters (live class data).",
+    defaultProps: {
+      eyebrow: "Timetable",
+      heading: "Term timetable",
+      subheading: "All times are local.",
+      footnote: "Updated weekly · All times are local",
+    },
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+      { key: "subheading", label: "Subheading", type: "text" },
+      { key: "footnote", label: "Footnote", type: "text" },
+    ],
+  },
+  {
     type: "gallery",
     label: "Image gallery",
     appearance: true,
@@ -265,6 +430,120 @@ export const BLOCK_LIBRARY: BlockDef[] = [
         itemFields: [
           { key: "quote", label: "Quote", type: "textarea" },
           { key: "author", label: "Author", type: "text" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "newsFeed",
+    label: "News & events",
+    appearance: true,
+    description: "Filterable feed of published studio events.",
+    defaultProps: {
+      eyebrow: "Stay informed",
+      heading: "News & events",
+      subheading: "Term dates, productions, and announcements.",
+      limit: 6,
+      showFilters: true,
+      viewAllLabel: "All news",
+      viewAllHref: "/news",
+    },
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+      { key: "subheading", label: "Subheading", type: "textarea" },
+      { key: "limit", label: "Max items", type: "number" },
+      { key: "showFilters", label: "Show category filters", type: "boolean" },
+      { key: "viewAllLabel", label: "View-all label", type: "text" },
+      { key: "viewAllHref", label: "View-all link", type: "text" },
+    ],
+  },
+  {
+    type: "peopleGrid",
+    label: "People / instructors",
+    appearance: true,
+    description: "Grid of studio staff (managed in admin or editor list).",
+    defaultProps: {
+      eyebrow: "Our team",
+      heading: "Meet our instructors",
+      subheading: "Experienced professionals dedicated to nurturing the next generation.",
+      source: "staff",
+      limit: 24,
+      items: [],
+    },
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+      { key: "subheading", label: "Subheading", type: "textarea" },
+      {
+        key: "source",
+        label: "Data source",
+        type: "select",
+        options: [
+          { value: "staff", label: "Staff table (admin-managed)" },
+          { value: "manual", label: "Manual list below" },
+        ],
+      },
+      { key: "limit", label: "Max people (staff source)", type: "number" },
+      {
+        key: "items",
+        label: "People (manual source)",
+        type: "list",
+        itemDefault: { name: "Name", role: "Role", bio: "", photoUrl: "" },
+        itemFields: [
+          { key: "name", label: "Name", type: "text" },
+          { key: "role", label: "Role", type: "text" },
+          { key: "bio", label: "Bio", type: "textarea" },
+          { key: "photoUrl", label: "Photo URL", type: "image" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "shopGrid",
+    label: "Shop",
+    appearance: true,
+    description: "Product catalogue with category filters (live shop data).",
+    defaultProps: {
+      eyebrow: "Store",
+      heading: "Shop",
+      subheading: "Uniforms, merchandise, and tickets.",
+      limit: 24,
+      showFilters: true,
+      footnote: "Secure payments powered by Stripe.",
+    },
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", type: "text" },
+      { key: "heading", label: "Heading", type: "text" },
+      { key: "subheading", label: "Subheading", type: "textarea" },
+      { key: "limit", label: "Max products", type: "number" },
+      { key: "showFilters", label: "Show category filters", type: "boolean" },
+      { key: "footnote", label: "Footnote", type: "text" },
+    ],
+  },
+  {
+    type: "locations",
+    label: "Locations",
+    appearance: true,
+    description: "Multi-studio location cards.",
+    defaultProps: {
+      heading: "Our studios",
+      items: [
+        { name: "Main studio", detail: "Studios 1, 2, 3 + theatre", address: "" },
+        { name: "Annex", detail: "Studio 4", address: "" },
+      ],
+    },
+    fields: [
+      { key: "heading", label: "Heading", type: "text" },
+      {
+        key: "items",
+        label: "Locations",
+        type: "list",
+        itemDefault: { name: "Location", detail: "Details", address: "" },
+        itemFields: [
+          { key: "name", label: "Name", type: "text" },
+          { key: "detail", label: "Detail", type: "text" },
+          { key: "address", label: "Address", type: "textarea" },
         ],
       },
     ],

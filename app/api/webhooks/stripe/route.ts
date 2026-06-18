@@ -18,6 +18,15 @@ import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CURRENCY, gstComponentCents } from "@/lib/currency";
+import {
+  classifyPaymentIntent,
+  subscriptionIdFromInvoice,
+  paymentIntentIdFromInvoice,
+  invoiceAmountCents,
+  subscriptionStatusFor,
+  subscriptionPeriodEndIso,
+  refundDescriptor,
+} from "@/lib/webhooks/stripe-events";
 import type Stripe from "stripe";
 
 // Webhooks run anonymously, so we need a client that bypasses RLS. Prefer the
@@ -74,13 +83,10 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "payment_intent.succeeded": {
         const intent = event.data.object as Stripe.PaymentIntent;
-        const meta = intent.metadata ?? {};
-        const invoiceId = meta.invoice_id;
-        const orderId = meta.order_id;
-        const eventId = meta.event_id;
+        const target = classifyPaymentIntent(intent.metadata);
 
         // ── Invoice payment ────────────────────────────────────────────────
-        if (invoiceId) {
+        if (target.kind === "invoice") {
           await supabase
             .from("invoices")
             .update({
@@ -88,12 +94,12 @@ export async function POST(req: NextRequest) {
               paid_at: new Date().toISOString(),
               stripe_payment_intent_id: intent.id,
             })
-            .eq("id", invoiceId);
+            .eq("id", target.invoiceId);
 
           await supabase.from("payments").insert({
-            studio_id: meta.studio_id,
-            payer_id: meta.supabase_user_id ?? meta.user_id ?? null,
-            invoice_id: invoiceId,
+            studio_id: target.studioId,
+            payer_id: target.payerId,
+            invoice_id: target.invoiceId,
             amount_cents: intent.amount_received,
             currency: intent.currency,
             stripe_payment_intent_id: intent.id,
@@ -101,39 +107,38 @@ export async function POST(req: NextRequest) {
             description: intent.description,
           });
 
-          console.log(`[stripe-webhook] payment_intent.succeeded — invoice ${invoiceId} marked paid`);
+          console.log(`[stripe-webhook] payment_intent.succeeded — invoice ${target.invoiceId} marked paid`);
           break;
         }
 
         // ── Shop order payment ─────────────────────────────────────────────
         // Setting status='paid' fires the stock-decrement DB trigger.
-        if (orderId) {
+        if (target.kind === "order") {
           await supabase
             .from("orders")
             .update({
               status: "paid",
               stripe_payment_intent_id: intent.id,
             })
-            .eq("id", orderId);
+            .eq("id", target.orderId);
 
-          console.log(`[stripe-webhook] payment_intent.succeeded — order ${orderId} marked paid`);
+          console.log(`[stripe-webhook] payment_intent.succeeded — order ${target.orderId} marked paid`);
           break;
         }
 
         // ── Event ticket payment ───────────────────────────────────────────
         // Promote the reserved ticket to 'paid'; the sync trigger keeps
         // events.sold_tickets accurate.
-        if (eventId) {
-          const userId = meta.user_id ?? null;
+        if (target.kind === "ticket") {
           let q = supabase
             .from("event_tickets")
             .update({ status: "paid" })
-            .eq("event_id", eventId)
+            .eq("event_id", target.eventId)
             .eq("stripe_payment_intent_id", intent.id);
-          if (userId) q = q.eq("user_id", userId);
+          if (target.userId) q = q.eq("user_id", target.userId);
           await q;
 
-          console.log(`[stripe-webhook] payment_intent.succeeded — event ticket (${eventId}) marked paid`);
+          console.log(`[stripe-webhook] payment_intent.succeeded — event ticket (${target.eventId}) marked paid`);
           break;
         }
 
@@ -166,10 +171,7 @@ export async function POST(req: NextRequest) {
 
         // 2. Recurring auto-pay charge → mirror a per-charge invoices + payments
         //    row so billing/revenue reporting includes subscription income.
-        const subId =
-          typeof stripeInvoice.subscription === "string"
-            ? stripeInvoice.subscription
-            : stripeInvoice.subscription?.id ?? null;
+        const subId = subscriptionIdFromInvoice(stripeInvoice);
 
         if (!subId) {
           console.log(`[stripe-webhook] invoice.paid — ${stripeInvoiceId} (no subscription, ignored)`);
@@ -198,11 +200,8 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        const amount = stripeInvoice.amount_paid ?? stripeInvoice.total ?? 0;
-        const piId =
-          typeof stripeInvoice.payment_intent === "string"
-            ? stripeInvoice.payment_intent
-            : stripeInvoice.payment_intent?.id ?? null;
+        const amount = invoiceAmountCents(stripeInvoice);
+        const piId = paymentIntentIdFromInvoice(stripeInvoice);
 
         const { data: newInvoice } = await supabase
           .from("invoices")
@@ -259,10 +258,7 @@ export async function POST(req: NextRequest) {
         let studioId: string | null = null;
         let userId: string | null = null;
 
-        const subId =
-          typeof stripeInvoice.subscription === "string"
-            ? stripeInvoice.subscription
-            : stripeInvoice.subscription?.id ?? null;
+        const subId = subscriptionIdFromInvoice(stripeInvoice);
 
         if (subId) {
           const { data: subRow } = await supabase
@@ -299,6 +295,101 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      case "charge.refunded": {
+        // Reconcile refunds — whether issued via our admin action or directly
+        // in the Stripe Dashboard. Find the local sale row by payment intent,
+        // flip it to 'refunded' (fires restock / capacity-release triggers),
+        // and record a negative ledger row. Idempotent on stripe_refund_id.
+        const charge = event.data.object as Stripe.Charge;
+        const { paymentIntentId: piId, refundId, refundedCents } = refundDescriptor(charge);
+
+        if (!piId) {
+          console.log("[stripe-webhook] charge.refunded — no payment_intent, ignored");
+          break;
+        }
+
+        // Already recorded by our admin action (or a previous delivery)?
+        const { data: ledgered } = await supabase
+          .from("payments")
+          .select("id")
+          .eq("stripe_refund_id", refundId)
+          .limit(1);
+        if (ledgered && ledgered.length) {
+          console.log(`[stripe-webhook] charge.refunded — ${refundId} already recorded`);
+          break;
+        }
+
+        const nowIso = new Date().toISOString();
+        const refundPatch = {
+          status: "refunded",
+          refunded_at: nowIso,
+          refund_amount_cents: refundedCents,
+          stripe_refund_id: refundId,
+        };
+
+        // Try each sale table in turn; only one will match the payment intent.
+        let refStudioId: string | null = null;
+        let refPayerId: string | null = null;
+        let refInvoiceId: string | null = null;
+
+        const { data: inv } = await supabase
+          .from("invoices")
+          .update(refundPatch)
+          .eq("stripe_payment_intent_id", piId)
+          .neq("status", "refunded")
+          .select("id, studio_id, payer_id");
+        if (inv && inv.length) {
+          refStudioId = inv[0].studio_id;
+          refPayerId = inv[0].payer_id;
+          refInvoiceId = inv[0].id;
+        }
+
+        if (!refStudioId) {
+          const { data: ord } = await supabase
+            .from("orders")
+            .update(refundPatch)
+            .eq("stripe_payment_intent_id", piId)
+            .neq("status", "refunded")
+            .select("id, studio_id, user_id");
+          if (ord && ord.length) {
+            refStudioId = ord[0].studio_id;
+            refPayerId = ord[0].user_id;
+          }
+        }
+
+        if (!refStudioId) {
+          const { data: tkt } = await supabase
+            .from("event_tickets")
+            .update(refundPatch)
+            .eq("stripe_payment_intent_id", piId)
+            .neq("status", "refunded")
+            .select("id, user_id, events ( studio_id )");
+          if (tkt && tkt.length) {
+            const ev = tkt[0].events as unknown as { studio_id: string } | null;
+            refStudioId = ev?.studio_id ?? null;
+            refPayerId = tkt[0].user_id;
+          }
+        }
+
+        if (refStudioId) {
+          await supabase.from("payments").insert({
+            studio_id: refStudioId,
+            payer_id: refPayerId,
+            invoice_id: refInvoiceId,
+            amount_cents: -refundedCents,
+            currency: charge.currency ?? CURRENCY,
+            stripe_payment_intent_id: piId,
+            stripe_refund_id: refundId,
+            status: "refunded",
+            description: "Refund (Stripe)",
+          });
+          console.log(`[stripe-webhook] charge.refunded — reconciled ${refundId} (${piId})`);
+        } else {
+          console.log(`[stripe-webhook] charge.refunded — no matching sale for ${piId}`);
+        }
+        break;
+      }
+
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
@@ -307,22 +398,13 @@ export async function POST(req: NextRequest) {
           current_period_end?: number | null;
         };
 
-        const periodEpoch =
-          sub.current_period_end ??
-          (sub.items?.data?.[0] as { current_period_end?: number } | undefined)
-            ?.current_period_end ??
-          null;
-
-        const status =
-          event.type === "customer.subscription.deleted" ? "canceled" : sub.status;
+        const status = subscriptionStatusFor(event.type, sub);
 
         await supabase
           .from("subscriptions")
           .update({
             status,
-            current_period_end: periodEpoch
-              ? new Date(periodEpoch * 1000).toISOString()
-              : null,
+            current_period_end: subscriptionPeriodEndIso(sub),
             cancel_at_period_end: sub.cancel_at_period_end ?? false,
           })
           .eq("stripe_subscription_id", sub.id);

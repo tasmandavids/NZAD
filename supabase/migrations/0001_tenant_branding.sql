@@ -6,8 +6,13 @@
 --  Apply:  supabase db push      (or paste into Supabase Studio → SQL editor)
 -- ============================================================================
 
-create type public.user_role  as enum ('admin','teacher','parent','student');
-create type public.theme_base as enum ('dark','light');
+do $$ begin
+  create type public.user_role as enum ('admin','teacher','parent','student');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type public.theme_base as enum ('dark','light');
+exception when duplicate_object then null; end $$;
 
 -- ---------------------------------------------------------------------------
 --  STUDIOS — the tenant root. Everything else hangs off studio_id.
@@ -80,24 +85,31 @@ alter table public.studio_branding enable row level security;
 alter table public.profiles        enable row level security;
 
 -- STUDIOS
+drop policy if exists "public reads active studios" on public.studios;
 create policy "public reads active studios" on public.studios
   for select using (status <> 'suspended');
+drop policy if exists "admins update own studio" on public.studios;
 create policy "admins update own studio" on public.studios
   for update using (id = public.current_studio() and public.current_user_role() = 'admin')
           with check (id = public.current_studio() and public.current_user_role() = 'admin');
 
 -- BRANDING
+drop policy if exists "public reads branding" on public.studio_branding;
 create policy "public reads branding" on public.studio_branding
   for select using (true);
+drop policy if exists "admins write own branding" on public.studio_branding;
 create policy "admins write own branding" on public.studio_branding
   for all using (studio_id = public.current_studio() and public.current_user_role() = 'admin')
           with check (studio_id = public.current_studio() and public.current_user_role() = 'admin');
 
 -- PROFILES (NOT public — tenant + role scoped)
+drop policy if exists "read profiles in own studio" on public.profiles;
 create policy "read profiles in own studio" on public.profiles
   for select using (studio_id = public.current_studio());
+drop policy if exists "update own profile" on public.profiles;
 create policy "update own profile" on public.profiles
   for update using (id = auth.uid());
+drop policy if exists "admins manage studio profiles" on public.profiles;
 create policy "admins manage studio profiles" on public.profiles
   for all using (studio_id = public.current_studio() and public.current_user_role() = 'admin')
           with check (studio_id = public.current_studio() and public.current_user_role() = 'admin');

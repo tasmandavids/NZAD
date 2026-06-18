@@ -72,7 +72,7 @@ export default function OluneLanding() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <motion.div
         variants={container}
-        initial="hidden"
+        initial={false}
         animate="show"
         className="relative z-10 mx-auto max-w-[1320px] px-[clamp(1.25rem,4vw,4rem)] pb-24 pt-[clamp(4rem,10vw,7rem)]"
       >

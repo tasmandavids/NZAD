@@ -10,6 +10,19 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { derivePalette } from "@/lib/branding";
+import type { SiteSettings } from "@/lib/types";
+
+const SiteSettingsSchema = z.object({
+  footerTagline: z.string().max(300).optional(),
+  showPoweredBy: z.boolean().optional(),
+  portalLabel: z.string().max(40).optional(),
+  contactEmail: z.string().email().optional().or(z.literal("")),
+  contactPhone: z.string().max(40).optional(),
+  regionLabel: z.string().max(80).optional(),
+  locations: z
+    .array(z.object({ name: z.string().max(80), detail: z.string().max(200) }))
+    .optional(),
+});
 
 const Schema = z.object({
   tagline: z.string().max(120).nullable().optional(),
@@ -18,6 +31,7 @@ const Schema = z.object({
   base: z.enum(["dark", "light"]),
   fontDisplay: z.string().max(60),
   fontBody: z.string().max(60),
+  siteSettings: SiteSettingsSchema.optional(),
 });
 
 export type SaveResult = { ok: true } | { ok: false; error: string };
@@ -55,6 +69,7 @@ export async function saveBranding(input: unknown): Promise<SaveResult> {
     base: data.base,
     font_display: data.fontDisplay,
     font_body: data.fontBody,
+    site_settings: (data.siteSettings ?? {}) as SiteSettings,
     updated_at: new Date().toISOString(),
   });
 
