@@ -12,6 +12,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { checkPlatformOperator } from "@/lib/platform/operator-edge";
 
 type Role = "admin" | "teacher" | "parent" | "student";
 
@@ -49,6 +50,24 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const inPortal = pathname === "/portal" || pathname.startsWith("/portal/");
+  const inPlatform = pathname === "/platform" || pathname.startsWith("/platform/");
+
+  // Platform console — Olune operators only.
+  if (inPlatform) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("next", pathname);
+      return NextResponse.redirect(url);
+    }
+    const isOperator = await checkPlatformOperator(supabase, user.id, user.email);
+    if (!isOperator) {
+      const role = await getRole(supabase, user.id);
+      const dest = role ? ROLE_HOME[role] : "/onboarding";
+      return NextResponse.redirect(new URL(dest, request.url));
+    }
+    return response;
+  }
 
   // (2) Unauthenticated → can't be in a portal.
   if (inPortal && !user) {
@@ -106,5 +125,5 @@ async function getRole(supabase: SupabaseClient, userId: string): Promise<Role |
 
 export const config = {
   // Only run where routing decisions are needed.
-  matcher: ["/portal/:path*", "/login"],
+  matcher: ["/portal/:path*", "/platform/:path*", "/login"],
 };

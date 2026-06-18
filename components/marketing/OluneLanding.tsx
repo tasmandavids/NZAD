@@ -55,6 +55,12 @@ export default function OluneLanding() {
         </span>
         <div className="flex items-center gap-6">
           <a
+            href="/platform"
+            className="text-xs uppercase tracking-widest text-muted transition-colors hover:text-chalk"
+          >
+            Platform
+          </a>
+          <a
             href="/login"
             className="text-xs uppercase tracking-widest text-muted transition-colors hover:text-chalk"
           >
