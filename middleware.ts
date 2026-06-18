@@ -9,7 +9,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkPlatformOperator } from "@/lib/platform/operator-edge";
-import { refreshSession } from "@/lib/supabase/middleware";
+import { mergeSessionCookies, redirectWithSession, refreshSession } from "@/lib/supabase/middleware";
 
 type Role = "admin" | "teacher" | "parent" | "student";
 
@@ -38,26 +38,20 @@ export async function middleware(request: NextRequest) {
   // Platform console — Olune operators only.
   if (inPlatform) {
     if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("next", pathname);
-      return NextResponse.redirect(url);
+      return redirectWithSession(request, "/login", response, { next: pathname });
     }
     const isOperator = await checkPlatformOperator(supabase, user.id, user.email);
     if (!isOperator) {
       const role = await getRole(supabase, user.id);
       const dest = role ? ROLE_HOME[role] : "/onboarding";
-      return NextResponse.redirect(new URL(dest, request.url));
+      return mergeSessionCookies(NextResponse.redirect(new URL(dest, request.url)), response);
     }
     return response;
   }
 
   // Unauthenticated → can't be in a portal.
   if (inPortal && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+    return redirectWithSession(request, "/login", response, { next: pathname });
   }
 
   if (user) {
@@ -65,28 +59,62 @@ export async function middleware(request: NextRequest) {
 
     // Signed up but hasn't created/joined a studio yet.
     if (!role) {
-      if (inPortal) return NextResponse.redirect(new URL("/onboarding", request.url));
+      if (inPortal) {
+        return mergeSessionCookies(
+          NextResponse.redirect(new URL("/onboarding", request.url)),
+          response,
+        );
+      }
       return response;
     }
 
     const home = ROLE_HOME[role];
 
-    // On /login or bare /portal → forward to role home (honour ?next= for platform).
+    // On /login or bare /portal → send to the intended destination.
     if (pathname === "/login" || pathname === "/portal" || pathname === "/portal/") {
-      const next = request.nextUrl.searchParams.get("next");
-      if (next?.startsWith("/platform") && (await checkPlatformOperator(supabase, user.id, user.email))) {
-        return NextResponse.redirect(new URL(next, request.url));
-      }
-      return NextResponse.redirect(new URL(home, request.url));
+      const dest = await resolveSignedInDestination(
+        request,
+        supabase,
+        user.id,
+        user.email,
+        home,
+      );
+      return mergeSessionCookies(NextResponse.redirect(new URL(dest, request.url)), response);
     }
 
     // Wandered into another role's portal → bounce to their own.
     if (inPortal && !pathname.startsWith(home)) {
-      return NextResponse.redirect(new URL(home, request.url));
+      return mergeSessionCookies(NextResponse.redirect(new URL(home, request.url)), response);
     }
   }
 
   return response;
+}
+
+function isSafeRelativePath(path: string): boolean {
+  return path.startsWith("/") && !path.startsWith("//");
+}
+
+async function resolveSignedInDestination(
+  request: NextRequest,
+  supabase: SupabaseClient,
+  userId: string,
+  email: string | undefined,
+  home: string,
+): Promise<string> {
+  const next = request.nextUrl.searchParams.get("next");
+  if (!next || !isSafeRelativePath(next)) return home;
+
+  if (next.startsWith("/platform")) {
+    const isOperator = await checkPlatformOperator(supabase, userId, email);
+    return isOperator ? next : home;
+  }
+
+  if (next.startsWith("/portal")) {
+    return next.startsWith(home) ? next : home;
+  }
+
+  return home;
 }
 
 /**

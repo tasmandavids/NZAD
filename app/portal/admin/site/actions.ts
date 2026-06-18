@@ -14,9 +14,9 @@ import { normalizePageBackground } from "@/lib/site/background";
 import { TEMPLATE_MAP, buildTemplateBlocks } from "@/lib/site/templates";
 import { derivePalette } from "@/lib/branding";
 import {
+  SETUP_HOME_IDS,
   buildSetupPages,
   validateSetupInput,
-  type SetupHomeId,
 } from "@/lib/site/setup";
 
 export type ActionResult<T = null> =
@@ -184,11 +184,14 @@ export async function createStarterHomepage(): Promise<ActionResult<{ id: string
 // ─── WEBSITE SETUP (wizard) ───────────────────────────────────────────────────
 
 const SetupSchema = z.object({
-  homeTemplateId: z.enum(["home-classic", "home-showcase", "home-minimal", "home-bold"]),
+  homeTemplateId: z.string().refine((id) => SETUP_HOME_IDS.includes(id), "Pick a homepage style."),
   pageTemplateIds: z.array(z.string()).default([]),
   tagline: z.string().max(120).optional().nullable(),
   fontDisplay: z.string().max(60),
   fontBody: z.string().max(60),
+  brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  base: z.enum(["dark", "light"]).optional(),
+  logoUrl: z.string().url().nullable().optional(),
   publishHome: z.coerce.boolean().optional(),
 });
 
@@ -214,12 +217,15 @@ export async function setupStudioWebsite(input: unknown): Promise<ActionResult<{
   }
 
   const setupInput = {
-    homeTemplateId: parsed.data.homeTemplateId as SetupHomeId,
+    homeTemplateId: parsed.data.homeTemplateId,
     pageTemplateIds: parsed.data.pageTemplateIds,
     studioName: studio.name as string,
     tagline: parsed.data.tagline,
     fontDisplay: parsed.data.fontDisplay,
     fontBody: parsed.data.fontBody,
+    brandColor: parsed.data.brandColor,
+    base: parsed.data.base,
+    logoUrl: parsed.data.logoUrl,
   };
 
   const validationError = validateSetupInput(setupInput);
@@ -232,14 +238,14 @@ export async function setupStudioWebsite(input: unknown): Promise<ActionResult<{
     return { ok: false, error: e instanceof Error ? e.message : "Could not build pages." };
   }
 
-  const palette = derivePalette(
-    (await supabase.from("studio_branding").select("brand_color").eq("studio_id", studioId).single())
-      .data?.brand_color ?? "#6B66C9",
-  );
+  const palette = derivePalette(parsed.data.brandColor ?? "#6B66C9");
 
   const { error: brandErr } = await supabase.from("studio_branding").upsert({
     studio_id: studioId,
     tagline: parsed.data.tagline ?? null,
+    logo_url: parsed.data.logoUrl ?? null,
+    brand_color: parsed.data.brandColor ?? "#6B66C9",
+    base: parsed.data.base ?? "light",
     font_display: parsed.data.fontDisplay,
     font_body: parsed.data.fontBody,
     brand_hot: palette.brandHot,

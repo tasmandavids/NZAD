@@ -14,7 +14,7 @@ export default async function MessagesPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/portal/login");
+  if (!user) redirect("/login");
 
   const { data: profile } = await supabase
     .from("profiles")

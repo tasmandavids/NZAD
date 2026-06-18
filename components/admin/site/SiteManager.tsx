@@ -16,6 +16,7 @@ import {
   deletePage,
 } from "@/app/portal/admin/site/actions";
 import { HOME_TEMPLATES, PAGE_TEMPLATES } from "@/lib/site/templates";
+import { TemplateGallery } from "@/components/admin/site/TemplateGallery";
 
 export type SitePageRow = {
   id: string;
@@ -49,6 +50,7 @@ export default function SiteManager({ pages }: { pages: SitePageRow[] }) {
       setTitle("");
       setCreating(false);
       router.push(`/portal/admin/site/${res.data.id}`);
+      router.refresh();
     });
 
   const onUseTemplate = (templateId: string) =>
@@ -60,6 +62,7 @@ export default function SiteManager({ pages }: { pages: SitePageRow[] }) {
         return;
       }
       router.push(`/portal/admin/site/${res.data.id}`);
+      router.refresh();
     });
 
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>) =>
@@ -77,12 +80,20 @@ export default function SiteManager({ pages }: { pages: SitePageRow[] }) {
           <h1 className="text-xl font-bold text-ink">Website</h1>
           <p className="text-sm text-muted">Build and publish your studio&apos;s public pages.</p>
         </div>
-        <button
-          onClick={() => setCreating((v) => !v)}
-          className="btn-glow btn-glow--solid px-5 py-2 text-sm"
-        >
-          {creating ? "Cancel" : "+ New page"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/portal/admin/site/domain"
+            className="rounded-full border border-[--hair] px-4 py-2 text-sm font-medium text-ink transition hover:border-brand hover:text-brand"
+          >
+            Domain setup
+          </Link>
+          <button
+            onClick={() => setCreating((v) => !v)}
+            className="btn-glow btn-glow--solid px-5 py-2 text-sm"
+          >
+            {creating ? "Cancel" : "+ New page"}
+          </button>
+        </div>
       </header>
 
       {creating && (
@@ -125,15 +136,16 @@ export default function SiteManager({ pages }: { pages: SitePageRow[] }) {
           <div>
             <h2 className="font-semibold text-ink">Choose a homepage style</h2>
             <p className="text-sm text-muted">
-              Pick a ready-made layout to start from — every block is fully editable, and you publish
+              Browse {HOME_TEMPLATES.length} ready-made layouts — every block is fully editable, and you publish
               when you&apos;re ready.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {HOME_TEMPLATES.map((t) => (
-              <TemplateCard key={t.id} label={t.label} description={t.description} disabled={pending} onClick={() => onUseTemplate(t.id)} />
-            ))}
-          </div>
+          <TemplateGallery
+            templates={HOME_TEMPLATES}
+            selectedId=""
+            onSelect={onUseTemplate}
+            disabled={pending}
+          />
         </section>
       )}
 

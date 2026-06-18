@@ -9,7 +9,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { PlatformAnnouncementsBanner } from "@/components/admin/PlatformAnnouncementsBanner";
+import { SetupResumeBanner } from "@/components/setup/SetupResumeBanner";
 import { getBranding } from "@/lib/branding";
+import { fetchStudioSetupState, setupBlocksPortal, setupNeedsBanner } from "@/lib/setup/server";
 import type { Role } from "@/lib/types";
 
 export default async function PortalLayout({
@@ -31,6 +33,13 @@ export default async function PortalLayout({
     .single();
 
   if (!profile?.studio_id) redirect("/onboarding");
+
+  if (profile.role === "admin") {
+    const { state: setupState } = await fetchStudioSetupState(supabase, profile.studio_id);
+    if (setupState && setupBlocksPortal(setupState)) {
+      redirect("/setup");
+    }
+  }
 
   // Supabase's TS inference treats every join as an array; cast through unknown.
   const studio = profile.studios as unknown as { name: string } | null;
@@ -54,6 +63,11 @@ export default async function PortalLayout({
 
   const branding = await getBranding(supabase, profile.studio_id);
 
+  const setupBanner =
+    profile.role === "admin"
+      ? await fetchStudioSetupState(supabase, profile.studio_id)
+      : { state: null };
+
   return (
     <PortalShell
       role={profile.role as Role}
@@ -61,6 +75,14 @@ export default async function PortalLayout({
       logoUrl={branding.logoUrl}
       userName={profile.full_name}
     >
+      {profile.role === "admin" &&
+        setupBanner.state &&
+        setupNeedsBanner(setupBanner.state) && (
+          <SetupResumeBanner
+            setupStep={setupBanner.state.setupStep}
+            snoozed={!!setupBanner.state.setupSnoozedAt}
+          />
+        )}
       {profile.role === "admin" && announcements.length > 0 && (
         <PlatformAnnouncementsBanner announcements={announcements} />
       )}

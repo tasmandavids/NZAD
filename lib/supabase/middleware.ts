@@ -51,3 +51,28 @@ function isStaleRefreshError(error: { message?: string; code?: string }): boolea
     error.code === "invalid_refresh_token"
   );
 }
+
+/** Copy refreshed auth cookies onto redirects so the browser keeps the session. */
+export function mergeSessionCookies(target: NextResponse, source: NextResponse) {
+  source.cookies.getAll().forEach((cookie) => {
+    target.cookies.set(cookie);
+  });
+  return target;
+}
+
+export function redirectWithSession(
+  request: NextRequest,
+  pathname: string,
+  sessionResponse: NextResponse,
+  searchParams?: Record<string, string>,
+) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  url.search = "";
+  if (searchParams) {
+    for (const [key, value] of Object.entries(searchParams)) {
+      url.searchParams.set(key, value);
+    }
+  }
+  return mergeSessionCookies(NextResponse.redirect(url), sessionResponse);
+}

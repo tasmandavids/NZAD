@@ -322,17 +322,19 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
         </InfoRow>
       </section>
 
-      {/* Deploy info */}
+      {/* Custom domain */}
       <section className="rounded-2xl border border-dashed border-[--hair] p-5">
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted">Custom domain</h2>
         <p className="text-sm text-muted leading-relaxed">
-          To use your own domain (e.g.{" "}
-          <code className="text-ink">book.mystudio.co.nz</code>), add a{" "}
-          <strong className="text-ink">CNAME</strong> pointing to your Vercel deployment, then set{" "}
-          <code className="text-ink">custom_domain</code> in your{" "}
-          <code className="text-ink">studios</code> row via Supabase Studio.
-          Wildcard domains require a paid Vercel plan.
+          Connect your own domain (e.g. <code className="text-ink">www.mystudio.co.nz</code>) with our step-by-step
+          guide — no DNS jargon required.
         </p>
+        <a
+          href="/portal/admin/site/domain"
+          className="mt-3 inline-flex rounded-full border border-brand/40 px-4 py-2 text-sm font-medium text-brand transition hover:bg-brand/10"
+        >
+          Open domain setup wizard →
+        </a>
       </section>
     </motion.div>
   );

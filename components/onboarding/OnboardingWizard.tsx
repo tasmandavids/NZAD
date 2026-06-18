@@ -16,6 +16,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { derivePalette } from "@/lib/branding";
 import { OluneLogo } from "@/components/brand/OluneLogo";
+import { AuthDivider, OAuthButtons } from "@/components/auth/OAuthButtons";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -90,7 +91,7 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
         .eq("studio_id", studioId);
     }
     go("done");
-    setTimeout(() => { router.push("/portal/admin/site"); router.refresh(); }, 1300);
+    setTimeout(() => { router.push("/setup"); router.refresh(); }, 1300);
   }
 
   const stepIndex = { account: 0, studio: 1, brand: 2, done: 3 }[step];
@@ -134,22 +135,31 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
 
                 {/* ── ① ACCOUNT ── */}
                 {step === "account" && (
-                  <form onSubmit={createAccount}>
+                  <div>
                     <h1 className="text-2xl font-black tracking-tight">Start your studio</h1>
                     <p className="mt-1 text-sm text-muted">Create your owner account to begin.</p>
-                    <div className="mt-6 space-y-3">
-                      <input className="field-premium" type="email" required placeholder="you@studio.co.nz"
-                        value={email} onChange={(e) => setEmail(e.target.value)} />
-                      <input className="field-premium" type="password" required minLength={6} placeholder="Create a password"
-                        value={password} onChange={(e) => setPassword(e.target.value)} />
+
+                    <div className="mt-6">
+                      <OAuthButtons next="/onboarding" disabled={busy} />
                     </div>
-                    <button type="submit" disabled={busy} className="btn-glow btn-glow--solid mt-6 w-full justify-center disabled:opacity-60">
-                      {busy ? "Creating…" : "Create account"}
-                    </button>
-                    <p className="mt-4 text-center text-sm text-muted">
-                      Already have one? <a href="/login" className="text-ink underline">Log in</a>
-                    </p>
-                  </form>
+
+                    <AuthDivider label="or sign up with email" />
+
+                    <form onSubmit={createAccount}>
+                      <div className="space-y-3">
+                        <input className="field-premium" type="email" required placeholder="you@studio.co.nz"
+                          value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <input className="field-premium" type="password" required minLength={6} placeholder="Create a password"
+                          value={password} onChange={(e) => setPassword(e.target.value)} />
+                      </div>
+                      <button type="submit" disabled={busy} className="btn-glow btn-glow--solid mt-6 w-full justify-center disabled:opacity-60">
+                        {busy ? "Creating…" : "Create account with email"}
+                      </button>
+                      <p className="mt-4 text-center text-sm text-muted">
+                        Already have one? <a href="/login" className="text-ink underline">Log in</a>
+                      </p>
+                    </form>
+                  </div>
                 )}
 
                 {/* ── ② STUDIO ── */}
@@ -222,8 +232,8 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 18 }}
                       className="mx-auto grid h-14 w-14 place-items-center rounded-full text-2xl text-white" style={{ background: brand }}>✓</motion.div>
                     <h1 className="mt-4 text-2xl font-black">Welcome to {studioName}</h1>
-                    <p className="mt-1 text-sm text-muted">Your studio is live. Taking you to your dashboard…</p>
-                    <a href="/portal/admin" className="btn-glow btn-glow--solid mt-6 inline-flex justify-center">Enter dashboard →</a>
+                    <p className="mt-1 text-sm text-muted">Your studio is live. Let&apos;s get you set up…</p>
+                    <a href="/setup" className="btn-glow btn-glow--solid mt-6 inline-flex justify-center">Continue setup →</a>
                   </div>
                 )}
 

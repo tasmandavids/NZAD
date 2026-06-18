@@ -94,7 +94,10 @@ export function NotificationBell() {
         body:    JSON.stringify({ ids: [n.id] }),
       });
     }
-    if (n.link) router.push(n.link);
+    if (n.link) {
+      router.push(n.link);
+      router.refresh();
+    }
   };
 
   return (

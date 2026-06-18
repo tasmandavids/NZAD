@@ -15,31 +15,12 @@
 //  both the server actions and client components.
 // ============================================================================
 
-import { makeBlock, type Block, type BlockProps, type BlockType } from "./blocks";
+import { makeBlock, type Block } from "./blocks";
+import { EXTRA_HOME_TEMPLATES } from "./home-templates-extra";
+import type { PageTemplate, TemplateBlock } from "./template-types";
 
-/** A block within a template: its type plus optional prop overrides. */
-export type TemplateBlock = {
-  type: BlockType;
-  /** Shallow-merged over the block type's default props. */
-  props?: Partial<BlockProps>;
-};
-
-export type PageTemplate = {
-  id: string;
-  label: string;
-  description: string;
-  kind: "home" | "page";
-  /** Default page title. */
-  title: string;
-  /** Default slug (sub-pages only; home always becomes "home"). */
-  slug?: string;
-  isHome?: boolean;
-  showInNav?: boolean;
-  navLabel?: string;
-  seoTitle?: string;
-  seoDescription?: string;
-  blocks: TemplateBlock[];
-};
+export type { PageTemplate, TemplateBlock, TemplateCategory } from "./template-types";
+export { TEMPLATE_CATEGORIES } from "./template-types";
 
 /** Turn a template's block recipe into concrete Block objects. */
 export function buildTemplateBlocks(blocks: TemplateBlock[]): Block[] {
@@ -54,16 +35,21 @@ export function buildTemplateBlocks(blocks: TemplateBlock[]): Block[] {
   });
 }
 
-// ─── Home themes ────────────────────────────────────────────────────────────
+// ─── Home themes (1–4: originals) ───────────────────────────────────────────
 
 const HOME_CLASSIC: PageTemplate = {
   id: "home-classic",
   label: "Classic",
   description: "Hero, feature grid, class showcase, testimonials, call-to-action and contact.",
   kind: "home",
+  category: "professional",
   title: "Home",
   isHome: true,
   showInNav: false,
+  suggestedBrandColor: "#6B66C9",
+  suggestedBase: "light",
+  suggestedTypographyId: "fraunces-hanken",
+  previewAccent: "#6B66C9",
   blocks: [
     { type: "hero" },
     { type: "features" },
@@ -79,9 +65,14 @@ const HOME_SHOWCASE: PageTemplate = {
   label: "Showcase",
   description: "Image-led layout: bold hero, class showcase, gallery and testimonials.",
   kind: "home",
+  category: "visual",
   title: "Home",
   isHome: true,
   showInNav: false,
+  suggestedBrandColor: "#E84A8A",
+  suggestedBase: "light",
+  suggestedTypographyId: "playfair-source",
+  previewAccent: "#E84A8A",
   blocks: [
     {
       type: "hero",
@@ -105,9 +96,14 @@ const HOME_MINIMAL: PageTemplate = {
   label: "Minimal",
   description: "A clean, focused single-message homepage: hero, intro, classes and a CTA.",
   kind: "home",
+  category: "minimal",
   title: "Home",
   isHome: true,
   showInNav: false,
+  suggestedBrandColor: "#0A0A0A",
+  suggestedBase: "light",
+  suggestedTypographyId: "albert",
+  previewAccent: "#0A0A0A",
   blocks: [
     {
       type: "hero",
@@ -141,9 +137,14 @@ const HOME_BOLD: PageTemplate = {
   label: "Bold",
   description: "Full-bleed hero, stats strip, class streams, news preview and enrol CTA.",
   kind: "home",
+  category: "bold",
   title: "Home",
   isHome: true,
   showInNav: false,
+  suggestedBrandColor: "#5B5BFF",
+  suggestedBase: "dark",
+  suggestedTypographyId: "oswald-roboto",
+  previewAccent: "#5B5BFF",
   blocks: [
     {
       type: "hero",
@@ -426,11 +427,17 @@ const PAGE_CONTACT: PageTemplate = {
   ],
 };
 
-export const SITE_TEMPLATES: PageTemplate[] = [
+const CORE_HOME_TEMPLATES: PageTemplate[] = [
   HOME_CLASSIC,
   HOME_SHOWCASE,
   HOME_MINIMAL,
   HOME_BOLD,
+];
+
+export const HOME_TEMPLATES: PageTemplate[] = [...CORE_HOME_TEMPLATES, ...EXTRA_HOME_TEMPLATES];
+
+export const SITE_TEMPLATES: PageTemplate[] = [
+  ...HOME_TEMPLATES,
   PAGE_ABOUT,
   PAGE_CLASSES,
   PAGE_SCHEDULE,
@@ -445,5 +452,13 @@ export const TEMPLATE_MAP: Record<string, PageTemplate> = Object.fromEntries(
   SITE_TEMPLATES.map((t) => [t.id, t]),
 );
 
-export const HOME_TEMPLATES = SITE_TEMPLATES.filter((t) => t.kind === "home");
 export const PAGE_TEMPLATES = SITE_TEMPLATES.filter((t) => t.kind === "page");
+
+export function filterHomeTemplates(category: import("./template-types").TemplateCategory | "all"): PageTemplate[] {
+  if (category === "all") return HOME_TEMPLATES;
+  return HOME_TEMPLATES.filter((t) => t.category === category);
+}
+
+export function getTemplateBlockPreview(template: PageTemplate): string[] {
+  return template.blocks.slice(0, 6).map((b) => b.type);
+}

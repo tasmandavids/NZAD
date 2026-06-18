@@ -57,7 +57,14 @@ export default async function SitePagesPage() {
         <PublicSiteUrlBanner />
         <WebsiteSetupWizard
           studioName={studio.name as string}
-          defaultTagline={branding?.tagline ?? null}
+          initialBranding={{
+            tagline: branding?.tagline ?? null,
+            logoUrl: branding?.logoUrl ?? null,
+            brandColor: branding?.brandColor ?? "#6B66C9",
+            base: branding?.base ?? "light",
+            fontDisplay: branding?.fontDisplay ?? "Fraunces",
+            fontBody: branding?.fontBody ?? "Hanken Grotesk",
+          }}
         />
       </div>
     );

@@ -20,6 +20,11 @@ const SLATS = 5;
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const reduce = useReducedMotion();
+  const isAppShell =
+    pathname?.startsWith("/portal") || pathname?.startsWith("/platform");
+
+  // Portal/platform use their own shells — skip the marketing curtain wipe.
+  if (isAppShell) return <>{children}</>;
 
   return (
     <div className="relative">

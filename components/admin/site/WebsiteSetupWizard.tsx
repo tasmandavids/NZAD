@@ -2,30 +2,46 @@
 
 // ============================================================================
 //  WebsiteSetupWizard — single-page website setup with live preview tab.
-//  All options on one screen; preview tab shows the homepage before generating.
+//  20 homepage templates, 30 typography pairings, instant branding apply.
 // ============================================================================
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, type CSSProperties } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { setupStudioWebsite } from "@/app/portal/admin/site/actions";
 import { BlockRenderer } from "@/components/site/BlockRenderer";
+import { TemplateGallery } from "@/components/admin/site/TemplateGallery";
+import { TypographyGallery } from "@/components/admin/site/TypographyGallery";
+import { BrandingQuickApply, type BrandingDraft } from "@/components/admin/site/BrandingQuickApply";
 import { HOME_TEMPLATES } from "@/lib/site/templates";
 import { EDITOR_PREVIEW_CONTEXT } from "@/lib/site/preview-context";
 import {
-  FONT_PAIRS,
-  SETUP_HOME_IDS,
   SETUP_PAGE_OPTIONS,
   buildSetupPages,
+  getTemplateBrandingSuggestion,
 } from "@/lib/site/setup";
+import { brandingToCssVars } from "@/lib/branding";
+import { googleFontsStylesheetUrl } from "@/lib/fonts";
+import type { TypographyPair } from "@/lib/site/typography";
+import type { ThemeBase } from "@/lib/types";
 
 type Tab = "setup" | "preview";
 
+type InitialBranding = {
+  tagline: string | null;
+  logoUrl: string | null;
+  brandColor: string;
+  base: ThemeBase;
+  fontDisplay: string;
+  fontBody: string;
+};
+
 export function WebsiteSetupWizard({
   studioName,
-  defaultTagline,
+  initialBranding,
 }: {
   studioName: string;
-  defaultTagline: string | null;
+  initialBranding: InitialBranding;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -33,33 +49,81 @@ export function WebsiteSetupWizard({
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
-  const homeOptions = HOME_TEMPLATES.filter((t) =>
-    (SETUP_HOME_IDS as readonly string[]).includes(t.id),
-  );
-
-  const [homeId, setHomeId] = useState<string>("home-classic");
-  const [fontPairId, setFontPairId] = useState<string>(FONT_PAIRS[0].id);
-  const [tagline, setTagline] = useState(defaultTagline ?? "");
+  const [homeId, setHomeId] = useState("home-classic");
+  const [fontPairId, setFontPairId] = useState("fraunces-hanken");
+  const [fontDisplay, setFontDisplay] = useState(initialBranding.fontDisplay);
+  const [fontBody, setFontBody] = useState(initialBranding.fontBody);
+  const [branding, setBranding] = useState<BrandingDraft>({
+    brandColor: initialBranding.brandColor,
+    base: initialBranding.base,
+    logoUrl: initialBranding.logoUrl ?? "",
+    tagline: initialBranding.tagline ?? "",
+  });
   const [pageIds, setPageIds] = useState<string[]>(
     () => SETUP_PAGE_OPTIONS.filter((p) => p.defaultChecked).map((p) => p.id),
   );
-
-  const fontPair = FONT_PAIRS.find((f) => f.id === fontPairId) ?? FONT_PAIRS[0];
+  const [brandingTouched, setBrandingTouched] = useState(false);
 
   const preview = useMemo(
     () =>
       buildSetupPages({
-        homeTemplateId: homeId as (typeof SETUP_HOME_IDS)[number],
+        homeTemplateId: homeId,
         pageTemplateIds: pageIds,
         studioName,
-        tagline: tagline || null,
-        fontDisplay: fontPair.display,
-        fontBody: fontPair.body,
+        tagline: branding.tagline || null,
+        fontDisplay,
+        fontBody,
+        brandColor: branding.brandColor,
+        base: branding.base,
+        logoUrl: branding.logoUrl || null,
       }),
-    [homeId, pageIds, studioName, tagline, fontPair],
+    [homeId, pageIds, studioName, branding, fontDisplay, fontBody],
   );
 
+  const previewVars = useMemo(
+    () =>
+      brandingToCssVars({
+        studioId: "",
+        tagline: branding.tagline || null,
+        logoUrl: branding.logoUrl || null,
+        brandColor: branding.brandColor,
+        base: branding.base,
+        fontDisplay,
+        fontBody,
+        siteSettings: { showPoweredBy: true, portalLabel: "Portal" },
+      }) as CSSProperties,
+    [branding, fontDisplay, fontBody],
+  );
+
+  const fontsUrl = googleFontsStylesheetUrl(fontDisplay, fontBody);
   const homeBlocks = preview[0]?.blocks ?? [];
+  const selectedTemplate = HOME_TEMPLATES.find((t) => t.id === homeId);
+
+  function selectTemplate(id: string) {
+    setHomeId(id);
+    if (!brandingTouched) {
+      const suggestion = getTemplateBrandingSuggestion(id);
+      setBranding((prev) => ({
+        ...prev,
+        brandColor: suggestion.brandColor,
+        base: suggestion.base,
+      }));
+      setFontPairId(suggestion.typographyId);
+      setFontDisplay(suggestion.fontDisplay);
+      setFontBody(suggestion.fontBody);
+    }
+  }
+
+  function selectTypography(pair: TypographyPair) {
+    setFontPairId(pair.id);
+    setFontDisplay(pair.display);
+    setFontBody(pair.body);
+  }
+
+  function updateBranding(next: BrandingDraft) {
+    setBrandingTouched(true);
+    setBranding(next);
+  }
 
   function togglePage(id: string) {
     setPageIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -71,9 +135,12 @@ export function WebsiteSetupWizard({
       const res = await setupStudioWebsite({
         homeTemplateId: homeId,
         pageTemplateIds: pageIds,
-        tagline: tagline.trim() || null,
-        fontDisplay: fontPair.display,
-        fontBody: fontPair.body,
+        tagline: branding.tagline.trim() || null,
+        fontDisplay,
+        fontBody,
+        brandColor: branding.brandColor,
+        base: branding.base,
+        logoUrl: branding.logoUrl.trim() || null,
         publishHome: true,
       });
       if (!res.ok) {
@@ -102,12 +169,14 @@ export function WebsiteSetupWizard({
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4 p-6">
+      {fontsUrl && <link rel="stylesheet" href={fontsUrl} />}
+
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink">Set up your website</h1>
           <p className="mt-1 text-sm text-muted">
-            Configure everything on this page, then preview your homepage before generating.
-            Everything stays editable in the visual editor afterward.
+            Browse 20 starting layouts and 30 type styles. Add your branding, preview, then generate —
+            everything stays editable in the visual editor.
           </p>
         </div>
         <div className="flex shrink-0 rounded-full border border-[--hair] bg-surface p-1">
@@ -133,21 +202,27 @@ export function WebsiteSetupWizard({
       </header>
 
       {error && (
-        <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-500">{error}</p>
+        <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-500">
+          {error}
+        </p>
       )}
 
       {tab === "preview" ? (
         <section className="overflow-hidden rounded-2xl border border-[--hair] bg-base shadow-sm">
           <div className="flex items-center justify-between border-b border-[--hair] bg-surface px-4 py-2">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted">Homepage preview</p>
-            <p className="text-xs text-muted">{studioName}{tagline ? ` · ${tagline}` : ""}</p>
+            <p className="text-xs text-muted">
+              {studioName}
+              {branding.tagline ? ` · ${branding.tagline}` : ""}
+            </p>
           </div>
-          <div className="max-h-[70vh] overflow-y-auto">
+          <div className="max-h-[70vh] overflow-y-auto" style={previewVars} data-base={branding.base}>
             <BlockRenderer blocks={homeBlocks} context={EDITOR_PREVIEW_CONTEXT} />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[--hair] bg-surface px-4 py-3">
             <p className="text-xs text-muted">
-              {preview.length} page{preview.length === 1 ? "" : "s"} will be created · Homepage publishes on generate
+              {preview.length} page{preview.length === 1 ? "" : "s"} will be created · Homepage publishes on
+              generate
             </p>
             <div className="flex gap-2">
               <button type="button" onClick={() => setTab("setup")} className="btn-glow px-5 py-2 text-sm">
@@ -165,55 +240,33 @@ export function WebsiteSetupWizard({
           </div>
         </section>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Left column: all setup options */}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
           <div className="space-y-6">
+            <BrandingQuickApply studioName={studioName} value={branding} onChange={updateBranding} />
+
             <section className="space-y-3 rounded-2xl border border-[--hair] bg-surface p-5">
-              <h2 className="font-semibold text-ink">Homepage layout</h2>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {homeOptions.map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => setHomeId(t.id)}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      homeId === t.id ? "border-brand bg-brand/5" : "border-[--hair] hover:border-brand/50"
-                    }`}
-                  >
-                    <span className="font-semibold text-ink">{t.label}</span>
-                    <p className="mt-0.5 text-xs text-muted">{t.description}</p>
-                  </button>
-                ))}
+              <div>
+                <h2 className="font-semibold text-ink">Homepage template</h2>
+                <p className="text-sm text-muted">
+                  Scroll through {HOME_TEMPLATES.length} layouts — each is a starting point you can fully edit.
+                </p>
               </div>
+              <TemplateGallery
+                templates={HOME_TEMPLATES}
+                selectedId={homeId}
+                onSelect={selectTemplate}
+                disabled={pending}
+              />
             </section>
 
             <section className="space-y-3 rounded-2xl border border-[--hair] bg-surface p-5">
-              <h2 className="font-semibold text-ink">Typography</h2>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {FONT_PAIRS.map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    onClick={() => setFontPairId(f.id)}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      fontPairId === f.id ? "border-brand bg-brand/5" : "border-[--hair] hover:border-brand/50"
-                    }`}
-                  >
-                    <span className="font-semibold text-ink">{f.label}</span>
-                    <p className="mt-0.5 text-xs text-muted">{f.display} + {f.body}</p>
-                  </button>
-                ))}
+              <div>
+                <h2 className="font-semibold text-ink">Typography</h2>
+                <p className="text-sm text-muted">
+                  30 curated pairings — tap to preview how your site will read.
+                </p>
               </div>
-              <label className="block text-sm">
-                <span className="mb-1 block font-medium text-ink">Tagline</span>
-                <input
-                  value={tagline}
-                  onChange={(e) => setTagline(e.target.value)}
-                  placeholder="e.g. Auckland · All ages welcome"
-                  className="field-premium"
-                />
-                <span className="mt-1 block text-xs text-muted">Shown on your homepage hero and site footer.</span>
-              </label>
+              <TypographyGallery selectedId={fontPairId} onSelect={selectTypography} disabled={pending} />
             </section>
 
             <section className="space-y-3 rounded-2xl border border-[--hair] bg-surface p-5">
@@ -238,14 +291,12 @@ export function WebsiteSetupWizard({
             </section>
           </div>
 
-          {/* Right column: summary + actions */}
           <div className="space-y-4">
             <section className="sticky top-6 space-y-4 rounded-2xl border border-[--hair] bg-surface p-5">
               <h2 className="font-semibold text-ink">Your site plan</h2>
               <p className="text-sm text-muted">
                 Building for <strong className="text-ink">{studioName}</strong> with the{" "}
-                <strong className="text-ink">{homeOptions.find((h) => h.id === homeId)?.label}</strong> homepage and{" "}
-                <strong className="text-ink">{fontPair.label}</strong> fonts.
+                <strong className="text-ink">{selectedTemplate?.label ?? "Classic"}</strong> template.
               </p>
               <ul className="space-y-1.5 text-sm text-ink">
                 {preview.map((p) => (
@@ -255,13 +306,23 @@ export function WebsiteSetupWizard({
                   </li>
                 ))}
               </ul>
+              <div
+                className="overflow-hidden rounded-xl border border-[--hair]"
+                style={previewVars}
+                data-base={branding.base}
+              >
+                <div className="border-b border-[--hair] bg-base px-3 py-2 text-xs text-muted">Live mini preview</div>
+                <div className="max-h-48 overflow-hidden">
+                  <BlockRenderer blocks={homeBlocks.slice(0, 2)} context={EDITOR_PREVIEW_CONTEXT} />
+                </div>
+              </div>
               <div className="flex flex-col gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setTab("preview")}
                   className="btn-glow w-full px-6 py-2.5 text-sm"
                 >
-                  Open preview
+                  Open full preview
                 </button>
                 <button
                   type="button"
@@ -271,6 +332,12 @@ export function WebsiteSetupWizard({
                 >
                   {pending ? "Generating…" : "Generate my website"}
                 </button>
+                <Link
+                  href="/portal/admin/site/domain"
+                  className="text-center text-xs text-muted underline hover:text-brand"
+                >
+                  Connect your own domain →
+                </Link>
               </div>
             </section>
           </div>

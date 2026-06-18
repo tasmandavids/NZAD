@@ -53,6 +53,8 @@ function Sidebar({
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
+              scroll={false}
               onClick={onNavClick}
               className={`flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                 active ? "bg-brand text-white" : "text-muted hover:text-ink"

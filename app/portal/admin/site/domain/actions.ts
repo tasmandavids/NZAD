@@ -1,0 +1,172 @@
+"use server";
+
+// ============================================================================
+//  Domain setup — save custom domain + lightweight DNS check.
+// ============================================================================
+
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
+import { promises as dns } from "dns";
+import { createClient } from "@/lib/supabase/server";
+import {
+  buildDnsRecords,
+  domainTargets,
+  normalizeDomainInput,
+  validateCustomDomain,
+  type DomainKind,
+} from "@/lib/site/domain-setup";
+
+export type DomainActionResult<T = null> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
+
+const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
+
+async function getAdminStudioId(): Promise<{ studioId: string } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're not signed in." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("studio_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.studio_id) return { error: "No studio found." };
+  if (profile.role !== "admin") return { error: "Only studio admins can manage domains." };
+
+  return { studioId: profile.studio_id };
+}
+
+const SaveSchema = z.object({
+  domain: z.string().min(3).max(253),
+  kind: z.enum(["subdomain", "apex", "www"]),
+});
+
+export async function saveCustomDomain(input: unknown): Promise<DomainActionResult<{ domain: string }>> {
+  const parsed = SaveSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const domain = normalizeDomainInput(parsed.data.domain);
+  const validationError = validateCustomDomain(domain, ROOT);
+  if (validationError) return { ok: false, error: validationError };
+
+  const auth = await getAdminStudioId();
+  if ("error" in auth) return { ok: false, error: auth.error };
+
+  const supabase = await createClient();
+
+  const { data: taken } = await supabase
+    .from("studios")
+    .select("id")
+    .eq("custom_domain", domain)
+    .neq("id", auth.studioId)
+    .maybeSingle();
+
+  if (taken) return { ok: false, error: "That domain is already connected to another studio." };
+
+  const { error } = await supabase
+    .from("studios")
+    .update({ custom_domain: domain })
+    .eq("id", auth.studioId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/", "layout");
+  revalidatePath("/portal/admin/site/domain");
+  revalidatePath("/portal/admin/settings");
+  return { ok: true, data: { domain } };
+}
+
+export async function removeCustomDomain(): Promise<DomainActionResult> {
+  const auth = await getAdminStudioId();
+  if ("error" in auth) return { ok: false, error: auth.error };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("studios")
+    .update({ custom_domain: null })
+    .eq("id", auth.studioId);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/", "layout");
+  revalidatePath("/portal/admin/site/domain");
+  revalidatePath("/portal/admin/settings");
+  return { ok: true, data: null };
+}
+
+const CheckSchema = z.object({
+  domain: z.string().min(3).max(253),
+  kind: z.enum(["subdomain", "apex", "www"]),
+});
+
+export type DnsCheckResult = {
+  ok: boolean;
+  message: string;
+  records: ReturnType<typeof buildDnsRecords>;
+};
+
+export async function checkDomainDns(input: unknown): Promise<DomainActionResult<DnsCheckResult>> {
+  const parsed = CheckSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const domain = normalizeDomainInput(parsed.data.domain);
+  const validationError = validateCustomDomain(domain, ROOT);
+  if (validationError) return { ok: false, error: validationError };
+
+  const targets = domainTargets();
+  const expected = buildDnsRecords(domain, parsed.data.kind as DomainKind, targets);
+  const record = expected[0];
+
+  try {
+    if (record.type === "A") {
+      const ips = await dns.resolve4(domain);
+      const match = ips.includes(record.value);
+      return {
+        ok: true,
+        data: {
+          ok: match,
+          message: match
+            ? "DNS looks good — your domain points to Olune."
+            : `We found A records (${ips.join(", ")}) but expected ${record.value}. Check your DNS settings.`,
+          records: expected,
+        },
+      };
+    }
+
+    const cnames = await dns.resolveCname(domain);
+    const normalized = cnames.map((c) => c.replace(/\.$/, "").toLowerCase());
+    const target = record.value.replace(/\.$/, "").toLowerCase();
+    const match = normalized.some((c) => c === target || c.endsWith(`.${target}`));
+    return {
+      ok: true,
+      data: {
+        ok: match,
+        message: match
+          ? "DNS looks good — your domain points to Olune."
+          : cnames.length
+            ? `We found CNAME → ${cnames.join(", ")} but expected ${record.value}. It may still be updating.`
+            : "No CNAME record found yet. Add the record below and check again in a few minutes.",
+        records: expected,
+      },
+    };
+  } catch {
+    return {
+      ok: true,
+      data: {
+        ok: false,
+        message:
+          "We couldn't find your DNS record yet. That's normal right after adding it — try again in 15–30 minutes.",
+        records: expected,
+      },
+    };
+  }
+}

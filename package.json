@@ -20,7 +20,8 @@
     "setup:all": "bash scripts/setup-all.sh",
     "db:pull": "npx supabase db pull",
     "db:reset": "npx supabase db reset",
-    "seed:platform-admin": "node --env-file=.env.local scripts/seed-platform-admin.mjs"
+    "seed:platform-admin": "node --env-file=.env.local scripts/seed-platform-admin.mjs",
+    "setup:oauth": "node --env-file=.env.local scripts/setup-oauth.mjs"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

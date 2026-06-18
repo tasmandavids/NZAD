@@ -14,6 +14,8 @@ import type { Branding, ThemeBase } from "@/lib/types";
 import { brandingToCssVars } from "@/lib/branding";
 import { saveBranding } from "@/app/portal/admin/branding/actions";
 
+import { TYPOGRAPHY_PAIRS } from "@/lib/site/typography";
+
 const PRESETS: { label: string; brandColor: string; base: ThemeBase }[] = [
   { label: "Iris", brandColor: "#6B66C9", base: "light" },
   { label: "Crimson", brandColor: "#C8102E", base: "light" },
@@ -23,7 +25,7 @@ const PRESETS: { label: string; brandColor: string; base: ThemeBase }[] = [
   { label: "Jade", brandColor: "#13B6A4", base: "light" },
 ];
 
-const FONTS = ["Fraunces", "Cormorant Garamond", "Archivo", "Inter", "Sora", "Outfit", "Manrope", "Hanken Grotesk"];
+const FONT_OPTIONS = [...new Set(TYPOGRAPHY_PAIRS.flatMap((p) => [p.display, p.body]))].sort();
 
 export function BrandingEditor({ initial }: { initial: Branding }) {
   const [b, setB] = useState<Branding>(initial);
@@ -151,7 +153,7 @@ export function BrandingEditor({ initial }: { initial: Branding }) {
               onChange={(e) => set("fontDisplay", e.target.value)}
               className="w-full rounded-lg border border-[--hair] bg-base/40 px-3 py-2 text-sm"
             >
-              {FONTS.map((f) => <option key={f}>{f}</option>)}
+              {FONT_OPTIONS.map((f) => <option key={f} value={f}>{f}</option>)}
             </select>
           </div>
           <div className="space-y-2">
@@ -161,7 +163,7 @@ export function BrandingEditor({ initial }: { initial: Branding }) {
               onChange={(e) => set("fontBody", e.target.value)}
               className="w-full rounded-lg border border-[--hair] bg-base/40 px-3 py-2 text-sm"
             >
-              {FONTS.map((f) => <option key={f}>{f}</option>)}
+              {FONT_OPTIONS.map((f) => <option key={f} value={f}>{f}</option>)}
             </select>
           </div>
         </section>
