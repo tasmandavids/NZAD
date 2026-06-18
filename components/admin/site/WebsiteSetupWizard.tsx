@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { setupStudioWebsite } from "@/app/portal/admin/site/actions";
 import { BlockRenderer } from "@/components/site/BlockRenderer";
+import { SiteHeader } from "@/components/site/SiteHeader";
 import { TemplateGallery } from "@/components/admin/site/TemplateGallery";
 import { TypographyGallery } from "@/components/admin/site/TypographyGallery";
 import { BrandingQuickApply, type BrandingDraft } from "@/components/admin/site/BrandingQuickApply";
@@ -21,6 +22,7 @@ import {
   getTemplateBrandingSuggestion,
 } from "@/lib/site/setup";
 import { brandingToCssVars } from "@/lib/branding";
+import { buildSetupNavLinks } from "@/lib/site/page-links";
 import { googleFontsStylesheetUrl } from "@/lib/fonts";
 import type { TypographyPair } from "@/lib/site/typography";
 import type { ThemeBase } from "@/lib/types";
@@ -98,6 +100,19 @@ export function WebsiteSetupWizard({
   const fontsUrl = googleFontsStylesheetUrl(fontDisplay, fontBody);
   const homeBlocks = preview[0]?.blocks ?? [];
   const selectedTemplate = HOME_TEMPLATES.find((t) => t.id === homeId);
+  const setupNav = useMemo(
+    () =>
+      buildSetupNavLinks(
+        preview.map((p) => ({
+          title: p.title,
+          slug: p.slug,
+          isHome: p.isHome,
+          showInNav: p.showInNav,
+          navLabel: p.navLabel,
+        })),
+      ),
+    [preview],
+  );
 
   function selectTemplate(id: string) {
     setHomeId(id);
@@ -217,6 +232,13 @@ export function WebsiteSetupWizard({
             </p>
           </div>
           <div className="max-h-[70vh] overflow-y-auto" style={previewVars} data-base={branding.base}>
+            <SiteHeader
+              studioName={studioName}
+              logoUrl={branding.logoUrl || null}
+              nav={setupNav}
+              portalLabel="Portal"
+              preview
+            />
             <BlockRenderer blocks={homeBlocks} context={EDITOR_PREVIEW_CONTEXT} />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[--hair] bg-surface px-4 py-3">
@@ -312,6 +334,13 @@ export function WebsiteSetupWizard({
                 data-base={branding.base}
               >
                 <div className="border-b border-[--hair] bg-base px-3 py-2 text-xs text-muted">Live mini preview</div>
+                <SiteHeader
+                  studioName={studioName}
+                  logoUrl={branding.logoUrl || null}
+                  nav={setupNav}
+                  portalLabel="Portal"
+                  preview
+                />
                 <div className="max-h-48 overflow-hidden">
                   <BlockRenderer blocks={homeBlocks.slice(0, 2)} context={EDITOR_PREVIEW_CONTEXT} />
                 </div>

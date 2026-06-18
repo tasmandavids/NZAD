@@ -24,21 +24,56 @@ interface NavItem {
   exact?: boolean;
 }
 
-const NAV: Record<Role, NavItem[]> = {
-  admin: [
-    { href: "/portal/admin",           label: "Dashboard",  exact: true },
-    { href: "/portal/admin/classes",   label: "Classes" },
-    { href: "/portal/admin/students",  label: "Students" },
-    { href: "/portal/admin/billing",   label: "Billing" },
-    { href: "/portal/admin/subscriptions", label: "Subscriptions" },
-    { href: "/portal/admin/leads",     label: "Leads" },
-    { href: "/portal/admin/messages",  label: "Messages" },
-    { href: "/portal/admin/events",    label: "Events" },
-    { href: "/portal/admin/shop",      label: "Shop" },
-    { href: "/portal/admin/site",      label: "Website" },
-    { href: "/portal/admin/support",   label: "Olune support" },
-    { href: "/portal/admin/settings",  label: "Settings" },
-  ],
+interface NavSection {
+  title?: string;
+  items: NavItem[];
+}
+
+const ADMIN_NAV: NavSection[] = [
+  {
+    items: [
+      { href: "/portal/admin", label: "Dashboard", exact: true },
+      { href: "/portal/admin/classes", label: "Classes" },
+      { href: "/portal/admin/events", label: "Events" },
+    ],
+  },
+  {
+    title: "Client management",
+    items: [
+      { href: "/portal/admin/parents", label: "Parents" },
+      { href: "/portal/admin/students", label: "Students" },
+      { href: "/portal/admin/leads", label: "Leads" },
+    ],
+  },
+  {
+    title: "Finance",
+    items: [
+      { href: "/portal/admin/billing", label: "Billing" },
+      { href: "/portal/admin/subscriptions", label: "Subscriptions" },
+    ],
+  },
+  {
+    title: "Digital",
+    items: [
+      { href: "/portal/admin/site", label: "Website" },
+      { href: "/portal/admin/advertising", label: "Advertising" },
+      { href: "/portal/admin/shop", label: "Shop" },
+    ],
+  },
+  {
+    title: "Communications",
+    items: [
+      { href: "/portal/admin/email", label: "Email" },
+      { href: "/portal/admin/messages", label: "Messages" },
+      { href: "/portal/admin/support", label: "Olune Support" },
+    ],
+  },
+  {
+    items: [{ href: "/portal/admin/settings", label: "Settings" }],
+  },
+];
+
+const NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
   teacher: [
     { href: "/portal/teacher", label: "Schedule & Roll", exact: true },
   ],
@@ -105,12 +140,28 @@ function SidebarContent({
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }) {
-  const items = NAV[role];
-
   const isActive = (item: NavItem) =>
     item.exact
       ? pathname === item.href
       : pathname === item.href || pathname.startsWith(item.href + "/");
+
+  const renderNavItem = (item: NavItem) => {
+    const active = isActive(item);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        prefetch={false}
+        scroll={false}
+        onClick={onNavClick}
+        className={`flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+          active ? "bg-brand text-white" : "text-muted hover:text-ink"
+        }`}
+      >
+        {item.label}
+      </Link>
+    );
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -139,33 +190,21 @@ function SidebarContent({
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 space-y-0.5 p-3">
-        {items.map((item) => {
-          const active = isActive(item);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              prefetch={false}
-              scroll={false}
-              onClick={onNavClick}
-              className={`flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                active
-                  ? "bg-brand text-white"
-                  : "text-muted hover:text-ink"
-              }`}
-              style={
-                active
-                  ? undefined
-                  : {
-                      // subtle hover bg using CSS var (Tailwind can't do runtime vars inline)
-                    }
-              }
-            >
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto p-3">
+        {role === "admin" ? (
+          ADMIN_NAV.map((section, index) => (
+            <div key={section.title ?? `section-${index}`} className={index > 0 ? "mt-4" : ""}>
+              {section.title && (
+                <p className="mb-1 px-3 text-[0.62rem] font-semibold uppercase tracking-widest text-muted">
+                  {section.title}
+                </p>
+              )}
+              <div className="space-y-0.5">{section.items.map(renderNavItem)}</div>
+            </div>
+          ))
+        ) : (
+          <div className="space-y-0.5">{NAV[role].map(renderNavItem)}</div>
+        )}
       </nav>
 
       {/* User + sign out */}

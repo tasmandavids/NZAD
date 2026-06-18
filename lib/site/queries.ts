@@ -7,6 +7,7 @@
 import { createPublicClient } from "@/lib/supabase/public";
 import { normalizeBlocks, type Block } from "./blocks";
 import { normalizePageBackground, type PageBackground } from "./background";
+import { buildStudioNavLinks, toStudioPageNavSource } from "./page-links";
 
 export type PublicPage = {
   id: string;
@@ -107,11 +108,7 @@ export async function getNavLinks(studioId: string): Promise<NavLink[]> {
     .order("is_home", { ascending: false })
     .order("nav_order", { ascending: true });
 
-  return (data ?? []).map((p) => ({
-    slug: p.is_home ? "" : (p.slug as string),
-    label: (p.nav_label as string | null) || (p.title as string),
-    isHome: p.is_home as boolean,
-  }));
+  return buildStudioNavLinks((data ?? []).map(toStudioPageNavSource));
 }
 
 /** Active classes for site blocks (public-readable via RLS). */

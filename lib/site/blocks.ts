@@ -12,7 +12,7 @@
 //  editor generic.
 // ============================================================================
 
-import { seedLayoutProps } from "./layout";
+import { seedLayoutDefaults } from "./layout";
 
 export type BlockType =
   | "heading"
@@ -37,7 +37,9 @@ export type BlockType =
   | "locations"
   | "cta"
   | "faq"
-  | "contact";
+  | "contact"
+  | "spacer"
+  | "divider";
 
 /** A repeated sub-item (feature, testimonial, faq row, gallery image…). */
 export type BlockItem = Record<string, string>;
@@ -64,6 +66,7 @@ export type FieldType =
   | "number"
   | "boolean"
   | "select"
+  | "color"
   | "list";
 
 export type SelectOption = { value: string; label: string };
@@ -137,6 +140,13 @@ export const LAYOUT_FIELDS: FieldDef[] = [
     key: "_width",
     label: "Width (%)",
     type: "number",
+    help: "Snaps to the 12-column grid.",
+  },
+  {
+    key: "_height",
+    label: "Height (px)",
+    type: "number",
+    help: "0 = auto height. Snaps to 40px rows when set.",
   },
   {
     key: "_zIndex",
@@ -150,6 +160,195 @@ export const LAYOUT_FIELDS: FieldDef[] = [
     type: "number",
     help: "0 = invisible, 100 = fully visible.",
   },
+];
+
+export const STYLE_FIELDS: FieldDef[] = [
+  {
+    key: "_rotate",
+    label: "Rotation (°)",
+    type: "number",
+    help: "Snaps to 15° steps. Use quick actions for ±15°.",
+  },
+  {
+    key: "_shadow",
+    label: "Shadow",
+    type: "select",
+    options: [
+      { value: "none", label: "None" },
+      { value: "sm", label: "Small" },
+      { value: "md", label: "Medium" },
+      { value: "lg", label: "Large" },
+      { value: "xl", label: "Extra large" },
+    ],
+  },
+  {
+    key: "_radius",
+    label: "Corner radius",
+    type: "select",
+    options: [
+      { value: "none", label: "Square" },
+      { value: "sm", label: "Small" },
+      { value: "md", label: "Medium" },
+      { value: "lg", label: "Large" },
+      { value: "full", label: "Pill / circle" },
+    ],
+  },
+  {
+    key: "_border",
+    label: "Border",
+    type: "select",
+    options: [
+      { value: "none", label: "None" },
+      { value: "hair", label: "Subtle" },
+      { value: "brand", label: "Brand color" },
+      { value: "strong", label: "Strong" },
+    ],
+  },
+  {
+    key: "_fill",
+    label: "Background fill",
+    type: "select",
+    options: [
+      { value: "none", label: "Transparent" },
+      { value: "surface", label: "Surface" },
+      { value: "tint", label: "Brand tint" },
+      { value: "brand", label: "Brand wash" },
+      { value: "blur", label: "Frosted glass" },
+    ],
+  },
+  {
+    key: "_padding",
+    label: "Inner padding",
+    type: "select",
+    options: [
+      { value: "none", label: "None" },
+      { value: "sm", label: "Small" },
+      { value: "md", label: "Medium" },
+      { value: "lg", label: "Large" },
+    ],
+  },
+  {
+    key: "_flipX",
+    label: "Flip horizontally",
+    type: "boolean",
+  },
+  {
+    key: "_locked",
+    label: "Lock position",
+    type: "boolean",
+    help: "Prevents accidental moves until unlocked.",
+  },
+];
+
+export const TYPOGRAPHY_FIELDS: FieldDef[] = [
+  {
+    key: "textColor",
+    label: "Text color",
+    type: "select",
+    options: [
+      { value: "default", label: "Default" },
+      { value: "ink", label: "Dark" },
+      { value: "muted", label: "Muted" },
+      { value: "brand", label: "Brand" },
+      { value: "white", label: "White" },
+      { value: "custom", label: "Custom…" },
+    ],
+  },
+  {
+    key: "customColor",
+    label: "Custom color",
+    type: "color",
+    help: "Used when text color is set to Custom.",
+  },
+  {
+    key: "fontSize",
+    label: "Font size",
+    type: "select",
+    options: [
+      { value: "auto", label: "Auto (from heading level)" },
+      { value: "xs", label: "Extra small" },
+      { value: "sm", label: "Small" },
+      { value: "base", label: "Base" },
+      { value: "lg", label: "Large" },
+      { value: "xl", label: "Extra large" },
+      { value: "2xl", label: "2× large" },
+      { value: "3xl", label: "3× large" },
+      { value: "4xl", label: "4× large" },
+      { value: "5xl", label: "5× large" },
+    ],
+  },
+  {
+    key: "fontWeight",
+    label: "Font weight",
+    type: "select",
+    options: [
+      { value: "auto", label: "Auto" },
+      { value: "light", label: "Light" },
+      { value: "normal", label: "Normal" },
+      { value: "medium", label: "Medium" },
+      { value: "semibold", label: "Semibold" },
+      { value: "bold", label: "Bold" },
+      { value: "black", label: "Black" },
+    ],
+  },
+];
+
+export const IMAGE_STYLE_FIELDS: FieldDef[] = [
+  {
+    key: "aspectRatio",
+    label: "Aspect ratio",
+    type: "select",
+    options: [
+      { value: "16:10", label: "16:10 (default)" },
+      { value: "16:9", label: "16:9 widescreen" },
+      { value: "4:3", label: "4:3 standard" },
+      { value: "1:1", label: "1:1 square" },
+      { value: "3:4", label: "3:4 portrait" },
+      { value: "auto", label: "Auto height" },
+    ],
+  },
+  {
+    key: "objectFit",
+    label: "Image fit",
+    type: "select",
+    options: [
+      { value: "cover", label: "Cover (crop to fill)" },
+      { value: "contain", label: "Contain (show all)" },
+    ],
+  },
+  {
+    key: "imageRadius",
+    label: "Corner radius",
+    type: "select",
+    options: [
+      { value: "none", label: "Square" },
+      { value: "sm", label: "Small" },
+      { value: "md", label: "Medium" },
+      { value: "lg", label: "Large" },
+      { value: "full", label: "Circle" },
+    ],
+  },
+  {
+    key: "imageBorder",
+    label: "Border",
+    type: "select",
+    options: [
+      { value: "none", label: "None" },
+      { value: "hair", label: "Subtle" },
+      { value: "brand", label: "Brand" },
+      { value: "strong", label: "Strong" },
+    ],
+  },
+];
+
+const BUTTON_STYLE_OPTIONS = [
+  { value: "solid", label: "Solid" },
+  { value: "outline", label: "Outline" },
+  { value: "ghost", label: "Ghost" },
+  { value: "soft", label: "Soft fill" },
+  { value: "dark", label: "Dark" },
+  { value: "gradient", label: "Gradient" },
+  { value: "square", label: "Square corners" },
 ];
 
 /** Default appearance per block type (preserves the original look of each). */
@@ -175,6 +374,8 @@ export const APPEARANCE_DEFAULTS: Partial<Record<BlockType, { _bg: string; _spac
   locations: { _bg: "surface", _spacing: "normal" },
   faq: { _bg: "base", _spacing: "normal" },
   contact: { _bg: "surface", _spacing: "normal" },
+  divider: { _bg: "base", _spacing: "compact" },
+  spacer: { _bg: "base", _spacing: "compact" },
 };
 
 // ─── Block definitions ────────────────────────────────────────────────────────
@@ -209,18 +410,23 @@ export const BLOCK_LIBRARY: BlockDef[] = [
         options: [
           { value: "left", label: "Left" },
           { value: "center", label: "Center" },
+          { value: "right", label: "Right" },
         ],
       },
+      ...TYPOGRAPHY_FIELDS,
     ],
   },
   {
     type: "paragraph",
-    label: "Text",
+    label: "Text box",
     appearance: true,
-    description: "A paragraph of body text.",
+    description: "A paragraph of body text — resize and style freely.",
     defaultProps: {
       body: "Add your text here. Use **bold** and [links](https://example.com) if you like.",
       align: "left",
+      textColor: "muted",
+      fontSize: "lg",
+      fontWeight: "normal",
     },
     fields: [
       {
@@ -236,26 +442,33 @@ export const BLOCK_LIBRARY: BlockDef[] = [
         options: [
           { value: "left", label: "Left" },
           { value: "center", label: "Center" },
+          { value: "right", label: "Right" },
         ],
       },
+      ...TYPOGRAPHY_FIELDS,
     ],
   },
   {
     type: "imageBlock",
     label: "Image",
     appearance: true,
-    description: "A single image with optional caption and link.",
+    description: "Upload or link an image — control crop, shape and borders.",
     defaultProps: {
       imageUrl: "",
       alt: "",
       caption: "",
       linkHref: "",
+      aspectRatio: "16:10",
+      objectFit: "cover",
+      imageRadius: "md",
+      imageBorder: "hair",
     },
     fields: [
       { key: "imageUrl", label: "Image", type: "image" },
       { key: "alt", label: "Alt text", type: "text" },
       { key: "caption", label: "Caption", type: "text" },
       { key: "linkHref", label: "Link URL (optional)", type: "text", help: "Clicking the image opens this link." },
+      ...IMAGE_STYLE_FIELDS,
     ],
   },
   {
@@ -282,13 +495,15 @@ export const BLOCK_LIBRARY: BlockDef[] = [
   },
   {
     type: "linkBlock",
-    label: "Link",
+    label: "Button",
     appearance: true,
-    description: "A text link or button linking to a page or URL.",
+    description: "A text link or styled button linking to a page or URL.",
     defaultProps: {
       label: "Learn more",
       href: "/",
       variant: "button",
+      buttonStyle: "solid",
+      buttonSize: "md",
       align: "left",
     },
     fields: [
@@ -296,11 +511,27 @@ export const BLOCK_LIBRARY: BlockDef[] = [
       { key: "href", label: "Link", type: "text" },
       {
         key: "variant",
-        label: "Style",
+        label: "Type",
         type: "select",
         options: [
           { value: "button", label: "Button" },
           { value: "text", label: "Text link" },
+        ],
+      },
+      {
+        key: "buttonStyle",
+        label: "Button style",
+        type: "select",
+        options: BUTTON_STYLE_OPTIONS,
+      },
+      {
+        key: "buttonSize",
+        label: "Button size",
+        type: "select",
+        options: [
+          { value: "sm", label: "Small" },
+          { value: "md", label: "Medium" },
+          { value: "lg", label: "Large" },
         ],
       },
       {
@@ -310,6 +541,68 @@ export const BLOCK_LIBRARY: BlockDef[] = [
         options: [
           { value: "left", label: "Left" },
           { value: "center", label: "Center" },
+          { value: "right", label: "Right" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "spacer",
+    label: "Spacer",
+    description: "Empty vertical space — use between sections.",
+    defaultProps: {
+      height: 80,
+      showLabel: false,
+    },
+    fields: [
+      {
+        key: "height",
+        label: "Height (px)",
+        type: "number",
+        help: "Snaps to 40px grid rows.",
+      },
+      {
+        key: "showLabel",
+        label: "Show label in editor",
+        type: "boolean",
+      },
+    ],
+  },
+  {
+    type: "divider",
+    label: "Divider",
+    appearance: true,
+    description: "Horizontal line to separate content.",
+    defaultProps: {
+      style: "hair",
+      width: 100,
+      align: "center",
+    },
+    fields: [
+      {
+        key: "style",
+        label: "Line style",
+        type: "select",
+        options: [
+          { value: "hair", label: "Subtle" },
+          { value: "brand", label: "Brand color" },
+          { value: "thick", label: "Bold" },
+          { value: "dashed", label: "Dashed" },
+        ],
+      },
+      {
+        key: "width",
+        label: "Width (%)",
+        type: "number",
+      },
+      {
+        key: "align",
+        label: "Alignment",
+        type: "select",
+        options: [
+          { value: "left", label: "Left" },
+          { value: "center", label: "Center" },
+          { value: "right", label: "Right" },
         ],
       },
     ],
@@ -329,6 +622,9 @@ export const BLOCK_LIBRARY: BlockDef[] = [
       imageUrl: "",
       align: "center",
       variant: "academy",
+      primaryButtonStyle: "dark",
+      secondaryButtonStyle: "outline",
+      overlayStrength: "medium",
     },
     fields: [
       { key: "eyebrow", label: "Eyebrow", type: "text" },
@@ -336,9 +632,32 @@ export const BLOCK_LIBRARY: BlockDef[] = [
       { key: "subheading", label: "Subheading", type: "textarea" },
       { key: "primaryLabel", label: "Primary button label", type: "text" },
       { key: "primaryHref", label: "Primary button link", type: "text" },
+      {
+        key: "primaryButtonStyle",
+        label: "Primary button style",
+        type: "select",
+        options: BUTTON_STYLE_OPTIONS,
+      },
       { key: "secondaryLabel", label: "Secondary button label", type: "text" },
       { key: "secondaryHref", label: "Secondary button link", type: "text" },
-      { key: "imageUrl", label: "Background image URL", type: "image", help: "Optional. Leave blank for a clean gradient." },
+      {
+        key: "secondaryButtonStyle",
+        label: "Secondary button style",
+        type: "select",
+        options: BUTTON_STYLE_OPTIONS,
+      },
+      { key: "imageUrl", label: "Background image", type: "image", help: "Optional. Upload or paste a URL." },
+      {
+        key: "overlayStrength",
+        label: "Image overlay",
+        type: "select",
+        options: [
+          { value: "light", label: "Light" },
+          { value: "medium", label: "Medium" },
+          { value: "dark", label: "Dark" },
+          { value: "none", label: "None" },
+        ],
+      },
       {
         key: "align",
         label: "Alignment",
@@ -735,12 +1054,24 @@ export const BLOCK_LIBRARY: BlockDef[] = [
       subheading: "Your first class is on us.",
       buttonLabel: "Book a trial",
       buttonHref: "/enrol",
+      buttonStyle: "white",
     },
     fields: [
       { key: "heading", label: "Heading", type: "text" },
       { key: "subheading", label: "Subheading", type: "text" },
       { key: "buttonLabel", label: "Button label", type: "text" },
       { key: "buttonHref", label: "Button link", type: "text" },
+      {
+        key: "buttonStyle",
+        label: "Button style",
+        type: "select",
+        options: [
+          { value: "white", label: "White" },
+          { value: "outline-white", label: "Outline white" },
+          { value: "dark", label: "Dark" },
+          { value: "ghost-white", label: "Ghost white" },
+        ],
+      },
     ],
   },
   {
@@ -804,7 +1135,7 @@ function newBlockId(): string {
 export function makeBlock(type: BlockType): Block {
   const def = BLOCK_MAP[type];
   // Deep-clone defaults so list items aren't shared across instances.
-  const props: BlockProps = seedLayoutProps(structuredClone(def.defaultProps));
+  const props: BlockProps = seedLayoutDefaults(structuredClone(def.defaultProps));
   // Seed appearance defaults so each block starts looking the way it always has.
   if (def.appearance) {
     const a = APPEARANCE_DEFAULTS[type] ?? { _bg: "base", _spacing: "normal" };

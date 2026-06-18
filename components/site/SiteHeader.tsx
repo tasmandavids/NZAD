@@ -10,18 +10,54 @@ export function SiteHeader({
   logoUrl,
   nav,
   portalLabel,
+  resolveHref,
+  homeHref = "/",
+  preview = false,
 }: {
   studioName: string;
   logoUrl: string | null;
   nav: NavLink[];
   portalLabel: string;
+  /** Override link targets (e.g. editor routes between pages). */
+  resolveHref?: (link: NavLink) => string;
+  homeHref?: string;
+  /** Non-interactive preview chrome (setup wizard). */
+  preview?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+
+  const hrefFor = (link: NavLink) =>
+    resolveHref ? resolveHref(link) : link.isHome ? "/" : `/${link.slug}`;
+
+  const NavAnchor = preview
+    ? ({ link, className, onClick }: { link: NavLink; className: string; onClick?: () => void }) => (
+        <span className={className}>{link.label}</span>
+      )
+    : ({ link, className, onClick }: { link: NavLink; className: string; onClick?: () => void }) => (
+        <Link href={hrefFor(link)} className={className} onClick={onClick}>
+          {link.label}
+        </Link>
+      );
 
   return (
     <header className="sticky top-0 z-40 border-b border-[--hair] bg-base/95 backdrop-blur">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2" onClick={() => setOpen(false)}>
+        {preview ? (
+          <span className="flex items-center gap-2">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt={studioName} className="h-8 w-auto" />
+            ) : (
+              <span
+                className="text-xl font-light tracking-tight text-ink"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {studioName}
+              </span>
+            )}
+          </span>
+        ) : (
+        <Link href={homeHref} className="flex items-center gap-2" onClick={() => setOpen(false)}>
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt={studioName} className="h-8 w-auto" />
@@ -34,16 +70,15 @@ export function SiteHeader({
             </span>
           )}
         </Link>
+        )}
 
         <nav className="hidden items-center gap-6 lg:flex">
           {nav.map((l) => (
-            <Link
+            <NavAnchor
               key={l.slug || "home"}
-              href={l.isHome ? "/" : `/${l.slug}`}
+              link={l}
               className="text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted transition hover:text-ink"
-            >
-              {l.label}
-            </Link>
+            />
           ))}
           <Link
             href="/login"
@@ -77,14 +112,12 @@ export function SiteHeader({
       {open && (
         <nav className="border-t border-[--hair] bg-base lg:hidden">
           {nav.map((l) => (
-            <Link
+            <NavAnchor
               key={l.slug || "home"}
-              href={l.isHome ? "/" : `/${l.slug}`}
+              link={l}
               className="block border-b border-[--hair] px-6 py-4 text-sm text-muted transition hover:text-ink"
               onClick={() => setOpen(false)}
-            >
-              {l.label}
-            </Link>
+            />
           ))}
           <Link
             href="/login"

@@ -99,6 +99,7 @@ export async function createPage(input: unknown): Promise<ActionResult<{ id: str
       is_home: isHome,
       blocks: [],
       status: "draft",
+      show_in_nav: !isHome,
     })
     .select("id")
     .single();

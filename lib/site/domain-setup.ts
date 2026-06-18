@@ -117,7 +117,7 @@ export function buildDnsRecords(
 export function domainTargets() {
   return {
     cname: process.env.NEXT_PUBLIC_DOMAIN_CNAME_TARGET ?? "cname.vercel-dns.com",
-    apexIp: process.env.NEXT_PUBLIC_DOMAIN_APEX_IP ?? "76.76.21.21",
+    apexIp: process.env.NEXT_PUBLIC_DOMAIN_APEX_IP ?? "216.198.79.1",
   };
 }
 
@@ -128,6 +128,18 @@ export function publicSubdomainUrl(slug: string, rootDomain: string, port?: stri
     return `http://${host}:${port ?? "3000"}`;
   }
   return `https://${host}`;
+}
+
+/** Full public URL for a studio page (homepage or sub-page). */
+export function publicPageUrl(
+  studioSlug: string,
+  opts: { isHome?: boolean; pageSlug?: string; rootDomain?: string; port?: string } = {},
+): string {
+  const root = opts.rootDomain ?? process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "localhost";
+  const port = opts.port ?? process.env.PORT ?? "3000";
+  const base = publicSubdomainUrl(studioSlug, root, port);
+  if (opts.isHome || !opts.pageSlug) return `${base}/`;
+  return `${base}/${opts.pageSlug.replace(/^\//, "")}`;
 }
 
 export function publicCustomDomainUrl(domain: string): string {

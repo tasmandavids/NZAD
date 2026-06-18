@@ -9,9 +9,11 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  APPEARANCE_FIELDS,
   BLOCK_LIBRARY,
   BLOCK_MAP,
   LAYOUT_FIELDS,
+  STYLE_FIELDS,
   cloneBlock,
   makeBlock,
   type Block,
@@ -25,9 +27,13 @@ import VideoInput from "@/components/admin/site/VideoInput";
 import { BackgroundEditor } from "@/components/admin/site/BackgroundEditor";
 import { EditorCanvas } from "@/components/admin/site/EditorCanvas";
 import { normalizePageBackground, type PageBackground } from "@/lib/site/background";
-import { freeformDefaultsAt, nextCanvasY, seedLayoutProps } from "@/lib/site/layout";
-import { num } from "@/lib/site/props";
+import { CANVAS_GRID, freeformDefaultsAt, isCanvasWidget, nextCanvasY, normalizeBlockLayoutForSave, seedLayoutDefaults, seedLayoutProps, snapGridHeight, snapGridWidth, snapGridX, snapGridY, snapLayoutPatch, type LayoutPatch } from "@/lib/site/layout";
+import { canvasAlignX, snapRotation } from "@/lib/site/block-styles";
+import { num, str } from "@/lib/site/props";
+import LinkPicker, { isLinkField } from "@/components/admin/site/LinkPicker";
+import { useEditorHistory } from "@/lib/site/editor-history";
 import { savePageBlocks, updatePageMeta, publishPage } from "@/app/portal/admin/site/actions";
+import { buildStudioNavLinks, type SitePageLink, type StudioPageNavSource } from "@/lib/site/page-links";
 
 type EditablePage = {
   id: string;
@@ -45,21 +51,60 @@ type EditablePage = {
 };
 
 function seedBlocks(blocks: Block[]): Block[] {
-  return blocks.map((b, i) => ({ ...b, props: seedLayoutProps(b.props, i) }));
+  return blocks.map((b, i) => {
+    if (isCanvasWidget(b.type)) {
+      return { ...b, props: seedLayoutProps(b.props, i) };
+    }
+    const props = seedLayoutDefaults(b.props, i);
+    props._position = "stack";
+    return { ...b, props };
+  });
 }
 
-export default function PageEditor({ page }: { page: EditablePage }) {
+function blocksForSave(blocks: Block[]): Block[] {
+  return blocks.map((b, i) => ({ ...b, props: normalizeBlockLayoutForSave(b, i) }));
+}
+
+export default function PageEditor({
+  page,
+  sitePages = [],
+  studioPages = [],
+  studioName,
+  logoUrl,
+  portalLabel = "Portal",
+  livePreviewUrl,
+}: {
+  page: EditablePage;
+  sitePages?: SitePageLink[];
+  studioPages?: StudioPageNavSource[];
+  studioName: string;
+  logoUrl: string | null;
+  portalLabel?: string;
+  livePreviewUrl: string;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const [blocks, setBlocks] = useState<Block[]>(() => seedBlocks(page.blocks));
-  const [background, setBackground] = useState<PageBackground>(() => normalizePageBackground(page.background));
-  const [selectedId, setSelectedId] = useState<string | null>(page.blocks[0]?.id ?? null);
+  const initialSnapshot = useMemo(
+    () => ({
+      blocks: seedBlocks(page.blocks),
+      background: normalizePageBackground(page.background),
+    }),
+    [page.blocks, page.background],
+  );
+
+  const editor = useEditorHistory(initialSnapshot);
+  const { blocks, background, apply, checkpoint, undo, redo, resetHistory, canUndo, canRedo } = editor;
+
+  const [selectedIds, setSelectedIds] = useState<string[]>(() =>
+    page.blocks[0]?.id ? [page.blocks[0].id] : [],
+  );
   const [backgroundSelected, setBackgroundSelected] = useState(false);
   const [panel, setPanel] = useState<"none" | "edit" | "settings" | "elements" | "background">("edit");
   const [status, setStatus] = useState<"draft" | "published">(page.status);
   const [dirty, setDirty] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const layoutGesturing = useRef(false);
 
   const [meta, setMeta] = useState({
     title: page.title,
@@ -71,15 +116,143 @@ export default function PageEditor({ page }: { page: EditablePage }) {
     seoDescription: page.seoDescription,
   });
 
-  const selected = useMemo(() => blocks.find((b) => b.id === selectedId) ?? null, [blocks, selectedId]);
+  const selected = useMemo(
+    () => blocks.find((b) => b.id === selectedIds[selectedIds.length - 1]) ?? null,
+    [blocks, selectedIds],
+  );
+
+  const navPages = useMemo(
+    () =>
+      studioPages.map((p) =>
+        p.id === page.id
+          ? {
+              ...p,
+              title: meta.title || p.title,
+              showInNav: meta.showInNav,
+              navLabel: meta.navLabel || null,
+              navOrder: meta.navOrder,
+            }
+          : p,
+      ),
+    [studioPages, page.id, meta.title, meta.showInNav, meta.navLabel, meta.navOrder],
+  );
+
+  const navLinks = useMemo(() => buildStudioNavLinks(navPages), [navPages]);
+
   const touch = () => setDirty(true);
 
+  const commit = (next: { blocks?: Block[]; background?: PageBackground }, record = true) => {
+    apply(
+      {
+        blocks: next.blocks ?? blocks,
+        background: next.background ?? background,
+      },
+      record,
+    );
+    touch();
+  };
+
   useEffect(() => {
-    if (selectedId) {
+    if (selectedIds.length) {
       setBackgroundSelected(false);
       setPanel((p) => (p === "settings" || p === "background" ? p : "edit"));
     }
-  }, [selectedId]);
+  }, [selectedIds.join(",")]);
+
+  const handleSelect = (id: string | null, opts?: { shift?: boolean }) => {
+    if (!id) {
+      setSelectedIds([]);
+      return;
+    }
+    setBackgroundSelected(false);
+    if (opts?.shift) {
+      setSelectedIds((prev) =>
+        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      );
+    } else {
+      setSelectedIds([id]);
+    }
+  };
+
+  useEffect(() => {
+    const isEditable = (el: EventTarget | null) => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (isEditable(e.target)) return;
+      const col = 100 / CANVAS_GRID.columns;
+      const targets = selectedIds.length ? selectedIds : [];
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        e.preventDefault();
+        if (undo()) touch();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) {
+        e.preventDefault();
+        if (redo()) touch();
+        return;
+      }
+
+      if (!targets.length) return;
+      const ids = targets;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        nudgeBlocks(ids, { dx: -col });
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        nudgeBlocks(ids, { dx: col });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        nudgeBlocks(ids, { dy: -CANVAS_GRID.rowHeight });
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        nudgeBlocks(ids, { dy: CANVAS_GRID.rowHeight });
+      } else if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        deleteBlocks(ids);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        duplicateBlock(ids[ids.length - 1]);
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedIds, blocks, background]);
+
+  const nudgeBlocks = (ids: string[], { dx, dy }: { dx?: number; dy?: number }) => {
+    commit({
+      blocks: blocks.map((b) => {
+        if (!ids.includes(b.id) || !isCanvasWidget(b.type)) return b;
+        const props: Record<string, PropValue> = { ...b.props, _position: "freeform" };
+        if (dx !== undefined) props._x = snapGridX(num(b.props, "_x", 0) + dx);
+        if (dy !== undefined) props._y = snapGridY(num(b.props, "_y", 0) + dy);
+        return { ...b, props };
+      }),
+    });
+  };
+
+  const alignBlock = (align: "left" | "center" | "right") => {
+    if (!selected) return;
+    const w = num(selected.props, "_width", snapGridWidth(33));
+    updateBlockLayout([selected.id], { _x: snapGridX(canvasAlignX(w, align)) });
+  };
+
+  const rotateBlock = (delta: number) => {
+    if (!selected) return;
+    const next = snapRotation(num(selected.props, "_rotate", 0) + delta);
+    setProp("_rotate", next);
+  };
+
+  const layerBlock = (dir: 1 | -1) => {
+    if (!selected) return;
+    setProp("_zIndex", Math.max(1, num(selected.props, "_zIndex", 1) + dir));
+  };
 
   useEffect(() => {
     if (!dirty) return;
@@ -97,62 +270,110 @@ export default function PageEditor({ page }: { page: EditablePage }) {
 
   const addBlockAt = (type: BlockType, index: number, at?: { x: number; y: number }) => {
     const b = makeBlock(type);
-    const width = type === "heading" || type === "paragraph" || type === "linkBlock" ? 50 : 70;
-    const y = at?.y ?? nextCanvasY(blocks);
-    const x = at?.x ?? 5;
-    Object.assign(b.props, freeformDefaultsAt(y, width));
-    b.props._x = x;
-    b.props._zIndex = blocks.length + 1;
-    setBlocks((prev) => {
-      const next = [...prev];
-      next.splice(index, 0, b);
-      return next;
-    });
-    setSelectedId(b.id);
+
+    if (isCanvasWidget(type)) {
+      let width = snapGridWidth(70);
+      if (type === "heading" || type === "paragraph" || type === "linkBlock") width = snapGridWidth(50);
+      if (type === "imageBlock") width = snapGridWidth(40);
+      if (type === "spacer") width = snapGridWidth(100);
+      if (type === "divider") width = snapGridWidth(60);
+
+      const y = at?.y ?? nextCanvasY(blocks);
+      const x = at?.x !== undefined ? snapGridX(at.x) : snapGridX(5);
+      Object.assign(b.props, freeformDefaultsAt(y, width));
+      b.props._x = x;
+      b.props._zIndex = blocks.length + 1;
+      if (type === "spacer") {
+        b.props._height = snapGridHeight(num(b.props, "height", 80));
+      }
+    } else {
+      Object.assign(b.props, seedLayoutDefaults(b.props, index));
+      b.props._position = "stack";
+    }
+
+    const next = [...blocks];
+    next.splice(index, 0, b);
+    commit({ blocks: next });
+    setSelectedIds([b.id]);
     setPanel("edit");
+  };
+
+  const onLayoutGestureStart = () => {
+    if (!layoutGesturing.current) {
+      layoutGesturing.current = true;
+      checkpoint();
+    }
+  };
+
+  const onLayoutGestureEnd = () => {
+    layoutGesturing.current = false;
     touch();
   };
 
-  const moveBlock = (id: string, patch: { _x?: number; _y?: number }) => {
-    setBlocks((prev) =>
-      prev.map((b) => (b.id === id ? { ...b, props: { ...b.props, ...patch } } : b)),
+  const updateBlockLayout = (
+    ids: string[],
+    patch: LayoutPatch | ((props: Block["props"]) => LayoutPatch),
+  ) => {
+    const idSet = new Set(ids);
+    commit(
+      {
+        blocks: blocks.map((b) => {
+          if (!idSet.has(b.id)) return b;
+          const p = typeof patch === "function" ? patch(b.props) : patch;
+          const snapped = snapLayoutPatch(p);
+          const merged = { ...b.props, ...snapped, _position: "freeform" as const };
+          if (snapped._width !== undefined && snapped._x === undefined) {
+            merged._x = Math.min(num(merged, "_x", 0), 100 - snapped._width);
+          }
+          return { ...b, props: merged };
+        }),
+      },
+      false,
     );
-    touch();
   };
 
-  const deleteBlock = (id: string) => {
-    setBlocks((prev) => prev.filter((b) => b.id !== id));
-    if (selectedId === id) setSelectedId(null);
-    touch();
+  const deleteBlocks = (ids: string[]) => {
+    const idSet = new Set(ids);
+    commit({ blocks: blocks.filter((b) => !idSet.has(b.id)) });
+    setSelectedIds((prev) => prev.filter((id) => !idSet.has(id)));
   };
+
+  const deleteBlock = (id: string) => deleteBlocks([id]);
 
   const duplicateBlock = (id: string) => {
-    setBlocks((prev) => {
-      const idx = prev.findIndex((b) => b.id === id);
-      if (idx === -1) return prev;
-      const copy = cloneBlock(prev[idx]);
-      copy.props._y = num(copy.props, "_y", 0) + 24;
-      copy.props._x = num(copy.props, "_x", 5) + 2;
-      copy.props._zIndex = prev.length + 1;
-      const next = [...prev];
-      next.splice(idx + 1, 0, copy);
-      setSelectedId(copy.id);
-      return next;
-    });
-    touch();
+    const idx = blocks.findIndex((b) => b.id === id);
+    if (idx === -1) return;
+    const copy = cloneBlock(blocks[idx]);
+    copy.props._position = "freeform";
+    copy.props._y = snapGridY(num(copy.props, "_y", 0) + CANVAS_GRID.rowHeight);
+    copy.props._x = snapGridX(num(copy.props, "_x", 0) + snapGridWidth(8));
+    copy.props._zIndex = blocks.length + 1;
+    const next = [...blocks];
+    next.splice(idx + 1, 0, copy);
+    commit({ blocks: next });
+    setSelectedIds([copy.id]);
   };
 
   const setProp = (key: string, value: PropValue) => {
     if (!selected) return;
-    setBlocks((prev) =>
-      prev.map((b) => {
+    const isText = key === "body" || key === "text" || key === "heading" || key === "subheading";
+    commit({
+      blocks: blocks.map((b) => {
         if (b.id !== selected.id) return b;
-        const props = { ...b.props, [key]: value };
+        let v = value;
+        if (key === "_x" && typeof v === "number") v = snapGridX(v);
+        if (key === "_y" && typeof v === "number") v = snapGridY(v);
+        if (key === "_width" && typeof v === "number") v = snapGridWidth(v);
+        if (key === "_height" && typeof v === "number") v = v > 0 ? snapGridHeight(v) : 0;
+        if (key === "_rotate" && typeof v === "number") v = snapRotation(v);
+        if (key === "height" && typeof v === "number") v = snapGridHeight(v);
+        const props = { ...b.props, [key]: v };
         if (key === "autoplay" && value === true) props.muted = true;
+        if (["_x", "_y", "_width", "_height"].includes(key)) props._position = "freeform";
+        if (key === "height" && b.type === "spacer") props._height = snapGridHeight(Number(v));
         return { ...b, props };
       }),
-    );
-    touch();
+    }, !isText);
   };
 
   const getList = (key: string): BlockItem[] => {
@@ -181,9 +402,10 @@ export default function PageEditor({ page }: { page: EditablePage }) {
       setMsg(null);
       const metaRes = await updatePageMeta({ pageId: page.id, ...meta });
       if (!metaRes.ok) return setMsg(metaRes.error);
-      const res = await savePageBlocks(page.id, blocks, background);
+      const res = await savePageBlocks(page.id, blocksForSave(blocks), background);
       if (!res.ok) return setMsg(res.error);
       setDirty(false);
+      resetHistory({ blocks, background });
       setMsg("Saved");
       router.refresh();
       setTimeout(() => setMsg(null), 2000);
@@ -194,18 +416,24 @@ export default function PageEditor({ page }: { page: EditablePage }) {
       setMsg(null);
       const metaRes = await updatePageMeta({ pageId: page.id, ...meta });
       if (!metaRes.ok) return setMsg(metaRes.error);
-      const blkRes = await savePageBlocks(page.id, blocks, background);
+      const blkRes = await savePageBlocks(page.id, blocksForSave(blocks), background);
       if (!blkRes.ok) return setMsg(blkRes.error);
       const pubRes = await publishPage(page.id);
       if (!pubRes.ok) return setMsg(pubRes.error);
       setStatus("published");
       setDirty(false);
+      resetHistory({ blocks, background });
       setMsg("Published");
       router.refresh();
       setTimeout(() => setMsg(null), 2000);
     });
 
-  const publicHref = page.isHome ? "/" : `/${meta.slug}`;
+  const draftPreviewHref = `/site-preview/${page.id}`;
+  const previewHref = status === "published" ? livePreviewUrl : draftPreviewHref;
+  const previewTitle =
+    status === "published"
+      ? `Open live page at ${livePreviewUrl.replace(/^https?:\/\//, "")}`
+      : "Preview draft (opens in admin — publish to share publicly)";
   const showPanel = panel !== "none";
 
   return (
@@ -235,6 +463,28 @@ export default function PageEditor({ page }: { page: EditablePage }) {
           )}
           <button
             type="button"
+            disabled={!canUndo}
+            onClick={() => {
+              if (undo()) touch();
+            }}
+            title="Undo (⌘Z)"
+            className="rounded-full border border-[--hair] px-3 py-1.5 text-sm text-ink transition hover:bg-base disabled:opacity-40"
+          >
+            ↶
+          </button>
+          <button
+            type="button"
+            disabled={!canRedo}
+            onClick={() => {
+              if (redo()) touch();
+            }}
+            title="Redo (⌘⇧Z)"
+            className="rounded-full border border-[--hair] px-3 py-1.5 text-sm text-ink transition hover:bg-base disabled:opacity-40"
+          >
+            ↷
+          </button>
+          <button
+            type="button"
             onClick={() => setPanel((p) => (p === "elements" ? "none" : "elements"))}
             className={`rounded-full border px-4 py-1.5 text-sm transition ${
               panel === "elements" ? "border-brand bg-brand/10 text-brand" : "border-[--hair] text-ink hover:bg-base"
@@ -245,7 +495,7 @@ export default function PageEditor({ page }: { page: EditablePage }) {
           <button
             type="button"
             onClick={() => {
-              setSelectedId(null);
+              setSelectedIds([]);
               setBackgroundSelected(true);
               setPanel("background");
             }}
@@ -264,9 +514,15 @@ export default function PageEditor({ page }: { page: EditablePage }) {
           >
             Settings
           </button>
-          <Link href={publicHref} target="_blank" className="rounded-full border border-[--hair] px-4 py-1.5 text-sm text-ink transition hover:bg-base">
+          <a
+            href={previewHref}
+            target="_blank"
+            rel="noreferrer noopener"
+            title={previewTitle}
+            className="rounded-full border border-[--hair] px-4 py-1.5 text-sm text-ink transition hover:bg-base"
+          >
             Preview
-          </Link>
+          </a>
           <button onClick={save} disabled={pending} className="rounded-full border border-[--hair] px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-base disabled:opacity-50">
             {pending ? "Saving…" : "Save draft"}
           </button>
@@ -282,20 +538,27 @@ export default function PageEditor({ page }: { page: EditablePage }) {
             blocks={blocks}
             background={background}
             backgroundSelected={backgroundSelected}
-            selectedId={selectedId}
-            onSelect={(id) => {
-              setSelectedId(id);
-              setBackgroundSelected(false);
+            selectedIds={selectedIds}
+            studioName={studioName}
+            logoUrl={logoUrl}
+            nav={navLinks}
+            portalLabel={portalLabel}
+            currentPageId={page.id}
+            navPages={navPages}
+            onSelect={(id, opts) => {
+              handleSelect(id, opts);
             }}
             onSelectBackground={() => {
-              setSelectedId(null);
+              setSelectedIds([]);
               setBackgroundSelected(true);
               setPanel("background");
             }}
             onAddAt={addBlockAt}
             onDelete={deleteBlock}
             onDuplicate={duplicateBlock}
-            onMoveBlock={moveBlock}
+            onUpdateLayout={updateBlockLayout}
+            onLayoutGestureStart={onLayoutGestureStart}
+            onLayoutGestureEnd={onLayoutGestureEnd}
           />
         </main>
 
@@ -307,8 +570,7 @@ export default function PageEditor({ page }: { page: EditablePage }) {
               <BackgroundEditor
                 background={background}
                 onChange={(bg) => {
-                  setBackground(bg);
-                  touch();
+                  commit({ background: bg });
                 }}
               />
             ) : panel === "elements" ? (
@@ -317,14 +579,36 @@ export default function PageEditor({ page }: { page: EditablePage }) {
               <Inspector
                 key={selected.id}
                 block={selected}
+                selectionCount={selectedIds.length}
                 fields={BLOCK_MAP[selected.type].fields}
+                hasAppearance={!!BLOCK_MAP[selected.type].appearance}
+                sitePages={sitePages}
                 onSet={setProp}
+                onAlign={alignBlock}
+                onRotate={rotateBlock}
+                onLayer={layerBlock}
                 list={{ get: getList, update: updateItem, add: addItem, remove: removeItem, move: moveItem }}
               />
+            ) : selectedIds.length > 1 ? (
+              <div className="space-y-4 p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">
+                  {selectedIds.length} elements selected
+                </h3>
+                <p className="text-sm text-muted">
+                  Arrow keys move all selected elements. Delete removes them. Click one element without Shift to edit it individually.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => deleteBlocks(selectedIds)}
+                  className="w-full rounded-lg border border-red-500/40 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10"
+                >
+                  Delete selected
+                </button>
+              </div>
             ) : (
               <div className="p-6 text-center text-sm text-muted">
                 <p>Click an element on the page to edit it.</p>
-                <p className="mt-2 text-xs">Or right-click the canvas to add heading, text, image, or link.</p>
+                <p className="mt-2 text-xs">Or right-click the canvas to add headings, text boxes, images, or buttons.</p>
               </div>
             )}
           </aside>
@@ -335,12 +619,15 @@ export default function PageEditor({ page }: { page: EditablePage }) {
 }
 
 function ElementsPanel({ onAdd }: { onAdd: (type: BlockType) => void }) {
-  return (
-    <div className="space-y-4 p-4">
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Add element</h2>
-      <p className="text-xs text-muted">Click to add at the bottom of the page, or right-click the canvas to insert in a specific spot.</p>
+  const basic: BlockType[] = ["heading", "paragraph", "imageBlock", "linkBlock", "spacer", "divider", "videoBlock"];
+  const sections = BLOCK_LIBRARY.filter((d) => !basic.includes(d.type) && ["hero", "pageHeader", "richText", "cta"].includes(d.type));
+  const content = BLOCK_LIBRARY.filter((d) => !basic.includes(d.type) && !sections.some((s) => s.type === d.type));
+
+  const renderGroup = (title: string, defs: typeof BLOCK_LIBRARY) => (
+    <div className="space-y-2">
+      <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted">{title}</p>
       <div className="grid grid-cols-2 gap-2">
-        {BLOCK_LIBRARY.map((def) => (
+        {defs.map((def) => (
           <button
             key={def.type}
             type="button"
@@ -354,6 +641,23 @@ function ElementsPanel({ onAdd }: { onAdd: (type: BlockType) => void }) {
       </div>
     </div>
   );
+
+  return (
+    <div className="space-y-5 p-4">
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Add element</h2>
+        <p className="mt-1 text-xs text-muted">
+          Click to add at the bottom, or right-click the canvas for a specific spot. Everything snaps to the 12-column grid.
+        </p>
+      </div>
+      {renderGroup(
+        "Basic — text, images & buttons",
+        BLOCK_LIBRARY.filter((d) => basic.includes(d.type)),
+      )}
+      {renderGroup("Sections", sections)}
+      {renderGroup("Studio content", content)}
+    </div>
+  );
 }
 
 type ListOps = {
@@ -364,31 +668,118 @@ type ListOps = {
   move: (key: string, index: number, dir: -1 | 1) => void;
 };
 
+function BlockQuickActions({
+  onAlign,
+  onRotate,
+  onLayer,
+}: {
+  onAlign: (a: "left" | "center" | "right") => void;
+  onRotate: (delta: number) => void;
+  onLayer: (dir: 1 | -1) => void;
+}) {
+  const btn =
+    "rounded-md border border-[--hair] bg-surface px-2 py-1 text-[0.65rem] font-medium text-ink transition hover:border-brand hover:text-brand";
+  return (
+    <div className="space-y-2 rounded-xl border border-[--hair] bg-base p-3">
+      <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted">Quick actions</p>
+      <div className="flex flex-wrap gap-1.5">
+        <button type="button" className={btn} onClick={() => onAlign("left")} title="Align left">
+          ⬅ Align
+        </button>
+        <button type="button" className={btn} onClick={() => onAlign("center")} title="Align center">
+          ↔ Center
+        </button>
+        <button type="button" className={btn} onClick={() => onAlign("right")} title="Align right">
+          ➡ Align
+        </button>
+        <button type="button" className={btn} onClick={() => onRotate(-15)} title="Rotate -15°">
+          ↺ −15°
+        </button>
+        <button type="button" className={btn} onClick={() => onRotate(15)} title="Rotate +15°">
+          ↻ +15°
+        </button>
+        <button type="button" className={btn} onClick={() => onLayer(1)} title="Bring forward">
+          ▲ Layer
+        </button>
+        <button type="button" className={btn} onClick={() => onLayer(-1)} title="Send back">
+          ▼ Layer
+        </button>
+      </div>
+      <p className="text-[0.6rem] text-muted">Arrow keys nudge · ⌘D duplicate · ⌘Z undo · Shift+click multi-select</p>
+    </div>
+  );
+}
+
 function Inspector({
   block,
+  selectionCount,
   fields,
+  hasAppearance,
+  sitePages,
   onSet,
+  onAlign,
+  onRotate,
+  onLayer,
   list,
 }: {
   block: Block;
+  selectionCount: number;
   fields: FieldDef[];
+  hasAppearance: boolean;
+  sitePages: SitePageLink[];
   onSet: (key: string, value: PropValue) => void;
+  onAlign: (a: "left" | "center" | "right") => void;
+  onRotate: (delta: number) => void;
+  onLayer: (dir: 1 | -1) => void;
   list: ListOps;
 }) {
+  const visibleFields = fields.filter((f) => {
+    if (f.key === "buttonStyle" && block.type === "linkBlock" && str(block.props, "variant") === "text") {
+      return false;
+    }
+    if (f.key === "buttonSize" && block.type === "linkBlock" && str(block.props, "variant") === "text") {
+      return false;
+    }
+    if (f.key === "customColor" && str(block.props, "textColor") !== "custom") {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-4 p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">{BLOCK_MAP[block.type].label}</h3>
-      {fields.map((f) =>
+      <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">
+        {BLOCK_MAP[block.type].label}
+        {selectionCount > 1 && (
+          <span className="ml-2 font-normal normal-case text-muted">(+{selectionCount - 1} selected)</span>
+        )}
+      </h3>
+      <BlockQuickActions onAlign={onAlign} onRotate={onRotate} onLayer={onLayer} />
+      {visibleFields.map((f) =>
         f.type === "list" ? (
           <ListField key={f.key} field={f} list={list} />
         ) : (
-          <ScalarField key={f.key} field={f} value={block.props[f.key]} onSet={onSet} />
+          <ScalarField key={f.key} field={f} value={block.props[f.key]} onSet={onSet} sitePages={sitePages} />
         ),
       )}
+      {hasAppearance && (
+        <>
+          <hr className="border-[--hair]" />
+          <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">Section appearance</h4>
+          {APPEARANCE_FIELDS.map((f) => (
+            <ScalarField key={f.key} field={f} value={block.props[f.key]} onSet={onSet} sitePages={sitePages} />
+          ))}
+        </>
+      )}
       <hr className="border-[--hair]" />
-      <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">Position & opacity</h4>
+      <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">Frame & effects</h4>
+      {STYLE_FIELDS.map((f) => (
+        <ScalarField key={f.key} field={f} value={block.props[f.key]} onSet={onSet} sitePages={sitePages} />
+      ))}
+      <hr className="border-[--hair]" />
+      <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">Position & size</h4>
       {LAYOUT_FIELDS.map((f) => (
-        <ScalarField key={f.key} field={f} value={block.props[f.key]} onSet={onSet} />
+        <ScalarField key={f.key} field={f} value={block.props[f.key]} onSet={onSet} sitePages={sitePages} />
       ))}
     </div>
   );
@@ -398,35 +789,55 @@ function ScalarField({
   field,
   value,
   onSet,
+  sitePages = [],
 }: {
   field: FieldDef;
   value: PropValue | undefined;
   onSet: (key: string, value: PropValue) => void;
+  sitePages?: SitePageLink[];
 }) {
-  const str = typeof value === "string" ? value : value == null ? "" : String(value);
+  const strVal = typeof value === "string" ? value : value == null ? "" : String(value);
   return (
     <label className="block text-sm">
       <span className="mb-1 block font-medium text-ink">{field.label}</span>
       {field.type === "image" ? (
-        <ImageInput value={str} onChange={(url) => onSet(field.key, url)} />
+        <ImageInput value={strVal} onChange={(url) => onSet(field.key, url)} />
       ) : field.type === "video" ? (
-        <VideoInput value={str} onChange={(url) => onSet(field.key, url)} />
+        <VideoInput value={strVal} onChange={(url) => onSet(field.key, url)} />
+      ) : isLinkField(field.key) ? (
+        <LinkPicker value={strVal} pages={sitePages} onChange={(href) => onSet(field.key, href)} />
       ) : field.type === "select" ? (
-        <select value={str} onChange={(e) => onSet(field.key, e.target.value)} className="field-premium">
+        <select value={strVal} onChange={(e) => onSet(field.key, e.target.value)} className="field-premium">
           {(field.options ?? []).map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
       ) : field.type === "textarea" && field.toolbar ? (
-        <RichTextArea value={str} placeholder={field.placeholder} onChange={(v) => onSet(field.key, v)} />
+        <RichTextArea value={strVal} placeholder={field.placeholder} onChange={(v) => onSet(field.key, v)} />
       ) : field.type === "textarea" ? (
-        <textarea value={str} rows={4} placeholder={field.placeholder} onChange={(e) => onSet(field.key, e.target.value)} className="field-premium" />
+        <textarea value={strVal} rows={4} placeholder={field.placeholder} onChange={(e) => onSet(field.key, e.target.value)} className="field-premium" />
+      ) : field.type === "color" ? (
+        <div className="flex items-center gap-2">
+          <input
+            type="color"
+            value={/^#[0-9a-f]{6}$/i.test(strVal) ? strVal : "#6B66C9"}
+            onChange={(e) => onSet(field.key, e.target.value)}
+            className="h-9 w-12 cursor-pointer rounded border border-[--hair] bg-base"
+          />
+          <input
+            type="text"
+            value={strVal}
+            placeholder="#6B66C9"
+            onChange={(e) => onSet(field.key, e.target.value)}
+            className="field-premium flex-1"
+          />
+        </div>
       ) : field.type === "boolean" ? (
         <input type="checkbox" checked={value === true} onChange={(e) => onSet(field.key, e.target.checked)} className="h-4 w-4 accent-[--brand]" />
       ) : field.type === "number" ? (
-        <input type="number" value={str} onChange={(e) => onSet(field.key, e.target.value === "" ? 0 : Number(e.target.value))} className="field-premium" />
+        <input type="number" value={strVal} onChange={(e) => onSet(field.key, e.target.value === "" ? 0 : Number(e.target.value))} className="field-premium" />
       ) : (
-        <input type="text" value={str} placeholder={field.placeholder} onChange={(e) => onSet(field.key, e.target.value)} className="field-premium" />
+        <input type="text" value={strVal} placeholder={field.placeholder} onChange={(e) => onSet(field.key, e.target.value)} className="field-premium" />
       )}
       {field.help && <span className="mt-1 block text-xs text-muted">{field.help}</span>}
     </label>

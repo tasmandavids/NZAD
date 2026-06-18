@@ -12,7 +12,14 @@ import Link from "next/link";
 import { formatMoney } from "@/lib/currency";
 import { str, num, list, bool } from "@/lib/site/props";
 import { APPEARANCE_DEFAULTS, type Block, type BlockProps, type BlockType } from "@/lib/site/blocks";
-import { blockFrameStyle, computeCanvasMinHeight } from "@/lib/site/layout";
+import { blockFrameClassName, blockFramePaddingClass, blockFrameStyle, blockOpacity, computeCanvasMinHeight, isStackLayout, usesCanvasLayout, usesStackLayout } from "@/lib/site/layout";
+import { buttonStyleClasses, buttonStyleInline, ctaButtonClasses } from "@/lib/site/button-styles";
+import {
+  imageFitClass,
+  imageFrameClasses,
+  textColorStyle,
+  typographyClasses,
+} from "@/lib/site/block-styles";
 import type { PageBackground } from "@/lib/site/background";
 import { BackgroundShell } from "@/components/site/BackgroundShell";
 import type { SiteClass, SiteEvent, SiteProduct, SiteStaff } from "@/lib/site/queries";
@@ -53,17 +60,38 @@ export function BlockRenderer({
     );
   }
 
+  if (usesStackLayout(blocks) || !usesCanvasLayout(blocks)) {
+    return (
+      <div className="relative w-full">
+        {background && <BackgroundShell background={background} />}
+        {blocks.map((b) => (
+          <div key={b.id} style={{ opacity: blockOpacity(b.props) }}>
+            <BlockSwitch block={b} context={context} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const minH = computeCanvasMinHeight(blocks);
 
   return (
     <div className="relative w-full" style={{ minHeight: minH }}>
       {background && <BackgroundShell background={background} />}
       <div className="relative" style={{ zIndex: 1, minHeight: minH }}>
-        {blocks.map((b) => (
-          <div key={b.id} style={blockFrameStyle(b.props)}>
-            <BlockSwitch block={b} context={context} />
-          </div>
-        ))}
+        {blocks.map((b) =>
+          isStackLayout(b.props) ? (
+            <div key={b.id} style={{ opacity: blockOpacity(b.props) }}>
+              <BlockSwitch block={b} context={context} />
+            </div>
+          ) : (
+            <div key={b.id} style={blockFrameStyle(b.props)} className={blockFrameClassName(b.props)}>
+              <div className={blockFramePaddingClass(b.props)}>
+                <BlockSwitch block={b} context={context} />
+              </div>
+            </div>
+          ),
+        )}
       </div>
     </div>
   );
@@ -94,6 +122,8 @@ function BlockSwitch({ block, context }: { block: Block; context: RenderContext 
     case "cta":          return <Cta p={block.props} />;
     case "faq":          return <Faq p={block.props} />;
     case "contact":      return <Contact p={block.props} />;
+    case "spacer":       return <SpacerBlock p={block.props} />;
+    case "divider":      return <DividerBlock p={block.props} />;
     default:             return null;
   }
 }
@@ -236,28 +266,41 @@ function isOptimizable(url: string): boolean {
 
 /** Fills its (positioned, sized) parent. next/image for our Storage host,
  *  plain <img> for arbitrary pasted URLs (which aren't in remotePatterns). */
-function FillImage({ src, alt, sizes }: { src: string; alt: string; sizes: string }) {
+function FillImage({
+  src,
+  alt,
+  sizes,
+  fitClass = "object-cover",
+}: {
+  src: string;
+  alt: string;
+  sizes: string;
+  fitClass?: string;
+}) {
   if (isOptimizable(src)) {
-    return <Image src={src} alt={alt} fill sizes={sizes} className="object-cover" />;
+    return <Image src={src} alt={alt} fill sizes={sizes} className={fitClass} />;
   }
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" />;
+  return <img src={src} alt={alt} className={`absolute inset-0 h-full w-full ${fitClass}`} />;
 }
 
 // ─── Simple Wix-style elements ────────────────────────────────────────────────
 
 function HeadingBlock({ p }: { p: BlockProps }) {
   const level = str(p, "level", "h2");
-  const align = str(p, "align", "left") === "center" ? "text-center" : "text-left";
+  const alignRaw = str(p, "align", "left");
+  const align =
+    alignRaw === "center" ? "text-center" : alignRaw === "right" ? "text-right" : "text-left";
   const text = str(p, "text", "Heading");
-  const size =
+  const typo = typographyClasses(p);
+  const levelSize =
     level === "h1"
       ? "text-4xl sm:text-5xl font-light"
       : level === "h3"
         ? "text-xl sm:text-2xl font-semibold"
         : "text-3xl sm:text-4xl font-bold";
-  const className = `${size} text-ink`;
-  const style = { fontFamily: "var(--font-display)" };
+  const className = `${str(p, "fontSize", "auto") === "auto" ? levelSize : ""} ${typo}`.trim();
+  const style = { fontFamily: "var(--font-display)", ...textColorStyle(p) };
   return (
     <BlockShell p={p} type="heading">
       <div className={`${WRAP} ${align}`}>
@@ -274,13 +317,19 @@ function HeadingBlock({ p }: { p: BlockProps }) {
 }
 
 function ParagraphBlock({ p }: { p: BlockProps }) {
-  const center = str(p, "align", "left") === "center";
+  const alignRaw = str(p, "align", "left");
+  const align =
+    alignRaw === "center" ? "text-center" : alignRaw === "right" ? "text-right" : "text-left";
   const body = str(p, "body");
+  const typo = typographyClasses(p);
   return (
     <BlockShell p={p} type="paragraph">
-      <div className={`${WRAP} ${center ? "text-center" : ""}`}>
+      <div className={`${WRAP} ${align}`}>
         {body && (
-          <div className={`space-y-4 text-lg leading-relaxed text-muted ${center ? "mx-auto max-w-2xl" : "max-w-3xl"}`}>
+          <div
+            className={`space-y-4 leading-relaxed ${typo || "text-lg text-muted"} ${align === "text-center" ? "mx-auto max-w-2xl" : "max-w-3xl"}`}
+            style={textColorStyle(p)}
+          >
             {renderRichBody(body)}
           </div>
         )}
@@ -294,12 +343,13 @@ function ImageBlock({ p }: { p: BlockProps }) {
   const alt = str(p, "alt", "Image");
   const caption = str(p, "caption");
   const href = str(p, "linkHref");
+  const fit = imageFitClass(p);
   const img = src ? (
-    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-[--hair]">
-      <FillImage src={src} alt={alt} sizes="(max-width: 1024px) 100vw, 896px" />
+    <div className={imageFrameClasses(p)}>
+      <FillImage src={src} alt={alt} sizes="(max-width: 1024px) 100vw, 896px" fitClass={fit} />
     </div>
   ) : (
-    <div className="grid aspect-[16/10] place-items-center rounded-2xl border border-dashed border-[--hair] bg-surface text-sm text-muted">
+    <div className={`grid place-items-center border border-dashed border-[--hair] bg-surface text-sm text-muted ${imageFrameClasses(p)}`}>
       Add an image
     </div>
   );
@@ -353,10 +403,14 @@ function VideoBlock({ p }: { p: BlockProps }) {
 }
 
 function LinkBlock({ p }: { p: BlockProps }) {
-  const align = str(p, "align", "left") === "center" ? "justify-center" : "justify-start";
+  const alignRaw = str(p, "align", "left");
+  const align =
+    alignRaw === "center" ? "justify-center" : alignRaw === "right" ? "justify-end" : "justify-start";
   const variant = str(p, "variant", "button");
   const label = str(p, "label", "Link");
   const href = str(p, "href", "#");
+  const style = str(p, "buttonStyle", "solid");
+  const size = str(p, "buttonSize", "md") as "sm" | "md" | "lg";
   return (
     <BlockShell p={p} type="linkBlock">
       <div className={`${WRAP} flex ${align}`}>
@@ -367,13 +421,52 @@ function LinkBlock({ p }: { p: BlockProps }) {
         ) : (
           <Link
             href={href}
-            className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+            className={buttonStyleClasses(style, size)}
+            style={buttonStyleInline(style)}
           >
             {label}
           </Link>
         )}
       </div>
     </BlockShell>
+  );
+}
+
+function heroOverlayClass(strength: string): string {
+  switch (strength) {
+    case "none":
+      return "bg-transparent";
+    case "dark":
+      return "bg-gradient-to-b from-black/70 via-black/50 to-black/70";
+    case "light":
+      return "bg-gradient-to-b from-paper/70 via-ivory/60 to-paper/75";
+    case "medium":
+    default:
+      return "bg-gradient-to-b from-paper/85 via-ivory/75 to-paper/90";
+  }
+}
+
+function HeroButton({
+  href,
+  label,
+  style,
+  academy,
+}: {
+  href: string;
+  label: string;
+  style: string;
+  academy: boolean;
+}) {
+  const academyExtra = academy ? "uppercase tracking-widest font-medium gap-2" : "";
+  return (
+    <Link
+      href={href}
+      className={`${buttonStyleClasses(style, academy ? "lg" : "md")} ${academyExtra}`}
+      style={buttonStyleInline(style)}
+    >
+      {label}
+      {academy && <span aria-hidden>→</span>}
+    </Link>
   );
 }
 
@@ -384,6 +477,9 @@ function Hero({ p }: { p: BlockProps }) {
   const academy = str(p, "variant", "academy") === "academy";
   const minH = academy ? "min-h-[85vh] sm:min-h-screen" : "py-28 sm:py-36";
   const hasImg = !!img;
+  const overlay = heroOverlayClass(str(p, "overlayStrength", hasImg ? "medium" : "none"));
+  const primaryStyle = str(p, "primaryButtonStyle", academy ? "dark" : "solid");
+  const secondaryStyle = str(p, "secondaryButtonStyle", "outline");
 
   return (
     <section
@@ -396,9 +492,7 @@ function Hero({ p }: { p: BlockProps }) {
     >
       <div
         className={`absolute inset-0 ${
-          hasImg
-            ? "bg-gradient-to-b from-paper/85 via-ivory/75 to-paper/90"
-            : "bg-gradient-to-b from-paper via-ivory to-paper"
+          hasImg ? overlay : "bg-gradient-to-b from-paper via-ivory to-paper"
         }`}
       />
       <div className={`relative z-10 mx-auto flex max-w-4xl flex-col gap-5 ${align}`}>
@@ -420,29 +514,20 @@ function Hero({ p }: { p: BlockProps }) {
         )}
         <div className={`mt-2 flex flex-wrap gap-3 ${align.includes("center") ? "justify-center" : ""}`}>
           {str(p, "primaryLabel") && (
-            <Link
+            <HeroButton
               href={str(p, "primaryHref", "#")}
-              className={
-                academy
-                  ? "inline-flex items-center gap-2 bg-ink px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-base transition hover:bg-brand hover:text-paper"
-                  : "rounded-full bg-ink px-6 py-3 text-sm font-semibold text-paper shadow-lg transition hover:bg-brand"
-              }
-            >
-              {str(p, "primaryLabel")}
-              {academy && <span aria-hidden>→</span>}
-            </Link>
+              label={str(p, "primaryLabel")}
+              style={primaryStyle}
+              academy={academy}
+            />
           )}
           {str(p, "secondaryLabel") && (
-            <Link
+            <HeroButton
               href={str(p, "secondaryHref", "#")}
-              className={
-                academy
-                  ? "inline-flex items-center gap-2 border border-ink/20 bg-paper/80 px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-ink backdrop-blur-sm transition hover:border-ink/40"
-                  : "rounded-full border border-ink/20 bg-paper/80 px-6 py-3 text-sm font-semibold text-ink backdrop-blur-sm transition hover:border-ink/40"
-              }
-            >
-              {str(p, "secondaryLabel")}
-            </Link>
+              label={str(p, "secondaryLabel")}
+              style={secondaryStyle}
+              academy={academy}
+            />
           )}
         </div>
       </div>
@@ -820,6 +905,7 @@ function Testimonials({ p }: { p: BlockProps }) {
 
 // ─── CTA ───────────────────────────────────────────────────────────────────────
 function Cta({ p }: { p: BlockProps }) {
+  const btnStyle = str(p, "buttonStyle", "white");
   return (
     <section className="px-6 py-20">
       <div
@@ -831,10 +917,7 @@ function Cta({ p }: { p: BlockProps }) {
         </h2>
         {str(p, "subheading") && <p className="max-w-xl text-white/85">{str(p, "subheading")}</p>}
         {str(p, "buttonLabel") && (
-          <Link
-            href={str(p, "buttonHref", "#")}
-            className="mt-2 rounded-full bg-white px-7 py-3 text-sm font-semibold text-[color:var(--brand-deep)] transition hover:brightness-95"
-          >
+          <Link href={str(p, "buttonHref", "#")} className={ctaButtonClasses(btnStyle)}>
             {str(p, "buttonLabel")}
           </Link>
         )}
@@ -864,6 +947,54 @@ function Faq({ p }: { p: BlockProps }) {
             </details>
           ))}
         </div>
+      </div>
+    </BlockShell>
+  );
+}
+
+// ─── Spacer & divider ──────────────────────────────────────────────────────────
+
+function SpacerBlock({ p }: { p: BlockProps }) {
+  const h = num(p, "height", 80);
+  const show = bool(p, "showLabel", false);
+  return (
+    <div
+      className="w-full"
+      style={{ height: h }}
+      aria-hidden={!show}
+    >
+      {show && (
+        <div className="flex h-full items-center justify-center rounded border border-dashed border-[--hair] text-xs text-muted">
+          Spacer · {h}px
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DividerBlock({ p }: { p: BlockProps }) {
+  const style = str(p, "style", "hair");
+  const width = num(p, "width", 100);
+  const alignRaw = str(p, "align", "center");
+  const justify =
+    alignRaw === "left" ? "justify-start" : alignRaw === "right" ? "justify-end" : "justify-center";
+
+  const lineClass =
+    style === "brand"
+      ? "border-brand bg-brand"
+      : style === "thick"
+        ? "border-ink/30 bg-ink/30"
+        : style === "dashed"
+          ? "border-[--hair] border-dashed bg-transparent"
+          : "border-[--hair] bg-[--hair]";
+
+  return (
+    <BlockShell p={p} type="divider" className="!py-4">
+      <div className={`${WRAP} flex ${justify}`}>
+        <hr
+          className={`h-0 w-full border-0 border-t-2 ${lineClass}`}
+          style={{ width: `${Math.min(100, Math.max(10, width))}%` }}
+        />
       </div>
     </BlockShell>
   );

@@ -76,7 +76,7 @@ async function main() {
 
   const merged = [...new Set([...existing, ...callbackUrls()])];
   const patch = {
-    site_url: current.site_url || "http://localhost:3000",
+    site_url: APP_URL?.replace(/\/$/, "") || current.site_url || "http://localhost:3000",
     uri_allow_list: merged.join(","),
   };
 
@@ -126,7 +126,13 @@ async function main() {
   console.log(" ", supabaseCallback);
   console.log("\nGoogle Cloud Console → APIs & Services → Credentials → OAuth client:");
   console.log("  https://console.cloud.google.com/apis/credentials");
-  console.log("  Authorized JavaScript origins: http://localhost:3000");
+  const origins = ["http://localhost:3000"];
+  if (APP_URL) origins.push(APP_URL.replace(/\/$/, ""));
+  else if (ROOT && ROOT !== "localhost") {
+    origins.push(`https://${ROOT}`, `https://www.${ROOT}`);
+  }
+  console.log("  Authorized JavaScript origins:");
+  for (const o of origins) console.log("   ", o);
   console.log("  Authorized redirect URIs:", supabaseCallback);
   console.log("\nApple Developer → Identifiers → Services ID → Sign in with Apple:");
   console.log("  https://developer.apple.com/account/resources/identifiers/list/serviceId");
