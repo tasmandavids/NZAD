@@ -52,6 +52,5 @@ and placeholder `STRIPE_*` keys.
   hang. The "Branding saved — your site is live" confirmation follows.
 - `npm run lint` uses the Next.js linter and surfaces pre-existing style findings
   (unescaped entities, `<a>`-vs-`<Link>`); these are not setup issues.
-- The README's top half and parts of the tree are stale Wix-template boilerplate
-  (leftover `wix.config.json`, `src/backend|pages|public` stubs) — ignore them;
-  the real app is in `app/`, `components/`, `lib/`, `supabase/`.
+- The app lives in `app/`, `components/`, `lib/`, `supabase/`. (Earlier Wix-template
+  boilerplate — `wix.config.json`, `wix.lock`, `src/` stubs — has been removed.)

@@ -1,17 +1,19 @@
-<<<<<<< HEAD
 # dependencies
-node_modules/
+node_modules
+
+# editors
 .vscode/
 .idea/
-.wix/
-jsconfig.json
-=======
-node_modules
+
+# next.js
 /.next
 /out
+
+# env
 .env*.local
+
+# misc
 .DS_Store
 *.log
 .vercel
 next-env.d.ts
->>>>>>> a59226f (Initial commit)
