@@ -104,6 +104,27 @@ before(async () => {
   ctx.invoiceA = await inv(ctx.studioA, ctx.parentA.id);
   ctx.invoice2A = await inv(ctx.studioA, ctx.parent2A.id);
   ctx.invoiceB = await inv(ctx.studioB, ctx.parentB.id);
+
+  // A private message adminA -> parentA (studio A).
+  const { data: msg, error: msgErr } = await svc.from("messages")
+    .insert({ studio_id: ctx.studioA, from_user_id: ctx.adminA.id, to_user_id: ctx.parentA.id, body: "private note" })
+    .select("id").single();
+  assert.equal(msgErr, null, `seed message: ${msgErr?.message}`);
+  ctx.messageA = msg.id;
+
+  // A progress note for studentA (logged by teacherA).
+  const { data: prog, error: progErr } = await svc.from("student_progress")
+    .insert({ studio_id: ctx.studioA, student_id: ctx.studentA.id, instructor_id: ctx.teacherA.id, notes: "great turns", level: "Grade 2" })
+    .select("id").single();
+  assert.equal(progErr, null, `seed progress: ${progErr?.message}`);
+  ctx.progressA = prog.id;
+
+  // A CRM lead (admin-only) in studio A.
+  const { data: lead, error: leadErr } = await svc.from("leads")
+    .insert({ studio_id: ctx.studioA, first_name: "Prospect", email: "prospect@test.dev" })
+    .select("id").single();
+  assert.equal(leadErr, null, `seed lead: ${leadErr?.message}`);
+  ctx.leadA = lead.id;
 });
 
 after(async () => {
@@ -181,4 +202,60 @@ test("admin sees their own studio's invoices but not the other studio's", async 
   assert.ok(own.length >= 2, "adminA should see studio A invoices");
   const { data: other } = await c.from("invoices").select("id").eq("studio_id", ctx.studioB);
   assert.equal(other.length, 0, "adminA must NOT see studio B invoices");
+});
+
+test("classes: a member of another studio cannot read this studio's classes", async () => {
+  const c = await asUser(ctx.parentB.email);
+  const { data } = await c.from("classes").select("id").eq("studio_id", ctx.studioA);
+  assert.equal(data.length, 0, "parentB must NOT see studio A classes");
+});
+
+test("enrollments: another family (same studio) cannot read a student's enrollments", async () => {
+  const c = await asUser(ctx.parent2A.email);
+  const { data } = await c.from("enrollments").select("id").eq("student_id", ctx.studentA.id);
+  assert.equal(data.length, 0, "parent2A must NOT see studentA's enrollments");
+});
+
+test("messages: only participants (and studio admins) can read a private message", async () => {
+  const recipient = await asUser(ctx.parentA.email);
+  const { data: seen } = await recipient.from("messages").select("id").eq("id", ctx.messageA);
+  assert.equal(seen.length, 1, "the recipient parentA should read the message");
+
+  const admin = await asUser(ctx.adminA.email);
+  const { data: byAdmin } = await admin.from("messages").select("id").eq("id", ctx.messageA);
+  assert.equal(byAdmin.length, 1, "a studio admin may read studio messages");
+
+  const outsider = await asUser(ctx.parent2A.email); // same studio, not a participant, not admin
+  const { data: byOutsider } = await outsider.from("messages").select("id").eq("id", ctx.messageA);
+  assert.equal(byOutsider.length, 0, "a non-participant non-admin must NOT read the message");
+
+  const otherStudio = await asUser(ctx.parentB.email);
+  const { data: byOther } = await otherStudio.from("messages").select("id").eq("id", ctx.messageA);
+  assert.equal(byOther.length, 0, "another studio must NOT read the message");
+});
+
+test("student_progress: guardian/student/teacher can read; other family cannot", async () => {
+  for (const who of ["parentA", "studentA", "teacherA"]) {
+    const c = await asUser(ctx[who].email);
+    const { data } = await c.from("student_progress").select("id").eq("id", ctx.progressA);
+    assert.equal(data.length, 1, `${who} should read studentA's progress`);
+  }
+  const outsider = await asUser(ctx.parent2A.email);
+  const { data } = await outsider.from("student_progress").select("id").eq("id", ctx.progressA);
+  assert.equal(data.length, 0, "another family must NOT read studentA's progress");
+});
+
+test("leads (CRM): admin-only — non-admins and other studios cannot read", async () => {
+  const admin = await asUser(ctx.adminA.email);
+  const { data: byAdmin } = await admin.from("leads").select("id").eq("id", ctx.leadA);
+  assert.equal(byAdmin.length, 1, "adminA should read the studio's lead");
+
+  for (const who of ["parentA", "teacherA", "studentA"]) {
+    const c = await asUser(ctx[who].email);
+    const { data } = await c.from("leads").select("id").eq("id", ctx.leadA);
+    assert.equal(data.length, 0, `${who} (non-admin) must NOT read leads`);
+  }
+  const otherAdmin = await asUser(ctx.adminB.email);
+  const { data } = await otherAdmin.from("leads").select("id").eq("id", ctx.leadA);
+  assert.equal(data.length, 0, "another studio's admin must NOT read this studio's leads");
 });
