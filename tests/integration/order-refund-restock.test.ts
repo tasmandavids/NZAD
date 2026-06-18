@@ -19,8 +19,9 @@ describe.skipIf(!run)("order refund restock (0023 trigger)", () => {
 
     const supabase = createAdminClient();
     const missing = await missingTables(supabase);
-    const needed = missing.filter((t) =>
-      (["orders", "order_items", "products"] as const).includes(t),
+    const orderTables = ["orders", "order_items", "products"] as const;
+    const needed = missing.filter((t): t is (typeof orderTables)[number] =>
+      (orderTables as readonly string[]).includes(t),
     );
     if (needed.length > 0) {
       skipReason = migrationsHint(needed);

@@ -9,7 +9,7 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "INTEGRATION_TEST=1 vitest run --config vitest.integration.config.ts",
+    "test:integration": "INTEGRATION_TEST=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run --config vitest.integration.config.ts",
     "db:status": "npx supabase migration list",
     "db:push": "npx supabase db push --linked --yes",
     "db:push:remote": "npx supabase db push --linked --yes",
