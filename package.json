@@ -13,7 +13,8 @@
     "db:status": "npx supabase migration list",
     "db:push": "npx supabase db push",
     "db:pull": "npx supabase db pull",
-    "db:reset": "npx supabase db reset"
+    "db:reset": "npx supabase db reset",
+    "seed:platform-admin": "node --env-file=.env.local scripts/seed-platform-admin.mjs"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
