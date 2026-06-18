@@ -88,8 +88,12 @@ export async function middleware(request: NextRequest) {
 
     const home = ROLE_HOME[role];
 
-    // (5) On /login or bare /portal → straight to their portal.
+    // (5) On /login or bare /portal → forward to role home (honour ?next= for platform).
     if (pathname === "/login" || pathname === "/portal" || pathname === "/portal/") {
+      const next = request.nextUrl.searchParams.get("next");
+      if (next?.startsWith("/platform") && (await checkPlatformOperator(supabase, user.id, user.email))) {
+        return NextResponse.redirect(new URL(next, request.url));
+      }
       return NextResponse.redirect(new URL(home, request.url));
     }
 

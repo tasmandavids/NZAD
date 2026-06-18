@@ -41,6 +41,12 @@ export default function LoginPage() {
         <p className="mt-4 text-center text-sm text-muted">
           New studio? <a href="/onboarding" className="text-ink underline">Get started</a>
         </p>
+        <p className="mt-3 text-center text-xs text-muted">
+          Olune platform admin?{" "}
+          <a href="/login?next=/platform" className="text-ink underline">
+            Sign in to /platform
+          </a>
+        </p>
       </form>
     </div>
   );
