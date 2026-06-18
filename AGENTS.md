@@ -22,6 +22,26 @@ The update script only refreshes npm deps. Each session, start the services:
    migrations) or `supabase migration up`.
 3. **Dev server:** `npm run dev` (http://localhost:3000). Lint: `npm run lint`.
 
+### Tests
+
+- `npm run test:rls` — cross-tenant Row-Level-Security isolation tests
+  (`tests/rls.test.mjs`, Node's built-in test runner). Requires the local
+  Supabase stack running. It seeds two studios with users via the service-role
+  key, then asserts (through normal signed-in clients) that no studio/family can
+  read or write another's data, that self role-escalation is blocked, and that
+  anonymous callers see no private rows. Run it after any change to
+  `supabase/migrations/` RLS policies, grants, or the tenant helpers.
+
+### Known security follow-ups (see PR description / `## Cursor Cloud` notes)
+
+- **Table grants are broader than necessary.** `auto_expose_new_tables = true`
+  grants full DML to `anon`/`authenticated`/`service_role` on every table; RLS
+  still gates rows (proven by `test:rls`), but least-privilege would be better.
+  Tightening it requires explicit per-role grants in a migration AND re-testing
+  the `service_role` webhook/cron path — best done alongside Stripe webhook
+  testing, since the migrations currently grant `service_role` nothing directly
+  and rely on this flag (which Supabase removes 2026-10-30).
+
 `.env.local` (gitignored) already points at the local stack using the standard
 local-dev demo keys. If it's missing, recreate it with
 `NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`, the local `ANON_KEY` /
