@@ -29,7 +29,11 @@ export default async function SitePageEditor({
 
   if (!page) notFound();
 
-  const studioSlug = (page.studios as { slug: string }).slug;
+  const studioRow = (
+    Array.isArray(page.studios) ? page.studios[0] : page.studios
+  ) as { slug: string } | null;
+  const studioSlug = studioRow?.slug;
+  if (!studioSlug) notFound();
   const livePreviewUrl = publicPageUrl(studioSlug, {
     isHome: page.is_home as boolean,
     pageSlug: page.slug as string,

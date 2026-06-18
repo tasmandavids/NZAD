@@ -101,7 +101,7 @@ export async function getNavLinks(studioId: string): Promise<NavLink[]> {
   const supabase = createPublicClient();
   const { data } = await supabase
     .from("site_pages")
-    .select("slug, title, nav_label, is_home, show_in_nav, nav_order")
+    .select("id, slug, title, nav_label, is_home, show_in_nav, nav_order")
     .eq("studio_id", studioId)
     .eq("status", "published")
     .eq("show_in_nav", true)
