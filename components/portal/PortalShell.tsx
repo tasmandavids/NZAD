@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { signOut } from "@/app/portal/actions";
 import type { Role } from "@/lib/types";
@@ -62,12 +62,16 @@ function SidebarContent({
   userName,
   pathname,
   onNavClick,
+  collapsed,
+  onToggleCollapse,
 }: {
   role: Role;
   studioName: string;
   userName: string | null;
   pathname: string;
   onNavClick?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }) {
   const items = NAV[role];
 
@@ -80,14 +84,27 @@ function SidebarContent({
     <div className="flex h-full flex-col">
       {/* Studio brand header */}
       <div className="border-b border-[--hair] p-5">
-        <div className="mb-1 flex items-center gap-2.5">
-          <span
-            className="grid h-8 w-8 shrink-0 place-items-center border text-xs font-black text-ink"
-            style={{ borderColor: "var(--brand)" }}
-          >
-            {studioName[0]?.toUpperCase() ?? "S"}
-          </span>
-          <h2 className="truncate text-sm font-black text-ink">{studioName}</h2>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span
+              className="grid h-8 w-8 shrink-0 place-items-center border text-xs font-black text-ink"
+              style={{ borderColor: "var(--brand)" }}
+            >
+              {studioName[0]?.toUpperCase() ?? "S"}
+            </span>
+            <h2 className="truncate text-sm font-black text-ink">{studioName}</h2>
+          </div>
+          {onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              title={collapsed ? "Keep sidebar open" : "Hide sidebar"}
+              aria-label={collapsed ? "Keep sidebar open" : "Hide sidebar"}
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-[--hair] text-xs text-muted transition hover:bg-base hover:text-ink"
+            >
+              {collapsed ? "›" : "‹"}
+            </button>
+          )}
         </div>
         <p className="text-[0.62rem] uppercase tracking-widest text-muted">
           {ROLE_BADGE[role]}
@@ -154,19 +171,95 @@ export function PortalShell({
 }) {
   const pathname  = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [hoverPeek, setHoverPeek] = useState(false);
+  const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showBell  = role === "admin";
+
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem("portal-sidebar-collapsed") === "1");
+    } catch {
+      /* ignore */
+    }
+    return () => {
+      if (peekTimer.current) clearTimeout(peekTimer.current);
+    };
+  }, []);
+
+  const openPeek = () => {
+    if (!collapsed) return;
+    if (peekTimer.current) clearTimeout(peekTimer.current);
+    setHoverPeek(true);
+  };
+
+  const closePeek = () => {
+    if (!collapsed) return;
+    peekTimer.current = setTimeout(() => setHoverPeek(false), 100);
+  };
+
+  const hideSidebar = () => {
+    setCollapsed(true);
+    setHoverPeek(false);
+    try {
+      localStorage.setItem("portal-sidebar-collapsed", "1");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const pinSidebarOpen = () => {
+    setCollapsed(false);
+    setHoverPeek(false);
+    try {
+      localStorage.setItem("portal-sidebar-collapsed", "0");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const toggleCollapse = () => {
+    if (collapsed) pinSidebarOpen();
+    else hideSidebar();
+  };
+
+  const sidebarOpen = !collapsed || hoverPeek;
 
   return (
     <div className="flex h-screen overflow-hidden bg-base">
       {/* ── Desktop sidebar ──────────────────────────────────────────── */}
-      <aside className="hidden w-56 shrink-0 border-r border-[--hair] bg-surface md:block">
-        <SidebarContent
-          role={role}
-          studioName={studioName}
-          userName={userName}
-          pathname={pathname ?? ""}
-        />
-      </aside>
+      <div
+        className="relative hidden shrink-0 md:block"
+        style={{ width: collapsed && !hoverPeek ? 12 : 224 }}
+      >
+        {collapsed && !hoverPeek && (
+          <div
+            className="absolute inset-y-0 left-0 z-30 w-3 cursor-pointer border-r border-[--hair] bg-surface/80"
+            aria-label="Show sidebar"
+            onMouseEnter={openPeek}
+          />
+        )}
+
+        <motion.aside
+          initial={false}
+          animate={{ x: sidebarOpen ? 0 : -224 }}
+          transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+          onMouseEnter={openPeek}
+          onMouseLeave={closePeek}
+          className={`h-full w-56 border-r border-[--hair] bg-surface ${
+            collapsed && hoverPeek ? "fixed left-0 top-0 z-40 shadow-2xl" : "relative"
+          }`}
+        >
+          <SidebarContent
+            role={role}
+            studioName={studioName}
+            userName={userName}
+            pathname={pathname ?? ""}
+            collapsed={collapsed}
+            onToggleCollapse={toggleCollapse}
+          />
+        </motion.aside>
+      </div>
 
       {/* ── Mobile: top bar + collapsible drawer ─────────────────────── */}
       <div className="fixed inset-x-0 top-0 z-50 md:hidden">
