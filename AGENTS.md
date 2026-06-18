@@ -41,6 +41,10 @@ The update script only refreshes npm deps. Each session, start the services:
   the `service_role` webhook/cron path — best done alongside Stripe webhook
   testing, since the migrations currently grant `service_role` nothing directly
   and rely on this flag (which Supabase removes 2026-10-30).
+- **Content-Security-Policy not yet set.** Baseline security headers live in
+  `next.config.ts` (`headers()`), but a CSP is intentionally omitted — it needs
+  per-source allow-listing (Stripe.js, Supabase Realtime `wss:`, WebGL/blob
+  workers) plus Next.js nonces, and dedicated testing.
 
 `.env.local` (gitignored) already points at the local stack using the standard
 local-dev demo keys. If it's missing, recreate it with
