@@ -59,7 +59,7 @@ export async function PublicSite({
       siteSettings={branding.siteSettings}
       nav={nav}
     >
-      <BlockRenderer blocks={page.blocks} context={context} />
+      <BlockRenderer blocks={page.blocks} context={context} background={page.background} />
     </SiteChrome>
   );
 }

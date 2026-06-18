@@ -15,6 +15,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const BUCKET = "site-images";
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50 MB
+
+const VIDEO_ALLOWED: Record<string, string> = {
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/quicktime": "mov",
+};
+
 const ALLOWED: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -81,6 +89,40 @@ export async function createSiteImageUploadUrl(
 
   const rand = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   const path = `${guard.studioId}/${rand}.${ext}`;
+
+  const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, error: error?.message ?? "Could not start upload." };
+
+  const { data: pub } = admin.storage.from(BUCKET).getPublicUrl(path);
+
+  return {
+    ok: true,
+    data: { path: data.path, token: data.token, publicUrl: pub.publicUrl },
+  };
+}
+
+/** Create a signed upload URL for a site video (MP4, WebM, MOV). */
+export async function createSiteVideoUploadUrl(
+  contentType: string,
+  sizeBytes: number,
+): Promise<UploadResult> {
+  const guard = await requireAdminStudio();
+  if ("error" in guard) return { ok: false, error: guard.error };
+
+  const ext = VIDEO_ALLOWED[contentType];
+  if (!ext) return { ok: false, error: "Unsupported video type. Use MP4, WebM, or MOV." };
+  if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) return { ok: false, error: "Invalid file." };
+  if (sizeBytes > MAX_VIDEO_BYTES) return { ok: false, error: "Video is too large (max 50 MB)." };
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return { ok: false, error: "Video uploads are not configured (missing service-role key)." };
+  }
+
+  const rand = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  const path = `${guard.studioId}/videos/${rand}.${ext}`;
 
   const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(path);
   if (error || !data) return { ok: false, error: error?.message ?? "Could not start upload." };

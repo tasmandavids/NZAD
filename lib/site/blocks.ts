@@ -12,7 +12,14 @@
 //  editor generic.
 // ============================================================================
 
+import { seedLayoutProps } from "./layout";
+
 export type BlockType =
+  | "heading"
+  | "paragraph"
+  | "imageBlock"
+  | "videoBlock"
+  | "linkBlock"
   | "hero"
   | "pageHeader"
   | "statsRow"
@@ -53,6 +60,7 @@ export type FieldType =
   | "textarea"
   | "url"
   | "image"
+  | "video"
   | "number"
   | "boolean"
   | "select"
@@ -113,8 +121,44 @@ export const APPEARANCE_FIELDS: FieldDef[] = [
   },
 ];
 
+/** Positioning controls — available for every block in the editor. */
+export const LAYOUT_FIELDS: FieldDef[] = [
+  {
+    key: "_x",
+    label: "Horizontal position (%)",
+    type: "number",
+  },
+  {
+    key: "_y",
+    label: "Vertical position (px)",
+    type: "number",
+  },
+  {
+    key: "_width",
+    label: "Width (%)",
+    type: "number",
+  },
+  {
+    key: "_zIndex",
+    label: "Layer (z-index)",
+    type: "number",
+    help: "Higher numbers appear on top.",
+  },
+  {
+    key: "_opacity",
+    label: "Opacity (%)",
+    type: "number",
+    help: "0 = invisible, 100 = fully visible.",
+  },
+];
+
 /** Default appearance per block type (preserves the original look of each). */
 export const APPEARANCE_DEFAULTS: Partial<Record<BlockType, { _bg: string; _spacing: string }>> = {
+  heading: { _bg: "base", _spacing: "compact" },
+  paragraph: { _bg: "base", _spacing: "compact" },
+  imageBlock: { _bg: "base", _spacing: "normal" },
+  videoBlock: { _bg: "base", _spacing: "normal" },
+  linkBlock: { _bg: "base", _spacing: "compact" },
   pageHeader: { _bg: "base", _spacing: "compact" },
   statsRow: { _bg: "base", _spacing: "compact" },
   classStreams: { _bg: "base", _spacing: "normal" },
@@ -136,6 +180,140 @@ export const APPEARANCE_DEFAULTS: Partial<Record<BlockType, { _bg: string; _spac
 // ─── Block definitions ────────────────────────────────────────────────────────
 
 export const BLOCK_LIBRARY: BlockDef[] = [
+  {
+    type: "heading",
+    label: "Heading",
+    appearance: true,
+    description: "A standalone heading (title or sub-heading).",
+    defaultProps: {
+      text: "Your heading",
+      level: "h2",
+      align: "left",
+    },
+    fields: [
+      { key: "text", label: "Text", type: "text" },
+      {
+        key: "level",
+        label: "Size",
+        type: "select",
+        options: [
+          { value: "h1", label: "Large (H1)" },
+          { value: "h2", label: "Medium (H2)" },
+          { value: "h3", label: "Small (H3)" },
+        ],
+      },
+      {
+        key: "align",
+        label: "Alignment",
+        type: "select",
+        options: [
+          { value: "left", label: "Left" },
+          { value: "center", label: "Center" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "paragraph",
+    label: "Text",
+    appearance: true,
+    description: "A paragraph of body text.",
+    defaultProps: {
+      body: "Add your text here. Use **bold** and [links](https://example.com) if you like.",
+      align: "left",
+    },
+    fields: [
+      {
+        key: "body",
+        label: "Text",
+        type: "textarea",
+        toolbar: true,
+      },
+      {
+        key: "align",
+        label: "Alignment",
+        type: "select",
+        options: [
+          { value: "left", label: "Left" },
+          { value: "center", label: "Center" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "imageBlock",
+    label: "Image",
+    appearance: true,
+    description: "A single image with optional caption and link.",
+    defaultProps: {
+      imageUrl: "",
+      alt: "",
+      caption: "",
+      linkHref: "",
+    },
+    fields: [
+      { key: "imageUrl", label: "Image", type: "image" },
+      { key: "alt", label: "Alt text", type: "text" },
+      { key: "caption", label: "Caption", type: "text" },
+      { key: "linkHref", label: "Link URL (optional)", type: "text", help: "Clicking the image opens this link." },
+    ],
+  },
+  {
+    type: "videoBlock",
+    label: "Video",
+    appearance: true,
+    description: "Upload a video with optional autoplay, loop, and poster image.",
+    defaultProps: {
+      videoUrl: "",
+      posterUrl: "",
+      autoplay: false,
+      loop: false,
+      muted: true,
+      controls: true,
+    },
+    fields: [
+      { key: "videoUrl", label: "Video", type: "video" },
+      { key: "posterUrl", label: "Poster image (optional)", type: "image" },
+      { key: "autoplay", label: "Autoplay", type: "boolean", help: "Browsers require muted autoplay." },
+      { key: "loop", label: "Loop", type: "boolean" },
+      { key: "muted", label: "Muted", type: "boolean" },
+      { key: "controls", label: "Show playback controls", type: "boolean" },
+    ],
+  },
+  {
+    type: "linkBlock",
+    label: "Link",
+    appearance: true,
+    description: "A text link or button linking to a page or URL.",
+    defaultProps: {
+      label: "Learn more",
+      href: "/",
+      variant: "button",
+      align: "left",
+    },
+    fields: [
+      { key: "label", label: "Label", type: "text" },
+      { key: "href", label: "Link", type: "text" },
+      {
+        key: "variant",
+        label: "Style",
+        type: "select",
+        options: [
+          { value: "button", label: "Button" },
+          { value: "text", label: "Text link" },
+        ],
+      },
+      {
+        key: "align",
+        label: "Alignment",
+        type: "select",
+        options: [
+          { value: "left", label: "Left" },
+          { value: "center", label: "Center" },
+        ],
+      },
+    ],
+  },
   {
     type: "hero",
     label: "Hero",
@@ -626,7 +804,7 @@ function newBlockId(): string {
 export function makeBlock(type: BlockType): Block {
   const def = BLOCK_MAP[type];
   // Deep-clone defaults so list items aren't shared across instances.
-  const props: BlockProps = structuredClone(def.defaultProps);
+  const props: BlockProps = seedLayoutProps(structuredClone(def.defaultProps));
   // Seed appearance defaults so each block starts looking the way it always has.
   if (def.appearance) {
     const a = APPEARANCE_DEFAULTS[type] ?? { _bg: "base", _spacing: "normal" };

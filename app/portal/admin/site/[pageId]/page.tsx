@@ -5,6 +5,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeBlocks } from "@/lib/site/blocks";
+import { normalizePageBackground } from "@/lib/site/background";
 import PageEditor from "@/components/admin/site/PageEditor";
 
 export default async function SitePageEditor({
@@ -17,7 +18,7 @@ export default async function SitePageEditor({
 
   const { data: page } = await supabase
     .from("site_pages")
-    .select("id, title, slug, blocks, status, is_home, show_in_nav, nav_label, nav_order, seo_title, seo_description")
+    .select("id, title, slug, blocks, background, status, is_home, show_in_nav, nav_label, nav_order, seo_title, seo_description")
     .eq("id", pageId)
     .single();
 
@@ -37,6 +38,7 @@ export default async function SitePageEditor({
         seoTitle: (page.seo_title as string | null) ?? "",
         seoDescription: (page.seo_description as string | null) ?? "",
         blocks: normalizeBlocks(page.blocks),
+        background: normalizePageBackground(page.background),
       }}
     />
   );

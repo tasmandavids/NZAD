@@ -12,6 +12,9 @@ import Link from "next/link";
 import { formatMoney } from "@/lib/currency";
 import { str, num, list, bool } from "@/lib/site/props";
 import { APPEARANCE_DEFAULTS, type Block, type BlockProps, type BlockType } from "@/lib/site/blocks";
+import { blockFrameStyle, computeCanvasMinHeight } from "@/lib/site/layout";
+import type { PageBackground } from "@/lib/site/background";
+import { BackgroundShell } from "@/components/site/BackgroundShell";
 import type { SiteClass, SiteEvent, SiteProduct, SiteStaff } from "@/lib/site/queries";
 import type { RenderContext } from "@/lib/site/render-context";
 import { ClassTabsBlock, ScheduleBlock } from "./blocks/ScheduleBlock";
@@ -23,9 +26,14 @@ export type { RenderContext } from "@/lib/site/render-context";
 export function BlockRenderer({
   blocks,
   context,
+  background,
+  embedded = false,
 }: {
   blocks: Block[];
   context: RenderContext;
+  background?: PageBackground;
+  /** When true, skip canvas layout (editor supplies positioning). */
+  embedded?: boolean;
 }) {
   if (!blocks.length) {
     return (
@@ -34,17 +42,40 @@ export function BlockRenderer({
       </div>
     );
   }
+
+  if (embedded) {
+    return (
+      <>
+        {blocks.map((b) => (
+          <BlockSwitch key={b.id} block={b} context={context} />
+        ))}
+      </>
+    );
+  }
+
+  const minH = computeCanvasMinHeight(blocks);
+
   return (
-    <>
-      {blocks.map((b) => (
-        <BlockSwitch key={b.id} block={b} context={context} />
-      ))}
-    </>
+    <div className="relative w-full" style={{ minHeight: minH }}>
+      {background && <BackgroundShell background={background} />}
+      <div className="relative" style={{ zIndex: 1, minHeight: minH }}>
+        {blocks.map((b) => (
+          <div key={b.id} style={blockFrameStyle(b.props)}>
+            <BlockSwitch block={b} context={context} />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
 function BlockSwitch({ block, context }: { block: Block; context: RenderContext }) {
   switch (block.type) {
+    case "heading":      return <HeadingBlock p={block.props} />;
+    case "paragraph":    return <ParagraphBlock p={block.props} />;
+    case "imageBlock":   return <ImageBlock p={block.props} />;
+    case "videoBlock":   return <VideoBlock p={block.props} />;
+    case "linkBlock":    return <LinkBlock p={block.props} />;
     case "hero":         return <Hero p={block.props} />;
     case "pageHeader":   return <PageHeader p={block.props} />;
     case "statsRow":     return <StatsRow p={block.props} />;
@@ -213,37 +244,177 @@ function FillImage({ src, alt, sizes }: { src: string; alt: string; sizes: strin
   return <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" />;
 }
 
+// ─── Simple Wix-style elements ────────────────────────────────────────────────
+
+function HeadingBlock({ p }: { p: BlockProps }) {
+  const level = str(p, "level", "h2");
+  const align = str(p, "align", "left") === "center" ? "text-center" : "text-left";
+  const text = str(p, "text", "Heading");
+  const size =
+    level === "h1"
+      ? "text-4xl sm:text-5xl font-light"
+      : level === "h3"
+        ? "text-xl sm:text-2xl font-semibold"
+        : "text-3xl sm:text-4xl font-bold";
+  const className = `${size} text-ink`;
+  const style = { fontFamily: "var(--font-display)" };
+  return (
+    <BlockShell p={p} type="heading">
+      <div className={`${WRAP} ${align}`}>
+        {level === "h1" ? (
+          <h1 className={className} style={style}>{text}</h1>
+        ) : level === "h3" ? (
+          <h3 className={className} style={style}>{text}</h3>
+        ) : (
+          <h2 className={className} style={style}>{text}</h2>
+        )}
+      </div>
+    </BlockShell>
+  );
+}
+
+function ParagraphBlock({ p }: { p: BlockProps }) {
+  const center = str(p, "align", "left") === "center";
+  const body = str(p, "body");
+  return (
+    <BlockShell p={p} type="paragraph">
+      <div className={`${WRAP} ${center ? "text-center" : ""}`}>
+        {body && (
+          <div className={`space-y-4 text-lg leading-relaxed text-muted ${center ? "mx-auto max-w-2xl" : "max-w-3xl"}`}>
+            {renderRichBody(body)}
+          </div>
+        )}
+      </div>
+    </BlockShell>
+  );
+}
+
+function ImageBlock({ p }: { p: BlockProps }) {
+  const src = str(p, "imageUrl");
+  const alt = str(p, "alt", "Image");
+  const caption = str(p, "caption");
+  const href = str(p, "linkHref");
+  const img = src ? (
+    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl border border-[--hair]">
+      <FillImage src={src} alt={alt} sizes="(max-width: 1024px) 100vw, 896px" />
+    </div>
+  ) : (
+    <div className="grid aspect-[16/10] place-items-center rounded-2xl border border-dashed border-[--hair] bg-surface text-sm text-muted">
+      Add an image
+    </div>
+  );
+  const content = href ? (
+    <Link href={href} className="block transition hover:opacity-90">
+      {img}
+    </Link>
+  ) : (
+    img
+  );
+  return (
+    <BlockShell p={p} type="imageBlock">
+      <figure className={WRAP}>
+        {content}
+        {caption && <figcaption className="mt-2 text-center text-sm text-muted">{caption}</figcaption>}
+      </figure>
+    </BlockShell>
+  );
+}
+
+function VideoBlock({ p }: { p: BlockProps }) {
+  const src = str(p, "videoUrl");
+  const poster = str(p, "posterUrl");
+  const autoplay = bool(p, "autoplay");
+  const loop = bool(p, "loop");
+  const muted = bool(p, "muted", true) || autoplay;
+  const controls = bool(p, "controls", true);
+
+  return (
+    <BlockShell p={p} type="videoBlock">
+      <div className={WRAP}>
+        {src ? (
+          <video
+            src={src}
+            poster={poster || undefined}
+            autoPlay={autoplay}
+            loop={loop}
+            muted={muted}
+            controls={controls}
+            playsInline
+            className="aspect-video w-full rounded-2xl border border-[--hair] bg-black/5 object-cover"
+          />
+        ) : (
+          <div className="grid aspect-video place-items-center rounded-2xl border border-dashed border-[--hair] bg-surface text-sm text-muted">
+            Add a video
+          </div>
+        )}
+      </div>
+    </BlockShell>
+  );
+}
+
+function LinkBlock({ p }: { p: BlockProps }) {
+  const align = str(p, "align", "left") === "center" ? "justify-center" : "justify-start";
+  const variant = str(p, "variant", "button");
+  const label = str(p, "label", "Link");
+  const href = str(p, "href", "#");
+  return (
+    <BlockShell p={p} type="linkBlock">
+      <div className={`${WRAP} flex ${align}`}>
+        {variant === "text" ? (
+          <Link href={href} className="text-brand underline underline-offset-2 transition hover:opacity-80">
+            {label}
+          </Link>
+        ) : (
+          <Link
+            href={href}
+            className="rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+          >
+            {label}
+          </Link>
+        )}
+      </div>
+    </BlockShell>
+  );
+}
+
 // ─── Hero (Academy full-bleed style from Base44 Home.jsx) ─────────────────────
 function Hero({ p }: { p: BlockProps }) {
   const align = str(p, "align", "center") === "left" ? "items-start text-left" : "items-center text-center";
   const img = str(p, "imageUrl");
   const academy = str(p, "variant", "academy") === "academy";
   const minH = academy ? "min-h-[85vh] sm:min-h-screen" : "py-28 sm:py-36";
+  const hasImg = !!img;
 
   return (
     <section
-      className={`relative flex ${minH} items-center justify-center overflow-hidden px-6`}
+      className={`relative flex ${minH} items-center justify-center overflow-hidden px-6 bg-base`}
       style={
-        img
+        hasImg
           ? { backgroundImage: `url(${img})`, backgroundSize: "cover", backgroundPosition: "center" }
-          : { background: academy ? "#000" : "linear-gradient(135deg, var(--brand-deep), var(--base))" }
+          : undefined
       }
     >
-      <div className={`absolute inset-0 ${academy ? "bg-black/55" : img ? "bg-black/45" : ""}`} />
+      <div
+        className={`absolute inset-0 ${
+          hasImg
+            ? "bg-gradient-to-b from-paper/85 via-ivory/75 to-paper/90"
+            : "bg-gradient-to-b from-paper via-ivory to-paper"
+        }`}
+      />
       <div className={`relative z-10 mx-auto flex max-w-4xl flex-col gap-5 ${align}`}>
         {str(p, "eyebrow") && (
-          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-brand-hot">
+          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-brand">
             {str(p, "eyebrow")}
           </span>
         )}
         <h1
-          className={`font-light tracking-wide text-white ${academy ? "text-5xl sm:text-7xl" : "text-4xl font-black sm:text-6xl"}`}
+          className={`font-light tracking-wide text-ink ${academy ? "text-5xl sm:text-7xl" : "text-4xl font-black sm:text-6xl"}`}
           style={{ fontFamily: "var(--font-display)" }}
         >
           {str(p, "heading")}
         </h1>
         {str(p, "subheading") && (
-          <p className={`max-w-xl text-lg font-light text-white/75 ${academy ? "leading-relaxed" : "text-white/80"}`}>
+          <p className={`max-w-xl text-lg font-light text-muted ${academy ? "leading-relaxed" : ""}`}>
             {str(p, "subheading")}
           </p>
         )}
@@ -253,8 +424,8 @@ function Hero({ p }: { p: BlockProps }) {
               href={str(p, "primaryHref", "#")}
               className={
                 academy
-                  ? "inline-flex items-center gap-2 bg-white px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-ink transition hover:bg-brand hover:text-white"
-                  : "rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:brightness-110"
+                  ? "inline-flex items-center gap-2 bg-ink px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-base transition hover:bg-brand hover:text-paper"
+                  : "rounded-full bg-ink px-6 py-3 text-sm font-semibold text-paper shadow-lg transition hover:bg-brand"
               }
             >
               {str(p, "primaryLabel")}
@@ -266,8 +437,8 @@ function Hero({ p }: { p: BlockProps }) {
               href={str(p, "secondaryHref", "#")}
               className={
                 academy
-                  ? "inline-flex items-center gap-2 border border-white px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-white transition hover:bg-white hover:text-ink"
-                  : "rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                  ? "inline-flex items-center gap-2 border border-ink/20 bg-paper/80 px-8 py-3.5 text-sm font-medium uppercase tracking-widest text-ink backdrop-blur-sm transition hover:border-ink/40"
+                  : "rounded-full border border-ink/20 bg-paper/80 px-6 py-3 text-sm font-semibold text-ink backdrop-blur-sm transition hover:border-ink/40"
               }
             >
               {str(p, "secondaryLabel")}
@@ -305,14 +476,14 @@ function PageHeader({ p }: { p: BlockProps }) {
 function StatsRow({ p }: { p: BlockProps }) {
   const items = list(p, "items");
   return (
-    <BlockShell p={p} type="statsRow" className="!bg-ink !text-white">
+    <BlockShell p={p} type="statsRow" className="!bg-surface border-y border-[--hair]">
       <div className="mx-auto grid w-full max-w-6xl grid-cols-2 gap-6 md:grid-cols-4">
         {items.map((it, i) => (
           <div key={i} className="text-center">
-            <p className="text-xl font-light text-brand-hot sm:text-2xl" style={{ fontFamily: "var(--font-display)" }}>
+            <p className="text-xl font-light text-brand sm:text-2xl" style={{ fontFamily: "var(--font-display)" }}>
               {it.label}
             </p>
-            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-white/60">{it.sublabel}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-muted">{it.sublabel}</p>
           </div>
         ))}
       </div>

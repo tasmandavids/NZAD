@@ -10,6 +10,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeBlocks } from "@/lib/site/blocks";
+import { normalizePageBackground } from "@/lib/site/background";
 import { TEMPLATE_MAP, buildTemplateBlocks } from "@/lib/site/templates";
 import { derivePalette } from "@/lib/branding";
 import {
@@ -339,18 +340,26 @@ export async function updatePageMeta(input: unknown): Promise<ActionResult> {
 
 // ─── SAVE BLOCKS ──────────────────────────────────────────────────────────────
 
-export async function savePageBlocks(pageId: string, rawBlocks: unknown): Promise<ActionResult> {
+export async function savePageBlocks(
+  pageId: string,
+  rawBlocks: unknown,
+  rawBackground?: unknown,
+): Promise<ActionResult> {
   if (!pageId) return { ok: false, error: "Missing page id." };
 
   const { error, supabase, studioId } = await getAdminStudio();
   if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
 
-  // Server-side validation: drop anything that isn't a known block.
   const blocks = normalizeBlocks(rawBlocks);
+  const background = rawBackground !== undefined ? normalizePageBackground(rawBackground) : undefined;
 
   const { error: dbErr } = await supabase
     .from("site_pages")
-    .update({ blocks, updated_at: new Date().toISOString() })
+    .update({
+      blocks,
+      ...(background !== undefined ? { background } : {}),
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", pageId)
     .eq("studio_id", studioId);
 

@@ -6,12 +6,14 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { normalizeBlocks, type Block } from "./blocks";
+import { normalizePageBackground, type PageBackground } from "./background";
 
 export type PublicPage = {
   id: string;
   slug: string;
   title: string;
   blocks: Block[];
+  background: PageBackground;
   seoTitle: string | null;
   seoDescription: string | null;
 };
@@ -69,7 +71,7 @@ export async function getPublishedHome(studioId: string): Promise<PublicPage | n
   const supabase = await createClient();
   const { data } = await supabase
     .from("site_pages")
-    .select("id, slug, title, blocks, seo_title, seo_description")
+    .select("id, slug, title, blocks, background, seo_title, seo_description")
     .eq("studio_id", studioId)
     .eq("status", "published")
     .eq("is_home", true)
@@ -85,7 +87,7 @@ export async function getPublishedPage(
   const supabase = await createClient();
   const { data } = await supabase
     .from("site_pages")
-    .select("id, slug, title, blocks, seo_title, seo_description")
+    .select("id, slug, title, blocks, background, seo_title, seo_description")
     .eq("studio_id", studioId)
     .eq("status", "published")
     .eq("slug", slug)
@@ -208,6 +210,7 @@ type Row = {
   slug: string;
   title: string;
   blocks: unknown;
+  background?: unknown;
   seo_title: string | null;
   seo_description: string | null;
 };
@@ -218,6 +221,7 @@ function toPublicPage(row: Row): PublicPage {
     slug: row.slug,
     title: row.title,
     blocks: normalizeBlocks(row.blocks),
+    background: normalizePageBackground(row.background),
     seoTitle: row.seo_title,
     seoDescription: row.seo_description,
   };
