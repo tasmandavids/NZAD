@@ -11,7 +11,12 @@
     "test:watch": "vitest",
     "test:integration": "INTEGRATION_TEST=1 vitest run --config vitest.integration.config.ts",
     "db:status": "npx supabase migration list",
-    "db:push": "npx supabase db push",
+    "db:push": "npx supabase db push --linked --yes",
+    "db:push:remote": "npx supabase db push --linked --yes",
+    "db:push:local": "npx supabase db reset --yes",
+    "db:sync": "bash scripts/db-sync.sh",
+    "db:sync:remote": "bash scripts/db-sync.sh --remote",
+    "db:sync:local": "bash scripts/db-sync.sh --local",
     "db:pull": "npx supabase db pull",
     "db:reset": "npx supabase db reset",
     "seed:platform-admin": "node --env-file=.env.local scripts/seed-platform-admin.mjs"
