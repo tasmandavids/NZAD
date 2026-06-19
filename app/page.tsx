@@ -10,13 +10,9 @@ import { getPublishedHomeCached } from "@/lib/site/cached-queries";
 import { PublicSite } from "@/components/site/PublicSite";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 import Hero from "@/components/marketing/Hero";
+import { ClientParticleBackground } from "@/components/landing/ClientParticleBackground";
 
 const OluneLanding = dynamic(() => import("@/components/marketing/OluneLanding"));
-
-const ParticleBackground = dynamic(
-  () => import("@/components/landing/ParticleBackground").then((m) => m.ParticleBackground),
-  { ssr: false },
-);
 
 export default async function HomePage() {
   const host = (await headers()).get("host");
@@ -38,7 +34,7 @@ export default async function HomePage() {
 
   return (
     <div className="relative min-h-screen">
-      <ParticleBackground variant="light" />
+      <ClientParticleBackground variant="light" />
       <Hero studioName={studio.name} tagline={branding.tagline} />
       <div className="pointer-events-none absolute bottom-[4.75rem] left-[clamp(1.25rem,4vw,4rem)] z-20">
         <PoweredByOlune />
