@@ -55,8 +55,16 @@ Also required:
 
 ```bash
 EMAIL_TOKEN_ENCRYPTION_KEY=...   # long random string
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000          # local
+# NEXT_PUBLIC_APP_URL=https://www.olune.co.nz      # production
+NEXT_PUBLIC_ROOT_DOMAIN=localhost                  # local
+# NEXT_PUBLIC_ROOT_DOMAIN=olune.co.nz              # production
 ```
+
+Production OAuth always uses `NEXT_PUBLIC_APP_URL` — register these exact redirect URIs in Google / Azure:
+
+- `https://www.olune.co.nz/api/email/oauth/google/callback`
+- `https://www.olune.co.nz/api/email/oauth/microsoft/callback`
 
 ## 2. Database
 
@@ -96,6 +104,8 @@ npm run dev
 
 ## Production
 
-- Add production redirect URI to Google OAuth client
-- Set `NEXT_PUBLIC_APP_URL=https://your-domain.com`
-- Cron `/api/cron/sync-email` runs every 15 minutes (uses `CRON_SECRET`)
+- Register redirect URIs on your Google / Microsoft OAuth apps:
+  - `https://www.olune.co.nz/api/email/oauth/google/callback`
+  - `https://www.olune.co.nz/api/email/oauth/microsoft/callback`
+- Set Vercel env: `NEXT_PUBLIC_APP_URL=https://www.olune.co.nz` and `NEXT_PUBLIC_ROOT_DOMAIN=olune.co.nz`
+- Cron `/api/cron/sync-email` runs daily (uses `CRON_SECRET`)

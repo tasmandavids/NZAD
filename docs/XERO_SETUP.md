@@ -8,7 +8,7 @@ Connect each studio's Xero organisation to Olune for P&L reporting and automatic
 2. Create a **Web app** (OAuth 2.0).
 3. Add a redirect URI:
    - Local: `http://localhost:3000/api/xero/oauth/callback`
-   - Production: `https://YOUR_DOMAIN/api/xero/oauth/callback`
+   - Production: `https://www.olune.co.nz/api/xero/oauth/callback`
 4. Enable scopes (granular — required for apps created after March 2026):
    - `openid`, `profile`, `email`, `offline_access`
    - `accounting.contacts`
@@ -28,13 +28,15 @@ Add to `.env.local` (see `.env.local.example`):
 ```bash
 XERO_CLIENT_ID=your-client-id
 XERO_CLIENT_SECRET=your-client-secret
-# Optional — must match the redirect URI registered in Xero
-# XERO_REDIRECT_URI=http://localhost:3000/api/xero/oauth/callback
+NEXT_PUBLIC_APP_URL=https://www.olune.co.nz
+NEXT_PUBLIC_ROOT_DOMAIN=olune.co.nz
+# Optional override — must match the redirect URI registered in Xero exactly
+# XERO_REDIRECT_URI=https://www.olune.co.nz/api/xero/oauth/callback
 # XERO_TOKEN_ENCRYPTION_KEY=generate-a-long-random-string
 # XERO_OAUTH_STATE_SECRET=generate-a-long-random-string
 ```
 
-For production webhooks (Stripe → Xero sync), set `NEXT_PUBLIC_APP_URL` so token refresh uses the correct redirect URI.
+`NEXT_PUBLIC_APP_URL` drives the OAuth callback in production (even when you open the admin portal from a studio subdomain like `nzad.olune.co.nz`).
 
 ## 3. Database migration
 

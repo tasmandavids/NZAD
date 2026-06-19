@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const redirectUri = xeroRedirectUri();
+    const redirectUri = xeroRedirectUri(req.nextUrl.origin);
     const state = signXeroOAuthState({
       studioId: ctx.studioId,
       userId: ctx.userId,

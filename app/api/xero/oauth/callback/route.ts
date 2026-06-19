@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const redirectUri = xeroRedirectUri();
+    const redirectUri = xeroRedirectUri(req.nextUrl.origin);
     const result = await exchangeXeroCallback(req.url, redirectUri, state);
 
     const { error } = await supabase.from("xero_connections").upsert(

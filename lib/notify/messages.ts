@@ -9,6 +9,8 @@
 //  means the routing rules and copy are tested without a network or DB.
 // ============================================================================
 
+import { canonicalAppUrl } from "@/lib/app-url";
+
 /** Mirrors the `notifications.type` values produced by the DB triggers + cron. */
 export type NotificationType =
   | "enrollment_confirmed"
@@ -37,8 +39,8 @@ export type DeliverableNotification = {
 function absoluteLink(link: string | null): string | null {
   if (!link) return null;
   if (/^https?:\/\//i.test(link)) return link;
-  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  return base ? `${base}${link.startsWith("/") ? "" : "/"}${link}` : link;
+  const base = canonicalAppUrl();
+  return `${base}${link.startsWith("/") ? "" : "/"}${link}`;
 }
 
 /**
