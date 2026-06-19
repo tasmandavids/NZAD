@@ -12,6 +12,8 @@ import {
   summarizeThreadAction,
 } from "@/app/portal/admin/email/actions";
 import { oauthConnectPath } from "@/lib/email/oauth-paths";
+import type { ContactMatch } from "@/lib/email/identify-contact";
+import { contactTypeLabel } from "@/lib/email/identify-contact";
 
 async function runEmailSync(accountId?: string): Promise<{ ok: true; synced: number } | { ok: false; error: string }> {
   const res = await fetch("/api/email/sync", {
@@ -45,21 +47,89 @@ function providerLabel(provider: Account["provider"]) {
   return PROVIDER_META[provider].label;
 }
 
+function formatFullWhen(iso: string | null) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function contactBadgeClass(type: ContactMatch["type"]): string {
+  switch (type) {
+    case "parent":
+      return "bg-sky-100 text-sky-800 border-sky-200";
+    case "student":
+      return "bg-violet-100 text-violet-800 border-violet-200";
+    case "teacher":
+      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    case "lead":
+      return "bg-amber-100 text-amber-900 border-amber-200";
+    default:
+      return "bg-base text-muted border-[--hair]";
+  }
+}
+
+function ContactBadge({ contact }: { contact: ContactMatch }) {
+  const className = `inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${contactBadgeClass(contact.type)}`;
+  const inner = (
+    <>
+      <span>{contact.label}</span>
+      <span className="font-normal opacity-75">· {contactTypeLabel(contact.type)}</span>
+    </>
+  );
+  if (contact.href) {
+    return (
+      <Link href={contact.href} className={`${className} transition hover:opacity-90`}>
+        {inner}
+      </Link>
+    );
+  }
+  return <span className={className}>{inner}</span>;
+}
+
+function resolveContact(
+  email: string | null | undefined,
+  contacts: Record<string, ContactMatch>,
+): ContactMatch | null {
+  if (!email) return null;
+  return contacts[email.toLowerCase()] ?? null;
+}
+
+function threadPrimaryLabel(
+  thread: Thread,
+  accountEmails: Set<string>,
+  contacts: Record<string, ContactMatch>,
+): string {
+  const external = thread.participant_addresses?.find((p) => !accountEmails.has(p.toLowerCase()));
+  const key = (external ?? thread.participant_addresses?.[0])?.toLowerCase();
+  if (key && contacts[key]) return contacts[key].label;
+  return external ?? thread.participant_addresses?.[0] ?? "Unknown sender";
+}
+
 function EmailBody({ message }: { message: EmailMessageRow }) {
   if (message.body_html) {
+    const wrappedHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_blank"><style>
+      body { margin: 0; padding: 24px; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 15px; line-height: 1.65; color: #111; }
+      img { max-width: 100%; height: auto; }
+      a { color: #2563eb; }
+    </style></head><body>${message.body_html}</body></html>`;
     return (
       <iframe
         title="Email content"
         sandbox=""
-        srcDoc={message.body_html}
-        className="min-h-[240px] w-full rounded-xl border border-[--hair] bg-white"
+        srcDoc={wrappedHtml}
+        className="min-h-[28rem] w-full rounded-2xl border border-[--hair] bg-white shadow-sm"
       />
     );
   }
   return (
-    <pre className="whitespace-pre-wrap rounded-xl border border-[--hair] bg-base p-4 text-sm text-ink">
+    <div className="min-h-[12rem] whitespace-pre-wrap rounded-2xl border border-[--hair] bg-base px-6 py-5 text-[15px] leading-relaxed text-ink">
       {message.body_text ?? "(No content)"}
-    </pre>
+    </div>
   );
 }
 
@@ -170,16 +240,19 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
 export function EmailInbox({
   accounts: initialAccounts,
   threads: initialThreads,
+  contacts: initialContacts,
   bannerError,
   bannerConnected,
 }: {
   accounts: Account[];
   threads: Thread[];
+  contacts: Record<string, ContactMatch>;
   bannerError?: string | null;
   bannerConnected?: string | null;
 }) {
   const [accounts, setAccounts] = useState(initialAccounts);
   const [threads, setThreads] = useState(initialThreads);
+  const [contacts, setContacts] = useState(initialContacts);
   const [selectedAccountId, setSelectedAccountId] = useState<string | "all">("all");
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [messages, setMessages] = useState<EmailMessageRow[]>([]);
@@ -213,7 +286,13 @@ export function EmailInbox({
   useEffect(() => {
     setAccounts(initialAccounts);
     setThreads(initialThreads);
-  }, [initialAccounts, initialThreads]);
+    setContacts(initialContacts);
+  }, [initialAccounts, initialThreads, initialContacts]);
+
+  const accountEmails = useMemo(
+    () => new Set(accounts.map((a) => a.email_address.toLowerCase())),
+    [accounts],
+  );
 
   const filteredThreads = useMemo(() => {
     return threads
@@ -240,6 +319,9 @@ export function EmailInbox({
       }
       setActiveThread(data.thread ?? null);
       setMessages(data.messages ?? []);
+      if (data.contacts) {
+        setContacts((prev) => ({ ...prev, ...data.contacts }));
+      }
       void markThreadReadAction(threadId).then(() => {
         setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, is_read: true } : t)));
       });
@@ -375,46 +457,60 @@ export function EmailInbox({
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Thread list */}
-        <aside className="flex w-full max-w-sm flex-col border-r border-[--hair] bg-surface/50">
-          <div className="border-b border-[--hair] p-3">
+        <aside className="flex w-[17.5rem] shrink-0 flex-col border-r border-[--hair] bg-surface/60 lg:w-80">
+          <div className="border-b border-[--hair] p-4">
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search conversations…"
-              className="w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm"
             />
           </div>
           <div className="flex-1 overflow-y-auto">
             {filteredThreads.length === 0 ? (
-              <p className="p-4 text-sm text-muted">No conversations yet. Try syncing your inbox.</p>
+              <p className="p-5 text-sm leading-relaxed text-muted">No conversations yet. Try syncing your inbox.</p>
             ) : (
-              filteredThreads.map((thread) => (
-                <button
-                  key={thread.id}
-                  type="button"
-                  onClick={() => selectThread(thread.id)}
-                  className={`w-full border-b border-[--hair]/60 px-4 py-3 text-left transition ${
-                    selectedThreadId === thread.id ? "bg-brand/10" : "hover:bg-base"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className={`truncate text-sm ${thread.is_read ? "font-medium text-ink" : "font-bold text-ink"}`}>
-                      {thread.subject ?? "(no subject)"}
+              filteredThreads.map((thread) => {
+                const primary = threadPrimaryLabel(thread, accountEmails, contacts);
+                const external = thread.participant_addresses?.find((p) => !accountEmails.has(p.toLowerCase()));
+                const contact = resolveContact(external, contacts);
+
+                return (
+                  <button
+                    key={thread.id}
+                    type="button"
+                    onClick={() => selectThread(thread.id)}
+                    className={`w-full border-b border-[--hair]/60 px-4 py-4 text-left transition ${
+                      selectedThreadId === thread.id ? "bg-brand/10" : "hover:bg-base"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className={`truncate text-sm ${thread.is_read ? "font-medium text-ink" : "font-bold text-ink"}`}>
+                        {primary}
+                      </p>
+                      <span className="shrink-0 text-xs text-muted">{formatWhen(thread.last_message_at)}</span>
+                    </div>
+                    <p className="mt-1 truncate text-sm font-medium text-ink/80">{thread.subject ?? "(no subject)"}</p>
+                    {contact && (
+                      <div className="mt-2">
+                        <ContactBadge contact={contact} />
+                      </div>
+                    )}
+                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted">
+                      {thread.snippet ?? thread.participant_addresses.join(", ")}
                     </p>
-                    <span className="shrink-0 text-[0.62rem] text-muted">{formatWhen(thread.last_message_at)}</span>
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-muted">{thread.snippet ?? thread.participant_addresses.join(", ")}</p>
-                  {thread.summary && (
-                    <p className="mt-1 line-clamp-2 text-[0.62rem] text-brand">{thread.summary.split("\n")[0]}</p>
-                  )}
-                </button>
-              ))
+                    {thread.summary && (
+                      <p className="mt-2 line-clamp-2 text-xs text-brand">{thread.summary.split("\n")[0]}</p>
+                    )}
+                  </button>
+                );
+              })
             )}
           </div>
-          <div className="border-t border-[--hair] p-3 text-[0.62rem] text-muted">
+          <div className="border-t border-[--hair] p-4 text-xs text-muted">
             {accounts.map((a) => (
               <div key={a.id} className="py-1">
                 <div className="flex items-center justify-between gap-2">
@@ -435,81 +531,144 @@ export function EmailInbox({
         </aside>
 
         {/* Conversation */}
-        <section className="flex min-w-0 flex-1 flex-col">
+        <section className="flex min-w-0 flex-1 flex-col bg-base/30">
           {!selectedThreadId ? (
-            <div className="grid flex-1 place-items-center text-sm text-muted">Select a conversation</div>
+            <div className="grid flex-1 place-items-center px-8 text-center">
+              <div>
+                <p className="text-lg font-semibold text-ink">Select a conversation</p>
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
+                  Choose a thread from the left to read and reply. Olune will identify parents, students, and leads when their email is in your studio.
+                </p>
+              </div>
+            </div>
           ) : loadingThread && !messages.length ? (
-            <div className="grid flex-1 place-items-center text-sm text-muted">Loading…</div>
+            <div className="grid flex-1 place-items-center text-sm text-muted">Loading conversation…</div>
           ) : (
             <>
-              <div className="border-b border-[--hair] px-5 py-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h2 className="font-black text-ink">{activeThread?.subject ?? "Conversation"}</h2>
-                    <p className="text-xs text-muted">
-                      {(activeThread?.participant_addresses ?? []).join(" · ")}
-                    </p>
+              <div className="shrink-0 border-b border-[--hair] bg-surface px-6 py-5 lg:px-8">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <h2 className="text-2xl font-black tracking-tight text-ink">
+                      {activeThread?.subject ?? "Conversation"}
+                    </h2>
+                    <div className="flex flex-wrap gap-2">
+                      {(activeThread?.participant_addresses ?? [])
+                        .filter((p) => !accountEmails.has(p.toLowerCase()))
+                        .map((email) => {
+                          const contact = resolveContact(email, contacts);
+                          if (contact) return <ContactBadge key={email} contact={contact} />;
+                          return (
+                            <span
+                              key={email}
+                              className="inline-flex rounded-full border border-[--hair] bg-base px-2.5 py-0.5 text-xs text-muted"
+                            >
+                              {email}
+                            </span>
+                          );
+                        })}
+                    </div>
                   </div>
                   <button
                     type="button"
                     onClick={summarize}
                     disabled={pending}
-                    className="rounded-lg border border-[--hair] px-3 py-1.5 text-xs font-semibold text-ink hover:bg-base"
+                    className="rounded-xl border border-[--hair] bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:bg-base"
                   >
-                    {pending ? "Summarizing…" : "Summarize conversation"}
+                    {pending ? "Summarizing…" : "Summarize"}
                   </button>
                 </div>
                 {activeThread?.summary && (
-                  <div className="mt-3 rounded-xl border border-brand/20 bg-brand/5 p-3">
-                    <p className="mb-1 text-[0.62rem] font-semibold uppercase tracking-widest text-brand">
-                      Summary
-                    </p>
-                    <p className="whitespace-pre-wrap text-sm text-ink">{activeThread.summary}</p>
+                  <div className="mt-5 rounded-2xl border border-brand/20 bg-brand/5 px-5 py-4">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand">Summary</p>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">{activeThread.summary}</p>
                   </div>
                 )}
               </div>
 
-              <div className="flex-1 space-y-4 overflow-y-auto p-5">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`rounded-2xl border p-4 ${
-                      msg.is_outbound ? "border-brand/30 bg-brand/5" : "border-[--hair] bg-surface"
-                    }`}
-                  >
-                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
-                      <span className="font-semibold text-ink">
-                        {msg.from_name ?? msg.from_address ?? "Unknown"}
-                        {msg.is_outbound && " (you)"}
-                      </span>
-                      <span>{formatWhen(msg.sent_at)}</span>
-                    </div>
-                    {msg.subject && msg.subject !== activeThread?.subject && (
-                      <p className="mb-2 text-xs font-medium text-muted">{msg.subject}</p>
-                    )}
-                    <EmailBody message={msg} />
-                  </div>
-                ))}
+              <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+                <div className="mx-auto flex max-w-4xl flex-col gap-8">
+                  {messages.map((msg) => {
+                    const contact = resolveContact(msg.from_address, contacts);
+                    return (
+                      <article
+                        key={msg.id}
+                        className={`rounded-2xl border shadow-sm ${
+                          msg.is_outbound
+                            ? "border-brand/25 bg-brand/[0.04]"
+                            : "border-[--hair] bg-surface"
+                        }`}
+                      >
+                        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-[--hair]/70 px-6 py-4">
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-base font-semibold text-ink">
+                                {contact?.label ?? msg.from_name ?? msg.from_address ?? "Unknown"}
+                                {msg.is_outbound && (
+                                  <span className="ml-2 text-sm font-normal text-muted">(you)</span>
+                                )}
+                              </p>
+                              {contact && !msg.is_outbound && <ContactBadge contact={contact} />}
+                            </div>
+                            {msg.from_address && (
+                              <p className="text-sm text-muted">{msg.from_address}</p>
+                            )}
+                          </div>
+                          <time className="text-sm text-muted">{formatFullWhen(msg.sent_at)}</time>
+                        </header>
+                        <div className="px-4 py-5 sm:px-6">
+                          {msg.subject && msg.subject !== activeThread?.subject && (
+                            <p className="mb-4 text-sm font-medium text-muted">{msg.subject}</p>
+                          )}
+                          <EmailBody message={msg} />
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div className="border-t border-[--hair] p-4">
-                <textarea
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Write a reply — sends from your connected email address…"
-                  rows={3}
-                  className="w-full resize-none rounded-xl border border-[--hair] bg-base px-4 py-3 text-sm"
-                />
-                <div className="mt-2 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={sendReply}
-                    disabled={sending || !draft.trim()}
-                    className="rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-                    style={{ background: "var(--brand)" }}
-                  >
-                    {sending ? "Sending…" : "Send reply"}
-                  </button>
+              <div className="shrink-0 border-t border-[--hair] bg-surface px-4 py-5 lg:px-8">
+                <div className="mx-auto max-w-4xl space-y-3">
+                  {(() => {
+                    const replyTo = (activeThread?.participant_addresses ?? []).find(
+                      (p) => !accountEmails.has(p.toLowerCase()),
+                    );
+                    const replyContact = resolveContact(replyTo, contacts);
+                    return (
+                      <p className="text-sm text-muted">
+                        Reply from your connected inbox
+                        {replyContact ? (
+                          <>
+                            {" "}
+                            to <span className="font-medium text-ink">{replyContact.label}</span>
+                          </>
+                        ) : replyTo ? (
+                          <>
+                            {" "}
+                            to <span className="font-medium text-ink">{replyTo}</span>
+                          </>
+                        ) : null}
+                      </p>
+                    );
+                  })()}
+                  <textarea
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder="Write your reply…"
+                    rows={6}
+                    className="min-h-[10rem] w-full resize-y rounded-2xl border border-[--hair] bg-base px-5 py-4 text-base leading-relaxed text-ink outline-none ring-brand/30 transition focus:ring-2"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={sendReply}
+                      disabled={sending || !draft.trim()}
+                      className="rounded-xl px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                      style={{ background: "var(--brand)" }}
+                    >
+                      {sending ? "Sending…" : "Send reply"}
+                    </button>
+                  </div>
                 </div>
               </div>
             </>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EmailInbox } from "@/components/admin/email/EmailInbox";
+import { identifyContactsByEmail } from "@/lib/email/identify-contact";
 
 export const dynamic = "force-dynamic";
 
@@ -48,11 +49,21 @@ export default async function EmailPage({
       .limit(200),
   ]);
 
+  const participantEmails = new Set<string>();
+  for (const thread of threads ?? []) {
+    for (const address of thread.participant_addresses ?? []) {
+      participantEmails.add(address.toLowerCase());
+    }
+  }
+
+  const contacts = await identifyContactsByEmail(supabase, profile.studio_id, [...participantEmails]);
+
   return (
-    <div className="h-full min-h-[calc(100vh-3rem)]">
+    <div className="flex h-[calc(100dvh-3.25rem)] min-h-[32rem] flex-col md:h-[calc(100dvh-3rem)]">
       <EmailInbox
         accounts={accounts ?? []}
         threads={threads ?? []}
+        contacts={contacts}
         bannerError={params.error ? safeDecodeURIComponent(params.error) : null}
         bannerConnected={params.connected ?? null}
       />
