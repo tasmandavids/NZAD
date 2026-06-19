@@ -9,6 +9,7 @@ import { resolveStudio } from "@/lib/tenant";
 import { fontsForBranding } from "@/lib/fonts/google-registry";
 import { getBrandingCached, brandingToCssVars, DEFAULT_BRANDING } from "@/lib/branding";
 import { OluneMoonDefs } from "@/components/brand/OluneMoonDefs";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { CSSProperties } from "react";
 
 export const metadata: Metadata = {
@@ -41,6 +42,7 @@ export default async function RootLayout({
       <body>
         <OluneMoonDefs />
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );

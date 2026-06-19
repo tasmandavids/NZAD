@@ -8,7 +8,12 @@ import { MessagesPanel } from "@/components/admin/messages/MessagesPanel";
 
 export const dynamic = "force-dynamic";
 
-export default async function MessagesPage() {
+export default async function MessagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ with?: string }>;
+}) {
+  const { with: withParam } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -24,15 +29,13 @@ export default async function MessagesPage() {
 
   if (!profile || profile.role !== "admin") redirect("/portal/admin");
 
-  // Fetch all studio members the admin can message
   const { data: contacts } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, role, avatar_url")
+    .select("id, first_name, last_name, role, avatar_url, full_name")
     .eq("studio_id", profile.studio_id)
     .neq("id", user.id)
     .order("first_name");
 
-  // Fetch recent conversations (latest message per contact)
   const { data: recentMessages } = await supabase
     .from("messages")
     .select("id, from_user_id, to_user_id, body, channel, sent_at, read_at")
@@ -41,11 +44,22 @@ export default async function MessagesPage() {
     .order("sent_at", { ascending: false })
     .limit(100);
 
+  const normalizedContacts = (contacts ?? []).map((c) => ({
+    id: c.id,
+    first_name: c.first_name ?? (c.full_name?.split(" ")[0] ?? null),
+    last_name:
+      c.last_name ??
+      (c.full_name?.split(" ").slice(1).join(" ") || null),
+    role: c.role as string,
+    avatar_url: c.avatar_url as string | null,
+  }));
+
   return (
     <MessagesPanel
       currentUserId={user.id}
-      contacts={contacts ?? []}
+      contacts={normalizedContacts}
       recentMessages={recentMessages ?? []}
+      initialContactId={withParam ?? null}
     />
   );
 }
