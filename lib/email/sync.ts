@@ -39,7 +39,16 @@ export async function syncEmailAccount(
   supabase: SupabaseClient,
   account: EmailAccountRow,
 ): Promise<{ synced: number; error: string | null }> {
-  let creds = decryptCredentials(account.credentials_encrypted);
+  if (!account.credentials_encrypted) {
+    return { synced: 0, error: "Missing stored credentials for this account." };
+  }
+
+  let creds: EmailCredentials;
+  try {
+    creds = decryptCredentials(account.credentials_encrypted);
+  } catch {
+    return { synced: 0, error: "Could not decrypt stored credentials — reconnect this inbox." };
+  }
 
   try {
     const { messages, nextCursor, refreshedCreds } = await pullMessages(account, creds);

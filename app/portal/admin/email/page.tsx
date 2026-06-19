@@ -6,6 +6,14 @@ import type { EmailAccountRow } from "@/lib/email/types";
 
 export const dynamic = "force-dynamic";
 
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 export default async function EmailPage({
   searchParams,
 }: {
@@ -45,7 +53,14 @@ export default async function EmailPage({
   if (params.connected && accounts?.length) {
     const latest = accounts.find((a) => a.provider === params.connected);
     if (latest) {
-      await syncEmailAccount(supabase, latest as EmailAccountRow);
+      const { data: fullAccount } = await supabase
+        .from("email_accounts")
+        .select("*")
+        .eq("id", latest.id)
+        .single();
+      if (fullAccount) {
+        await syncEmailAccount(supabase, fullAccount as EmailAccountRow);
+      }
     }
   }
 
@@ -65,7 +80,7 @@ export default async function EmailPage({
       <EmailInbox
         accounts={accounts ?? []}
         threads={refreshedThreads}
-        bannerError={params.error ? decodeURIComponent(params.error) : null}
+        bannerError={params.error ? safeDecodeURIComponent(params.error) : null}
         bannerConnected={params.connected ?? null}
       />
     </div>
