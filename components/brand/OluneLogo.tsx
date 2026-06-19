@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ComponentPropsWithoutRef } from "react";
 import {
   OLUNE_MOON_CLIP_ID,
@@ -115,10 +116,12 @@ export function OluneLogo({
   theme = "light",
   size = "md",
   animated = false,
-  label = "Olune",
+  label,
   className = "",
   ...rest
 }: OluneLogoProps) {
+  const t = useTranslations("site.brand");
+  const accessibleLabel = label ?? t("logoLabel");
   const cfg = sizeConfig[size];
   const glow = theme === "dark";
   const textColor = theme === "dark" ? "text-paper" : "text-ink-black";
@@ -133,7 +136,7 @@ export function OluneLogo({
           glow={glow}
           className={cfg.moon}
         />
-        <span className="sr-only">{label}</span>
+        <span className="sr-only">{accessibleLabel}</span>
       </span>
     );
   }
@@ -142,7 +145,7 @@ export function OluneLogo({
     return (
       <span
         className={`inline-flex items-baseline ${textColor} ${className}`}
-        aria-label={label}
+        aria-label={accessibleLabel}
         {...rest}
       >
         <OluneMoon
@@ -161,7 +164,7 @@ export function OluneLogo({
     return (
       <span
         className={`inline-flex flex-col items-center ${cfg.gap} ${textColor} ${className}`}
-        aria-label={label}
+        aria-label={accessibleLabel}
         {...rest}
       >
         {animated ? (
@@ -177,7 +180,7 @@ export function OluneLogo({
   return (
     <span
       className={`inline-flex items-center ${cfg.gap} ${textColor} ${className}`}
-      aria-label={label}
+      aria-label={accessibleLabel}
       {...rest}
     >
       <OluneMoon glow={glow} className={cfg.moon} />

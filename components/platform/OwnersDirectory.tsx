@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import type { PlatformOwner } from "@/lib/platform/types";
 import { saveOwnerNotes, createSupportThread } from "@/app/platform/owners/actions";
 
 export function OwnersDirectory({ owners }: { owners: PlatformOwner[] }) {
+  const t = useTranslations("platform.owners");
+  const locale = useLocale();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<PlatformOwner | null>(null);
   const [notes, setNotes] = useState("");
@@ -26,11 +29,11 @@ export function OwnersDirectory({ owners }: { owners: PlatformOwner[] }) {
   function openOwner(o: PlatformOwner) {
     setSelected(o);
     setNotes(o.notes ?? "");
-    setSubject(`Re: ${o.studioName}`);
+    setSubject(t("subjectDefault", { studioName: o.studioName }));
     setMessage("");
   }
 
-  function saveNotes() {
+  function saveNotesHandler() {
     if (!selected) return;
     startTransition(async () => {
       const res = await saveOwnerNotes({
@@ -38,7 +41,7 @@ export function OwnersDirectory({ owners }: { owners: PlatformOwner[] }) {
         notes,
         tags: selected.tags,
       });
-      setFeedback(res.ok ? "Notes saved" : res.error);
+      setFeedback(res.ok ? t("notesSaved") : res.error);
       setTimeout(() => setFeedback(null), 2000);
     });
   }
@@ -52,7 +55,7 @@ export function OwnersDirectory({ owners }: { owners: PlatformOwner[] }) {
         body: message.trim(),
         priority: "normal",
       });
-      setFeedback(res.ok ? "Message sent — see Support inbox" : res.error);
+      setFeedback(res.ok ? t("messageSent") : res.error);
       setMessage("");
       setTimeout(() => setFeedback(null), 3000);
     });
@@ -62,14 +65,14 @@ export function OwnersDirectory({ owners }: { owners: PlatformOwner[] }) {
     <div className="mx-auto flex max-w-6xl flex-col gap-6 p-6 lg:flex-row">
       <div className="flex-1 space-y-4">
         <header>
-          <h1 className="text-2xl font-black text-ink">Business owners</h1>
-          <p className="text-sm text-muted">Studio admins — your direct line to every tenant.</p>
+          <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </header>
 
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by studio, name, or email…"
+          placeholder={t("searchPlaceholder")}
           className="w-full rounded-xl border border-[--hair] bg-surface px-4 py-2.5 text-sm"
         />
 
@@ -86,7 +89,7 @@ export function OwnersDirectory({ owners }: { owners: PlatformOwner[] }) {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-ink">{o.fullName ?? "Unnamed owner"}</p>
+                    <p className="font-semibold text-ink">{o.fullName ?? t("unnamedOwner")}</p>
                     <p className="text-xs text-muted">{o.studioName}</p>
                     {o.email && <p className="mt-1 text-xs text-muted">{o.email}</p>}
                   </div>
@@ -103,7 +106,7 @@ export function OwnersDirectory({ owners }: { owners: PlatformOwner[] }) {
       {selected && (
         <aside className="w-full shrink-0 space-y-4 rounded-2xl border border-[--hair] bg-surface p-5 lg:w-96">
           <div>
-            <h2 className="text-lg font-bold text-ink">{selected.fullName ?? "Owner"}</h2>
+            <h2 className="text-lg font-bold text-ink">{selected.fullName ?? t("ownerFallback")}</h2>
             <p className="text-sm text-muted">{selected.studioName}</p>
           </div>
 
@@ -117,33 +120,35 @@ export function OwnersDirectory({ owners }: { owners: PlatformOwner[] }) {
             )}
             {selected.phone && <p className="text-muted">{selected.phone}</p>}
             <p className="text-xs text-muted">
-              Admin since {new Date(selected.createdAt).toLocaleDateString("en-NZ")}
+              {t("adminSince", {
+                date: new Date(selected.createdAt).toLocaleDateString(locale),
+              })}
             </p>
           </div>
 
           <div>
             <label className="mb-1 block text-xs uppercase tracking-widest text-muted">
-              Private notes
+              {t("privateNotes")}
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={4}
               className="w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
-              placeholder="Relationship notes, call summaries, preferences…"
+              placeholder={t("notesPlaceholder")}
             />
             <button
-              onClick={saveNotes}
+              onClick={saveNotesHandler}
               disabled={pending}
               className="mt-2 rounded-full bg-brand px-4 py-1.5 text-xs font-bold uppercase text-white"
             >
-              Save notes
+              {t("saveNotes")}
             </button>
           </div>
 
           <div className="border-t border-[--hair] pt-4">
             <label className="mb-1 block text-xs uppercase tracking-widest text-muted">
-              Message owner
+              {t("messageOwner")}
             </label>
             <input
               value={subject}
@@ -155,14 +160,14 @@ export function OwnersDirectory({ owners }: { owners: PlatformOwner[] }) {
               onChange={(e) => setMessage(e.target.value)}
               rows={3}
               className="w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
-              placeholder="Your message appears in their support thread…"
+              placeholder={t("messagePlaceholder")}
             />
             <button
               onClick={sendMessage}
               disabled={pending}
               className="mt-2 rounded-full border border-[--hair] px-4 py-1.5 text-xs font-bold uppercase hover:border-brand"
             >
-              Send via support
+              {t("sendViaSupport")}
             </button>
           </div>
 

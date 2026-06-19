@@ -8,10 +8,6 @@
 import { createClient } from "@/lib/supabase/server";
 import StudentTimetable from "@/components/portal/student/StudentTimetable";
 
-const DAY_NAMES = [
-  "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
-];
-
 export type EnrolledClass = {
   enrollmentId: string;
   classId: string;
@@ -85,7 +81,6 @@ export default async function StudentPortal() {
       classes={classes}
       studentName={profile?.full_name ?? null}
       todayDow={todayDow}
-      dayNames={DAY_NAMES}
     />
   );
 }

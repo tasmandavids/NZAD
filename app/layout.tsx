@@ -5,6 +5,9 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
+import { getTranslations } from "@/lib/i18n/server";
 import { resolveStudio } from "@/lib/tenant";
 import { fontsForBranding } from "@/lib/fonts/google-registry";
 import { getBrandingCached, brandingToCssVars, DEFAULT_BRANDING } from "@/lib/branding";
@@ -12,18 +15,24 @@ import { OluneMoonDefs } from "@/components/brand/OluneMoonDefs";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { CSSProperties } from "react";
 
-export const metadata: Metadata = {
-  title: "Olune — Run your whole studio from one calm place",
-  description:
-    "The studio management system for projects, finances, and live client websites — all in real time.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    title: t("title"),
+    description: t("description"),
+  };
+}
 
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const host = (await headers()).get("host");
+  const [host, locale, messages] = await Promise.all([
+    headers().then((h) => h.get("host")),
+    getLocale(),
+    getMessages(),
+  ]);
   const studio = await resolveStudio(host);
 
   const branding = studio
@@ -38,11 +47,13 @@ export default async function RootLayout({
   } as CSSProperties;
 
   return (
-    <html lang="en-NZ" data-base={branding.base} className={fonts.className} style={vars}>
+    <html lang={locale} data-base={branding.base} className={fonts.className} style={vars}>
       <body>
-        <OluneMoonDefs />
-        {children}
-        <SpeedInsights />
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <OluneMoonDefs />
+          {children}
+          <SpeedInsights />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

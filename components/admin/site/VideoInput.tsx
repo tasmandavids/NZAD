@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import {
   createSiteVideoUploadUrl,
@@ -16,6 +17,7 @@ export default function VideoInput({
   value: string;
   onChange: (url: string) => void;
 }) {
+  const t = useTranslations("site.media");
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function VideoInput({
       onChange(ticket.data.publicUrl);
       cleanup(previous);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed.");
+      setError(err instanceof Error ? err.message : t("uploadFailed"));
     } finally {
       setBusy(false);
     }
@@ -71,7 +73,7 @@ export default function VideoInput({
         <input
           type="text"
           value={value}
-          placeholder="Paste a video URL or upload MP4 / WebM"
+          placeholder={t("videoPlaceholder")}
           onChange={(e) => onChange(e.target.value)}
           className="field-premium"
         />
@@ -82,11 +84,11 @@ export default function VideoInput({
             disabled={busy}
             className="rounded-full border border-[--hair] px-3 py-1 text-xs font-medium text-ink transition hover:bg-base disabled:opacity-50"
           >
-            {busy ? "Uploading…" : value ? "Replace video" : "Upload video"}
+            {busy ? t("uploading") : value ? t("replaceVideo") : t("uploadVideo")}
           </button>
           {value && !busy && (
             <button type="button" onClick={remove} className="text-xs text-red-500 hover:underline">
-              Remove
+              {t("remove")}
             </button>
           )}
         </div>

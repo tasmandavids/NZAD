@@ -7,6 +7,7 @@
 // ============================================================================
 
 import { motion } from "framer-motion";
+import { useTranslations, useLocale } from "next-intl";
 import { StatCard } from "./StatCard";
 import { CapacityHeatmap } from "./CapacityHeatmap";
 import { ScheduleBuilder } from "./ScheduleBuilder";
@@ -27,9 +28,11 @@ export function AdminDashboard({
   heatTimes?: string[];
   scheduleClasses: ClassBlock[];
 }) {
+  const tGreeting = useTranslations("common.greeting");
+  const locale = useLocale();
   const greeting = (() => {
     const h = new Date().getHours();
-    return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+    return h < 12 ? tGreeting("morning") : h < 18 ? tGreeting("afternoon") : tGreeting("evening");
   })();
 
   return (
@@ -48,7 +51,7 @@ export function AdminDashboard({
           <h1 className="text-2xl font-black tracking-tight text-ink">{studioName}</h1>
         </div>
         <p className="text-sm text-muted">
-          {new Date().toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long" })}
+          {new Date().toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
         </p>
       </motion.header>
 

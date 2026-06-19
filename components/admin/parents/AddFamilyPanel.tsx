@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { addFamily } from "@/app/portal/admin/parents/actions";
 import type { GuardianRelationship, StudentOption } from "@/lib/parents/types";
-import { RELATIONSHIP_LABELS } from "@/lib/parents/types";
 
 const RELATIONSHIPS: GuardianRelationship[] = ["mother", "father", "guardian", "other"];
 
@@ -32,48 +32,52 @@ function GuardianFields({
   form: GuardianForm;
   onChange: (k: keyof GuardianForm, v: string) => void;
 }) {
+  const t = useTranslations("admin.parents.addFamily");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
+
   return (
     <div className="space-y-3 rounded-xl border border-[--hair] bg-base/50 p-4">
       <p className="text-xs font-bold uppercase tracking-wider text-muted">{label}</p>
       <div>
         <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-          Full name *
+          {t("fullName")}
         </label>
         <input
           value={form.fullName}
           onChange={(e) => onChange("fullName", e.target.value)}
-          placeholder="e.g. Sarah Johnson"
+          placeholder={t("namePlaceholder")}
           className="w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
         />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-            Email
+            {tCommon("email")}
           </label>
           <input
             type="email"
             value={form.email}
             onChange={(e) => onChange("email", e.target.value)}
-            placeholder="sarah@example.com"
+            placeholder={t("emailPlaceholder")}
             className="w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
           />
         </div>
         <div>
           <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-            Phone
+            {tCommon("phone")}
           </label>
           <input
             value={form.phone}
             onChange={(e) => onChange("phone", e.target.value)}
-            placeholder="+64 21 234 567"
+            placeholder={t("phonePlaceholder")}
             className="w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
           />
         </div>
       </div>
       <div>
         <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-          Relationship
+          {t("relationship")}
         </label>
         <select
           value={form.relationship}
@@ -82,7 +86,7 @@ function GuardianFields({
         >
           {RELATIONSHIPS.map((r) => (
             <option key={r} value={r}>
-              {RELATIONSHIP_LABELS[r]}
+              {tShared(`relationships.${r}`)}
             </option>
           ))}
         </select>
@@ -98,6 +102,9 @@ export default function AddFamilyPanel({
   students: StudentOption[];
   onClose: () => void;
 }) {
+  const t = useTranslations("admin.parents.addFamily");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [together, setTogether] = useState(false);
   const [primary, setPrimary] = useState<GuardianForm>({ ...emptyGuardian(), relationship: "mother" });
@@ -154,7 +161,7 @@ export default function AddFamilyPanel({
         transition={{ type: "spring", stiffness: 380, damping: 38 }}
       >
         <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
-          <h2 className="font-black text-ink">Add family</h2>
+          <h2 className="font-black text-ink">{t("title")}</h2>
           <button type="button" onClick={onClose} className="text-muted hover:text-ink">
             ✕
           </button>
@@ -167,11 +174,11 @@ export default function AddFamilyPanel({
               checked={together}
               onChange={(e) => setTogether(e.target.checked)}
             />
-            Parents together (add a co-parent)
+            {t("parentsTogether")}
           </label>
 
           <GuardianFields
-            label={together ? "Guardian 1" : "Primary contact"}
+            label={together ? t("guardian1") : t("primaryContact")}
             form={primary}
             onChange={(k, v) => setPrimary((f) => ({ ...f, [k]: v }))}
           />
@@ -179,13 +186,13 @@ export default function AddFamilyPanel({
           {together && (
             <>
               <GuardianFields
-                label="Guardian 2"
+                label={t("guardian2")}
                 form={coParent}
                 onChange={(k, v) => setCoParent((f) => ({ ...f, [k]: v }))}
               />
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-                  Primary contact for billing
+                  {t("primaryContactBilling")}
                 </p>
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -194,7 +201,7 @@ export default function AddFamilyPanel({
                     checked={primaryContact === "primary"}
                     onChange={() => setPrimaryContact("primary")}
                   />
-                  {primary.fullName || "Guardian 1"}
+                  {primary.fullName || t("guardian1Fallback")}
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -203,7 +210,7 @@ export default function AddFamilyPanel({
                     checked={primaryContact === "coParent"}
                     onChange={() => setPrimaryContact("coParent")}
                   />
-                  {coParent.fullName || "Guardian 2"}
+                  {coParent.fullName || t("guardian2Fallback")}
                 </label>
               </div>
             </>
@@ -212,7 +219,7 @@ export default function AddFamilyPanel({
           {students.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-                Link children (optional)
+                {t("linkChildren")}
               </p>
               <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-[--hair] p-2">
                 {students.map((s) => (
@@ -225,17 +232,14 @@ export default function AddFamilyPanel({
                       checked={childIds.includes(s.id)}
                       onChange={() => toggleChild(s.id)}
                     />
-                    {s.name ?? "Student"}
+                    {s.name ?? tCommon("student")}
                   </label>
                 ))}
               </div>
             </div>
           )}
 
-          <p className="text-xs text-muted">
-            Parents can sign in with their email once you send them an invite or magic link from
-            Supabase Auth.
-          </p>
+          <p className="text-xs text-muted">{t("authHint")}</p>
 
           {error && (
             <p className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs text-red-400">
@@ -250,7 +254,7 @@ export default function AddFamilyPanel({
             onClick={onClose}
             className="flex-1 rounded-xl border border-[--hair] py-2.5 text-sm text-muted hover:text-ink"
           >
-            Cancel
+            {tCommon("cancel")}
           </button>
           <button
             type="button"
@@ -259,7 +263,7 @@ export default function AddFamilyPanel({
             className="flex-1 rounded-xl py-2.5 text-sm font-bold text-white disabled:opacity-50"
             style={{ background: "var(--brand)" }}
           >
-            {pending ? "Adding…" : "Add family"}
+            {pending ? t("adding") : t("submitButton")}
           </button>
         </div>
       </motion.aside>

@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import {
   Bar,
@@ -43,6 +44,8 @@ export function AccountingDashboard({
   bannerError: string | null;
   bannerConnected: boolean;
 }) {
+  const t = useTranslations("admin.accounting");
+  const tShared = useTranslations("admin.shared");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [refreshing, startRefresh] = useTransition();
@@ -72,7 +75,7 @@ export function AccountingDashboard({
 
   const onDisconnect = () => {
     setActionError(null);
-    if (!window.confirm("Disconnect Xero? Olune will stop syncing sales and showing accounting data.")) return;
+    if (!window.confirm(t("disconnectConfirm"))) return;
     startTransition(async () => {
       const res = await disconnectXero();
       if (!res.ok) setActionError(res.error);
@@ -81,6 +84,17 @@ export function AccountingDashboard({
 
   const displayError =
     bannerError ?? actionError ?? snapshot.fetchError ?? snapshot.connection?.sync_error ?? null;
+
+  const syncStatus =
+    snapshot.connection?.settings?.sync_enabled === false ? t("salesSyncOff") : t("salesSyncOn");
+
+  const invoiceTableHeaders = [
+    t("recentInvoices.table.reference"),
+    t("recentInvoices.table.contact"),
+    t("recentInvoices.table.amount"),
+    t("recentInvoices.table.date"),
+    t("recentInvoices.table.status"),
+  ];
 
   return (
     <motion.div
@@ -94,10 +108,8 @@ export function AccountingDashboard({
         className="flex flex-wrap items-start justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-ink">Accounting</h1>
-          <p className="mt-1 text-sm text-muted">
-            Income, expenses &amp; profit from Xero — full detail stays in your Xero organisation.
-          </p>
+          <h1 className="text-2xl font-black tracking-tight text-ink">{t("title")}</h1>
+          <p className="mt-1 text-sm text-muted">{t("subtitle")}</p>
         </div>
         {snapshot.connected && (
           <div className="flex flex-wrap gap-2">
@@ -107,7 +119,7 @@ export function AccountingDashboard({
               disabled={refreshing || pending}
               className="rounded-xl border border-[--hair] bg-surface px-4 py-2.5 text-sm font-semibold text-ink hover:bg-base disabled:opacity-50"
             >
-              {refreshing ? "Refreshing…" : "Refresh"}
+              {refreshing ? tShared("refreshing") : t("refresh")}
             </button>
             <a
               href={openInXeroUrl(orgShortCode, "dashboard")}
@@ -116,7 +128,7 @@ export function AccountingDashboard({
               className="inline-flex items-center gap-2 rounded-xl bg-[#13B5EA] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:brightness-105"
             >
               <XeroMark />
-              Open in Xero
+              {t("openInXero")}
             </a>
             <a
               href={openInXeroUrl(orgShortCode, "reports")}
@@ -124,7 +136,7 @@ export function AccountingDashboard({
               rel="noopener noreferrer"
               className="rounded-xl border border-[--hair] bg-surface px-4 py-2.5 text-sm font-semibold text-ink hover:bg-base"
             >
-              Reports
+              {t("reports")}
             </a>
           </div>
         )}
@@ -134,7 +146,7 @@ export function AccountingDashboard({
         <motion.div variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}>
           {bannerConnected && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-              Xero connected successfully.
+              {t("connectedSuccess")}
             </div>
           )}
           {displayError && (
@@ -144,7 +156,7 @@ export function AccountingDashboard({
           )}
           {!displayError && snapshot.connected && summary && summary.monthlySeries.length === 0 && (
             <div className={`rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 ${bannerConnected ? "mt-2" : ""}`}>
-              Connected to Xero, but no P&L rows were returned yet. If this is a new organisation, add a few transactions in Xero first.
+              {t("noPlaRows")}
             </div>
           )}
         </motion.div>
@@ -155,20 +167,18 @@ export function AccountingDashboard({
         className="rounded-2xl border border-[--hair] bg-surface p-5"
       >
         {!snapshot.configured ? (
-          <p className="text-sm text-muted">
-            Xero is not configured on this environment. Add <code className="text-xs">XERO_CLIENT_ID</code> and{" "}
-            <code className="text-xs">XERO_CLIENT_SECRET</code> to connect.
-          </p>
+          <p className="text-sm text-muted">{t("notConfigured")}</p>
         ) : snapshot.connected ? (
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-ink">{snapshot.connection?.tenant_name}</p>
               <p className="text-xs text-muted">
-                Last synced{" "}
-                {snapshot.connection?.last_sync_at
-                  ? formatSyncTime(snapshot.connection.last_sync_at)
-                  : "just now"}
-                · Olune sales sync {snapshot.connection?.settings?.sync_enabled === false ? "off" : "on"}
+                {t("lastSynced", {
+                  time: snapshot.connection?.last_sync_at
+                    ? formatSyncTime(snapshot.connection.last_sync_at)
+                    : t("lastSyncedJustNow"),
+                })}{" "}
+                · {t("salesSync", { status: syncStatus })}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -178,7 +188,7 @@ export function AccountingDashboard({
                 disabled={refreshing || pending}
                 className="rounded-lg border border-[--hair] px-3 py-1.5 text-xs font-semibold text-ink hover:bg-base disabled:opacity-50"
               >
-                {refreshing ? "Refreshing…" : "Refresh data"}
+                {refreshing ? tShared("refreshing") : t("refreshData")}
               </button>
               <button
                 type="button"
@@ -186,46 +196,29 @@ export function AccountingDashboard({
                 disabled={pending || refreshing}
                 className="rounded-lg border border-[--hair] px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink disabled:opacity-50"
               >
-                {pending ? "Disconnecting…" : "Disconnect"}
+                {pending ? tShared("disconnecting") : t("disconnect")}
               </button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <p className="text-sm text-muted">
-                Connect your Xero organisation to see income, expenses, and sync Olune purchases as invoices.
-              </p>
+              <p className="text-sm text-muted">{t("connectDescription")}</p>
               <Link
                 href="/api/xero/oauth/connect"
                 className="inline-flex items-center gap-2 rounded-xl bg-[#13B5EA] px-4 py-2.5 text-sm font-bold text-white"
               >
                 <XeroMark />
-                Connect Xero
+                {t("connectXero")}
               </Link>
             </div>
             <div className="rounded-xl border border-[--hair] bg-base/60 px-4 py-3 text-xs text-muted">
-              <p className="font-semibold text-ink">Xero app setup — add this OAuth 2.0 redirect URI</p>
-              <p className="mt-1">
-                In{" "}
-                <a
-                  href="https://developer.xero.com/app/manage"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold text-[#13B5EA] hover:underline"
-                >
-                  developer.xero.com
-                </a>
-                , open your app → <strong>Configuration</strong> → <strong>OAuth 2.0 redirect URIs</strong> (not
-                Company URL). Add exactly:
-              </p>
+              <p className="font-semibold text-ink">{t("oauthSetupTitle")}</p>
+              <p className="mt-1">{t("oauthSetupBody")}</p>
               <code className="mt-2 block break-all rounded-lg bg-surface px-3 py-2 text-[0.7rem] text-ink">
                 {redirectUri}
               </code>
-              <p className="mt-2">
-                If you browse Olune via <code className="text-[0.65rem]">127.0.0.1</code>, also add{" "}
-                <code className="text-[0.65rem]">http://127.0.0.1:3000/api/xero/oauth/callback</code>.
-              </p>
+              <p className="mt-2">{t("oauthLocalhostHint")}</p>
             </div>
           </div>
         )}
@@ -237,23 +230,35 @@ export function AccountingDashboard({
             variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
             className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
           >
-            <StatCard label="Income (MTD)" value={NZD.format(summary.incomeMtdCents / 100)} sub="From Xero P&L" />
-            <StatCard label="Expenses (MTD)" value={NZD.format(summary.expenseMtdCents / 100)} sub="From Xero P&L" />
             <StatCard
-              label="Net profit (MTD)"
-              value={NZD.format(summary.netMtdCents / 100)}
-              sub={summary.netMtdCents >= 0 ? "In the black" : "In the red"}
+              label={t("stats.incomeMtd")}
+              value={NZD.format(summary.incomeMtdCents / 100)}
+              sub={t("stats.incomeSub")}
             />
-            <StatCard label="Net profit (YTD)" value={NZD.format(summary.netYtdCents / 100)} sub="Calendar year" />
+            <StatCard
+              label={t("stats.expensesMtd")}
+              value={NZD.format(summary.expenseMtdCents / 100)}
+              sub={t("stats.expensesSub")}
+            />
+            <StatCard
+              label={t("stats.netMtd")}
+              value={NZD.format(summary.netMtdCents / 100)}
+              sub={summary.netMtdCents >= 0 ? t("stats.inTheBlack") : t("stats.inTheRed")}
+            />
+            <StatCard
+              label={t("stats.netYtd")}
+              value={NZD.format(summary.netYtdCents / 100)}
+              sub={t("stats.calendarYear")}
+            />
           </motion.div>
 
           <motion.div
             variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }}
             className="rounded-2xl border border-[--hair] bg-surface p-6"
           >
-            <h2 className="mb-5 text-sm font-bold text-ink">Income vs expenses (last 12 months)</h2>
+            <h2 className="mb-5 text-sm font-bold text-ink">{t("chart.title")}</h2>
             {chartData.length === 0 ? (
-              <p className="text-sm text-muted">No P&L data available yet.</p>
+              <p className="text-sm text-muted">{t("chart.noData")}</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
@@ -269,7 +274,7 @@ export function AccountingDashboard({
                   <Tooltip
                     formatter={(value: unknown, name: unknown) => [
                       NZD2.format(Number(value)),
-                      name === "income" ? "Income" : "Expenses",
+                      name === "income" ? tShared("income") : tShared("expenses"),
                     ]}
                     contentStyle={{
                       background: "var(--base)",
@@ -279,8 +284,8 @@ export function AccountingDashboard({
                     }}
                   />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="income" name="Income" fill="var(--brand)" radius={[4, 4, 0, 0]} maxBarSize={32} />
-                  <Bar dataKey="expenses" name="Expenses" fill="#64748b" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                  <Bar dataKey="income" name={tShared("income")} fill="var(--brand)" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                  <Bar dataKey="expenses" name={tShared("expenses")} fill="#64748b" radius={[4, 4, 0, 0]} maxBarSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -291,21 +296,21 @@ export function AccountingDashboard({
             className="rounded-2xl border border-[--hair] bg-surface"
           >
             <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
-              <h2 className="text-sm font-bold text-ink">Recent Xero invoices</h2>
+              <h2 className="text-sm font-bold text-ink">{t("recentInvoices.title")}</h2>
               <a
                 href={openInXeroUrl(orgShortCode, "invoices")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs font-semibold text-[#13B5EA] hover:underline"
               >
-                View all in Xero
+                {t("recentInvoices.viewAll")}
               </a>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="border-b border-[--hair]">
-                    {["Reference", "Contact", "Amount", "Date", "Status"].map((h) => (
+                    {invoiceTableHeaders.map((h) => (
                       <th
                         key={h}
                         className="px-4 py-3 text-left text-[0.62rem] font-semibold uppercase tracking-wider text-muted"
@@ -319,7 +324,7 @@ export function AccountingDashboard({
                   {snapshot.activity.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="px-4 py-10 text-center text-sm text-muted">
-                        No recent invoices in Xero.
+                        {t("recentInvoices.empty")}
                       </td>
                     </tr>
                   ) : (
@@ -347,10 +352,7 @@ export function AccountingDashboard({
           variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
           className="rounded-2xl border border-dashed border-[--hair] bg-base/50 p-10 text-center"
         >
-          <p className="text-sm text-muted">
-            Expenditure tracking and full accounting detail live in Xero. Olune Billing continues to handle Stripe
-            payments and refunds; connect Xero to mirror sales and view your complete P&L here.
-          </p>
+          <p className="text-sm text-muted">{t("disconnected")}</p>
         </motion.div>
       )}
     </motion.div>

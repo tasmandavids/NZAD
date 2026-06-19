@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import type { PlatformAnnouncement, AnnouncementSeverity, AnnouncementTarget } from "@/lib/platform/types";
 import { createAnnouncement, publishAnnouncement } from "@/app/platform/announcements/actions";
 
@@ -9,6 +10,8 @@ export function AnnouncementsManager({
 }: {
   announcements: PlatformAnnouncement[];
 }) {
+  const t = useTranslations("platform.announcements");
+  const locale = useLocale();
   const [items, setItems] = useState(announcements);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -44,24 +47,22 @@ export function AnnouncementsManager({
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <header>
-        <h1 className="text-2xl font-black text-ink">Announcements</h1>
-        <p className="text-sm text-muted">
-          Broadcast updates to studio admins — maintenance, new features, policy changes.
-        </p>
+        <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
+        <p className="text-sm text-muted">{t("subtitle")}</p>
       </header>
 
       <div className="rounded-2xl border border-[--hair] bg-surface p-5 space-y-3">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Title"
+          placeholder={t("titlePlaceholder")}
           className="w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
         />
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={3}
-          placeholder="Message body (shown in studio admin portal)…"
+          placeholder={t("bodyPlaceholder")}
           className="w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
         />
         <div className="flex flex-wrap gap-3">
@@ -70,26 +71,29 @@ export function AnnouncementsManager({
             onChange={(e) => setSeverity(e.target.value as AnnouncementSeverity)}
             className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
           >
-            <option value="info">Info</option>
-            <option value="warning">Warning</option>
-            <option value="critical">Critical</option>
+            {(["info", "warning", "critical"] as const).map((s) => (
+              <option key={s} value={s}>
+                {t(`severity.${s}`)}
+              </option>
+            ))}
           </select>
           <select
             value={target}
             onChange={(e) => setTarget(e.target.value as AnnouncementTarget)}
             className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
           >
-            <option value="all">All studios</option>
-            <option value="trial">Trial only</option>
-            <option value="active">Active only</option>
-            <option value="suspended">Suspended only</option>
+            {(["all", "trial", "active", "suspended"] as const).map((tg) => (
+              <option key={tg} value={tg}>
+                {t(`target.${tg}`)}
+              </option>
+            ))}
           </select>
           <button
             onClick={create}
             disabled={pending}
             className="rounded-full bg-brand px-5 py-2 text-xs font-bold uppercase text-white"
           >
-            Draft announcement
+            {t("draft")}
           </button>
         </div>
       </div>
@@ -102,10 +106,12 @@ export function AnnouncementsManager({
                 <p className="font-bold text-ink">{a.title}</p>
                 <p className="mt-1 text-sm text-muted whitespace-pre-wrap">{a.body}</p>
                 <p className="mt-2 text-xs text-muted">
-                  {a.severity} · {a.target}
+                  {t(`severity.${a.severity}`)} · {t(`target.${a.target}`)}
                   {a.publishedAt
-                    ? ` · published ${new Date(a.publishedAt).toLocaleString("en-NZ")}`
-                    : " · draft"}
+                    ? ` · ${t("publishedAt", {
+                        date: new Date(a.publishedAt).toLocaleString(locale),
+                      })}`
+                    : ` · ${t("draftStatus")}`}
                 </p>
               </div>
               {!a.publishedAt && (
@@ -114,7 +120,7 @@ export function AnnouncementsManager({
                   disabled={pending}
                   className="rounded-full border border-[--hair] px-4 py-1.5 text-xs font-bold uppercase hover:border-brand"
                 >
-                  Publish now
+                  {t("publishNow")}
                 </button>
               )}
             </div>

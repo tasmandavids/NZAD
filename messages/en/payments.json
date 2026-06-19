@@ -1,0 +1,6 @@
+{
+  "paymentNotCompleted": "Payment could not be completed.",
+  "paymentIncomplete": "Payment was not completed. Please try another method.",
+  "processing": "Processing…",
+  "payNow": "Pay now"
+}

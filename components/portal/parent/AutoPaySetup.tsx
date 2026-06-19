@@ -1,14 +1,8 @@
 "use client";
 
-// ============================================================================
-//  AutoPaySetup — parent-facing monthly auto-pay (Phase 3.2)
-//  Lists the family's paid enrolled classes. For each, the parent can start a
-//  recurring monthly Stripe subscription (card captured via <CheckoutForm>) or,
-//  if already on auto-pay, cancel it at period end.
-// ============================================================================
-
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import {
   createEnrollmentSubscription,
   cancelSubscription,
@@ -21,7 +15,7 @@ export type AutoPayItem = {
   classId: string;
   className: string;
   priceCents: number;
-  subscriptionId: string | null; // non-null when auto-pay is already active
+  subscriptionId: string | null;
   status: string | null;
   cancelAtPeriodEnd: boolean;
 };
@@ -34,8 +28,7 @@ function itemKey(i: AutoPayItem) {
 }
 
 export default function AutoPaySetup({ items }: { items: AutoPayItem[] }) {
-  // Local UI state per item: which one is mid-setup, its clientSecret, and any
-  // items the parent just confirmed / cancelled this session.
+  const t = useTranslations("parent.autoPay");
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
@@ -78,10 +71,8 @@ export default function AutoPaySetup({ items }: { items: AutoPayItem[] }) {
 
   return (
     <section>
-      <h2 className="text-xl font-black text-ink">Auto-pay</h2>
-      <p className="mb-4 text-sm text-muted">
-        Set up monthly tuition so fees are charged automatically — no more chasing invoices.
-      </p>
+      <h2 className="text-xl font-black text-ink">{t("title")}</h2>
+      <p className="mb-4 text-sm text-muted">{t("subtitle")}</p>
 
       {error && (
         <p className="mb-3 rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-500">{error}</p>
@@ -94,41 +85,37 @@ export default function AutoPaySetup({ items }: { items: AutoPayItem[] }) {
           const isCancelling = cancelled.has(key);
 
           return (
-            <div
-              key={key}
-              className="rounded-2xl border border-[--hair] bg-surface p-4"
-            >
+            <div key={key} className="rounded-2xl border border-[--hair] bg-surface p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold text-ink">{item.className}</p>
                   <p className="text-xs text-muted">
-                    {item.studentName ?? "Student"} · {money(item.priceCents)}/month
+                    {item.studentName ?? t("studentFallback")} ·{" "}
+                    {t("pricePerMonth", { price: money(item.priceCents) })}
                   </p>
                 </div>
                 {isActive && !isCancelling && (
                   <span className="rounded-full bg-green-500/15 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-wider text-green-500">
-                    Auto-pay on
+                    {t("badgeOn")}
                   </span>
                 )}
                 {isCancelling && (
                   <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-wider text-amber-500">
-                    Ending
+                    {t("badgeEnding")}
                   </span>
                 )}
               </div>
 
               <div className="mt-3">
                 {isCancelling ? (
-                  <p className="text-xs text-muted">
-                    Auto-pay will stop at the end of the current period.
-                  </p>
+                  <p className="text-xs text-muted">{t("endingHint")}</p>
                 ) : isActive ? (
                   <button
                     onClick={() => cancel(item)}
                     disabled={pending || !item.subscriptionId}
                     className="text-xs font-semibold text-muted transition-colors hover:text-red-400 disabled:opacity-40"
                   >
-                    Cancel auto-pay
+                    {t("cancelAutoPay")}
                   </button>
                 ) : (
                   <button
@@ -137,7 +124,7 @@ export default function AutoPaySetup({ items }: { items: AutoPayItem[] }) {
                     className="rounded-xl px-3 py-2 text-xs font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ background: "var(--brand)" }}
                   >
-                    {pending && activeKey === key ? "Starting…" : "Set up monthly auto-pay"}
+                    {pending && activeKey === key ? t("starting") : t("setup")}
                   </button>
                 )}
               </div>
@@ -146,7 +133,6 @@ export default function AutoPaySetup({ items }: { items: AutoPayItem[] }) {
         })}
       </div>
 
-      {/* Card-capture modal for the first subscription invoice */}
       <AnimatePresence>
         {activeKey && clientSecret && (
           <>
@@ -167,14 +153,12 @@ export default function AutoPaySetup({ items }: { items: AutoPayItem[] }) {
               exit={{ opacity: 0, scale: 0.96 }}
             >
               <div className="w-full max-w-md rounded-2xl border border-[--hair] bg-surface p-6 shadow-2xl">
-                <h3 className="mb-1 font-black text-ink">Confirm auto-pay</h3>
-                <p className="mb-4 text-sm text-muted">
-                  Your card is saved and charged monthly. Cancel any time.
-                </p>
+                <h3 className="mb-1 font-black text-ink">{t("confirmTitle")}</h3>
+                <p className="mb-4 text-sm text-muted">{t("confirmHint")}</p>
                 <CheckoutForm
                   clientSecret={clientSecret}
-                  submitLabel="Start auto-pay"
-                  cancelLabel="Not now"
+                  submitLabel={t("startAutoPay")}
+                  cancelLabel={t("notNow")}
                   onCancel={() => {
                     setActiveKey(null);
                     setClientSecret(null);

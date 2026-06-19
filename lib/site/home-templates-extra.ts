@@ -8,8 +8,6 @@ import type { PageTemplate } from "./template-types";
 export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   {
     id: "home-academy",
-    label: "Academy",
-    description: "Institution-style layout: bold hero, credentials strip, programmes and faculty.",
     kind: "home",
     category: "professional",
     title: "Home",
@@ -60,8 +58,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-spotlight",
-    label: "Spotlight",
-    description: "Performer-first: dramatic hero, instructor spotlight and photo gallery.",
     kind: "home",
     category: "visual",
     title: "Home",
@@ -104,8 +100,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-magazine",
-    label: "Magazine",
-    description: "News-first editorial flow — like a studio journal with class highlights.",
     kind: "home",
     category: "editorial",
     title: "Home",
@@ -156,8 +150,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-gallery",
-    label: "Gallery",
-    description: "Photo portfolio lead — minimal copy, maximum visual impact.",
     kind: "home",
     category: "visual",
     title: "Home",
@@ -189,8 +181,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-community",
-    label: "Community",
-    description: "Social proof heavy — reviews, values and a welcoming class grid.",
     kind: "home",
     category: "community",
     title: "Home",
@@ -232,8 +222,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-momentum",
-    label: "Momentum",
-    description: "High-energy fitness vibe — stats, classes and enrol-focused CTA.",
     kind: "home",
     category: "bold",
     title: "Home",
@@ -284,8 +272,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-elegant",
-    label: "Elegant",
-    description: "Refined luxury feel — left-aligned hero, story and faculty.",
     kind: "home",
     category: "elegant",
     title: "Home",
@@ -329,8 +315,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-modern",
-    label: "Modern Edge",
-    description: "Clean tech-startup aesthetic — streams, stats and sharp CTAs.",
     kind: "home",
     category: "modern",
     title: "Home",
@@ -370,8 +354,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-festival",
-    label: "Festival",
-    description: "Events-driven — news, schedule preview and enrol CTA.",
     kind: "home",
     category: "community",
     title: "Home",
@@ -420,8 +402,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-streams",
-    label: "Programmes",
-    description: "Class streams explorer with FAQ — ideal for multi-discipline studios.",
     kind: "home",
     category: "professional",
     title: "Home",
@@ -461,8 +441,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-family",
-    label: "Family Welcome",
-    description: "Warm and approachable — values, classes and FAQ for new parents.",
     kind: "home",
     category: "community",
     title: "Home",
@@ -494,8 +472,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-professional",
-    label: "Professional",
-    description: "Corporate-clean layout — story, values, team and contact.",
     kind: "home",
     category: "professional",
     title: "Home",
@@ -533,8 +509,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-creative",
-    label: "Creative Bold",
-    description: "Agency-style impact — asymmetric hero, gallery and stats.",
     kind: "home",
     category: "bold",
     title: "Home",
@@ -566,8 +540,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-story",
-    label: "Storyteller",
-    description: "Narrative journey — layered rich text sections building your brand story.",
     kind: "home",
     category: "editorial",
     title: "Home",
@@ -615,8 +587,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-enrol",
-    label: "Enrol Focus",
-    description: "Conversion-optimised — classes, social proof and multiple enrol prompts.",
     kind: "home",
     category: "bold",
     title: "Home",
@@ -657,8 +627,6 @@ export const EXTRA_HOME_TEMPLATES: PageTemplate[] = [
   },
   {
     id: "home-complete",
-    label: "Complete",
-    description: "Everything on one page — the full studio experience in a single scroll.",
     kind: "home",
     category: "complete",
     title: "Home",

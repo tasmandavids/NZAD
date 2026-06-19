@@ -4,13 +4,14 @@
 //  PublicFooter). Footer content comes from studio_branding.site_settings.
 // ============================================================================
 
+import { getTranslations } from "@/lib/i18n/server";
 import type { SiteSettings } from "@/lib/types";
 import type { NavLink } from "@/lib/site/queries";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 import { SiteHeader } from "./SiteHeader";
 import { SiteNavLink } from "./SiteNavLink";
 
-export function SiteChrome({
+export async function SiteChrome({
   studioName,
   logoUrl,
   tagline,
@@ -25,11 +26,12 @@ export function SiteChrome({
   nav: NavLink[];
   children: React.ReactNode;
 }) {
+  const t = await getTranslations("site.public");
   const footerTagline =
     siteSettings.footerTagline ??
     tagline ??
-    "Exceptional dance education. World-class training for all ages and abilities.";
-  const portalLabel = siteSettings.portalLabel ?? "Portal";
+    t("defaultFooterTagline");
+  const portalLabel = siteSettings.portalLabel ?? t("defaultPortalLabel");
   const locations = siteSettings.locations ?? [];
 
   return (
@@ -53,7 +55,7 @@ export function SiteChrome({
           </div>
 
           <div>
-            <p className="mb-5 text-xs uppercase tracking-[0.2em] text-muted">Navigation</p>
+            <p className="mb-5 text-xs uppercase tracking-[0.2em] text-muted">{t("navigation")}</p>
             {nav.map((l) => (
               <SiteNavLink
                 key={l.slug || "home"}
@@ -67,7 +69,7 @@ export function SiteChrome({
 
           {locations.length > 0 && (
             <div>
-              <p className="mb-5 text-xs uppercase tracking-[0.2em] text-muted">Studios</p>
+              <p className="mb-5 text-xs uppercase tracking-[0.2em] text-muted">{t("studios")}</p>
               <div className="space-y-4 text-sm text-slate">
                 {locations.map((loc) => (
                   <div key={loc.name}>
@@ -80,7 +82,7 @@ export function SiteChrome({
           )}
 
           <div>
-            <p className="mb-5 text-xs uppercase tracking-[0.2em] text-muted">Contact</p>
+            <p className="mb-5 text-xs uppercase tracking-[0.2em] text-muted">{t("contact")}</p>
             <div className="space-y-2 text-sm text-slate">
               {siteSettings.contactPhone && <p>{siteSettings.contactPhone}</p>}
               {siteSettings.contactEmail && (
@@ -100,7 +102,7 @@ export function SiteChrome({
 
         <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-2 border-t border-[--hair] px-6 py-5 sm:flex-row">
           <p className="text-xs text-muted">
-            © {new Date().getFullYear()} {studioName}. All rights reserved.
+            {t("copyright", { year: new Date().getFullYear(), studio: studioName })}
           </p>
           <div className="flex items-center gap-4">
             {siteSettings.regionLabel && (

@@ -1,0 +1,151 @@
+{
+  "platform": {
+    "dashboard": {
+      "title": "Aperçu de la plateforme",
+      "greeting": "{greeting},",
+      "stats": {
+        "totalStudios": "Studios au total",
+        "activeHint": "{count} actifs",
+        "onTrial": "En essai",
+        "suspended": "Suspendus",
+        "studentsPlatformWide": "Élèves sur la plateforme"
+      },
+      "recentSignups": "Inscriptions récentes",
+      "allStudios": "Tous les studios →",
+      "noStudios": "Aucun studio pour l'instant.",
+      "openSupport": "Support ouvert",
+      "inbox": "Boîte de réception →",
+      "inboxClear": "Boîte vide.",
+      "opsQueue": "File ops",
+      "allTasks": "Toutes les tâches →",
+      "noOpenTasks": "Aucune tâche ouverte.",
+      "dueDate": "échéance {date}",
+      "unknownStudio": "Inconnu"
+    },
+    "studios": {
+      "title": "Studios",
+      "subtitle": "Tous les locataires sur la plateforme Olune.",
+      "filters": {
+        "all": "tous",
+        "trial": "essai",
+        "active": "actif",
+        "suspended": "suspendu"
+      },
+      "updated": "Mis à jour",
+      "tableStudio": "Studio",
+      "tableOwner": "Propriétaire",
+      "tableStudents": "Élèves",
+      "tableStatus": "Statut",
+      "tableJoined": "Inscription",
+      "tableActions": "Actions",
+      "noMatch": "Aucun studio ne correspond à ce filtre."
+    },
+    "owners": {
+      "title": "Propriétaires",
+      "subtitle": "Administrateurs de studio — votre ligne directe vers chaque locataire.",
+      "searchPlaceholder": "Rechercher par studio, nom ou e-mail…",
+      "unnamedOwner": "Propriétaire sans nom",
+      "ownerFallback": "Propriétaire",
+      "adminSince": "Admin depuis {date}",
+      "privateNotes": "Notes privées",
+      "notesPlaceholder": "Notes relationnelles, comptes rendus d'appels, préférences…",
+      "saveNotes": "Enregistrer les notes",
+      "messageOwner": "Message au propriétaire",
+      "subjectDefault": "Re : {studioName}",
+      "messagePlaceholder": "Votre message apparaît dans leur fil de support…",
+      "sendViaSupport": "Envoyer via le support",
+      "notesSaved": "Notes enregistrées",
+      "messageSent": "Message envoyé — voir la boîte Support"
+    },
+    "support": {
+      "title": "Boîte de support",
+      "noThreads": "Aucun fil de support pour l'instant.",
+      "selectThread": "Sélectionnez un fil pour voir la conversation.",
+      "status": {
+        "open": "ouvert",
+        "pending": "en attente",
+        "resolved": "résolu"
+      },
+      "senderOperator": "Olune",
+      "senderOwner": "Propriétaire",
+      "replyPlaceholder": "Répondre au propriétaire du studio…",
+      "sendReply": "Envoyer la réponse"
+    },
+    "tasks": {
+      "title": "Tâches ops",
+      "subtitle": "File de travail interne — intégrations, facturation, domaines, déploiements, etc.",
+      "newTask": "Nouvelle tâche",
+      "cancel": "Annuler",
+      "type": "Type",
+      "priority": "Priorité",
+      "priorities": {
+        "low": "Basse",
+        "normal": "Normale",
+        "high": "Haute",
+        "urgent": "Urgente"
+      },
+      "titleLabel": "Titre",
+      "studioOptional": "Studio (optionnel)",
+      "platformWide": "Plateforme entière",
+      "detailsPlaceholder": "Détails, liens, contexte…",
+      "createTask": "Créer la tâche",
+      "columns": {
+        "todo": "À faire",
+        "in_progress": "En cours",
+        "blocked": "Bloqué",
+        "done": "Terminé"
+      }
+    },
+    "features": {
+      "title": "Fonctionnalités",
+      "subtitle": "Activer ou désactiver des modules globalement ou par studio — boutique, événements, SMS, bêta IA, etc.",
+      "globalDefaults": "Paramètres globaux",
+      "studioOverrides": "Surcharges par studio",
+      "on": "Activé",
+      "off": "Désactivé"
+    },
+    "announcements": {
+      "title": "Annonces",
+      "subtitle": "Diffuser des mises à jour aux admins de studio — maintenance, nouvelles fonctionnalités, changements de politique.",
+      "titlePlaceholder": "Titre",
+      "bodyPlaceholder": "Corps du message (affiché dans le portail admin du studio)…",
+      "severity": {
+        "info": "Info",
+        "warning": "Avertissement",
+        "critical": "Critique"
+      },
+      "target": {
+        "all": "Tous les studios",
+        "trial": "Essai uniquement",
+        "active": "Actifs uniquement",
+        "suspended": "Suspendus uniquement"
+      },
+      "draft": "Brouillon d'annonce",
+      "publishedAt": "publié {date}",
+      "draftStatus": "brouillon",
+      "publishNow": "Publier maintenant"
+    },
+    "settings": {
+      "title": "Paramètres de la plateforme",
+      "subtitle": "Configuration globale Olune — inscription, essais, maintenance.",
+      "maintenanceMode": "Mode maintenance",
+      "signupEnabled": "Inscription activée",
+      "defaultTrialDays": "Jours d'essai par défaut",
+      "supportEmail": "E-mail de support",
+      "welcomeMessage": "Message de bienvenue",
+      "saveSettings": "Enregistrer",
+      "saved": "Enregistré",
+      "operatorAccessTitle": "Accès opérateur",
+      "operatorAccessBody": "Accordez l'accès en ajoutant des e-mails à <envVar></envVar> dans votre env, ou insérez une ligne dans <table></table> liée à un utilisateur auth."
+    },
+    "audit": {
+      "title": "Journal d'audit",
+      "subtitle": "Enregistrement immuable des actions des opérateurs.",
+      "when": "Quand",
+      "operator": "Opérateur",
+      "action": "Action",
+      "target": "Cible",
+      "noEntries": "Aucune entrée d'audit pour l'instant."
+    }
+  }
+}

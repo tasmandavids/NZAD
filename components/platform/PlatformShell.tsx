@@ -5,22 +5,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { signOut } from "@/app/portal/actions";
 import { OluneMark } from "@/components/brand/OluneLogo";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
-
-const NAV = [
-  { href: "/platform", label: "Overview", exact: true },
-  { href: "/platform/studios", label: "Studios" },
-  { href: "/platform/owners", label: "Owners" },
-  { href: "/platform/messages", label: "Support inbox" },
-  { href: "/platform/tasks", label: "Ops tasks" },
-  { href: "/platform/features", label: "Feature flags" },
-  { href: "/platform/announcements", label: "Announcements" },
-  { href: "/platform/settings", label: "Settings" },
-  { href: "/platform/audit", label: "Audit log" },
-];
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { PLATFORM_NAV } from "@/lib/portal/nav-config";
 
 function Sidebar({
   operatorName,
@@ -31,6 +22,10 @@ function Sidebar({
   pathname: string;
   onNavClick?: () => void;
 }) {
+  const t = useTranslations();
+  const tCommon = useTranslations("common");
+  const tPlatform = useTranslations("nav.platform");
+
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 
@@ -40,14 +35,16 @@ function Sidebar({
         <div className="mb-1 flex items-center gap-2.5">
           <OluneMark className="h-8 w-8 shrink-0" />
           <div>
-            <h2 className="text-sm font-black text-ink">Olune Platform</h2>
-            <p className="text-[0.62rem] uppercase tracking-widest text-muted">Operator console</p>
+            <h2 className="text-sm font-black text-ink">{tPlatform("consoleTitle")}</h2>
+            <p className="text-[0.62rem] uppercase tracking-widest text-muted">
+              {tPlatform("consoleSubtitle")}
+            </p>
           </div>
         </div>
       </div>
 
       <nav className="flex-1 space-y-0.5 p-3">
-        {NAV.map((item) => {
+        {PLATFORM_NAV.map((item) => {
           const active = isActive(item.href, item.exact);
           return (
             <Link
@@ -60,7 +57,7 @@ function Sidebar({
                 active ? "bg-brand text-white" : "text-muted hover:text-ink"
               }`}
             >
-              {item.label}
+              {t(item.labelKey as Parameters<typeof t>[0])}
             </Link>
           );
         })}
@@ -68,10 +65,13 @@ function Sidebar({
 
       <div className="border-t border-[--hair] p-4">
         <PoweredByOlune className="mb-3" />
-        <p className="mb-2 truncate text-xs font-medium text-ink">{operatorName ?? "Operator"}</p>
+        <LanguageSwitcher className="mb-3 w-full justify-between" />
+        <p className="mb-2 truncate text-xs font-medium text-ink">
+          {operatorName ?? tCommon("operator")}
+        </p>
         <form action={signOut}>
           <button type="submit" className="text-xs text-muted transition-colors hover:text-ink">
-            Sign out →
+            {tCommon("signOut")}
           </button>
         </form>
       </div>
@@ -87,6 +87,8 @@ export function PlatformShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? "";
+  const tPlatform = useTranslations("nav.platform");
+  const tShell = useTranslations("shell");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -99,12 +101,12 @@ export function PlatformShell({
         <div className="flex items-center justify-between border-b border-[--hair] bg-surface/95 px-4 py-3 backdrop-blur">
           <div className="flex items-center gap-2">
             <OluneMark className="h-7 w-7 shrink-0" />
-            <span className="text-sm font-black text-ink">Olune Platform</span>
+            <span className="text-sm font-black text-ink">{tPlatform("consoleTitle")}</span>
           </div>
           <button
             onClick={() => setMobileOpen((o) => !o)}
             className="grid h-8 w-8 place-items-center text-muted"
-            aria-label="Toggle menu"
+            aria-label={tShell("toggleMenu")}
           >
             {mobileOpen ? "✕" : "☰"}
           </button>

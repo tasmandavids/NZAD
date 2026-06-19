@@ -1,0 +1,51 @@
+{
+  "onboarding": {
+    "progress": {
+      "account": "Compte",
+      "studio": "Studio",
+      "brand": "Marque"
+    },
+    "account": {
+      "title": "Lancez votre studio",
+      "subtitle": "Créez votre compte propriétaire pour commencer.",
+      "divider": "ou inscrivez-vous par e-mail",
+      "emailPlaceholder": "vous@studio.co.nz",
+      "passwordPlaceholder": "Créer un mot de passe",
+      "submitting": "Création…",
+      "submit": "Créer un compte par e-mail",
+      "hasAccount": "Vous en avez déjà un ?",
+      "logIn": "Se connecter"
+    },
+    "confirmEmail": {
+      "title": "Vérifiez votre boîte mail",
+      "body": "Nous avons envoyé un lien de confirmation à {email}. Cliquez dessus, puis revenez — nous reprendrons là où vous vous êtes arrêté."
+    },
+    "studio": {
+      "title": "Nommez votre studio",
+      "subtitle": "C'est ce que vos danseurs et leurs familles verront.",
+      "namePlaceholder": "Sunrise Dance Studio",
+      "slugPlaceholder": "votre-studio",
+      "checking": "Vérification…",
+      "available": "✓ {slug}.{root} est disponible",
+      "taken": "✗ Ce sous-domaine est déjà pris",
+      "invalid": "Utilisez 3+ lettres minuscules, chiffres ou tirets",
+      "back": "Retour",
+      "continue": "Continuer"
+    },
+    "brand": {
+      "title": "Personnalisez-le",
+      "subtitle": "Choisissez une couleur de marque — vous pourrez tout affiner plus tard.",
+      "fallbackName": "Votre studio",
+      "previewCta": "Réserver un essai",
+      "customColour": "Couleur personnalisée",
+      "back": "Retour",
+      "submitting": "Création de votre studio…",
+      "submit": "Créer le studio"
+    },
+    "done": {
+      "title": "Bienvenue chez {studioName}",
+      "subtitle": "Votre studio est en ligne. Configurons-le…",
+      "continue": "Continuer la configuration →"
+    }
+  }
+}

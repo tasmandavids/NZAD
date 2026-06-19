@@ -1,14 +1,21 @@
 "use client";
 
-// ============================================================================
-//  EnrolPage — "Book a free trial" form stub.
-//  Full implementation: class selector → guardian details → Stripe payment.
-//  For now: captures name + email + class interest → shows confirmation.
-// ============================================================================
-
 import { useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
+
+const DISCIPLINE_KEYS = [
+  "ballet",
+  "contemporary",
+  "jazz",
+  "hipHop",
+  "tap",
+  "lyrical",
+  "acro",
+  "pointe",
+  "notSure",
+] as const;
 
 export default function EnrolPage({
   studioName,
@@ -19,6 +26,7 @@ export default function EnrolPage({
   tagline: string | null;
   logoUrl?: string | null;
 }) {
+  const t = useTranslations("enrol");
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,23 +35,15 @@ export default function EnrolPage({
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: POST to an API route or an email service (Resend, Postmark, etc.)
-    // For now, just show confirmation so the UX is complete.
     startTransition(async () => {
-      await new Promise((r) => setTimeout(r, 600)); // simulate network
+      await new Promise((r) => setTimeout(r, 600));
       setSubmitted(true);
     });
   };
 
-  const DISCIPLINES = [
-    "Ballet", "Contemporary", "Jazz", "Hip-Hop", "Tap", "Lyrical", "Acro", "Pointe",
-    "Not sure yet",
-  ];
-
   return (
     <div className="grid min-h-screen place-items-center bg-base p-6 text-ink">
       <div className="w-full max-w-md">
-        {/* Studio identity */}
         <div className="mb-8 text-center">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -57,11 +57,9 @@ export default function EnrolPage({
             {tagline ?? studioName}
           </p>
           <h1 className="mt-2 text-3xl font-black uppercase tracking-tight">
-            Book a free trial
+            {t("title")}
           </h1>
-          <p className="mt-2 text-sm text-muted">
-            No commitment. We'll contact you to arrange the best class for your dancer.
-          </p>
+          <p className="mt-2 text-sm text-muted">{t("subtitle")}</p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -81,16 +79,18 @@ export default function EnrolPage({
               >
                 ✓
               </motion.div>
-              <h2 className="text-xl font-black">You're on the list!</h2>
+              <h2 className="text-xl font-black">{t("success.title")}</h2>
               <p className="mt-2 text-sm text-muted">
-                We'll be in touch soon, <strong className="text-ink">{name.split(" ")[0]}</strong>.
-                Keep an eye on <span className="text-ink">{email}</span>.
+                {t("success.body", {
+                  name: name.split(" ")[0],
+                  email,
+                })}
               </p>
               <a
                 href="/"
                 className="btn-glow btn-glow--solid mt-6 inline-flex justify-center px-6 py-3 text-sm"
               >
-                Back to home
+                {t("success.backHome")}
               </a>
             </motion.div>
           ) : (
@@ -105,13 +105,13 @@ export default function EnrolPage({
               <div className="space-y-4">
                 <label className="block">
                   <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted">
-                    Your name
+                    {t("fields.name")}
                   </span>
                   <input
                     type="text"
                     required
                     className="field-premium"
-                    placeholder="Jane Smith"
+                    placeholder={t("fields.namePlaceholder")}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
@@ -119,13 +119,13 @@ export default function EnrolPage({
 
                 <label className="block">
                   <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-muted">
-                    Email address
+                    {t("fields.email")}
                   </span>
                   <input
                     type="email"
                     required
                     className="field-premium"
-                    placeholder="you@example.com"
+                    placeholder={t("fields.emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -133,22 +133,22 @@ export default function EnrolPage({
 
                 <div>
                   <span className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted">
-                    Dance style interest
+                    {t("fields.interest")}
                   </span>
                   <div className="flex flex-wrap gap-2">
-                    {DISCIPLINES.map((d) => (
+                    {DISCIPLINE_KEYS.map((key) => (
                       <button
-                        key={d}
+                        key={key}
                         type="button"
-                        onClick={() => setInterest(d)}
+                        onClick={() => setInterest(key)}
                         className="rounded-full border px-3 py-1.5 text-xs font-medium transition-all"
                         style={{
-                          borderColor: interest === d ? "var(--brand)" : "var(--hair)",
-                          background: interest === d ? "var(--brand)" : "transparent",
-                          color: interest === d ? "#fff" : "var(--muted)",
+                          borderColor: interest === key ? "var(--brand)" : "var(--hair)",
+                          background: interest === key ? "var(--brand)" : "transparent",
+                          color: interest === key ? "#fff" : "var(--muted)",
                         }}
                       >
-                        {d}
+                        {t(`disciplines.${key}`)}
                       </button>
                     ))}
                   </div>
@@ -160,13 +160,13 @@ export default function EnrolPage({
                 disabled={pending || !name.trim() || !email.trim()}
                 className="btn-glow btn-glow--solid mt-6 w-full justify-center disabled:opacity-50"
               >
-                {pending ? "Sending…" : "Request my free trial →"}
+                {pending ? t("submitting") : t("submit")}
               </button>
 
               <p className="mt-4 text-center text-xs text-muted">
-                Already have an account?{" "}
+                {t("hasAccount")}{" "}
                 <a href="/login" className="text-ink underline">
-                  Sign in
+                  {t("signIn")}
                 </a>
               </p>
             </motion.form>

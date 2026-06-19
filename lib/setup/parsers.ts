@@ -215,11 +215,11 @@ export function parseClassPaste(text: string): ParsedClass[] {
 
 export function suggestClassesFromStyles(styles: string[]): ParsedClass[] {
   const templates: Record<string, Omit<ParsedClass, "discipline">> = {
-    Ballet: { name: "Ballet — Beginners", level: "Beginners", dayOfWeek: 1, startTime: "16:00", endTime: "17:00", capacity: 15, priceCents: 1800 },
-    Jazz: { name: "Jazz — Juniors", level: "Juniors", dayOfWeek: 2, startTime: "16:30", endTime: "17:30", capacity: 18, priceCents: 1600 },
-    "Hip-Hop": { name: "Hip-Hop — Teens", level: "Teens", dayOfWeek: 3, startTime: "17:00", endTime: "18:00", capacity: 20, priceCents: 1600 },
-    Contemporary: { name: "Contemporary — Open", level: "Open", dayOfWeek: 4, startTime: "17:30", endTime: "18:30", capacity: 16, priceCents: 1700 },
-    Tap: { name: "Tap — All levels", level: "Mixed", dayOfWeek: 5, startTime: "16:00", endTime: "17:00", capacity: 14, priceCents: 1500 },
+    ballet: { name: "Ballet — Beginners", level: "Beginners", dayOfWeek: 1, startTime: "16:00", endTime: "17:00", capacity: 15, priceCents: 1800 },
+    jazz: { name: "Jazz — Juniors", level: "Juniors", dayOfWeek: 2, startTime: "16:30", endTime: "17:30", capacity: 18, priceCents: 1600 },
+    hipHop: { name: "Hip-Hop — Teens", level: "Teens", dayOfWeek: 3, startTime: "17:00", endTime: "18:00", capacity: 20, priceCents: 1600 },
+    contemporary: { name: "Contemporary — Open", level: "Open", dayOfWeek: 4, startTime: "17:30", endTime: "18:30", capacity: 16, priceCents: 1700 },
+    tap: { name: "Tap — All levels", level: "Mixed", dayOfWeek: 5, startTime: "16:00", endTime: "17:00", capacity: 14, priceCents: 1500 },
   };
 
   return styles

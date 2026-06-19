@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import ImageInput from "@/components/admin/site/ImageInput";
 import VideoInput from "@/components/admin/site/VideoInput";
 import {
@@ -15,32 +16,35 @@ export function BackgroundEditor({
   background: PageBackground;
   onChange: (bg: PageBackground) => void;
 }) {
+  const t = useTranslations("site.background");
   const set = <K extends keyof PageBackground>(key: K, value: PageBackground[K]) =>
     onChange({ ...background, [key]: value });
 
   return (
     <div className="space-y-4 p-4">
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Page background</h2>
-        <p className="mt-1 text-xs text-muted">The canvas behind all your elements. Drag blocks on top of it freely.</p>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("title")}</h2>
+        <p className="mt-1 text-xs text-muted">{t("subtitle")}</p>
       </div>
 
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-ink">Background type</span>
+        <span className="mb-1 block font-medium text-ink">{t("type")}</span>
         <select
           value={background.kind}
           onChange={(e) => set("kind", e.target.value as BackgroundKind)}
           className="field-premium"
         >
           {BACKGROUND_KIND_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option key={opt.value} value={opt.value}>
+              {t(`kinds.${opt.value}`)}
+            </option>
           ))}
         </select>
       </label>
 
       {background.kind === "image" && (
         <label className="block text-sm">
-          <span className="mb-1 block font-medium text-ink">Background image</span>
+          <span className="mb-1 block font-medium text-ink">{t("image")}</span>
           <ImageInput value={background.imageUrl ?? ""} onChange={(url) => set("imageUrl", url)} />
         </label>
       )}
@@ -48,7 +52,7 @@ export function BackgroundEditor({
       {background.kind === "video" && (
         <>
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-ink">Background video</span>
+            <span className="mb-1 block font-medium text-ink">{t("video")}</span>
             <VideoInput value={background.videoUrl ?? ""} onChange={(url) => set("videoUrl", url)} />
           </label>
           <label className="flex items-center gap-2 text-sm">
@@ -58,13 +62,13 @@ export function BackgroundEditor({
               onChange={(e) => set("videoAutoplay", e.target.checked)}
               className="h-4 w-4 accent-[--brand]"
             />
-            <span className="text-ink">Autoplay (muted)</span>
+            <span className="text-ink">{t("autoplayMuted")}</span>
           </label>
         </>
       )}
 
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-ink">Opacity (%)</span>
+        <span className="mb-1 block font-medium text-ink">{t("opacity")}</span>
         <input
           type="number"
           min={0}

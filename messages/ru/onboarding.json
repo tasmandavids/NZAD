@@ -1,0 +1,51 @@
+{
+  "onboarding": {
+    "progress": {
+      "account": "Аккаунт",
+      "studio": "Студия",
+      "brand": "Бренд"
+    },
+    "account": {
+      "title": "Запустите студию",
+      "subtitle": "Создайте аккаунт владельца, чтобы начать.",
+      "divider": "или зарегистрируйтесь по e-mail",
+      "emailPlaceholder": "you@studio.co.nz",
+      "passwordPlaceholder": "Придумайте пароль",
+      "submitting": "Создание…",
+      "submit": "Создать аккаунт по e-mail",
+      "hasAccount": "Уже есть аккаунт?",
+      "logIn": "Войти"
+    },
+    "confirmEmail": {
+      "title": "Проверьте почту",
+      "body": "Мы отправили ссылку для подтверждения на {email}. Перейдите по ней и вернитесь — мы продолжим с того же места."
+    },
+    "studio": {
+      "title": "Назовите студию",
+      "subtitle": "Так её увидят танцоры и их семьи.",
+      "namePlaceholder": "Sunrise Dance Studio",
+      "slugPlaceholder": "your-studio",
+      "checking": "Проверка…",
+      "available": "✓ {slug}.{root} доступен",
+      "taken": "✗ Этот поддомен занят",
+      "invalid": "Используйте 3+ строчные буквы, цифры или дефисы",
+      "back": "Назад",
+      "continue": "Продолжить"
+    },
+    "brand": {
+      "title": "Сделайте её своей",
+      "subtitle": "Выберите цвет бренда — всё можно доработать позже.",
+      "fallbackName": "Ваша студия",
+      "previewCta": "Записаться на пробное",
+      "customColour": "Свой цвет",
+      "back": "Назад",
+      "submitting": "Создаём студию…",
+      "submit": "Создать студию"
+    },
+    "done": {
+      "title": "Добро пожаловать в {studioName}",
+      "subtitle": "Студия запущена. Настроим её…",
+      "continue": "Продолжить настройку →"
+    }
+  }
+}

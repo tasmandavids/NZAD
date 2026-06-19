@@ -9,6 +9,7 @@
 // ============================================================================
 
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { DAYS, TIMES, type HeatClass } from "./types";
 
@@ -29,6 +30,7 @@ export function CapacityHeatmap({
   /** Time row labels — defaults to the 5 fixed after-school slots. Pass real times from live data. */
   times?: string[];
 }) {
+  const t = useTranslations("admin.dashboard.capacity");
   const [hover, setHover] = useState<HeatClass | null>(null);
 
   // index classes by `${day}-${slot}` for O(1) cell lookup
@@ -45,15 +47,15 @@ export function CapacityHeatmap({
     >
       <header className="mb-5 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-ink">Class capacity</h2>
-          <p className="text-sm text-muted">This week, by studio time slot.</p>
+          <h2 className="text-lg font-bold text-ink">{t("title")}</h2>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
         {/* legend */}
         <div className="flex items-center gap-2 text-xs text-muted">
-          <span>Empty</span>
+          <span>{t("empty")}</span>
           <span className="h-2.5 w-28 rounded-full"
             style={{ background: "linear-gradient(90deg, var(--heat-empty), var(--brand) 80%, var(--brand-deep))" }} />
-          <span>Full</span>
+          <span>{t("full")}</span>
         </div>
       </header>
 
@@ -106,8 +108,11 @@ export function CapacityHeatmap({
       {hover && (
         <div className="pointer-events-none absolute bottom-6 left-6 rounded-xl border border-[--hair] bg-base/90 px-3 py-2 text-xs shadow-xl backdrop-blur">
           <p className="font-bold text-ink">{hover.name}</p>
-          <p className="text-muted">{hover.room} · {hover.enrolled}/{hover.capacity} enrolled
-            {hover.enrolled >= hover.capacity && <span style={{ color: "var(--brand-hot)" }}> · FULL</span>}
+          <p className="text-muted">
+            {t("tooltipRoom", { room: hover.room, enrolled: hover.enrolled, capacity: hover.capacity })}
+            {hover.enrolled >= hover.capacity && (
+              <span style={{ color: "var(--brand-hot)" }}>{t("tooltipFull")}</span>
+            )}
           </p>
         </div>
       )}

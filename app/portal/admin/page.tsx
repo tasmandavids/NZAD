@@ -5,6 +5,7 @@
 // ============================================================================
 
 import dynamic from "next/dynamic";
+import { getTranslations } from "@/lib/i18n/server";
 import { getPortalSession } from "@/lib/portal/session";
 import { MOCK_HEAT, UNSCHEDULED, type Stat, type HeatClass, type ClassBlock } from "@/components/admin/dashboard/types";
 
@@ -25,6 +26,9 @@ const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export default async function AdminDashboardPage() {
   const session = await getPortalSession();
   if (!session) throw new Error("Not signed in");
+
+  const t = await getTranslations("admin.dashboard.stats");
+  const tCommon = await getTranslations("common");
 
   const { supabase, studioId } = session;
 
@@ -71,9 +75,9 @@ export default async function AdminDashboardPage() {
     (paidRes.data ?? []).reduce((sum, r) => sum + (r.amount_cents ?? 0), 0) / 100;
 
   const stats: Stat[] = [
-    { id: "students", label: "Active students", value: studentsRes.count ?? 0, format: "number", hint: "enrolled this term" },
-    { id: "revenue",  label: "Revenue this month", value: revenue, format: "currency", hint: "NZD, paid invoices" },
-    { id: "today",    label: "Classes today", value: todayRes.count ?? 0, format: "number", hint: "across your studios" },
+    { id: "students", label: t("activeStudents"), value: studentsRes.count ?? 0, format: "number", hint: t("activeStudentsHint") },
+    { id: "revenue",  label: t("revenueThisMonth"), value: revenue, format: "currency", hint: t("revenueHint") },
+    { id: "today",    label: t("classesToday"), value: todayRes.count ?? 0, format: "number", hint: t("classesTodayHint") },
   ];
 
   // ── Build heatmap from real data (or fall back to mock) ──────────────────
@@ -100,7 +104,7 @@ export default async function AdminDashboardPage() {
       id: r.id as string,
       name: r.name as string,
       // No room column yet — use discipline as a readable label
-      room: (r.discipline as string | null) ?? "Studio",
+      room: (r.discipline as string | null) ?? tCommon("yourStudio"),
       day:  dayIdx.get(r.day_of_week as number) ?? 0,
       slot: timeIdx.get((r.start_time as string | null) ?? "00:00") ?? 0,
       enrolled: Number(r.enrolled ?? 0),
@@ -141,7 +145,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <AdminDashboard
-      studioName={studioRes.data?.name ?? "Your studio"}
+      studioName={studioRes.data?.name ?? tCommon("yourStudio")}
       stats={stats}
       heat={heat}
       heatDays={heatDays}

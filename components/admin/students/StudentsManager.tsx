@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 // ============================================================================
 //  StudentsManager — searchable student roster + detail panel.
@@ -361,6 +362,9 @@ export default function StudentsManager({
   students: StudentRow[];
   allClasses: ClassOption[];
 }) {
+  const t = useTranslations("admin.students");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<StudentRow | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -381,9 +385,9 @@ export default function StudentsManager({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-ink">Students</h1>
+          <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
           <p className="text-sm text-muted">
-            {students.length} student{students.length !== 1 ? "s" : ""} · click to manage enrollments
+            {t("subtitle", { count: students.length })}
           </p>
         </div>
         <button
@@ -391,7 +395,7 @@ export default function StudentsManager({
           className="rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90"
           style={{ background: "var(--brand)" }}
         >
-          + Add student
+          {t("addStudent")}
         </button>
       </div>
 
@@ -400,7 +404,7 @@ export default function StudentsManager({
         type="search"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by name or email…"
+        placeholder={t("searchPlaceholder")}
         className="w-full max-w-sm rounded-xl border border-[--hair] bg-surface px-4 py-2.5 text-sm
                    text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
       />
@@ -409,7 +413,7 @@ export default function StudentsManager({
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-[--hair] bg-surface px-6 py-12 text-center">
           <p className="text-sm text-muted">
-            {search ? "No students match your search." : "No students yet — add your first one above."}
+            {search ? t("emptySearch") : t("empty")}
           </p>
         </div>
       ) : (

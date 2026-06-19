@@ -1,0 +1,24 @@
+{
+  "teacher": {
+    "schedule": {
+      "title": "Расписание и посещаемость",
+      "greetingWithName": "{greeting}, {name}.",
+      "greetingOnly": "{greeting}.",
+      "todayRoll": "Сегодняшний список · {day}",
+      "noClassesToday": "Сегодня занятий нет.",
+      "marked": "отмечено",
+      "noStudents": "Нет записанных учеников.",
+      "unknownStudent": "Неизвестный ученик",
+      "attendance": {
+        "present": "Присутствует",
+        "late": "Опоздал",
+        "absent": "Отсутствует",
+        "excused": "Уважительная"
+      },
+      "thisWeek": "На этой неделе · {count, plural, one {# занятие} few {# занятия} many {# занятий} other {# занятия}}",
+      "studentCount": "{count, plural, one {# ученик} few {# ученика} many {# учеников} other {# ученика}}",
+      "noClassesAssigned": "Вам пока не назначены занятия.",
+      "noClassesAssignedHint": "Попросите администратора студии назначить вам занятия."
+    }
+  }
+}

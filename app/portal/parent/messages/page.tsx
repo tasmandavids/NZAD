@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getTranslations } from "@/lib/i18n/server";
 import { ParentEmailInbox } from "@/components/portal/parent/ParentEmailInbox";
 
 export const dynamic = "force-dynamic";
@@ -26,8 +27,9 @@ export default async function ParentMessagesPage() {
     .order("last_message_at", { ascending: false })
     .limit(200);
 
+  const t = await getTranslations("parent.email");
   const studioName =
-    (profile.studios as { name?: string } | null)?.name ?? "your studio";
+    (profile.studios as { name?: string } | null)?.name ?? t("yourStudio");
 
   return (
     <ParentEmailInbox

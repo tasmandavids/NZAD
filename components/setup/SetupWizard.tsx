@@ -9,12 +9,14 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { OluneLogo } from "@/components/brand/OluneLogo";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { CsvFileUpload } from "@/components/setup/CsvFileUpload";
 import {
-  DANCE_STYLES,
-  IMPORT_SOURCES,
-  NZ_REGIONS,
+  DANCE_STYLE_KEYS,
+  IMPORT_SOURCE_IDS,
+  NZ_REGION_KEYS,
   SETUP_STEPS,
   TOUR_FEATURES,
   type ImportSource,
@@ -39,7 +41,7 @@ import {
 } from "@/app/setup/actions";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 const EMPTY_STUDENT: ParsedStudent = {
   fullName: "",
@@ -71,6 +73,7 @@ function safeParseClasses(text: string): ParsedClass[] {
 }
 
 export function SetupWizard({ studio, schemaError }: Props) {
+  const t = useTranslations("setup");
   const router = useRouter();
   const reduceMotion = useReducedMotion();
   const reduce = reduceMotion ?? false;
@@ -187,12 +190,12 @@ export function SetupWizard({ studio, schemaError }: Props) {
       if (!skip && parsedStudents.length > 0) {
         const res = await bulkAddStudents({ students: parsedStudents, linkParents });
         if (!res.ok) { setError(res.error); return; }
-        const parts = [`Added ${res.data?.added ?? 0} dancer${(res.data?.added ?? 0) === 1 ? "" : "s"}`];
+        const parts = [t("importSummary.added", { count: res.data?.added ?? 0 })];
         if ((res.data?.parentsLinked ?? 0) > 0) {
-          parts.push(`${res.data?.parentsLinked} parent link${res.data?.parentsLinked === 1 ? "" : "s"}`);
+          parts.push(t("importSummary.parentsLinked", { count: res.data?.parentsLinked ?? 0 }));
         }
         if ((res.data?.skipped ?? 0) > 0) {
-          parts.push(`${res.data?.skipped} skipped`);
+          parts.push(t("importSummary.skipped", { count: res.data?.skipped ?? 0 }));
         }
         setImportSummary(parts.join(" · "));
       }
@@ -218,37 +221,43 @@ export function SetupWizard({ studio, schemaError }: Props) {
     router.refresh();
   }
 
-  const importMeta = IMPORT_SOURCES.find((s) => s.id === importSource);
+  const importSourceId = importSource;
 
   return (
     <div className="min-h-screen bg-base px-4 py-10 text-ink sm:px-6">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <OluneLogo variant="stacked" size="md" />
-          <p className="text-sm text-muted">
-            Setting up <span className="font-semibold text-ink">{studio.name}</span>
-          </p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div className="flex-1" />
+          <div className="flex flex-col items-center gap-3 text-center">
+            <OluneLogo variant="stacked" size="md" />
+            <p className="text-sm text-muted">
+              {t("header", { studioName: studio.name })}
+            </p>
+          </div>
+          <div className="flex flex-1 justify-end">
+            <LanguageSwitcher compact />
+          </div>
         </div>
 
         {!studio.schemaReady && (
           <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-            <p className="font-semibold">Database migration pending</p>
+            <p className="font-semibold">{t("schemaPending.title")}</p>
             <p className="mt-1 text-xs opacity-90">
-              Run <code className="rounded bg-black/20 px-1">supabase db push</code> to enable saving setup progress.
+              {t("schemaPending.body", { command: t("schemaPending.command") })}
               {schemaError ? ` (${schemaError})` : ""}
             </p>
           </div>
         )}
 
         {step !== "tour" && (
-          <nav className="mb-8 flex flex-wrap items-center justify-center gap-1 sm:gap-2" aria-label="Setup progress">
+          <nav className="mb-8 flex flex-wrap items-center justify-center gap-1 sm:gap-2" aria-label={t("progressAria")}>
             {SETUP_STEPS.slice(0, -1).map((s, i) => (
               <div key={s.id} className="flex items-center gap-1 sm:gap-2">
                 <span
                   className="text-[0.65rem] font-semibold uppercase tracking-wider sm:text-xs"
                   style={{ color: i <= stepIndex ? "var(--brand-hot)" : "var(--muted)" }}
                 >
-                  {s.label}
+                  {t(`steps.${s.id}`)}
                 </span>
                 {i < SETUP_STEPS.length - 2 && (
                   <span
@@ -317,7 +326,7 @@ export function SetupWizard({ studio, schemaError }: Props) {
               {step === "students" && (
                 <StudentsStep
                   path={path}
-                  importMeta={importMeta}
+                  importSource={importSourceId}
                   studentPaste={studentPaste}
                   manualStudents={manualStudents}
                   parsedCount={parsedStudents.length}
@@ -389,17 +398,19 @@ function StepActions({
   continueDisabled?: boolean;
   showSkip?: boolean;
 }) {
+  const t = useTranslations("setup.actions");
+
   return (
     <div className="mt-8 space-y-3">
       <div className="flex flex-wrap gap-2">
         {onBack && (
           <button type="button" onClick={onBack} className="btn-glow flex-none">
-            Back
+            {t("back")}
           </button>
         )}
         {showSkip && onSkip && (
           <button type="button" onClick={onSkip} disabled={pending} className="btn-glow flex-none text-muted">
-            Skip for now
+            {t("skip")}
           </button>
         )}
         <button
@@ -408,7 +419,7 @@ function StepActions({
           disabled={pending || continueDisabled}
           className="btn-glow btn-glow--solid min-w-0 flex-1 justify-center disabled:opacity-50"
         >
-          {pending ? "Working…" : continueLabel}
+          {pending ? t("working") : continueLabel}
         </button>
       </div>
       <button
@@ -417,7 +428,7 @@ function StepActions({
         disabled={pending}
         className="w-full text-center text-xs text-muted underline-offset-2 hover:text-ink hover:underline disabled:opacity-50"
       >
-        Save progress & finish later →
+        {t("saveLater")}
       </button>
     </div>
   );
@@ -442,48 +453,48 @@ function PathStep({
   onFinishLater: () => void;
   pending: boolean;
 }) {
+  const t = useTranslations("setup");
+
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight">How are you getting started?</h1>
-      <p className="mt-1 text-sm text-muted">
-        Brand-new studio or moving from another system — we&apos;ll tailor the next steps.
-      </p>
+      <h1 className="text-2xl font-black tracking-tight">{t("path.title")}</h1>
+      <p className="mt-1 text-sm text-muted">{t("path.subtitle")}</p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <PathCard
           selected={path === "scratch"}
           onClick={() => onPath("scratch")}
           emoji="✨"
-          title="Start from scratch"
-          body="You're opening fresh or have a small roster to enter by hand."
+          title={t("path.scratch.title")}
+          body={t("path.scratch.body")}
         />
         <PathCard
           selected={path === "import"}
           onClick={() => onPath("import")}
           emoji="📋"
-          title="I have an existing studio"
-          body="Bulk import from StudioPro, Class Manager, or any spreadsheet."
+          title={t("path.import.title")}
+          body={t("path.import.body")}
         />
       </div>
 
       {path === "import" && (
         <div className="mt-5 overflow-hidden">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted">
-            Where is your data today?
+            {t("path.sourcePrompt")}
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {IMPORT_SOURCES.map((src) => (
+            {IMPORT_SOURCE_IDS.map((id) => (
               <button
-                key={src.id}
+                key={id}
                 type="button"
-                onClick={() => onSource(src.id)}
+                onClick={() => onSource(id)}
                 className={`rounded-xl border px-3 py-2.5 text-left text-sm transition ${
-                  importSource === src.id
+                  importSource === id
                     ? "border-brand bg-brand/10 text-ink"
                     : "border-[--hair] text-muted hover:border-brand/40 hover:text-ink"
                 }`}
               >
-                <span className="font-semibold">{src.name}</span>
+                <span className="font-semibold">{t(`importSources.${id}.name`)}</span>
               </button>
             ))}
           </div>
@@ -493,7 +504,7 @@ function PathStep({
       <StepActions
         onContinue={onContinue}
         onFinishLater={onFinishLater}
-        continueLabel="Continue"
+        continueLabel={t("actions.continue")}
         pending={pending}
         continueDisabled={!path}
         showSkip={false}
@@ -565,57 +576,57 @@ function ProfileStep({
   onFinishLater: () => void;
   pending: boolean;
 }) {
+  const t = useTranslations("setup");
+
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight">Tell us about your studio</h1>
-      <p className="mt-1 text-sm text-muted">
-        This helps us personalise your site, class suggestions, and local settings.
-      </p>
+      <h1 className="text-2xl font-black tracking-tight">{t("profile.title")}</h1>
+      <p className="mt-1 text-sm text-muted">{t("profile.subtitle")}</p>
 
       <div className="mt-6 space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="City / town">
+          <Field label={t("profile.city")}>
             <input
               className="field-premium"
-              placeholder="e.g. Auckland"
+              placeholder={t("profile.cityPlaceholder")}
               value={locationCity}
               onChange={(e) => onCity(e.target.value)}
             />
           </Field>
-          <Field label="Region">
+          <Field label={t("profile.region")}>
             <select
               className="field-premium"
               value={locationRegion}
               onChange={(e) => onRegion(e.target.value)}
             >
-              <option value="">Select region…</option>
-              {NZ_REGIONS.map((r) => (
-                <option key={r} value={r}>{r}</option>
+              <option value="">{t("profile.regionPlaceholder")}</option>
+              {NZ_REGION_KEYS.map((key) => (
+                <option key={key} value={key}>{t(`regions.${key}`)}</option>
               ))}
             </select>
           </Field>
         </div>
-        <Field label="Country">
+        <Field label={t("profile.country")}>
           <input
             className="field-premium"
             value={locationCountry}
             onChange={(e) => onCountry(e.target.value)}
           />
         </Field>
-        <Field label="What makes your studio special?">
+        <Field label={t("profile.about")}>
           <textarea
             className="field-premium min-h-[88px] resize-y"
-            placeholder="Community-focused preschool ballet, competition teams, adult open classes…"
+            placeholder={t("profile.aboutPlaceholder")}
             value={about}
             onChange={(e) => onAbout(e.target.value)}
           />
         </Field>
         <div>
           <p className="mb-2 text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-            Dance styles you offer
+            {t("profile.stylesLabel")}
           </p>
           <div className="flex flex-wrap gap-2">
-            {DANCE_STYLES.map((style) => (
+            {DANCE_STYLE_KEYS.map((style) => (
               <button
                 key={style}
                 type="button"
@@ -626,7 +637,7 @@ function ProfileStep({
                     : "border border-[--hair] text-muted hover:border-brand/40 hover:text-ink"
                 }`}
               >
-                {style}
+                {t(`danceStyles.${style}`)}
               </button>
             ))}
           </div>
@@ -637,13 +648,13 @@ function ProfileStep({
         onBack={onBack}
         onContinue={onContinue}
         onFinishLater={onFinishLater}
-        continueLabel="Continue"
+        continueLabel={t("actions.continue")}
         pending={pending}
         continueDisabled={danceStyles.length === 0}
         showSkip={false}
       />
       {danceStyles.length === 0 && (
-        <p className="mt-2 text-center text-xs text-muted">Pick at least one style to continue.</p>
+        <p className="mt-2 text-center text-xs text-muted">{t("profile.stylesRequired")}</p>
       )}
     </div>
   );
@@ -653,7 +664,7 @@ function ProfileStep({
 
 function StudentsStep({
   path,
-  importMeta,
+  importSource,
   studentPaste,
   manualStudents,
   parsedCount,
@@ -668,7 +679,7 @@ function StudentsStep({
   pending,
 }: {
   path: SetupPath | null;
-  importMeta: (typeof IMPORT_SOURCES)[number] | undefined;
+  importSource: ImportSource | null;
   studentPaste: string;
   manualStudents: ParsedStudent[];
   parsedCount: number;
@@ -682,44 +693,45 @@ function StudentsStep({
   onFinishLater: () => void;
   pending: boolean;
 }) {
+  const t = useTranslations("setup");
   const showPasteFirst = path === "import";
 
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight">Add your dancers</h1>
-      <p className="mt-1 text-sm text-muted">
-        Paste, upload a CSV, or type rows — parent/guardian columns are linked automatically.
-      </p>
+      <h1 className="text-2xl font-black tracking-tight">{t("students.title")}</h1>
+      <p className="mt-1 text-sm text-muted">{t("students.subtitle")}</p>
 
-      {showPasteFirst && importMeta && (
+      {showPasteFirst && importSource && (
         <div className="mt-4 rounded-xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm">
-          <p className="font-semibold text-ink">{importMeta.name} tip</p>
-          <p className="mt-1 text-muted">{importMeta.hint}</p>
+          <p className="font-semibold text-ink">
+            {t("students.tipTitle", { source: t(`importSources.${importSource}.name`) })}
+          </p>
+          <p className="mt-1 text-muted">{t(`importSources.${importSource}.hint`)}</p>
           <p className="mt-2 font-mono text-[0.65rem] text-muted">
-            {importMeta.sampleHeaders.join(" · ")}
+            {t(`importSources.${importSource}.sampleHeaders`)}
           </p>
         </div>
       )}
 
       <div className="mt-5 space-y-3">
         <CsvFileUpload
-          label="Upload CSV or TSV file"
+          label={t("students.uploadLabel")}
           disabled={pending}
           onLoad={onPaste}
         />
         <div>
           <p className="mb-2 text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-            Or paste from spreadsheet
+            {t("students.pasteLabel")}
           </p>
           <textarea
             className="field-premium min-h-[120px] resize-y font-mono text-xs"
-            placeholder={"Name\tEmail\tPhone\tParent Name\tParent Email\nEmma Johnson\temma@example.com\t021 234 567\tJane Johnson\tjane@example.com"}
+            placeholder={t("students.pastePlaceholder")}
             value={studentPaste}
             onChange={(e) => onPaste(e.target.value)}
           />
           {studentPaste.trim() && (
             <p className="mt-1.5 text-xs text-brand">
-              {parsedCount} dancer{parsedCount === 1 ? "" : "s"} detected
+              {t("students.detected", { count: parsedCount })}
             </p>
           )}
         </div>
@@ -728,14 +740,14 @@ function StudentsStep({
       {!studentPaste.trim() && (
         <div className="mt-5 space-y-2">
           <p className="text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-            Or add manually
+            {t("students.manualLabel")}
           </p>
           {manualStudents.map((row, i) => (
             <div key={i} className="space-y-2 rounded-xl border border-[--hair] p-3">
               <div className="grid gap-2 sm:grid-cols-3">
                 <input
                   className="field-premium text-sm"
-                  placeholder="Student name *"
+                  placeholder={t("students.namePlaceholder")}
                   value={row.fullName}
                   onChange={(e) => {
                     const next = [...manualStudents];
@@ -745,7 +757,7 @@ function StudentsStep({
                 />
                 <input
                   className="field-premium text-sm"
-                  placeholder="Student email"
+                  placeholder={t("students.emailPlaceholder")}
                   value={row.email ?? ""}
                   onChange={(e) => {
                     const next = [...manualStudents];
@@ -755,7 +767,7 @@ function StudentsStep({
                 />
                 <input
                   className="field-premium text-sm"
-                  placeholder="Phone"
+                  placeholder={t("students.phonePlaceholder")}
                   value={row.phone ?? ""}
                   onChange={(e) => {
                     const next = [...manualStudents];
@@ -767,7 +779,7 @@ function StudentsStep({
               <div className="grid gap-2 sm:grid-cols-2">
                 <input
                   className="field-premium text-sm"
-                  placeholder="Parent / guardian name"
+                  placeholder={t("students.parentNamePlaceholder")}
                   value={row.parentName ?? ""}
                   onChange={(e) => {
                     const next = [...manualStudents];
@@ -777,7 +789,7 @@ function StudentsStep({
                 />
                 <input
                   className="field-premium text-sm"
-                  placeholder="Parent email"
+                  placeholder={t("students.parentEmailPlaceholder")}
                   value={row.parentEmail ?? ""}
                   onChange={(e) => {
                     const next = [...manualStudents];
@@ -793,7 +805,7 @@ function StudentsStep({
             onClick={() => onManual([...manualStudents, { ...EMPTY_STUDENT }])}
             className="text-xs font-semibold text-brand hover:underline"
           >
-            + Add another student
+            {t("students.addAnother")}
           </button>
         </div>
       )}
@@ -805,7 +817,7 @@ function StudentsStep({
           onChange={(e) => onLinkParents(e.target.checked)}
           className="rounded border-[--hair]"
         />
-        Create parent accounts & link families when parent details are provided
+        {t("students.linkParents")}
       </label>
 
       <StepActions
@@ -815,8 +827,8 @@ function StudentsStep({
         onFinishLater={onFinishLater}
         continueLabel={
           parsedCount > 0
-            ? `Import ${parsedCount} dancer${parsedCount === 1 ? "" : "s"}`
-            : "Continue"
+            ? t("students.import", { count: parsedCount })
+            : t("actions.continue")
         }
         pending={pending}
         continueDisabled={parsedCount === 0}
@@ -854,12 +866,12 @@ function ClassesStep({
   onFinishLater: () => void;
   pending: boolean;
 }) {
+  const t = useTranslations("setup");
+
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight">Build your timetable</h1>
-      <p className="mt-1 text-sm text-muted">
-        Upload a CSV, paste a class list, or start from suggestions based on your styles.
-      </p>
+      <h1 className="text-2xl font-black tracking-tight">{t("classes.title")}</h1>
+      <p className="mt-1 text-sm text-muted">{t("classes.subtitle")}</p>
 
       {danceStyles.length > 0 && !classPaste.trim() && (
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -868,10 +880,12 @@ function ClassesStep({
             onClick={onApplySuggestions}
             className="rounded-full border border-brand/40 bg-brand/10 px-4 py-2 text-xs font-semibold text-ink hover:bg-brand/20"
           >
-            ✨ Suggest classes from my styles
+            {t("classes.suggest")}
           </button>
           {suggestionsApplied && manualClasses.length > 0 && (
-            <span className="text-xs text-muted">{manualClasses.length} starter classes ready</span>
+            <span className="text-xs text-muted">
+              {t("classes.suggestionsReady", { count: manualClasses.length })}
+            </span>
           )}
         </div>
       )}
@@ -881,18 +895,22 @@ function ClassesStep({
           <table className="w-full min-w-[480px] text-left text-xs">
             <thead>
               <tr className="border-b border-[--hair] text-muted">
-                <th className="px-3 py-2 font-semibold">Class</th>
-                <th className="px-3 py-2 font-semibold">Style</th>
-                <th className="px-3 py-2 font-semibold">Day</th>
-                <th className="px-3 py-2 font-semibold">Time</th>
+                <th className="px-3 py-2 font-semibold">{t("classes.tableClass")}</th>
+                <th className="px-3 py-2 font-semibold">{t("classes.tableStyle")}</th>
+                <th className="px-3 py-2 font-semibold">{t("classes.tableDay")}</th>
+                <th className="px-3 py-2 font-semibold">{t("classes.tableTime")}</th>
               </tr>
             </thead>
             <tbody>
               {manualClasses.map((c, i) => (
                 <tr key={i} className="border-b border-[--hair]/60 last:border-0">
                   <td className="px-3 py-2">{c.name}</td>
-                  <td className="px-3 py-2 text-muted">{c.discipline ?? "—"}</td>
-                  <td className="px-3 py-2">{DAY_SHORT[c.dayOfWeek] ?? "—"}</td>
+                  <td className="px-3 py-2 text-muted">
+                    {c.discipline && (DANCE_STYLE_KEYS as readonly string[]).includes(c.discipline)
+                      ? t(`danceStyles.${c.discipline as (typeof DANCE_STYLE_KEYS)[number]}`)
+                      : (c.discipline ?? "—")}
+                  </td>
+                  <td className="px-3 py-2">{DAY_KEYS[c.dayOfWeek] ? t(`days.${DAY_KEYS[c.dayOfWeek]}`) : "—"}</td>
                   <td className="px-3 py-2 text-muted">
                     {c.startTime ?? ""}{c.endTime ? `–${c.endTime}` : ""}
                   </td>
@@ -905,22 +923,22 @@ function ClassesStep({
 
       <div className="mt-5 space-y-3">
         <CsvFileUpload
-          label="Upload class list (CSV / TSV)"
+          label={t("classes.uploadLabel")}
           disabled={pending}
           onLoad={onPaste}
         />
         <div>
           <p className="mb-2 text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-            Or paste from spreadsheet
+            {t("classes.pasteLabel")}
           </p>
           <textarea
             className="field-premium min-h-[100px] resize-y font-mono text-xs"
-            placeholder={"Class\tStyle\tDay\tStart\tEnd\tCapacity\tPrice\nJunior Ballet\tBallet\tMon\t16:00\t17:00\t15\t18"}
+            placeholder={t("classes.pastePlaceholder")}
             value={classPaste}
             onChange={(e) => onPaste(e.target.value)}
           />
           {classPaste.trim() && (
-            <p className="mt-1.5 text-xs text-brand">{parsedCount} class{parsedCount === 1 ? "" : "es"} detected</p>
+            <p className="mt-1.5 text-xs text-brand">{t("classes.detected", { count: parsedCount })}</p>
           )}
         </div>
       </div>
@@ -932,8 +950,8 @@ function ClassesStep({
         onFinishLater={onFinishLater}
         continueLabel={
           parsedCount > 0
-            ? `Create ${parsedCount} class${parsedCount === 1 ? "" : "es"}`
-            : "Continue"
+            ? t("classes.create", { count: parsedCount })
+            : t("actions.continue")
         }
         pending={pending}
         continueDisabled={parsedCount === 0}
@@ -951,6 +969,8 @@ function TourStep({
   studioName: string;
   onFinish: () => void;
 }) {
+  const t = useTranslations("setup");
+
   return (
     <div>
       <div className="text-center">
@@ -960,10 +980,8 @@ function TourStep({
         >
           🎉
         </div>
-        <h1 className="mt-4 text-2xl font-black">{studioName} is ready</h1>
-        <p className="mt-1 text-sm text-muted">
-          Here&apos;s what you can do in Olune — explore anytime from your dashboard.
-        </p>
+        <h1 className="mt-4 text-2xl font-black">{t("tour.title", { studioName })}</h1>
+        <p className="mt-1 text-sm text-muted">{t("tour.subtitle")}</p>
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -974,8 +992,10 @@ function TourStep({
             className="group rounded-2xl border border-[--hair] p-4 transition hover:border-brand/40 hover:bg-brand/5"
           >
             <span className="text-xl">{f.emoji}</span>
-            <p className="mt-2 font-bold text-ink group-hover:text-brand">{f.title}</p>
-            <p className="mt-1 text-xs text-muted">{f.body}</p>
+            <p className="mt-2 font-bold text-ink group-hover:text-brand">
+              {t(`tourFeatures.${f.id}.title`)}
+            </p>
+            <p className="mt-1 text-xs text-muted">{t(`tourFeatures.${f.id}.body`)}</p>
           </Link>
         ))}
       </div>
@@ -985,7 +1005,7 @@ function TourStep({
         onClick={onFinish}
         className="btn-glow btn-glow--solid mt-8 w-full justify-center"
       >
-        Enter your dashboard →
+        {t("tour.enterDashboard")}
       </button>
     </div>
   );

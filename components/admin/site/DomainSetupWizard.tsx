@@ -7,6 +7,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   checkDomainDns,
   removeCustomDomain,
@@ -33,6 +34,7 @@ type Props = {
 };
 
 export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }: Props) {
+  const t = useTranslations("site.domain");
   const [step, setStep] = useState<DomainWizardStep>(customDomain ? "done" : "intro");
   const [wantsCustom, setWantsCustom] = useState<boolean | null>(customDomain ? true : null);
   const [kind, setKind] = useState<DomainKind>("www");
@@ -117,11 +119,9 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6">
       <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-widest text-brand">Domain setup</p>
-        <h1 className="text-2xl font-bold text-ink">Connect your website address</h1>
-        <p className="text-sm text-muted">
-          A simple step-by-step guide for {studioName}. No jargon — just copy, paste, and go live.
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-brand">{t("eyebrow")}</p>
+        <h1 className="text-2xl font-bold text-ink">{t("title")}</h1>
+        <p className="text-sm text-muted">{t("subtitle", { studio: studioName })}</p>
       </header>
 
       <StepProgress current={step} />
@@ -134,11 +134,11 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
 
       {step === "intro" && (
         <StepCard
-          title="Your site already has an address"
-          subtitle="Every studio gets a free Olune address — it works right away."
+          title={t("intro.title")}
+          subtitle={t("intro.subtitle")}
         >
           <div className="rounded-xl border border-brand/30 bg-brand/5 p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted">Free address</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted">{t("intro.freeAddress")}</p>
             <a
               href={subdomainUrl}
               target="_blank"
@@ -147,35 +147,32 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
             >
               {subdomainUrl.replace(/^https?:\/\//, "")}
             </a>
-            <p className="mt-2 text-sm text-muted">
-              Share this link today. Families can view your website and portal from this address.
-            </p>
+            <p className="mt-2 text-sm text-muted">{t("intro.shareToday")}</p>
           </div>
           <p className="text-sm text-muted">
-            Want your own domain instead — like{" "}
-            <strong className="text-ink">www.{studioName.toLowerCase().replace(/\s+/g, "")}.co.nz</strong>?
-            The next steps walk you through it.
+            {t("intro.wantOwn", {
+              example: `www.${studioName.toLowerCase().replace(/\s+/g, "")}.co.nz`,
+            })}
           </p>
-          <StepActions onNext={() => go("decide")} nextLabel="Continue" />
+          <StepActions onNext={() => go("decide")} nextLabel={t("continue")} />
         </StepCard>
       )}
 
       {step === "decide" && (
-        <StepCard
-          title="Do you want your own domain?"
-          subtitle="Optional — your free Olune address always works."
-        >
+        <StepCard title={t("decide.title")} subtitle={t("decide.subtitle")}>
           <div className="grid gap-3 sm:grid-cols-2">
             <ChoiceButton
               selected={wantsCustom === true}
-              title="Yes, use my domain"
-              description="I'll connect www.mystudio.co.nz (or similar)"
+              title={t("decide.yesTitle")}
+              description={t("decide.yesDesc")}
               onClick={() => nextFromDecide(true)}
             />
             <ChoiceButton
               selected={wantsCustom === false}
-              title="Not right now"
-              description={`I'll keep using ${slug}.${rootDomain === "localhost" ? "localhost" : rootDomain}`}
+              title={t("decide.noTitle")}
+              description={t("decide.noDesc", {
+                address: `${slug}.${rootDomain === "localhost" ? "localhost" : rootDomain}`,
+              })}
               onClick={() => nextFromDecide(false)}
             />
           </div>
@@ -184,10 +181,7 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
       )}
 
       {step === "kind" && (
-        <StepCard
-          title="Which address do you want?"
-          subtitle="Pick the style that matches what you bought from your domain provider."
-        >
+        <StepCard title={t("kind.title")} subtitle={t("kind.subtitle")}>
           <div className="space-y-2">
             {DOMAIN_KIND_OPTIONS.map((opt) => (
               <button
@@ -206,61 +200,54 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
                   kind === opt.id ? "border-brand bg-brand/5" : "border-[--hair] hover:border-brand/50"
                 }`}
               >
-                <span className="font-semibold text-ink">{opt.label}</span>
+                <span className="font-semibold text-ink">{t(`kind.${opt.id}.label`)}</span>
                 <p className="mt-0.5 font-mono text-sm text-brand">{opt.example}</p>
-                <p className="mt-1 text-xs text-muted">{opt.hint}</p>
+                <p className="mt-1 text-xs text-muted">{t(`kind.${opt.id}.hint`)}</p>
               </button>
             ))}
           </div>
-          <StepActions onBack={() => go("decide")} onNext={() => go("domain")} nextLabel="Continue" />
+          <StepActions onBack={() => go("decide")} onNext={() => go("domain")} nextLabel={t("continue")} />
         </StepCard>
       )}
 
       {step === "domain" && (
-        <StepCard
-          title="Enter your domain"
-          subtitle="Type exactly what you want families to type in their browser."
-        >
+        <StepCard title={t("domain.title")} subtitle={t("domain.subtitle")}>
           <label className="block text-sm">
-            <span className="mb-1 block font-medium text-ink">Your domain</span>
+            <span className="mb-1 block font-medium text-ink">{t("domain.label")}</span>
             <input
               value={domainInput}
               onChange={(e) => setDomainInput(e.target.value)}
-              placeholder="www.mystudio.co.nz"
+              placeholder={t("domain.placeholder")}
               className="field-premium font-mono"
               autoFocus
             />
             {domainError && <span className="mt-1 block text-xs text-red-500">{domainError}</span>}
             {!domainError && normalizedDomain && (
               <span className="mt-1 block text-xs text-muted">
-                Families will visit{" "}
-                <strong className="text-ink">{publicCustomDomainUrl(normalizedDomain)}</strong>
+                {t("domain.familiesVisit", { url: publicCustomDomainUrl(normalizedDomain) })}
               </span>
             )}
           </label>
           <StepActions
             onBack={() => go("kind")}
             onNext={() => (domainError ? setError(domainError) : go("dns"))}
-            nextLabel="Show DNS steps"
+            nextLabel={t("dns.showSteps")}
             nextDisabled={!domainInput.trim() || !!domainError}
           />
         </StepCard>
       )}
 
       {step === "dns" && (
-        <StepCard
-          title="Add one DNS record"
-          subtitle="Log in where you bought your domain (GoDaddy, Cloudflare, Namecheap, etc.) and add this record."
-        >
+        <StepCard title={t("dns.title")} subtitle={t("dns.subtitle")}>
           <ol className="space-y-3 text-sm text-muted">
             <li>
-              <strong className="text-ink">1.</strong> Open your domain provider&apos;s DNS settings.
+              <strong className="text-ink">1.</strong> {t("dns.step1")}
             </li>
             <li>
-              <strong className="text-ink">2.</strong> Add the record below (copy each value).
+              <strong className="text-ink">2.</strong> {t("dns.step2")}
             </li>
             <li>
-              <strong className="text-ink">3.</strong> Save — changes can take 15 minutes to 48 hours.
+              <strong className="text-ink">3.</strong> {t("dns.step3")}
             </li>
           </ol>
 
@@ -268,31 +255,18 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
             <DnsRecordCard key={`${rec.type}-${rec.host}`} record={rec} />
           ))}
 
-          <p className="rounded-lg bg-base px-3 py-2 text-xs text-muted">
-            <strong className="text-ink">Tip:</strong> If your provider asks for a &quot;TTL&quot;, leave the default
-            or choose 3600. The &quot;Host&quot; column might be labelled Name or Subdomain.
-          </p>
+          <p className="rounded-lg bg-base px-3 py-2 text-xs text-muted">{t("dns.tip")}</p>
 
-          <StepActions
-            onBack={() => go("domain")}
-            onNext={() => go("connect")}
-            nextLabel="I've added the record"
-          />
+          <StepActions onBack={() => go("domain")} onNext={() => go("connect")} nextLabel={t("dns.nextLabel")} />
         </StepCard>
       )}
 
       {step === "connect" && (
-        <StepCard
-          title="Connect to Olune"
-          subtitle="Tell Olune your domain so we can show your website when someone visits it."
-        >
+        <StepCard title={t("connect.title")} subtitle={t("connect.subtitle")}>
           <div className="rounded-xl border border-[--hair] bg-base p-4 font-mono text-sm text-ink">
             {normalizedDomain}
           </div>
-          <p className="text-sm text-muted">
-            Click connect below. Then use &quot;Check DNS&quot; — if it&apos;s not ready yet, wait 30 minutes and try
-            again.
-          </p>
+          <p className="text-sm text-muted">{t("connect.hint")}</p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -300,7 +274,7 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
               disabled={pending || !!domainError}
               className="btn-glow btn-glow--solid px-6 py-2.5 text-sm disabled:opacity-50"
             >
-              {pending ? "Connecting…" : "Connect domain"}
+              {pending ? t("connect.connecting") : t("connect.connectDomain")}
             </button>
             <button
               type="button"
@@ -308,14 +282,11 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
               disabled={pending}
               className="btn-glow px-6 py-2.5 text-sm disabled:opacity-50"
             >
-              Check DNS
+              {t("connect.checkDns")}
             </button>
           </div>
           {dnsMessage && (
-            <p
-              className={`text-sm ${dnsOk ? "text-green-600" : "text-muted"}`}
-              role="status"
-            >
+            <p className={`text-sm ${dnsOk ? "text-green-600" : "text-muted"}`} role="status">
               {dnsMessage}
             </p>
           )}
@@ -325,17 +296,13 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
 
       {step === "done" && (
         <StepCard
-          title={savedDomain ? "You're connected!" : "You're all set"}
-          subtitle={
-            savedDomain
-              ? "Your custom domain is linked to Olune."
-              : "Your free Olune address is ready to share."
-          }
+          title={savedDomain ? t("done.connectedTitle") : t("done.readyTitle")}
+          subtitle={savedDomain ? t("done.connectedSubtitle") : t("done.readySubtitle")}
         >
           {savedDomain ? (
             <div className="space-y-3">
               <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted">Custom domain</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-muted">{t("done.customDomain")}</p>
                 <a
                   href={publicCustomDomainUrl(savedDomain)}
                   target="_blank"
@@ -351,7 +318,7 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
                 disabled={pending}
                 className="btn-glow px-5 py-2 text-sm disabled:opacity-50"
               >
-                {pending ? "Checking…" : "Check DNS again"}
+                {pending ? t("done.checking") : t("done.checkAgain")}
               </button>
               {dnsMessage && (
                 <p className={`text-sm ${dnsOk ? "text-green-600" : "text-muted"}`}>{dnsMessage}</p>
@@ -362,12 +329,12 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
                 disabled={pending}
                 className="text-xs text-red-500 underline disabled:opacity-50"
               >
-                Remove custom domain
+                {t("done.removeDomain")}
               </button>
             </div>
           ) : (
             <div className="rounded-xl border border-brand/30 bg-brand/5 p-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted">Your address</p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted">{t("done.yourAddress")}</p>
               <a
                 href={subdomainUrl}
                 target="_blank"
@@ -376,23 +343,17 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
               >
                 {subdomainUrl.replace(/^https?:\/\//, "")}
               </a>
-              <p className="mt-2 text-sm text-muted">
-                You can connect a custom domain any time from Website → Domain setup.
-              </p>
+              <p className="mt-2 text-sm text-muted">{t("done.connectAnytime")}</p>
             </div>
           )}
 
           <div className="flex flex-wrap gap-2 pt-2">
             <Link href="/portal/admin/site" className="btn-glow btn-glow--solid px-6 py-2.5 text-sm">
-              Back to website
+              {t("done.backToWebsite")}
             </Link>
             {!savedDomain && (
-              <button
-                type="button"
-                onClick={() => go("decide")}
-                className="btn-glow px-6 py-2.5 text-sm"
-              >
-                Connect a domain
+              <button type="button" onClick={() => go("decide")} className="btn-glow px-6 py-2.5 text-sm">
+                {t("done.connectDomain")}
               </button>
             )}
           </div>
@@ -401,7 +362,7 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
 
       {stepIndex > 0 && step !== "done" && (
         <p className="text-center text-xs text-muted">
-          Step {stepIndex + 1} of {DOMAIN_WIZARD_STEPS.length}
+          {t("stepOf", { current: stepIndex + 1, total: DOMAIN_WIZARD_STEPS.length })}
         </p>
       )}
     </div>
@@ -409,14 +370,15 @@ export function DomainSetupWizard({ studioName, slug, customDomain, rootDomain }
 }
 
 function StepProgress({ current }: { current: DomainWizardStep }) {
+  const t = useTranslations("site.domain");
   const labels: Partial<Record<DomainWizardStep, string>> = {
-    intro: "Start",
-    decide: "Choose",
-    kind: "Type",
-    domain: "Domain",
-    dns: "DNS",
-    connect: "Connect",
-    done: "Done",
+    intro: t("steps.intro"),
+    decide: t("steps.decide"),
+    kind: t("steps.kind"),
+    domain: t("steps.domain"),
+    dns: t("steps.dns"),
+    connect: t("steps.connect"),
+    done: t("steps.done"),
   };
   const visible = DOMAIN_WIZARD_STEPS.filter((s) => s !== "done" || current === "done");
   const idx = visible.indexOf(current);
@@ -460,7 +422,7 @@ function StepCard({
 function StepActions({
   onBack,
   onNext,
-  nextLabel = "Continue",
+  nextLabel,
   nextDisabled,
 }: {
   onBack?: () => void;
@@ -468,11 +430,12 @@ function StepActions({
   nextLabel?: string;
   nextDisabled?: boolean;
 }) {
+  const t = useTranslations("site.domain");
   return (
     <div className="flex flex-wrap gap-2 pt-2">
       {onBack && (
         <button type="button" onClick={onBack} className="btn-glow px-5 py-2 text-sm">
-          Back
+          {t("back")}
         </button>
       )}
       {onNext && (
@@ -482,7 +445,7 @@ function StepActions({
           disabled={nextDisabled}
           className="btn-glow btn-glow--solid px-6 py-2 text-sm disabled:opacity-50"
         >
-          {nextLabel}
+          {nextLabel ?? t("continue")}
         </button>
       )}
     </div>
@@ -515,19 +478,21 @@ function ChoiceButton({
 }
 
 function DnsRecordCard({ record }: { record: { type: string; host: string; value: string; note: string } }) {
+  const t = useTranslations("site.domain");
   return (
     <div className="space-y-2 rounded-xl border border-[--hair] bg-base p-4">
       <p className="text-xs text-muted">{record.note}</p>
       <div className="grid gap-2 sm:grid-cols-3">
-        <CopyField label="Type" value={record.type} />
-        <CopyField label="Host / Name" value={record.host} />
-        <CopyField label="Points to / Value" value={record.value} />
+        <CopyField label={t("dnsFields.type")} value={record.type} />
+        <CopyField label={t("dnsFields.host")} value={record.host} />
+        <CopyField label={t("dnsFields.value")} value={record.value} />
       </div>
     </div>
   );
 }
 
 function CopyField({ label, value }: { label: string; value: string }) {
+  const t = useTranslations("site.domain");
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -548,7 +513,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
           onClick={copy}
           className="shrink-0 rounded-lg border border-[--hair] px-2 py-1.5 text-[0.65rem] font-medium text-ink hover:bg-surface"
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("dnsFields.copied") : t("dnsFields.copy")}
         </button>
       </div>
     </div>

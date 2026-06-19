@@ -1,0 +1,33 @@
+{
+  "enrol": {
+    "title": "Book a free trial",
+    "subtitle": "No commitment. We'll contact you to arrange the best class for your dancer.",
+    "fields": {
+      "name": "Your name",
+      "namePlaceholder": "Jane Smith",
+      "email": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "interest": "Dance style interest"
+    },
+    "disciplines": {
+      "ballet": "Ballet",
+      "contemporary": "Contemporary",
+      "jazz": "Jazz",
+      "hipHop": "Hip-Hop",
+      "tap": "Tap",
+      "lyrical": "Lyrical",
+      "acro": "Acro",
+      "pointe": "Pointe",
+      "notSure": "Not sure yet"
+    },
+    "submitting": "Sending…",
+    "submit": "Request my free trial →",
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "success": {
+      "title": "You're on the list!",
+      "body": "We'll be in touch soon, {name}. Keep an eye on {email}.",
+      "backHome": "Back to home"
+    }
+  }
+}

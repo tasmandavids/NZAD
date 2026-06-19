@@ -1,14 +1,9 @@
 "use client";
 
-// ============================================================================
-//  NotificationBell — a header bell icon with unread count badge.
-//  Polls /api/notifications every 60s and shows a dropdown list on click.
-//  Clicking a notification marks it read and navigates to its link.
-// ============================================================================
-
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 interface Notification {
   id:      string;
@@ -29,22 +24,24 @@ const TYPE_ICON: Record<string, string> = {
   message_received:     "✉️",
 };
 
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60_000);
-  if (m < 1)  return "Just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
-}
-
 export function NotificationBell() {
+  const t = useTranslations("admin.notifications");
+  const tShared = useTranslations("admin.shared");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount,   setUnreadCount]   = useState(0);
   const [open,          setOpen]          = useState(false);
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  function timeAgo(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60_000);
+    if (m < 1)  return tShared("justNow");
+    if (m < 60) return tShared("timeAgoMinutes", { count: m });
+    const h = Math.floor(m / 60);
+    if (h < 24) return tShared("timeAgoHours", { count: h });
+    return tShared("timeAgoDays", { count: Math.floor(h / 24) });
+  }
 
   const fetchNotifications = async () => {
     try {
@@ -57,14 +54,12 @@ export function NotificationBell() {
     }
   };
 
-  // Poll every 60s
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60_000);
     return () => clearInterval(interval);
   }, []);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (open && dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -78,7 +73,6 @@ export function NotificationBell() {
   const handleOpen = async () => {
     setOpen((o) => !o);
     if (!open && unreadCount > 0) {
-      // Optimistically clear
       setUnreadCount(0);
       setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? new Date().toISOString() })));
       await fetch("/api/notifications", { method: "POST", body: JSON.stringify({}) });
@@ -102,11 +96,10 @@ export function NotificationBell() {
 
   return (
     <div ref={dropdownRef} className="relative">
-      {/* Bell button */}
       <button
         onClick={handleOpen}
         className="relative grid h-9 w-9 place-items-center rounded-xl text-muted transition-colors hover:bg-surface hover:text-ink"
-        aria-label="Notifications"
+        aria-label={t("ariaLabel")}
       >
         <svg
           className="h-5 w-5"
@@ -127,7 +120,6 @@ export function NotificationBell() {
         )}
       </button>
 
-      {/* Dropdown */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -138,14 +130,14 @@ export function NotificationBell() {
             className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-2xl border border-[--hair] bg-surface shadow-2xl"
           >
             <div className="border-b border-[--hair] px-4 py-3">
-              <h3 className="text-sm font-semibold text-ink">Notifications</h3>
+              <h3 className="text-sm font-semibold text-ink">{t("title")}</h3>
             </div>
 
             <div className="max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (
                 <div className="px-4 py-8 text-center text-sm text-muted">
                   <p className="text-2xl mb-2">🔔</p>
-                  <p>All clear — nothing new!</p>
+                  <p>{t("empty")}</p>
                 </div>
               ) : (
                 notifications.map((n) => (

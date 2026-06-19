@@ -1,0 +1,33 @@
+{
+  "enrol": {
+    "title": "Записаться на пробное занятие",
+    "subtitle": "Без обязательств. Мы свяжемся с вами, чтобы подобрать подходящий класс.",
+    "fields": {
+      "name": "Ваше имя",
+      "namePlaceholder": "Jane Smith",
+      "email": "E-mail",
+      "emailPlaceholder": "you@example.com",
+      "interest": "Интересующий стиль"
+    },
+    "disciplines": {
+      "ballet": "Балет",
+      "contemporary": "Современный",
+      "jazz": "Джаз",
+      "hipHop": "Хип-хоп",
+      "tap": "Step",
+      "lyrical": "Лирический",
+      "acro": "Акро",
+      "pointe": "Пуанты",
+      "notSure": "Пока не знаю"
+    },
+    "submitting": "Отправка…",
+    "submit": "Запросить пробное →",
+    "hasAccount": "Уже есть аккаунт?",
+    "signIn": "Войти",
+    "success": {
+      "title": "Вы в списке!",
+      "body": "Мы скоро свяжемся с вами, {name}. Следите за {email}.",
+      "backHome": "На главную"
+    }
+  }
+}

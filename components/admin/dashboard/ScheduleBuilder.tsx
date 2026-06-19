@@ -17,6 +17,7 @@ import {
   type DropResult,
 } from "@hello-pangea/dnd";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { useCallback, useState, useTransition } from "react";
 import { rescheduleClass } from "@/app/portal/admin/classes/schedule-actions";
 import { slotKey, SCHEDULE_DAYS, SCHEDULE_SLOTS, type ClassBlock } from "./types";
@@ -54,9 +55,11 @@ function buildLists(classes: ClassBlock[]): Lists {
 function ClassCard({
   block,
   dragging,
+  durationLabel,
 }: {
   block: ClassBlock;
   dragging?: boolean;
+  durationLabel?: string;
 }) {
   return (
     <div
@@ -73,13 +76,19 @@ function ClassCard({
       </div>
       <p className="mt-0.5 pl-[18px] text-xs text-muted">
         {block.level}
-        {block.durationMin ? ` · ${block.durationMin}m` : ""}
+        {durationLabel ? ` · ${durationLabel}` : ""}
       </p>
     </div>
   );
 }
 
 export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
+  const t = useTranslations("admin.dashboard.schedule");
+  const tShared = useTranslations("admin.shared");
+  const tDays = useTranslations("common.days");
+  const dayKey: Record<string, "mon" | "tue" | "wed" | "thu" | "fri" | "sat"> = {
+    Mon: "mon", Tue: "tue", Wed: "wed", Thu: "thu", Fri: "fri", Sat: "sat",
+  };
   const [lists, setLists] = useState<Lists>(() => buildLists(classes));
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -164,20 +173,18 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
       >
         <header className="mb-5 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-ink">Schedule builder</h2>
-            <p className="text-sm text-muted">
-              Drag a class into a day + time slot.
-            </p>
+            <h2 className="text-lg font-bold text-ink">{t("title")}</h2>
+            <p className="text-sm text-muted">{t("subtitle")}</p>
           </div>
           <div className="flex items-center gap-3">
             {isPending && (
-              <span className="text-xs text-muted animate-pulse">Saving…</span>
+              <span className="text-xs text-muted animate-pulse">{tShared("saving")}</span>
             )}
             {errorMsg && (
               <span className="text-xs text-red-500">{errorMsg}</span>
             )}
             <span className="text-xs text-muted">
-              {placed} placed · {lists.tray.length} unscheduled
+              {tShared("placedCount", { placed, unscheduled: lists.tray.length })}
             </span>
           </div>
         </header>
@@ -203,7 +210,15 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
                       {...p.draggableProps}
                       {...p.dragHandleProps}
                     >
-                      <ClassCard block={block} dragging={snap.isDragging} />
+                      <ClassCard
+                        block={block}
+                        dragging={snap.isDragging}
+                        durationLabel={
+                          block.durationMin
+                            ? t("durationMin", { minutes: block.durationMin })
+                            : undefined
+                        }
+                      />
                     </div>
                   )}
                 </Draggable>
@@ -211,7 +226,7 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
               {provided.placeholder}
               {lists.tray.length === 0 && (
                 <span className="self-center text-xs text-muted">
-                  All classes scheduled 🎉
+                  {t("allScheduled")}
                 </span>
               )}
             </div>
@@ -232,7 +247,7 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
               key={s.id}
               className="pb-1 text-center text-xs font-semibold uppercase tracking-wider text-muted"
             >
-              {s.label}
+              {t(`slots.slot${s.id.replace(":", "")}` as "slots.slot1530")}
             </div>
           ))}
 
@@ -240,7 +255,7 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
           {SCHEDULE_DAYS.map((day) => (
             <div key={day.dow} className="contents">
               <div className="flex items-center text-sm font-semibold text-ink">
-                {day.label}
+                {tDays(dayKey[day.label])}
               </div>
               {SCHEDULE_SLOTS.map((s) => {
                 const id = slotKey(String(day.dow), s.id);
@@ -273,6 +288,11 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
                                 <ClassCard
                                   block={block}
                                   dragging={snap.isDragging}
+                                  durationLabel={
+                                    block.durationMin
+                                      ? t("durationMin", { minutes: block.durationMin })
+                                      : undefined
+                                  }
                                 />
                               </div>
                             )}

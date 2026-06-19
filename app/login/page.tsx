@@ -4,11 +4,15 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 import { AuthDivider, OAuthButtons } from "@/components/auth/OAuthButtons";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 
 function LoginForm() {
+  const t = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") ?? "/portal";
@@ -17,7 +21,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(
-    callbackError ? "Sign-in was interrupted. Please try again." : null,
+    callbackError ? t("callbackError") : null,
   );
   const [busy, setBusy] = useState(false);
 
@@ -37,12 +41,16 @@ function LoginForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <div className="mb-8 flex justify-center">
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="flex-1" />
         <OluneLogo variant="stacked" size="md" />
+        <div className="flex flex-1 justify-end">
+          <LanguageSwitcher compact />
+        </div>
       </div>
       <div className="rounded-3xl border border-[--hair] bg-surface p-7 shadow-2xl">
-        <h1 className="text-2xl font-black tracking-tight">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted">Sign in to your studio.</p>
+        <h1 className="text-2xl font-black tracking-tight">{t("welcomeBack")}</h1>
+        <p className="mt-1 text-sm text-muted">{t("signInSubtitle")}</p>
 
         <div className="mt-6">
           <OAuthButtons next={next} disabled={busy} />
@@ -61,7 +69,7 @@ function LoginForm() {
               className="field-premium"
               type="email"
               required
-              placeholder="you@studio.co.nz"
+              placeholder={t("emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -69,7 +77,7 @@ function LoginForm() {
               className="field-premium"
               type="password"
               required
-              placeholder="Password"
+              placeholder={t("passwordPlaceholder")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -79,20 +87,20 @@ function LoginForm() {
             disabled={busy}
             className="btn-glow btn-glow--solid mt-6 w-full justify-center disabled:opacity-60"
           >
-            {busy ? "Signing in…" : "Sign in with email"}
+            {busy ? t("signingIn") : t("signInWithEmail")}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-muted">
-          New studio?{" "}
+          {t("newStudio")}{" "}
           <a href="/onboarding" className="text-ink underline">
-            Get started
+            {t("getStarted")}
           </a>
         </p>
         <p className="mt-3 text-center text-xs text-muted">
-          Olune platform admin?{" "}
+          {t("platformAdmin")}{" "}
           <a href="/login?next=/platform" className="text-ink underline">
-            Sign in to /platform
+            {t("signInToPlatform")}
           </a>
         </p>
       </div>
@@ -101,12 +109,14 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const tCommon = useTranslations("common");
+
   return (
     <div className="grid min-h-screen place-items-center bg-base px-5 text-ink">
       <Suspense
         fallback={
           <div className="w-full max-w-sm rounded-3xl border border-[--hair] bg-surface p-7 text-center text-sm text-muted">
-            Loading…
+            {tCommon("loading")}
           </div>
         }
       >

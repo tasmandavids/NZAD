@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export interface ThreadMessage {
   id: string;
@@ -40,6 +41,8 @@ export function MessageThread({
   compact = false,
   onNewMessage,
 }: MessageThreadProps) {
+  const t = useTranslations("admin.messages");
+  const tShared = useTranslations("admin.shared");
   const [thread, setThread] = useState<ThreadMessage[]>([]);
   const [loadingThread, setLoadingThread] = useState(false);
   const [draftText, setDraftText] = useState("");
@@ -152,7 +155,7 @@ export function MessageThread({
           <div>
             <p className="font-semibold text-ink">{contact.name}</p>
             <p className="text-xs capitalize text-muted">
-              {contact.subtitle ?? contact.role ?? "parent"}
+              {contact.subtitle ?? contact.role ?? t("parentRole")}
             </p>
           </div>
         </div>
@@ -160,13 +163,13 @@ export function MessageThread({
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
         {loadingThread ? (
-          <div className="flex h-full items-center justify-center text-sm text-muted">Loading…</div>
+          <div className="flex h-full items-center justify-center text-sm text-muted">{tShared("loading")}</div>
         ) : thread.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center text-sm text-muted">
             <div>
               <p className="mb-2 text-2xl">💬</p>
-              <p>No messages yet.</p>
-              <p className="mt-1 text-xs">Say hello to {contact.name}!</p>
+              <p>{t("noMessages")}</p>
+              <p className="mt-1 text-xs">{t("sayHello", { name: contact.name })}</p>
             </div>
           </div>
         ) : (
@@ -191,7 +194,7 @@ export function MessageThread({
                     <p className="whitespace-pre-wrap break-words">{msg.body}</p>
                     <p className={`mt-1 text-[0.62rem] ${isMine ? "text-white/60" : "text-muted"}`}>
                       {formatTime(msg.sent_at)}
-                      {isMine && msg.read_at && " · Read"}
+                      {isMine && msg.read_at && ` · ${tShared("read")}`}
                     </p>
                   </div>
                 </motion.div>
@@ -209,7 +212,7 @@ export function MessageThread({
             value={draftText}
             onChange={(e) => setDraftText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Message… (Enter to send)"
+            placeholder={t("placeholder")}
             rows={1}
             className="flex-1 resize-none rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
             style={{ maxHeight: "120px", overflowY: "auto" }}
@@ -220,13 +223,11 @@ export function MessageThread({
             disabled={!draftText.trim() || sending}
             className="shrink-0 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
           >
-            {sending ? "…" : "Send"}
+            {sending ? "…" : t("send")}
           </button>
         </div>
         {!compact && (
-          <p className="mt-1.5 text-[0.62rem] text-muted">
-            Internal channel — visible to admins and this parent in their notifications
-          </p>
+          <p className="mt-1.5 text-[0.62rem] text-muted">{t("internalChannel")}</p>
         )}
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { OluneLogo } from "./OluneLogo";
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl" | "hero";
@@ -22,11 +23,13 @@ export function PoweredByOlune({
   variant = "horizontal",
   className = "",
 }: PoweredByOluneProps) {
+  const t = useTranslations("site.brand");
+
   return (
     <span className={`inline-flex flex-wrap items-center gap-x-2 gap-y-1 ${className}`}>
       {showLabel && (
         <span className="text-[0.62rem] font-medium uppercase tracking-[0.18em] text-muted">
-          Powered by
+          {t("poweredBy")}
         </span>
       )}
       <OluneLogo variant={variant} size={size} theme={theme} />

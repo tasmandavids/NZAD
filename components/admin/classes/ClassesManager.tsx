@@ -1,26 +1,35 @@
 "use client";
 
-// ============================================================================
-//  ClassesManager — admin class roster + create/edit slide-over.
-//  Receives pre-fetched classes + teacher options as props; all mutations go
-//  through server actions (createClass / updateClass / deleteClass).
-// ============================================================================
-
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { createClass, updateClass, deleteClass, createRecurringClasses, deleteRecurringGroup } from "@/app/portal/admin/classes/actions";
 import type { ClassRow, TeacherOption } from "@/app/portal/admin/classes/page";
 import { formatMoney } from "@/lib/currency";
 
-// ─── constants ───────────────────────────────────────────────────────────────
+const DISCIPLINE_KEYS = [
+  "ballet", "jazz", "hipHop", "contemporary", "tap", "lyrical",
+  "acro", "pointe", "musicalTheatre", "ballroom", "latin", "aerial", "other",
+] as const;
 
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DISCIPLINE_VALUES: Record<(typeof DISCIPLINE_KEYS)[number], string> = {
+  ballet: "Ballet",
+  jazz: "Jazz",
+  hipHop: "Hip-Hop",
+  contemporary: "Contemporary",
+  tap: "Tap",
+  lyrical: "Lyrical",
+  acro: "Acro",
+  pointe: "Pointe",
+  musicalTheatre: "Musical Theatre",
+  ballroom: "Ballroom",
+  latin: "Latin",
+  aerial: "Aerial",
+  other: "Other",
+};
 
-const DISCIPLINES = [
-  "Ballet", "Jazz", "Hip-Hop", "Contemporary", "Tap", "Lyrical",
-  "Acro", "Pointe", "Musical Theatre", "Ballroom", "Latin", "Aerial", "Other",
-];
+const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
+const DAY_SHORT_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 function fmt(time: string | null) {
   if (!time) return "";
@@ -29,14 +38,12 @@ function fmt(time: string | null) {
   return `${h % 12 || 12}:${m.toString().padStart(2, "0")}${ampm}`;
 }
 
-// ─── form state ──────────────────────────────────────────────────────────────
-
 type FormState = {
   name: string;
   discipline: string;
   level: string;
   dayOfWeek: number;
-  days: number[];        // create mode: one or more weekdays (recurring group)
+  days: number[];
   startTime: string;
   endTime: string;
   capacity: number;
@@ -71,8 +78,6 @@ function formFromClass(c: ClassRow): FormState {
     teacherId:  c.teacherId ?? "",
   };
 }
-
-// ─── sub-components ──────────────────────────────────────────────────────────
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
@@ -125,8 +130,6 @@ function Select({
   );
 }
 
-// ─── slide-over panel ────────────────────────────────────────────────────────
-
 function ClassSlideOver({
   mode,
   editing,
@@ -138,6 +141,9 @@ function ClassSlideOver({
   teachers: TeacherOption[];
   onClose: () => void;
 }) {
+  const t = useTranslations("admin.classes.form");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [form, setForm] = useState<FormState>(
     mode === "edit" && editing ? formFromClass(editing) : EMPTY_FORM,
   );
@@ -169,7 +175,7 @@ function ClassSlideOver({
     };
 
     if (mode === "create" && form.days.length === 0) {
-      setError("Pick at least one day.");
+      setError(t("pickDayError"));
       return;
     }
 
@@ -190,7 +196,6 @@ function ClassSlideOver({
 
   return (
     <>
-      {/* Backdrop */}
       <motion.div
         className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
         initial={{ opacity: 0 }}
@@ -199,7 +204,6 @@ function ClassSlideOver({
         onClick={onClose}
       />
 
-      {/* Panel */}
       <motion.aside
         className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col
                    border-l border-[--hair] bg-surface shadow-2xl"
@@ -208,68 +212,69 @@ function ClassSlideOver({
         exit={{ x: "100%" }}
         transition={{ type: "spring", stiffness: 380, damping: 38 }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
           <h2 className="font-black text-ink">
-            {mode === "create" ? "New class" : "Edit class"}
+            {mode === "create" ? t("newClass") : t("editClass")}
           </h2>
           <button
             onClick={onClose}
             className="text-muted transition-colors hover:text-ink"
-            aria-label="Close"
+            aria-label={tShared("close")}
           >
             ✕
           </button>
         </div>
 
-        {/* Form body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {/* Name */}
           <div>
-            <Label>Class name *</Label>
+            <Label>{t("className")}</Label>
             <Input
               value={form.name}
               onChange={(v) => set("name", v)}
-              placeholder="e.g. Ballet Junior"
+              placeholder={t("classNamePlaceholder")}
             />
           </div>
 
-          {/* Discipline + Level */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Discipline</Label>
+              <Label>{t("discipline")}</Label>
               <Select value={form.discipline} onChange={(v) => set("discipline", v)}>
-                <option value="">— none —</option>
-                {DISCIPLINES.map((d) => <option key={d} value={d}>{d}</option>)}
+                <option value="">{tShared("none")}</option>
+                {DISCIPLINE_KEYS.map((key) => (
+                  <option key={key} value={DISCIPLINE_VALUES[key]}>
+                    {tShared(`disciplines.${key}`)}
+                  </option>
+                ))}
               </Select>
             </div>
             <div>
-              <Label>Level / Age group</Label>
+              <Label>{t("level")}</Label>
               <Input
                 value={form.level}
                 onChange={(v) => set("level", v)}
-                placeholder="e.g. Grade 2"
+                placeholder={t("levelPlaceholder")}
               />
             </div>
           </div>
 
-          {/* Day(s) */}
           {mode === "edit" ? (
             <div>
-              <Label>Day of week</Label>
+              <Label>{t("dayOfWeek")}</Label>
               <Select value={form.dayOfWeek} onChange={(v) => set("dayOfWeek", Number(v))}>
-                {DAY_NAMES.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                {DAY_KEYS.map((key, i) => (
+                  <option key={key} value={i}>{tCommon(`days.${key}`)}</option>
+                ))}
               </Select>
             </div>
           ) : (
             <div>
-              <Label>Day(s) of week</Label>
+              <Label>{t("daysOfWeek")}</Label>
               <div className="flex flex-wrap gap-1.5">
-                {DAY_SHORT.map((d, i) => {
+                {DAY_SHORT_KEYS.map((key, i) => {
                   const active = form.days.includes(i);
                   return (
                     <button
-                      key={i}
+                      key={key}
                       type="button"
                       onClick={() => toggleDay(i)}
                       className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
@@ -279,35 +284,33 @@ function ClassSlideOver({
                       }`}
                       style={active ? { background: "var(--brand)" } : undefined}
                     >
-                      {d}
+                      {tCommon(`days.${key}`)}
                     </button>
                   );
                 })}
               </div>
               {form.days.length > 1 && (
                 <p className="mt-1.5 text-[0.68rem] text-muted">
-                  Creates {form.days.length} linked weekly classes (one per day).
+                  {t("recurringHint", { count: form.days.length })}
                 </p>
               )}
             </div>
           )}
 
-          {/* Start / End time */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Start time</Label>
+              <Label>{t("startTime")}</Label>
               <Input type="time" value={form.startTime} onChange={(v) => set("startTime", v)} />
             </div>
             <div>
-              <Label>End time</Label>
+              <Label>{t("endTime")}</Label>
               <Input type="time" value={form.endTime} onChange={(v) => set("endTime", v)} />
             </div>
           </div>
 
-          {/* Capacity + Price */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Capacity</Label>
+              <Label>{t("capacity")}</Label>
               <Input
                 type="number"
                 value={form.capacity}
@@ -317,24 +320,23 @@ function ClassSlideOver({
               />
             </div>
             <div>
-              <Label>Price (cents NZD)</Label>
+              <Label>{t("priceCents")}</Label>
               <Input
                 type="number"
                 value={form.priceCents}
                 onChange={(v) => set("priceCents", Number(v))}
                 min={0}
-                placeholder="e.g. 2000 = $20"
+                placeholder={t("pricePlaceholder")}
               />
             </div>
           </div>
 
-          {/* Teacher */}
           <div>
-            <Label>Teacher</Label>
+            <Label>{t("teacher")}</Label>
             <Select value={form.teacherId} onChange={(v) => set("teacherId", v)}>
-              <option value="">— unassigned —</option>
-              {teachers.map((t) => (
-                <option key={t.id} value={t.id}>{t.name ?? t.email}</option>
+              <option value="">{tShared("unassignedOption")}</option>
+              {teachers.map((teacher) => (
+                <option key={teacher.id} value={teacher.id}>{teacher.name ?? teacher.email}</option>
               ))}
             </Select>
           </div>
@@ -346,14 +348,13 @@ function ClassSlideOver({
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex gap-3 border-t border-[--hair] px-6 py-4">
           <button
             onClick={onClose}
             className="flex-1 rounded-xl border border-[--hair] py-2.5 text-sm text-muted
                        transition-colors hover:text-ink"
           >
-            Cancel
+            {tCommon("cancel")}
           </button>
           <button
             onClick={submit}
@@ -362,15 +363,13 @@ function ClassSlideOver({
                        disabled:opacity-50"
             style={{ background: "var(--brand)" }}
           >
-            {pending ? "Saving…" : mode === "create" ? "Create class" : "Save changes"}
+            {pending ? tShared("saving") : mode === "create" ? t("createClass") : t("saveChanges")}
           </button>
         </div>
       </motion.aside>
     </>
   );
 }
-
-// ─── delete confirm ──────────────────────────────────────────────────────────
 
 function DeleteConfirm({
   cls,
@@ -379,6 +378,9 @@ function DeleteConfirm({
   cls: ClassRow;
   onClose: () => void;
 }) {
+  const t = useTranslations("admin.classes.delete");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [deleteSeries, setDeleteSeries] = useState(false);
@@ -411,10 +413,8 @@ function DeleteConfirm({
         exit={{ opacity: 0, scale: 0.95 }}
       >
         <div className="w-full max-w-sm rounded-2xl border border-[--hair] bg-surface p-6 shadow-2xl">
-          <h3 className="font-black text-ink mb-1">Delete "{cls.name}"?</h3>
-          <p className="text-sm text-muted mb-4">
-            This will remove the class and all its enrollment records. This cannot be undone.
-          </p>
+          <h3 className="font-black text-ink mb-1">{t("title", { name: cls.name })}</h3>
+          <p className="text-sm text-muted mb-4">{t("description")}</p>
           {isRecurring && (
             <label className="mb-4 flex items-start gap-2 rounded-lg border border-[--hair] bg-base px-3 py-2.5 text-xs text-ink cursor-pointer">
               <input
@@ -423,23 +423,24 @@ function DeleteConfirm({
                 onChange={(e) => setDeleteSeries(e.target.checked)}
                 className="mt-0.5"
               />
-              <span>
-                Delete the <strong>entire recurring series</strong> (every weekday in this group),
-                not just this one class.
-              </span>
+              <span>{t("deleteSeries")}</span>
             </label>
           )}
           {error && <p className="mb-3 text-xs text-red-400">{error}</p>}
           <div className="flex gap-3">
             <button onClick={onClose} className="flex-1 rounded-xl border border-[--hair] py-2.5 text-sm text-muted hover:text-ink">
-              Cancel
+              {tCommon("cancel")}
             </button>
             <button
               onClick={confirm}
               disabled={pending}
               className="flex-1 rounded-xl bg-red-500 py-2.5 text-sm font-bold text-white disabled:opacity-50"
             >
-              {pending ? "Deleting…" : isRecurring && deleteSeries ? "Delete series" : "Delete"}
+              {pending
+                ? tShared("deleting")
+                : isRecurring && deleteSeries
+                  ? t("deleteSeriesButton")
+                  : tCommon("delete")}
             </button>
           </div>
         </div>
@@ -448,9 +449,7 @@ function DeleteConfirm({
   );
 }
 
-// ─── class row ───────────────────────────────────────────────────────────────
-
-function ClassRow({
+function ClassRowItem({
   cls,
   onEdit,
   onDelete,
@@ -459,12 +458,14 @@ function ClassRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const t = useTranslations("admin.classes");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const fill = cls.capacity > 0 ? cls.enrolled / cls.capacity : 0;
   const isFull = fill >= 1;
 
   return (
     <tr className="border-b border-[--hair] last:border-0 hover:bg-[color-mix(in_srgb,var(--brand)_3%,transparent)] transition-colors">
-      {/* Name + meta */}
       <td className="px-4 py-3">
         <p className="flex items-center gap-2 font-semibold text-ink text-sm">
           {cls.name}
@@ -475,9 +476,9 @@ function ClassRow({
                 color: "var(--brand)",
                 background: "color-mix(in srgb, var(--brand) 12%, transparent)",
               }}
-              title="Part of a recurring weekly series"
+              title={t("seriesTitle")}
             >
-              ↻ Series
+              {t("series")}
             </span>
           )}
         </p>
@@ -488,20 +489,17 @@ function ClassRow({
         </p>
       </td>
 
-      {/* Day + time */}
       <td className="px-4 py-3 text-sm text-ink">
-        <span className="font-medium">{DAY_SHORT[cls.dayOfWeek]}</span>
+        <span className="font-medium">{tCommon(`days.${DAY_SHORT_KEYS[cls.dayOfWeek]}`)}</span>
         {cls.startTime && (
           <span className="ml-1 text-muted">{fmt(cls.startTime)}</span>
         )}
       </td>
 
-      {/* Teacher */}
       <td className="px-4 py-3 text-sm text-muted">
-        {cls.teacherName ?? <span className="italic">Unassigned</span>}
+        {cls.teacherName ?? <span className="italic">{tShared("unassigned")}</span>}
       </td>
 
-      {/* Capacity */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <span
@@ -521,31 +519,27 @@ function ClassRow({
         </div>
       </td>
 
-      {/* Price */}
       <td className="hidden sm:table-cell px-4 py-3 text-sm tabular-nums text-muted">
-        {cls.priceCents > 0 ? formatMoney(cls.priceCents) : "—"}
+        {cls.priceCents > 0 ? formatMoney(cls.priceCents) : tShared("dash")}
       </td>
 
-      {/* Actions */}
       <td className="px-4 py-3 text-right">
         <button
           onClick={onEdit}
           className="mr-2 text-xs text-muted hover:text-ink transition-colors"
         >
-          Edit
+          {tCommon("edit")}
         </button>
         <button
           onClick={onDelete}
           className="text-xs text-muted hover:text-red-400 transition-colors"
         >
-          Delete
+          {tCommon("delete")}
         </button>
       </td>
     </tr>
   );
 }
-
-// ─── main component ──────────────────────────────────────────────────────────
 
 export default function ClassesManager({
   classes,
@@ -554,6 +548,8 @@ export default function ClassesManager({
   classes: ClassRow[];
   teachers: TeacherOption[];
 }) {
+  const t = useTranslations("admin.classes");
+
   type Panel =
     | { type: "create" }
     | { type: "edit"; cls: ClassRow }
@@ -571,18 +567,26 @@ export default function ClassesManager({
       (c.level ?? "").toLowerCase().includes(search.toLowerCase()),
   );
 
+  const tableHeaders = [
+    t("table.class"),
+    t("table.schedule"),
+    t("table.teacher"),
+    t("table.enrolled"),
+    t("table.price"),
+    "",
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       className="mx-auto max-w-5xl space-y-6 p-6"
     >
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-ink">Classes</h1>
+          <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
           <p className="text-sm text-muted">
-            {classes.length} class{classes.length !== 1 ? "es" : ""} · manage your timetable
+            {t("subtitle", { count: classes.length })}
           </p>
         </div>
         <button
@@ -590,28 +594,26 @@ export default function ClassesManager({
           className="rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90"
           style={{ background: "var(--brand)" }}
         >
-          + New class
+          {t("newClass")}
         </button>
       </div>
 
-      {/* Search */}
       <div>
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, discipline or level…"
+          placeholder={t("searchPlaceholder")}
           className="w-full max-w-sm rounded-xl border border-[--hair] bg-surface px-4 py-2.5 text-sm
                      text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
         />
       </div>
 
-      {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-[--hair] bg-surface">
         {filtered.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <p className="text-sm text-muted">
-              {search ? "No classes match your search." : "No classes yet — create your first one above."}
+              {search ? t("emptySearch") : t("empty")}
             </p>
           </div>
         ) : (
@@ -619,12 +621,12 @@ export default function ClassesManager({
             <table className="w-full min-w-[560px] text-left">
               <thead>
                 <tr className="border-b border-[--hair]">
-                  {["Class", "Schedule", "Teacher", "Enrolled", "Price", ""].map((h) => (
+                  {tableHeaders.map((h) => (
                     <th
-                      key={h}
+                      key={h || "actions"}
                       className={`px-4 py-3 text-[0.62rem] font-semibold uppercase tracking-wider text-muted ${
                         !h ? "text-right" : ""
-                      } ${h === "Price" ? "hidden sm:table-cell" : ""}`}
+                      } ${h === t("table.price") ? "hidden sm:table-cell" : ""}`}
                     >
                       {h}
                     </th>
@@ -633,7 +635,7 @@ export default function ClassesManager({
               </thead>
               <tbody>
                 {filtered.map((cls) => (
-                  <ClassRow
+                  <ClassRowItem
                     key={cls.id}
                     cls={cls}
                     onEdit={() => setPanel({ type: "edit", cls })}
@@ -646,7 +648,6 @@ export default function ClassesManager({
         )}
       </div>
 
-      {/* Panels */}
       <AnimatePresence>
         {(panel?.type === "create" || panel?.type === "edit") && (
           <ClassSlideOver

@@ -1,37 +1,31 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import type { BlockType } from "@/lib/site/blocks";
 
 export type ContextMenuAction = {
   type: BlockType;
-  label: string;
   icon: string;
   group: "basic" | "section" | "content";
 };
 
 export const CANVAS_ADD_ACTIONS: ContextMenuAction[] = [
-  { type: "heading", label: "Heading", icon: "H", group: "basic" },
-  { type: "paragraph", label: "Text box", icon: "¶", group: "basic" },
-  { type: "imageBlock", label: "Image", icon: "🖼", group: "basic" },
-  { type: "linkBlock", label: "Button", icon: "⬡", group: "basic" },
-  { type: "spacer", label: "Spacer", icon: "↕", group: "basic" },
-  { type: "divider", label: "Divider", icon: "—", group: "basic" },
-  { type: "videoBlock", label: "Video", icon: "▶", group: "basic" },
-  { type: "pageHeader", label: "Page header", icon: "▤", group: "section" },
-  { type: "hero", label: "Hero", icon: "★", group: "section" },
-  { type: "richText", label: "Text section", icon: "≡", group: "section" },
-  { type: "cta", label: "Call to action", icon: "◎", group: "section" },
-  { type: "gallery", label: "Gallery", icon: "▦", group: "content" },
-  { type: "features", label: "Features", icon: "⊞", group: "content" },
-  { type: "testimonials", label: "Testimonials", icon: "❝", group: "content" },
+  { type: "heading", icon: "H", group: "basic" },
+  { type: "paragraph", icon: "¶", group: "basic" },
+  { type: "imageBlock", icon: "🖼", group: "basic" },
+  { type: "linkBlock", icon: "⬡", group: "basic" },
+  { type: "spacer", icon: "↕", group: "basic" },
+  { type: "divider", icon: "—", group: "basic" },
+  { type: "videoBlock", icon: "▶", group: "basic" },
+  { type: "pageHeader", icon: "▤", group: "section" },
+  { type: "hero", icon: "★", group: "section" },
+  { type: "richText", icon: "≡", group: "section" },
+  { type: "cta", icon: "◎", group: "section" },
+  { type: "gallery", icon: "▦", group: "content" },
+  { type: "features", icon: "⊞", group: "content" },
+  { type: "testimonials", icon: "❝", group: "content" },
 ];
-
-const GROUP_LABELS: Record<ContextMenuAction["group"], string> = {
-  basic: "Basic elements",
-  section: "Sections",
-  content: "Content blocks",
-};
 
 type EditorContextMenuProps = {
   x: number;
@@ -41,6 +35,7 @@ type EditorContextMenuProps = {
 };
 
 export function EditorContextMenu({ x, y, onSelect, onClose }: EditorContextMenuProps) {
+  const t = useTranslations("site.contextMenu");
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,7 +60,7 @@ export function EditorContextMenu({ x, y, onSelect, onClose }: EditorContextMenu
 
   const groups = (["basic", "section", "content"] as const).map((g) => ({
     id: g,
-    label: GROUP_LABELS[g],
+    label: t(`groups.${g}`),
     items: CANVAS_ADD_ACTIONS.filter((a) => a.group === g),
   }));
 
@@ -76,7 +71,9 @@ export function EditorContextMenu({ x, y, onSelect, onClose }: EditorContextMenu
       style={style}
       role="menu"
     >
-      <p className="px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-widest text-muted">Add element</p>
+      <p className="px-3 py-1.5 text-[0.65rem] font-semibold uppercase tracking-widest text-muted">
+        {t("addElement")}
+      </p>
       {groups.map((group) => (
         <div key={group.id}>
           <p className="px-3 pb-0.5 pt-2 text-[0.6rem] font-semibold uppercase tracking-wider text-muted/80">
@@ -96,7 +93,7 @@ export function EditorContextMenu({ x, y, onSelect, onClose }: EditorContextMenu
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-base text-xs">
                 {action.icon}
               </span>
-              {action.label}
+              {t(`actions.${action.type}` as "actions.heading")}
             </button>
           ))}
         </div>

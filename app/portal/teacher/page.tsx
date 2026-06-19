@@ -7,10 +7,6 @@
 import { createClient } from "@/lib/supabase/server";
 import TeacherSchedule from "@/components/portal/teacher/TeacherSchedule";
 
-const DAY_NAMES = [
-  "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
-];
-
 export type TeacherClass = {
   id: string;
   name: string;
@@ -103,7 +99,6 @@ export default async function TeacherPortal() {
       classes={classes}
       todayDow={todayDow}
       todayDate={today}
-      dayNames={DAY_NAMES}
     />
   );
 }

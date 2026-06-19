@@ -22,6 +22,7 @@
 // ============================================================================
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Elements,
   PaymentElement,
@@ -53,6 +54,8 @@ function InnerForm({
   onCancel,
   cancelLabel,
 }: Omit<CheckoutFormProps, "clientSecret">) {
+  const t = useTranslations("payments");
+  const tCommon = useTranslations("common");
   const stripe = useStripe();
   const elements = useElements();
   const [busy, setBusy] = useState(false);
@@ -74,7 +77,7 @@ function InnerForm({
     });
 
     if (confirmError) {
-      setError(confirmError.message ?? "Payment could not be completed.");
+      setError(confirmError.message ?? t("paymentNotCompleted"));
       setBusy(false);
       return;
     }
@@ -89,7 +92,7 @@ function InnerForm({
     }
 
     // requires_action / requires_payment_method etc.
-    setError("Payment was not completed. Please try another method.");
+    setError(t("paymentIncomplete"));
     setBusy(false);
   }
 
@@ -111,7 +114,7 @@ function InnerForm({
             disabled={busy}
             className="flex-1 rounded-xl border border-[--hair] py-3 text-sm font-semibold text-muted transition-colors hover:border-[--brand] hover:text-ink disabled:opacity-40"
           >
-            {cancelLabel ?? "Back"}
+            {cancelLabel ?? tCommon("back")}
           </button>
         )}
         <button
@@ -120,7 +123,7 @@ function InnerForm({
           className="flex-1 rounded-xl bg-brand py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
           style={{ background: "var(--brand)" }}
         >
-          {busy ? "Processing…" : (submitLabel ?? "Pay now")}
+          {busy ? t("processing") : (submitLabel ?? t("payNow"))}
         </button>
       </div>
     </form>

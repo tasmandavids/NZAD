@@ -1,0 +1,51 @@
+{
+  "onboarding": {
+    "progress": {
+      "account": "Account",
+      "studio": "Studio",
+      "brand": "Brand"
+    },
+    "account": {
+      "title": "Start your studio",
+      "subtitle": "Create your owner account to begin.",
+      "divider": "or sign up with email",
+      "emailPlaceholder": "you@studio.co.nz",
+      "passwordPlaceholder": "Create a password",
+      "submitting": "Creating…",
+      "submit": "Create account with email",
+      "hasAccount": "Already have one?",
+      "logIn": "Log in"
+    },
+    "confirmEmail": {
+      "title": "Check your inbox",
+      "body": "We sent a confirmation link to {email}. Click it, then come back — we'll pick up right where you left off."
+    },
+    "studio": {
+      "title": "Name your studio",
+      "subtitle": "This is what your dancers and whānau will see.",
+      "namePlaceholder": "Sunrise Dance Studio",
+      "slugPlaceholder": "your-studio",
+      "checking": "Checking…",
+      "available": "✓ {slug}.{root} is available",
+      "taken": "✗ That subdomain is taken",
+      "invalid": "Use 3+ lowercase letters, numbers or hyphens",
+      "back": "Back",
+      "continue": "Continue"
+    },
+    "brand": {
+      "title": "Make it yours",
+      "subtitle": "Pick a brand colour — you can refine everything later.",
+      "fallbackName": "Your studio",
+      "previewCta": "Book a trial",
+      "customColour": "Custom colour",
+      "back": "Back",
+      "submitting": "Creating your studio…",
+      "submit": "Create studio"
+    },
+    "done": {
+      "title": "Welcome to {studioName}",
+      "subtitle": "Your studio is live. Let's get you set up…",
+      "continue": "Continue setup →"
+    }
+  }
+}

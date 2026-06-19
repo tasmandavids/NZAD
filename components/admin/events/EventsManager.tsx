@@ -1,12 +1,8 @@
 "use client";
 
-// ============================================================================
-//  EventsManager — full CRUD for studio events with a 4-step creation wizard.
-//  Steps: Basic Info → Venue → Tickets & Pricing → Review & Publish
-// ============================================================================
-
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import {
   createEvent,
   updateEvent,
@@ -60,18 +56,18 @@ function formatDate(iso: string) {
   });
 }
 
-function formatPrice(cents: number) {
-  if (cents === 0) return "Free";
+function formatPrice(cents: number, freeLabel: string) {
+  if (cents === 0) return freeLabel;
   return new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" })
     .format(cents / 100);
 }
 
-// ── Wizard step component ────────────────────────────────────────────────────
-
 type WizardStep = 0 | 1 | 2 | 3;
 
 function WizardStepIndicator({ current }: { current: WizardStep }) {
-  const steps = ["Basic Info", "Venue", "Tickets", "Review"];
+  const t = useTranslations("admin.events.wizard.steps");
+  const steps = [t("basic"), t("venue"), t("tickets"), t("review")];
+
   return (
     <div className="flex items-center gap-2 mb-6">
       {steps.map((label, i) => (
@@ -101,17 +97,23 @@ const TICKET_STATUS_BADGE: Record<string, string> = {
 };
 
 function TicketRefundButton({ ticket, onDone }: { ticket: TicketRow; onDone: (id: string) => void }) {
+  const t = useTranslations("admin.events.tickets");
+  const tShared = useTranslations("admin.shared");
+
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
 
-  if (ticket.status !== "paid") return <span className="text-xs text-muted">—</span>;
+  if (ticket.status !== "paid") return <span className="text-xs text-muted">{tShared("dash")}</span>;
   if (!ticket.stripe_payment_intent_id) {
-    return <span className="text-[0.7rem] text-muted">No card payment</span>;
+    return <span className="text-[0.7rem] text-muted">{tShared("noCardPayment")}</span>;
   }
 
   const onClick = () => {
     setErr(null);
-    if (!confirm(`Refund ${formatPrice(ticket.total_cents)} for ${ticket.buyerName}? This frees the seat(s) and cannot be undone.`)) {
+    if (!confirm(t("refundConfirm", {
+      amount: formatPrice(ticket.total_cents, tShared("free")),
+      buyer: ticket.buyerName,
+    }))) {
       return;
     }
     startTransition(async () => {
@@ -128,16 +130,19 @@ function TicketRefundButton({ ticket, onDone }: { ticket: TicketRow; onDone: (id
         disabled={pending}
         className="rounded-lg border border-[--hair] px-2.5 py-1 text-[0.7rem] font-semibold text-red-500 hover:bg-red-500/10 disabled:opacity-50"
       >
-        {pending ? "Refunding…" : "Refund"}
+        {pending ? tShared("refunding") : tShared("refund")}
       </button>
       {err && <span className="max-w-[12rem] text-right text-[0.65rem] text-red-500">{err}</span>}
     </div>
   );
 }
 
-// ── Main component ───────────────────────────────────────────────────────────
-
 export function EventsManager({ events: initial }: { events: Event[] }) {
+  const t = useTranslations("admin.events");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
+  const tStatus = useTranslations("admin.shared.status");
+
   const [events,      setEvents]      = useState(initial);
   const [wizardOpen,  setWizardOpen]  = useState(false);
   const [editTarget,  setEditTarget]  = useState<Event | null>(null);
@@ -168,7 +173,7 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
   }
 
   const markTicketRefunded = (id: string) =>
-    setTickets((prev) => prev.map((t) => (t.id === id ? { ...t, status: "refunded" } : t)));
+    setTickets((prev) => prev.map((tk) => (tk.id === id ? { ...tk, status: "refunded" } : tk)));
 
   function openCreate() {
     setEditTarget(null);
@@ -183,7 +188,7 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
     setForm({
       name:         e.name,
       description:  e.description ?? "",
-      eventDate:    e.event_date.slice(0, 16),   // datetime-local format
+      eventDate:    e.event_date.slice(0, 16),
       venueName:    e.venue_name ?? "",
       venueAddress: e.venue_address ?? "",
       ticketPrice:  e.ticket_price,
@@ -211,7 +216,6 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
     setError(null);
     const data: EventFormData = {
       ...form,
-      // Convert datetime-local to ISO
       eventDate: form.eventDate ? new Date(form.eventDate).toISOString() : "",
       status: publish ? "published" : "draft",
     };
@@ -223,7 +227,6 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
     setSaving(false);
     if (!result.ok) { setError(result.error); return; }
 
-    // Reload via router would re-fetch; here we just close and rely on server revalidation
     closeWizard();
     window.location.reload();
   }
@@ -234,13 +237,13 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
   }
 
   async function handleCancel(id: string) {
-    if (!confirm("Cancel this event? Ticket holders will need to be refunded manually.")) return;
+    if (!confirm(t("cancelConfirm"))) return;
     await cancelEvent(id);
     window.location.reload();
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this draft event?")) return;
+    if (!confirm(t("deleteConfirm"))) return;
     await deleteEvent(id);
     setEvents((prev) => prev.filter((e) => e.id !== id));
   }
@@ -248,37 +251,35 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
   const upcoming = events.filter((e) => e.status !== "cancelled" && e.status !== "completed");
   const past     = events.filter((e) => e.status === "cancelled" || e.status === "completed");
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const ticketPriceLabel = (cents: number) =>
+    cents === 0 ? tShared("free") : `$${(cents / 100).toFixed(2)}`;
 
   return (
     <div className="h-full overflow-auto">
       <div className="mx-auto max-w-5xl px-6 py-8">
-        {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-ink">Events & Recitals</h1>
-            <p className="text-sm text-muted">{upcoming.length} upcoming</p>
+            <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
+            <p className="text-sm text-muted">{tShared("upcomingEventsCount", { count: upcoming.length })}</p>
           </div>
           <button
             onClick={openCreate}
             className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
           >
-            + New Event
+            {t("newEvent")}
           </button>
         </div>
 
-        {/* Upcoming events */}
         {upcoming.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[--hair] py-16 text-center">
             <p className="text-3xl mb-3">🎭</p>
-            <p className="font-semibold text-ink">No upcoming events</p>
-            <p className="text-sm text-muted mt-1">Create a recital, showcase, or workshop to get started.</p>
+            <p className="font-semibold text-ink">{t("empty.title")}</p>
+            <p className="text-sm text-muted mt-1">{t("empty.description")}</p>
           </div>
         ) : (
           <div className="space-y-4">
             {upcoming.map((ev) => {
-              const available = ev.total_tickets - ev.sold_tickets;
-              const pct       = Math.round((ev.sold_tickets / ev.total_tickets) * 100);
+              const pct = Math.round((ev.sold_tickets / ev.total_tickets) * 100);
 
               return (
                 <div
@@ -290,7 +291,7 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-ink truncate">{ev.name}</h3>
                         <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${STATUS_BADGE[ev.status]}`}>
-                          {ev.status}
+                          {tStatus(ev.status)}
                         </span>
                       </div>
                       <p className="text-sm text-muted">{formatDate(ev.event_date)}</p>
@@ -301,7 +302,6 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                         <p className="text-xs text-muted mt-2 line-clamp-2">{ev.description}</p>
                       )}
 
-                      {/* Ticket progress */}
                       <div className="mt-3 flex items-center gap-3">
                         <div className="flex-1 h-1.5 rounded-full bg-[--hair] overflow-hidden">
                           <div
@@ -310,39 +310,42 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                           />
                         </div>
                         <span className="text-xs text-muted whitespace-nowrap">
-                          {ev.sold_tickets}/{ev.total_tickets} tickets · {formatPrice(ev.ticket_price)}
+                          {t("ticketsProgress", {
+                            sold: ev.sold_tickets,
+                            total: ev.total_tickets,
+                            price: formatPrice(ev.ticket_price, tShared("free")),
+                          })}
                         </span>
                       </div>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex shrink-0 flex-col gap-1.5">
                       {ev.status === "draft" && (
                         <button
                           onClick={() => handlePublish(ev.id)}
                           className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
                         >
-                          Publish
+                          {t("actions.publish")}
                         </button>
                       )}
                       <button
                         onClick={() => openEdit(ev)}
                         className="rounded-lg border border-[--hair] px-3 py-1.5 text-xs text-ink hover:bg-base"
                       >
-                        Edit
+                        {t("actions.edit")}
                       </button>
                       <button
                         onClick={() => openTickets(ev)}
                         className="rounded-lg border border-[--hair] px-3 py-1.5 text-xs text-ink hover:bg-base"
                       >
-                        Tickets
+                        {t("actions.tickets")}
                       </button>
                       {ev.status === "published" && (
                         <button
                           onClick={() => handleCancel(ev.id)}
                           className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50/10"
                         >
-                          Cancel
+                          {t("actions.cancel")}
                         </button>
                       )}
                       {ev.status === "draft" && (
@@ -350,7 +353,7 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                           onClick={() => handleDelete(ev.id)}
                           className="rounded-lg border border-[--hair] px-3 py-1.5 text-xs text-muted hover:text-red-500"
                         >
-                          Delete
+                          {t("actions.delete")}
                         </button>
                       )}
                     </div>
@@ -361,26 +364,27 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
           </div>
         )}
 
-        {/* Past events */}
         {past.length > 0 && (
           <div className="mt-10">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-muted">Past Events</h2>
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-widest text-muted">{t("pastTitle")}</h2>
             <div className="space-y-3">
               {past.map((ev) => (
                 <div key={ev.id} className="flex items-center justify-between rounded-xl border border-[--hair] bg-surface/50 px-4 py-3">
                   <div>
                     <p className="text-sm font-medium text-ink">{ev.name}</p>
-                    <p className="text-xs text-muted">{formatDate(ev.event_date)} · {ev.sold_tickets} tickets sold</p>
+                    <p className="text-xs text-muted">
+                      {t("pastMeta", { date: formatDate(ev.event_date), sold: ev.sold_tickets })}
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => openTickets(ev)}
                       className="rounded-lg border border-[--hair] px-3 py-1 text-xs text-ink hover:bg-base"
                     >
-                      Tickets
+                      {t("actions.tickets")}
                     </button>
                     <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${STATUS_BADGE[ev.status]}`}>
-                      {ev.status}
+                      {tStatus(ev.status)}
                     </span>
                   </div>
                 </div>
@@ -390,7 +394,6 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
         )}
       </div>
 
-      {/* ── Creation Wizard / Edit slide-over ─────────────────────────────── */}
       <AnimatePresence>
         {wizardOpen && (
           <>
@@ -406,7 +409,7 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
             >
               <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
                 <h2 className="font-semibold text-ink">
-                  {editTarget ? "Edit Event" : "New Event"}
+                  {editTarget ? t("wizard.editEvent") : t("wizard.newEvent")}
                 </h2>
                 <button onClick={closeWizard} className="text-muted hover:text-ink text-lg">✕</button>
               </div>
@@ -414,85 +417,84 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
               <div className="flex-1 overflow-y-auto px-6 py-5">
                 <WizardStepIndicator current={step} />
 
-                {/* Step 0: Basic Info */}
                 {step === 0 && (
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">Event Name *</label>
+                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">{t("wizard.eventName")}</label>
                       <input
                         type="text" value={form.name} onChange={(e) => field("name", e.target.value)}
-                        placeholder="Spring Recital 2026"
+                        placeholder={t("wizard.eventNamePlaceholder")}
                         className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">Date & Time *</label>
+                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">{t("wizard.dateTime")}</label>
                       <input
                         type="datetime-local" value={form.eventDate} onChange={(e) => field("eventDate", e.target.value)}
                         className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink focus:border-brand focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">Description</label>
+                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">{t("wizard.description")}</label>
                       <textarea
                         rows={4} value={form.description} onChange={(e) => field("description", e.target.value)}
-                        placeholder="Tell families what to expect…"
+                        placeholder={t("wizard.descriptionPlaceholder")}
                         className="w-full resize-none rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">Banner Image URL</label>
+                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">{t("wizard.bannerUrl")}</label>
                       <input
                         type="url" value={form.imageUrl} onChange={(e) => field("imageUrl", e.target.value)}
-                        placeholder="https://…"
+                        placeholder={t("wizard.bannerPlaceholder")}
                         className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Step 1: Venue */}
                 {step === 1 && (
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">Venue Name</label>
+                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">{t("wizard.venueName")}</label>
                       <input
                         type="text" value={form.venueName} onChange={(e) => field("venueName", e.target.value)}
-                        placeholder="City Concert Hall"
+                        placeholder={t("wizard.venueNamePlaceholder")}
                         className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">Address</label>
+                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">{t("wizard.address")}</label>
                       <textarea
                         rows={3} value={form.venueAddress} onChange={(e) => field("venueAddress", e.target.value)}
-                        placeholder="123 Main St, Sydney NSW 2000"
+                        placeholder={t("wizard.addressPlaceholder")}
                         className="w-full resize-none rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
                       />
                     </div>
                     <div className="rounded-xl bg-brand/5 p-4 text-sm text-muted">
-                      <p className="font-medium text-ink mb-1">💡 Tip</p>
-                      <p>Leave venue empty for online-only events. The full address will be shown on tickets.</p>
+                      <p className="font-medium text-ink mb-1">{t("wizard.venueTipTitle")}</p>
+                      <p>{t("wizard.venueTip")}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Step 2: Tickets */}
                 {step === 2 && (
                   <div className="space-y-4">
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">Ticket Price (cents — 0 for free)</label>
+                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">{t("wizard.ticketPrice")}</label>
                       <input
                         type="number" min="0" step="100" value={form.ticketPrice}
                         onChange={(e) => field("ticketPrice", parseInt(e.target.value) || 0)}
                         className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink focus:border-brand focus:outline-none"
                       />
                       <p className="mt-1 text-xs text-muted">
-                        {form.ticketPrice === 0 ? "Free event" : `$${(form.ticketPrice / 100).toFixed(2)} per ticket`}
+                        {form.ticketPrice === 0
+                          ? t("wizard.freeEvent")
+                          : t("wizard.pricePerTicket", { price: (form.ticketPrice / 100).toFixed(2) })}
                       </p>
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">Total Ticket Capacity</label>
+                      <label className="mb-1.5 block text-xs font-semibold text-muted uppercase tracking-wider">{t("wizard.capacity")}</label>
                       <input
                         type="number" min="1" value={form.totalTickets}
                         onChange={(e) => field("totalTickets", parseInt(e.target.value) || 1)}
@@ -500,40 +502,48 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                       />
                     </div>
                     <div className="rounded-xl border border-[--hair] bg-base p-4">
-                      <p className="text-xs text-muted mb-1">Summary</p>
+                      <p className="text-xs text-muted mb-1">{t("wizard.summary")}</p>
                       <p className="text-sm font-semibold text-ink">
-                        {form.totalTickets} tickets × {form.ticketPrice === 0 ? "Free" : `$${(form.ticketPrice / 100).toFixed(2)}`}
+                        {t("wizard.summaryLine", {
+                          total: form.totalTickets,
+                          price: ticketPriceLabel(form.ticketPrice),
+                        })}
                         {form.ticketPrice > 0 && (
-                          <span className="text-muted"> = ${((form.totalTickets * form.ticketPrice) / 100).toFixed(2)} potential revenue</span>
+                          <span className="text-muted">
+                            {t("wizard.potentialRevenue", {
+                              revenue: ((form.totalTickets * form.ticketPrice) / 100).toFixed(2),
+                            })}
+                          </span>
                         )}
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* Step 3: Review */}
                 {step === 3 && (
                   <div className="space-y-4">
                     <div className="rounded-2xl border border-[--hair] bg-base p-5 space-y-3">
                       <div>
-                        <p className="text-xs text-muted uppercase tracking-wider">Event</p>
-                        <p className="font-semibold text-ink">{form.name || "—"}</p>
+                        <p className="text-xs text-muted uppercase tracking-wider">{t("wizard.reviewEvent")}</p>
+                        <p className="font-semibold text-ink">{form.name || tShared("dash")}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted uppercase tracking-wider">Date</p>
-                        <p className="text-sm text-ink">{form.eventDate ? formatDate(new Date(form.eventDate).toISOString()) : "—"}</p>
+                        <p className="text-xs text-muted uppercase tracking-wider">{t("wizard.reviewDate")}</p>
+                        <p className="text-sm text-ink">
+                          {form.eventDate ? formatDate(new Date(form.eventDate).toISOString()) : tShared("dash")}
+                        </p>
                       </div>
                       {form.venueName && (
                         <div>
-                          <p className="text-xs text-muted uppercase tracking-wider">Venue</p>
+                          <p className="text-xs text-muted uppercase tracking-wider">{t("wizard.reviewVenue")}</p>
                           <p className="text-sm text-ink">{form.venueName}</p>
                           {form.venueAddress && <p className="text-xs text-muted">{form.venueAddress}</p>}
                         </div>
                       )}
                       <div>
-                        <p className="text-xs text-muted uppercase tracking-wider">Tickets</p>
+                        <p className="text-xs text-muted uppercase tracking-wider">{t("wizard.reviewTickets")}</p>
                         <p className="text-sm text-ink">
-                          {form.totalTickets} × {formatPrice(form.ticketPrice)}
+                          {form.totalTickets} × {formatPrice(form.ticketPrice, tShared("free"))}
                         </p>
                       </div>
                     </div>
@@ -544,27 +554,26 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                 )}
               </div>
 
-              {/* Footer nav */}
               <div className="flex items-center justify-between border-t border-[--hair] px-6 py-4 gap-3">
                 <button
                   onClick={step === 0 ? closeWizard : () => setStep((s) => (s - 1) as WizardStep)}
                   className="rounded-xl border border-[--hair] px-4 py-2 text-sm text-muted hover:text-ink"
                 >
-                  {step === 0 ? "Cancel" : "← Back"}
+                  {step === 0 ? tCommon("cancel") : t("wizard.back")}
                 </button>
 
                 <div className="flex gap-2">
                   {step < 3 ? (
                     <button
                       onClick={() => {
-                        if (step === 0 && !form.name.trim()) { setError("Event name is required"); return; }
-                        if (step === 0 && !form.eventDate)   { setError("Event date is required"); return; }
+                        if (step === 0 && !form.name.trim()) { setError(t("wizard.nameRequired")); return; }
+                        if (step === 0 && !form.eventDate)   { setError(t("wizard.dateRequired")); return; }
                         setError(null);
                         setStep((s) => (s + 1) as WizardStep);
                       }}
                       className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
                     >
-                      Next →
+                      {t("wizard.next")}
                     </button>
                   ) : (
                     <>
@@ -573,14 +582,14 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
                         disabled={saving}
                         className="rounded-xl border border-[--hair] px-4 py-2 text-sm font-semibold text-ink hover:bg-base disabled:opacity-40"
                       >
-                        {saving ? "Saving…" : "Save Draft"}
+                        {saving ? tShared("saving") : t("wizard.saveDraft")}
                       </button>
                       <button
                         onClick={() => save(true)}
                         disabled={saving}
                         className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40"
                       >
-                        {saving ? "Publishing…" : "Publish Event"}
+                        {saving ? tShared("publishing") : t("wizard.publishEvent")}
                       </button>
                     </>
                   )}
@@ -591,7 +600,6 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
         )}
       </AnimatePresence>
 
-      {/* ── Ticket viewer / refund panel ──────────────────────────────────── */}
       <AnimatePresence>
         {viewTickets && (
           <>
@@ -608,36 +616,36 @@ export function EventsManager({ events: initial }: { events: Event[] }) {
               <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
                 <div className="min-w-0">
                   <h2 className="font-semibold text-ink truncate">{viewTickets.name}</h2>
-                  <p className="text-xs text-muted">Tickets &amp; refunds</p>
+                  <p className="text-xs text-muted">{t("tickets.title")}</p>
                 </div>
                 <button onClick={closeTickets} className="text-muted hover:text-ink text-lg">✕</button>
               </div>
 
               <div className="flex-1 overflow-y-auto px-6 py-5">
                 {ticketsLoading ? (
-                  <p className="py-10 text-center text-sm text-muted">Loading tickets…</p>
+                  <p className="py-10 text-center text-sm text-muted">{tShared("loadingTickets")}</p>
                 ) : ticketsError ? (
                   <p className="rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-500">{ticketsError}</p>
                 ) : tickets.length === 0 ? (
-                  <p className="py-10 text-center text-sm text-muted">No tickets purchased yet.</p>
+                  <p className="py-10 text-center text-sm text-muted">{t("tickets.empty")}</p>
                 ) : (
                   <ul className="space-y-2">
-                    {tickets.map((t) => (
+                    {tickets.map((tk) => (
                       <li
-                        key={t.id}
+                        key={tk.id}
                         className="flex items-center justify-between gap-3 rounded-xl border border-[--hair] bg-base px-4 py-3"
                       >
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-ink truncate">{t.buyerName}</p>
+                          <p className="text-sm font-medium text-ink truncate">{tk.buyerName}</p>
                           <p className="text-xs text-muted">
-                            {t.quantity} × · {formatPrice(t.total_cents)} ·{" "}
-                            {new Date(t.purchased_at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
+                            {tk.quantity} × · {formatPrice(tk.total_cents, tShared("free"))} ·{" "}
+                            {new Date(tk.purchased_at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}
                           </p>
-                          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${TICKET_STATUS_BADGE[t.status] ?? ""}`}>
-                            {t.status}
+                          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[0.6rem] font-semibold ${TICKET_STATUS_BADGE[tk.status] ?? ""}`}>
+                            {tStatus(tk.status as "paid" | "reserved" | "cancelled" | "refunded")}
                           </span>
                         </div>
-                        <TicketRefundButton ticket={t} onDone={markTicketRefunded} />
+                        <TicketRefundButton ticket={tk} onDone={markTicketRefunded} />
                       </li>
                     ))}
                   </ul>

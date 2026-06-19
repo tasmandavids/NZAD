@@ -1,0 +1,33 @@
+{
+  "enrol": {
+    "title": "Prenota una prova gratuita",
+    "subtitle": "Senza impegno. Ti contatteremo per trovare il corso giusto per il tuo ballerino.",
+    "fields": {
+      "name": "Il tuo nome",
+      "namePlaceholder": "Jane Smith",
+      "email": "Indirizzo e-mail",
+      "emailPlaceholder": "tu@esempio.com",
+      "interest": "Stile di danza di interesse"
+    },
+    "disciplines": {
+      "ballet": "Ballet",
+      "contemporary": "Contemporaneo",
+      "jazz": "Jazz",
+      "hipHop": "Hip-Hop",
+      "tap": "Tip tap",
+      "lyrical": "Lyrical",
+      "acro": "Acro",
+      "pointe": "Punte",
+      "notSure": "Non sono sicuro"
+    },
+    "submitting": "Invio…",
+    "submit": "Richiedi la prova gratuita →",
+    "hasAccount": "Hai già un account?",
+    "signIn": "Accedi",
+    "success": {
+      "title": "Sei in lista!",
+      "body": "Ti contatteremo presto, {name}. Tieni d'occhio {email}.",
+      "backHome": "Torna alla home"
+    }
+  }
+}

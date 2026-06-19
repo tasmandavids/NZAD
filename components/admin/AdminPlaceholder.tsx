@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export function AdminPlaceholder({
   title,
@@ -9,6 +10,8 @@ export function AdminPlaceholder({
   title: string;
   description: string;
 }) {
+  const t = useTranslations("admin.placeholder");
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -17,7 +20,7 @@ export function AdminPlaceholder({
     >
       <div className="rounded-2xl border border-[--hair] bg-surface px-8 py-14 text-center">
         <p className="mb-2 text-[0.62rem] font-semibold uppercase tracking-widest text-muted">
-          Coming soon
+          {t("comingSoon")}
         </p>
         <h1 className="mb-3 text-2xl font-black text-ink">{title}</h1>
         <p className="text-sm leading-relaxed text-muted">{description}</p>

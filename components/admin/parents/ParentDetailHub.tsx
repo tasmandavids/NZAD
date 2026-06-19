@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import {
   updateParent,
   linkChild,
@@ -22,7 +23,6 @@ import type {
   ParentPayment,
   StudentOption,
 } from "@/lib/parents/types";
-import { RELATIONSHIP_LABELS } from "@/lib/parents/types";
 import ParentBillingTab from "./ParentBillingTab";
 import ParentMessagesTab from "./ParentMessagesTab";
 
@@ -53,6 +53,9 @@ export default function ParentDetailHub({
   orders: ParentOrder[];
   currentUserId: string;
 }) {
+  const t = useTranslations("admin.parents.detail");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("profile");
   const [pending, startTransition] = useTransition();
@@ -86,10 +89,10 @@ export default function ParentDetailHub({
     startTransition(async () => {
       const result = await fn();
       if (!result.ok) {
-        setError(result.error ?? "Something went wrong.");
+        setError(result.error ?? tShared("somethingWentWrong"));
         return;
       }
-      setSuccess("Saved.");
+      setSuccess(tShared("saved"));
       router.refresh();
       if (result.id && showCoParent) {
         setShowCoParent(false);
@@ -99,11 +102,14 @@ export default function ParentDetailHub({
   };
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "profile", label: "Profile" },
-    { id: "children", label: "Children" },
-    { id: "billing", label: "Billing" },
-    { id: "messages", label: "Messages" },
+    { id: "profile", label: t("tabs.profile") },
+    { id: "children", label: t("tabs.children") },
+    { id: "billing", label: t("tabs.billing") },
+    { id: "messages", label: t("tabs.messages") },
   ];
+
+  const relationshipLabel = (r: GuardianRelationship) =>
+    tShared(`relationships.${r}` as "relationships.mother");
 
   return (
     <motion.div
@@ -117,7 +123,7 @@ export default function ParentDetailHub({
             href="/portal/admin/parents"
             className="mb-2 inline-block text-xs font-semibold text-muted hover:text-ink"
           >
-            ← Parents
+            {t("back")}
           </Link>
           <div className="flex items-center gap-3">
             <span
@@ -127,12 +133,12 @@ export default function ParentDetailHub({
               {initials(parent.name)}
             </span>
             <div>
-              <h1 className="text-2xl font-black text-ink">{parent.name ?? "Unknown"}</h1>
+              <h1 className="text-2xl font-black text-ink">{parent.name ?? tShared("unknown")}</h1>
               <p className="text-sm text-muted">
-                {parent.email ?? parent.phone ?? "No contact info"}
+                {parent.email ?? parent.phone ?? tShared("noContactInfo")}
                 {parent.isPrimaryContact && (
                   <span className="ml-2 rounded-full bg-brand/15 px-2 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wider text-brand">
-                    Primary contact
+                    {t("primaryContact")}
                   </span>
                 )}
               </p>
@@ -144,7 +150,7 @@ export default function ParentDetailHub({
           onClick={() => setTab("messages")}
           className="rounded-xl border border-[--hair] px-4 py-2 text-sm font-semibold text-ink hover:bg-surface"
         >
-          Message
+          {t("message")}
         </button>
       </div>
 
@@ -161,18 +167,18 @@ export default function ParentDetailHub({
       )}
 
       <div className="flex flex-wrap gap-2 border-b border-[--hair] pb-1">
-        {tabs.map((t) => (
+        {tabs.map((tabItem) => (
           <button
-            key={t.id}
+            key={tabItem.id}
             type="button"
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(tabItem.id)}
             className={`rounded-t-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              tab === t.id
+              tab === tabItem.id
                 ? "border-b-2 border-brand text-brand"
                 : "text-muted hover:text-ink"
             }`}
           >
-            {t.label}
+            {tabItem.label}
           </button>
         ))}
       </div>
@@ -180,10 +186,10 @@ export default function ParentDetailHub({
       {tab === "profile" && (
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="rounded-2xl border border-[--hair] bg-surface p-5 space-y-4">
-            <h2 className="font-bold text-ink">Contact details</h2>
+            <h2 className="font-bold text-ink">{t("contactDetails")}</h2>
             <div>
               <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-                Full name
+                {t("fullName")}
               </label>
               <input
                 value={profileForm.fullName}
@@ -193,7 +199,7 @@ export default function ParentDetailHub({
             </div>
             <div>
               <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-                Email
+                {tCommon("email")}
               </label>
               <input
                 type="email"
@@ -204,7 +210,7 @@ export default function ParentDetailHub({
             </div>
             <div>
               <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-                Phone
+                {tCommon("phone")}
               </label>
               <input
                 value={profileForm.phone}
@@ -228,43 +234,41 @@ export default function ParentDetailHub({
               className="rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
               style={{ background: "var(--brand)" }}
             >
-              {pending ? "Saving…" : "Save changes"}
+              {pending ? tShared("saving") : t("saveChanges")}
             </button>
           </section>
 
           <section className="space-y-4">
             {!parent.isPrimaryContact && parent.children.length > 0 && (
               <div className="rounded-2xl border border-[--hair] bg-surface p-5">
-                <h2 className="mb-2 font-bold text-ink">Primary contact</h2>
-                <p className="mb-3 text-sm text-muted">
-                  Set this parent as the primary contact for billing and communications.
-                </p>
+                <h2 className="mb-2 font-bold text-ink">{t("makePrimaryTitle")}</h2>
+                <p className="mb-3 text-sm text-muted">{t("makePrimaryDescription")}</p>
                 <button
                   type="button"
                   disabled={pending}
                   onClick={() => run(() => setPrimaryContact({ guardianId: parent.id }))}
                   className="rounded-xl border border-[--hair] px-4 py-2 text-sm font-semibold text-ink hover:bg-base"
                 >
-                  Make primary contact
+                  {t("makePrimaryContact")}
                 </button>
               </div>
             )}
 
             <div className="rounded-2xl border border-[--hair] bg-surface p-5">
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-bold text-ink">Co-parents</h2>
+                <h2 className="font-bold text-ink">{t("coParents")}</h2>
                 {!showCoParent && (
                   <button
                     type="button"
                     onClick={() => setShowCoParent(true)}
                     className="text-sm font-semibold text-brand"
                   >
-                    + Add co-parent
+                    {t("addCoParent")}
                   </button>
                 )}
               </div>
               {parent.coParents.length === 0 && !showCoParent ? (
-                <p className="text-sm italic text-muted">No co-parents linked yet.</p>
+                <p className="text-sm italic text-muted">{t("noCoParents")}</p>
               ) : (
                 <ul className="space-y-2">
                   {parent.coParents.map((cp) => (
@@ -286,7 +290,7 @@ export default function ParentDetailHub({
                         setCoParentForm((f) => ({ ...f, makePrimary: e.target.checked }))
                       }
                     />
-                    Make this co-parent the primary contact
+                    {t("makeCoParentPrimary")}
                   </label>
                   <div className="flex gap-2">
                     <button
@@ -294,7 +298,7 @@ export default function ParentDetailHub({
                       onClick={() => setShowCoParent(false)}
                       className="flex-1 rounded-xl border border-[--hair] py-2 text-sm text-muted"
                     >
-                      Cancel
+                      {tCommon("cancel")}
                     </button>
                     <button
                       type="button"
@@ -316,7 +320,7 @@ export default function ParentDetailHub({
                       className="flex-1 rounded-xl py-2 text-sm font-bold text-white disabled:opacity-50"
                       style={{ background: "var(--brand)" }}
                     >
-                      Add co-parent
+                      {t("addCoParentButton")}
                     </button>
                   </div>
                 </div>
@@ -329,7 +333,7 @@ export default function ParentDetailHub({
       {tab === "children" && (
         <div className="space-y-6">
           {parent.children.length === 0 ? (
-            <p className="text-sm italic text-muted">No linked students yet.</p>
+            <p className="text-sm italic text-muted">{t("noLinkedStudents")}</p>
           ) : (
             <ul className="space-y-2">
               {parent.children.map((child) => (
@@ -356,17 +360,17 @@ export default function ParentDetailHub({
 
           {availableStudents.length > 0 && (
             <div className="rounded-2xl border border-[--hair] bg-surface p-5 space-y-3">
-              <h3 className="font-bold text-ink">Link a student</h3>
+              <h3 className="font-bold text-ink">{t("linkStudent")}</h3>
               <div className="flex flex-wrap gap-3">
                 <select
                   value={linkStudentId}
                   onChange={(e) => setLinkStudentId(e.target.value)}
                   className="min-w-[200px] flex-1 rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm"
                 >
-                  <option value="">Select student…</option>
+                  <option value="">{t("selectStudent")}</option>
                   {availableStudents.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name ?? "Student"}
+                      {s.name ?? tCommon("student")}
                     </option>
                   ))}
                 </select>
@@ -379,7 +383,7 @@ export default function ParentDetailHub({
                 >
                   {RELATIONSHIPS.map((r) => (
                     <option key={r} value={r}>
-                      {RELATIONSHIP_LABELS[r]}
+                      {relationshipLabel(r)}
                     </option>
                   ))}
                 </select>
@@ -400,7 +404,7 @@ export default function ParentDetailHub({
                   className="rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                   style={{ background: "var(--brand)" }}
                 >
-                  Link student
+                  {t("linkStudentButton")}
                 </button>
               </div>
             </div>
@@ -416,7 +420,7 @@ export default function ParentDetailHub({
         <ParentMessagesTab
           currentUserId={currentUserId}
           parentId={parent.id}
-          parentName={parent.name ?? "Parent"}
+          parentName={parent.name ?? tCommon("parent")}
         />
       )}
     </motion.div>
@@ -424,17 +428,20 @@ export default function ParentDetailHub({
 }
 
 function CoParentCard({ coParent }: { coParent: CoParent }) {
+  const t = useTranslations("admin.parents.detail");
+  const tShared = useTranslations("admin.shared");
+
   return (
     <li className="flex items-center justify-between rounded-xl border border-[--hair] px-3 py-2">
       <div>
-        <p className="text-sm font-semibold text-ink">{coParent.name ?? "Unknown"}</p>
-        <p className="text-xs text-muted">{coParent.email ?? coParent.phone ?? "—"}</p>
+        <p className="text-sm font-semibold text-ink">{coParent.name ?? tShared("unknown")}</p>
+        <p className="text-xs text-muted">{coParent.email ?? coParent.phone ?? tShared("dash")}</p>
       </div>
       <Link
         href={`/portal/admin/parents/${coParent.id}`}
         className="text-xs font-semibold text-brand"
       >
-        View profile
+        {t("viewProfile")}
       </Link>
     </li>
   );
@@ -451,6 +458,10 @@ function ChildRow({
   onUnlink: () => void;
   onRelationshipChange: (r: GuardianRelationship) => void;
 }) {
+  const t = useTranslations("admin.parents.detail");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
+
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[--hair] bg-surface px-4 py-3">
       <div className="flex items-center gap-3">
@@ -458,11 +469,11 @@ function ChildRow({
           href={`/portal/admin/students/${child.id}`}
           className="text-sm font-semibold text-ink hover:underline"
         >
-          {child.name ?? "Student"}
+          {child.name ?? tCommon("student")}
         </Link>
         {child.isPrimary && (
           <span className="rounded-full bg-brand/15 px-2 py-0.5 text-[0.6rem] font-semibold uppercase text-brand">
-            Primary payer
+            {t("primaryPayer")}
           </span>
         )}
       </div>
@@ -475,7 +486,7 @@ function ChildRow({
         >
           {RELATIONSHIPS.map((r) => (
             <option key={r} value={r}>
-              {RELATIONSHIP_LABELS[r]}
+              {tShared(`relationships.${r}` as "relationships.mother")}
             </option>
           ))}
         </select>
@@ -485,7 +496,7 @@ function ChildRow({
           onClick={onUnlink}
           className="text-xs text-red-500 hover:underline"
         >
-          Unlink
+          {t("unlink")}
         </button>
       </div>
     </li>
@@ -504,11 +515,15 @@ function GuardianFields({
   };
   onChange: (k: "fullName" | "email" | "phone" | "relationship", v: string) => void;
 }) {
+  const t = useTranslations("admin.parents.detail");
+  const tCommon = useTranslations("common");
+  const tShared = useTranslations("admin.shared");
+
   return (
     <>
       <div>
         <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-          Full name *
+          {t("fullName")} *
         </label>
         <input
           value={form.fullName}
@@ -519,7 +534,7 @@ function GuardianFields({
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-            Email
+            {tCommon("email")}
           </label>
           <input
             type="email"
@@ -530,7 +545,7 @@ function GuardianFields({
         </div>
         <div>
           <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-            Phone
+            {tCommon("phone")}
           </label>
           <input
             value={form.phone}
@@ -541,7 +556,7 @@ function GuardianFields({
       </div>
       <div>
         <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-          Relationship
+          {t("relationship")}
         </label>
         <select
           value={form.relationship}
@@ -550,7 +565,7 @@ function GuardianFields({
         >
           {RELATIONSHIPS.map((r) => (
             <option key={r} value={r}>
-              {RELATIONSHIP_LABELS[r]}
+              {tShared(`relationships.${r}` as "relationships.mother")}
             </option>
           ))}
         </select>

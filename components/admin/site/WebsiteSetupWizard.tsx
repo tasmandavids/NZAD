@@ -8,6 +8,7 @@
 import { useMemo, useState, useTransition, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { setupStudioWebsite } from "@/app/portal/admin/site/actions";
 import { EditorBlockPreview } from "@/components/admin/site/EditorBlockPreview";
 import { SiteHeader } from "@/components/site/SiteHeader";
@@ -24,6 +25,7 @@ import {
 import { brandingToCssVars } from "@/lib/branding";
 import { buildSetupNavLinks } from "@/lib/site/page-links";
 import { googleFontsStylesheetUrl } from "@/lib/fonts";
+import { setupPageLabel, templateLabel } from "@/lib/site/i18n-labels";
 import type { TypographyPair } from "@/lib/site/typography";
 import type { ThemeBase } from "@/lib/types";
 
@@ -45,6 +47,8 @@ export function WebsiteSetupWizard({
   studioName: string;
   initialBranding: InitialBranding;
 }) {
+  const t = useTranslations("site.setup");
+  const tSite = useTranslations("site");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [tab, setTab] = useState<Tab>("setup");
@@ -92,7 +96,7 @@ export function WebsiteSetupWizard({
         base: branding.base,
         fontDisplay,
         fontBody,
-        siteSettings: { showPoweredBy: true, portalLabel: "Portal" },
+        siteSettings: { showPoweredBy: true, portalLabel: t("portalLabel") },
       }) as CSSProperties,
     [branding, fontDisplay, fontBody],
   );
@@ -175,8 +179,8 @@ export function WebsiteSetupWizard({
       <div className="mx-auto max-w-3xl p-6">
         <section className="rounded-2xl border border-brand/30 bg-brand/5 p-8 text-center">
           <p className="text-3xl">✓</p>
-          <h2 className="mt-2 text-xl font-bold text-ink">Your website is ready</h2>
-          <p className="mt-1 text-sm text-muted">Opening the visual editor…</p>
+          <h2 className="mt-2 text-xl font-bold text-ink">{t("websiteReady")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("openingEditor")}</p>
         </section>
       </div>
     );
@@ -188,11 +192,8 @@ export function WebsiteSetupWizard({
 
       <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Set up your website</h1>
-          <p className="mt-1 text-sm text-muted">
-            Browse 20 starting layouts and 30 type styles. Add your branding, preview, then generate —
-            everything stays editable in the visual editor.
-          </p>
+          <h1 className="text-2xl font-bold text-ink">{t("title")}</h1>
+          <p className="mt-1 text-sm text-muted">{t("subtitle")}</p>
         </div>
         <div className="flex shrink-0 rounded-full border border-[--hair] bg-surface p-1">
           <button
@@ -202,7 +203,7 @@ export function WebsiteSetupWizard({
               tab === "setup" ? "bg-brand text-white" : "text-muted hover:text-ink"
             }`}
           >
-            Setup
+            {t("setupTab")}
           </button>
           <button
             type="button"
@@ -211,7 +212,7 @@ export function WebsiteSetupWizard({
               tab === "preview" ? "bg-brand text-white" : "text-muted hover:text-ink"
             }`}
           >
-            Preview
+            {t("previewTab")}
           </button>
         </div>
       </header>
@@ -225,7 +226,7 @@ export function WebsiteSetupWizard({
       {tab === "preview" ? (
         <section className="overflow-hidden rounded-2xl border border-[--hair] bg-base shadow-sm">
           <div className="flex items-center justify-between border-b border-[--hair] bg-surface px-4 py-2">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted">Homepage preview</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted">{t("homepagePreview")}</p>
             <p className="text-xs text-muted">
               {studioName}
               {branding.tagline ? ` · ${branding.tagline}` : ""}
@@ -236,19 +237,18 @@ export function WebsiteSetupWizard({
               studioName={studioName}
               logoUrl={branding.logoUrl || null}
               nav={setupNav}
-              portalLabel="Portal"
+              portalLabel={t("portalLabel")}
               preview
             />
             <EditorBlockPreview blocks={homeBlocks} context={EDITOR_PREVIEW_CONTEXT} />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[--hair] bg-surface px-4 py-3">
             <p className="text-xs text-muted">
-              {preview.length} page{preview.length === 1 ? "" : "s"} will be created · Homepage publishes on
-              generate
+              {t("pagesWillBeCreated", { count: preview.length })}
             </p>
             <div className="flex gap-2">
               <button type="button" onClick={() => setTab("setup")} className="btn-glow px-5 py-2 text-sm">
-                Back to setup
+                {t("backToSetup")}
               </button>
               <button
                 type="button"
@@ -256,7 +256,7 @@ export function WebsiteSetupWizard({
                 disabled={pending}
                 className="btn-glow btn-glow--solid px-6 py-2 text-sm disabled:opacity-50"
               >
-                {pending ? "Generating…" : "Generate my website"}
+                {pending ? t("generating") : t("generateWebsite")}
               </button>
             </div>
           </div>
@@ -268,9 +268,9 @@ export function WebsiteSetupWizard({
 
             <section className="space-y-3 rounded-2xl border border-[--hair] bg-surface p-5">
               <div>
-                <h2 className="font-semibold text-ink">Homepage template</h2>
+                <h2 className="font-semibold text-ink">{t("homepageTemplate")}</h2>
                 <p className="text-sm text-muted">
-                  Scroll through {HOME_TEMPLATES.length} layouts — each is a starting point you can fully edit.
+                  {t("homepageTemplateHint", { count: HOME_TEMPLATES.length })}
                 </p>
               </div>
               <TemplateGallery
@@ -283,17 +283,15 @@ export function WebsiteSetupWizard({
 
             <section className="space-y-3 rounded-2xl border border-[--hair] bg-surface p-5">
               <div>
-                <h2 className="font-semibold text-ink">Typography</h2>
-                <p className="text-sm text-muted">
-                  30 curated pairings — tap to preview how your site will read.
-                </p>
+                <h2 className="font-semibold text-ink">{t("typography")}</h2>
+                <p className="text-sm text-muted">{t("typographyHint")}</p>
               </div>
               <TypographyGallery selectedId={fontPairId} onSelect={selectTypography} disabled={pending} />
             </section>
 
             <section className="space-y-3 rounded-2xl border border-[--hair] bg-surface p-5">
-              <h2 className="font-semibold text-ink">Starter pages</h2>
-              <p className="text-sm text-muted">Uncheck any pages you don&apos;t need yet.</p>
+              <h2 className="font-semibold text-ink">{t("starterPages")}</h2>
+              <p className="text-sm text-muted">{t("starterPagesHint")}</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {SETUP_PAGE_OPTIONS.map((p) => (
                   <label
@@ -306,7 +304,7 @@ export function WebsiteSetupWizard({
                       onChange={() => togglePage(p.id)}
                       className="h-4 w-4 accent-[--brand]"
                     />
-                    <span className="text-sm text-ink">{p.label}</span>
+                    <span className="text-sm text-ink">{setupPageLabel(tSite, p.id)}</span>
                   </label>
                 ))}
               </div>
@@ -315,15 +313,17 @@ export function WebsiteSetupWizard({
 
           <div className="space-y-4">
             <section className="sticky top-6 space-y-4 rounded-2xl border border-[--hair] bg-surface p-5">
-              <h2 className="font-semibold text-ink">Your site plan</h2>
+              <h2 className="font-semibold text-ink">{t("sitePlan")}</h2>
               <p className="text-sm text-muted">
-                Building for <strong className="text-ink">{studioName}</strong> with the{" "}
-                <strong className="text-ink">{selectedTemplate?.label ?? "Classic"}</strong> template.
+                {t("sitePlanTemplate", {
+                  studio: studioName,
+                  template: selectedTemplate ? templateLabel(tSite, selectedTemplate.id) : t("templateFallback"),
+                })}
               </p>
               <ul className="space-y-1.5 text-sm text-ink">
                 {preview.map((p) => (
                   <li key={p.slug} className="flex items-center justify-between rounded-lg bg-base px-3 py-2">
-                    <span>{p.isHome ? "Homepage" : p.title}</span>
+                    <span>{p.isHome ? t("homepage") : p.title}</span>
                     <span className="text-xs text-muted">/{p.isHome ? "" : p.slug}</span>
                   </li>
                 ))}
@@ -333,12 +333,12 @@ export function WebsiteSetupWizard({
                 style={previewVars}
                 data-base={branding.base}
               >
-                <div className="border-b border-[--hair] bg-base px-3 py-2 text-xs text-muted">Live mini preview</div>
+                <div className="border-b border-[--hair] bg-base px-3 py-2 text-xs text-muted">{t("liveMiniPreview")}</div>
                 <SiteHeader
                   studioName={studioName}
                   logoUrl={branding.logoUrl || null}
                   nav={setupNav}
-                  portalLabel="Portal"
+                  portalLabel={t("portalLabel")}
                   preview
                 />
                 <div className="max-h-48 overflow-hidden">
@@ -351,7 +351,7 @@ export function WebsiteSetupWizard({
                   onClick={() => setTab("preview")}
                   className="btn-glow w-full px-6 py-2.5 text-sm"
                 >
-                  Open full preview
+                  {t("openFullPreview")}
                 </button>
                 <button
                   type="button"
@@ -359,13 +359,13 @@ export function WebsiteSetupWizard({
                   disabled={pending}
                   className="btn-glow btn-glow--solid w-full px-6 py-2.5 text-sm disabled:opacity-50"
                 >
-                  {pending ? "Generating…" : "Generate my website"}
+                  {pending ? t("generating") : t("generateWebsite")}
                 </button>
                 <Link
                   href="/portal/admin/site/domain"
                   className="text-center text-xs text-muted underline hover:text-brand"
                 >
-                  Connect your own domain →
+                  {t("connectDomain")}
                 </Link>
               </div>
             </section>

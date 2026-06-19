@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 // ============================================================================
 //  ProgressTracker — log + timeline of a student's progress entries.
@@ -51,6 +52,9 @@ export default function ProgressTracker({
   entries,
   readOnlyDelete = false,
 }: Props) {
+  const t = useTranslations("admin.students.progress");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [notes, setNotes] = useState("");
   const [level, setLevel] = useState("");
   const [certInput, setCertInput] = useState("");
@@ -94,16 +98,16 @@ export default function ProgressTracker({
     <div className="space-y-8">
       {/* ── Log a new entry ─────────────────────────────────────────────── */}
       <section className="rounded-2xl border border-[--hair] bg-surface p-5">
-        <h2 className="mb-4 text-sm font-black text-ink">Log progress</h2>
+        <h2 className="mb-4 text-sm font-black text-ink">{t("logProgress")}</h2>
 
         <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-          Instructor notes
+          {t("instructorNotes")}
         </label>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          placeholder="What did they work on? How are they tracking?"
+          placeholder={t("notesPlaceholder")}
           className="mb-4 w-full resize-none rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-[--brand] focus:outline-none"
         />
 

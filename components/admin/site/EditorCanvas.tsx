@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { BackgroundShell } from "@/components/site/BackgroundShell";
 import { EditorBlockPreview } from "@/components/admin/site/EditorBlockPreview";
 import {
@@ -10,7 +11,7 @@ import {
   type GuideLine,
 } from "@/lib/site/alignment-guides";
 import type { PageBackground } from "@/lib/site/background";
-import { BLOCK_MAP, type Block, type BlockType } from "@/lib/site/blocks";
+import { type Block, type BlockType } from "@/lib/site/blocks";
 import {
   CANVAS_GRID,
   blockFrameClassName,
@@ -30,6 +31,7 @@ import { EDITOR_PREVIEW_CONTEXT } from "@/lib/site/preview-context";
 import type { NavLink } from "@/lib/site/queries";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { EditorContextMenu } from "./EditorContextMenu";
+import { blockLabel } from "@/lib/site/i18n-labels";
 
 type EditorCanvasProps = {
   blocks: Block[];
@@ -109,6 +111,8 @@ function StackSectionBlock({
   onDelete: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
+  const t = useTranslations("site.editor");
+  const tSite = useTranslations("site");
   return (
     <div
       data-block-shell
@@ -124,11 +128,11 @@ function StackSectionBlock({
           selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
       >
-        <span className="px-1.5 text-[0.65rem] font-medium text-muted">{BLOCK_MAP[block.type].label}</span>
-        <button type="button" title="Duplicate" onClick={onDuplicate} className="rounded px-1.5 py-1 text-xs text-muted hover:bg-base hover:text-ink">
+        <span className="px-1.5 text-[0.65rem] font-medium text-muted">{blockLabel(tSite, block.type)}</span>
+        <button type="button" title={t("duplicate")} onClick={onDuplicate} className="rounded px-1.5 py-1 text-xs text-muted hover:bg-base hover:text-ink">
           ⧉
         </button>
-        <button type="button" title="Delete" onClick={onDelete} className="rounded px-1.5 py-1 text-xs text-red-500 hover:bg-red-500/10">
+        <button type="button" title={t("delete")} onClick={onDelete} className="rounded px-1.5 py-1 text-xs text-red-500 hover:bg-red-500/10">
           ✕
         </button>
       </div>
@@ -164,6 +168,8 @@ function CanvasBlock({
   onGuidesChange: (guides: GuideLine[]) => void;
   onLayoutGestureEnd: () => void;
 }) {
+  const t = useTranslations("site.editor");
+  const tSite = useTranslations("site");
   const locked = bool(block.props, "_locked", false);
   const dragging = useRef(false);
   const resizing = useRef<"se" | "e" | "s" | null>(null);
@@ -283,24 +289,24 @@ function CanvasBlock({
         }`}
       >
         {locked ? (
-          <span className="px-1.5 text-xs text-muted" title="Locked">
+          <span className="px-1.5 text-xs text-muted" title={t("locked")}>
             🔒
           </span>
         ) : (
           <button
             type="button"
             data-drag-handle
-            title="Drag to move (snaps to grid + guides)"
+            title={t("dragToMove")}
             className="cursor-grab rounded px-2 py-1 text-xs text-muted hover:bg-base hover:text-ink active:cursor-grabbing"
           >
             ⠿
           </button>
         )}
-        <span className="px-1.5 text-[0.65rem] font-medium text-muted">{BLOCK_MAP[block.type].label}</span>
-        <button type="button" title="Duplicate" onClick={onDuplicate} className="rounded px-1.5 py-1 text-xs text-muted hover:bg-base hover:text-ink">
+        <span className="px-1.5 text-[0.65rem] font-medium text-muted">{blockLabel(tSite, block.type)}</span>
+        <button type="button" title={t("duplicate")} onClick={onDuplicate} className="rounded px-1.5 py-1 text-xs text-muted hover:bg-base hover:text-ink">
           ⧉
         </button>
-        <button type="button" title="Delete" onClick={onDelete} className="rounded px-1.5 py-1 text-xs text-red-500 hover:bg-red-500/10">
+        <button type="button" title={t("delete")} onClick={onDelete} className="rounded px-1.5 py-1 text-xs text-red-500 hover:bg-red-500/10">
           ✕
         </button>
       </div>
@@ -309,7 +315,7 @@ function CanvasBlock({
         <>
           <div
             data-resize-handle
-            title="Resize"
+            title={t("resize")}
             className={`${handle} bottom-0 right-0 h-3 w-3 cursor-se-resize rounded-sm`}
             onPointerDown={(e) => beginResize(e, "se")}
             onPointerMove={onPointerMove}
@@ -317,7 +323,7 @@ function CanvasBlock({
           />
           <div
             data-resize-handle
-            title="Resize width"
+            title={t("resizeWidth")}
             className={`${handle} right-0 top-1/2 h-6 w-2 -translate-y-1/2 cursor-e-resize rounded-sm`}
             onPointerDown={(e) => beginResize(e, "e")}
             onPointerMove={onPointerMove}
@@ -325,7 +331,7 @@ function CanvasBlock({
           />
           <div
             data-resize-handle
-            title="Resize height"
+            title={t("resizeHeight")}
             className={`${handle} bottom-0 left-1/2 h-2 w-6 -translate-x-1/2 cursor-s-resize rounded-sm`}
             onPointerDown={(e) => beginResize(e, "s")}
             onPointerMove={onPointerMove}
@@ -366,6 +372,7 @@ export function EditorCanvas({
   onLayoutGestureStart,
   onLayoutGestureEnd,
 }: EditorCanvasProps) {
+  const t = useTranslations("site.editor");
   const canvasRef = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<MenuState>(null);
   const [guides, setGuides] = useState<GuideLine[]>([]);
@@ -417,7 +424,7 @@ export function EditorCanvas({
       >
         <button
           type="button"
-          aria-label="Edit page background"
+          aria-label={t("editPageBackground")}
           className={`absolute inset-0 text-left ${backgroundSelected ? "ring-2 ring-inset ring-brand" : ""}`}
           style={{ zIndex: 0 }}
           onClick={(e) => {
@@ -429,7 +436,7 @@ export function EditorCanvas({
           <GridOverlay />
           {backgroundSelected && (
             <span className="absolute left-3 top-3 rounded-md bg-surface/90 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-widest text-brand shadow-sm">
-              Background
+              {t("backgroundLabel")}
             </span>
           )}
         </button>
@@ -440,10 +447,8 @@ export function EditorCanvas({
           {blocks.length === 0 ? (
             <div className="grid min-h-[50vh] place-items-center px-6 text-center" onContextMenu={(e) => openMenu(e, 0)}>
               <div className="max-w-sm space-y-2">
-                <p className="text-lg font-medium text-ink">Your page is empty</p>
-                <p className="text-sm text-muted">
-                  Right-click to add content. Shift+click to multi-select. Pink guides appear when edges align.
-                </p>
+                <p className="text-lg font-medium text-ink">{t("emptyPage")}</p>
+                <p className="text-sm text-muted">{t("emptyPageHint")}</p>
               </div>
             </div>
           ) : (
@@ -483,7 +488,7 @@ export function EditorCanvas({
               className="pointer-events-none absolute inset-x-0 grid h-24 place-items-center border-t border-dashed border-[--hair]/60 text-xs text-muted"
               style={{ top: minH - 96 }}
             >
-              Right-click to add · Shift+click multi-select · ⌘Z undo
+              {t("canvasHint")}
             </div>
           )}
         </div>

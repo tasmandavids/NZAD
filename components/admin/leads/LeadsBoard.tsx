@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 // ============================================================================
 //  LeadsBoard — Kanban pipeline for the CRM.
@@ -272,6 +273,9 @@ function buildColumns(leads: Lead[]): Columns {
 }
 
 export function LeadsBoard({ initialLeads }: { initialLeads: Lead[] }) {
+  const t = useTranslations("admin.leads");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [columns, setColumns] = useState<Columns>(() => buildColumns(initialLeads));
   const [showNew, setShowNew] = useState(false);
   const [, startTransition] = useTransition();
@@ -329,8 +333,8 @@ export function LeadsBoard({ initialLeads }: { initialLeads: Lead[] }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
         <div>
-          <h1 className="text-xl font-black text-ink">Leads</h1>
-          <p className="text-xs text-muted">{total} prospect{total !== 1 ? "s" : ""} in pipeline</p>
+          <h1 className="text-xl font-black text-ink">{t("title")}</h1>
+          <p className="text-xs text-muted">{t("subtitle", { count: total })}</p>
         </div>
         <button
           type="button"
@@ -338,7 +342,7 @@ export function LeadsBoard({ initialLeads }: { initialLeads: Lead[] }) {
           className="rounded-xl px-4 py-2 text-sm font-bold text-white shadow-sm"
           style={{ background: "var(--brand)" }}
         >
-          + New lead
+          {t("newLead")}
         </button>
       </div>
 

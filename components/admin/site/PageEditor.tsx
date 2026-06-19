@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   APPEARANCE_FIELDS,
   BLOCK_LIBRARY,
@@ -34,6 +35,7 @@ import LinkPicker, { isLinkField } from "@/components/admin/site/LinkPicker";
 import { useEditorHistory } from "@/lib/site/editor-history";
 import { savePageBlocks, updatePageMeta, publishPage } from "@/app/portal/admin/site/actions";
 import { buildStudioNavLinks, type SitePageLink, type StudioPageNavSource } from "@/lib/site/page-links";
+import { blockLabel } from "@/lib/site/i18n-labels";
 
 type EditablePage = {
   id: string;
@@ -82,6 +84,9 @@ export default function PageEditor({
   portalLabel?: string;
   livePreviewUrl: string;
 }) {
+  const t = useTranslations("site.editor");
+  const tSite = useTranslations("site");
+  const tManager = useTranslations("site.manager");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -265,7 +270,7 @@ export default function PageEditor({
   }, [dirty]);
 
   const confirmLeave = (e: React.MouseEvent) => {
-    if (dirty && !window.confirm("You have unsaved changes. Leave this page?")) e.preventDefault();
+    if (dirty && !window.confirm(t("confirmLeave"))) e.preventDefault();
   };
 
   const addBlockAt = (type: BlockType, index: number, at?: { x: number; y: number }) => {
@@ -406,7 +411,7 @@ export default function PageEditor({
       if (!res.ok) return setMsg(res.error);
       setDirty(false);
       resetHistory({ blocks, background });
-      setMsg("Saved");
+      setMsg(t("saved"));
       router.refresh();
       setTimeout(() => setMsg(null), 2000);
     });
@@ -423,7 +428,7 @@ export default function PageEditor({
       setStatus("published");
       setDirty(false);
       resetHistory({ blocks, background });
-      setMsg("Published");
+      setMsg(t("published"));
       router.refresh();
       setTimeout(() => setMsg(null), 2000);
     });
@@ -432,8 +437,8 @@ export default function PageEditor({
   const previewHref = status === "published" ? livePreviewUrl : draftPreviewHref;
   const previewTitle =
     status === "published"
-      ? `Open live page at ${livePreviewUrl.replace(/^https?:\/\//, "")}`
-      : "Preview draft (opens in admin — publish to share publicly)";
+      ? t("previewLiveTitle", { url: livePreviewUrl.replace(/^https?:\/\//, "") })
+      : t("previewDraftTitle");
   const showPanel = panel !== "none";
 
   return (
@@ -441,9 +446,9 @@ export default function PageEditor({
       <div className="flex items-center justify-between gap-3 border-b border-[--hair] bg-surface px-5 py-3">
         <div className="flex items-center gap-3">
           <Link href="/portal/admin/site" onClick={confirmLeave} className="text-sm text-muted hover:text-ink">
-            ← Pages
+            {t("backToPages")}
           </Link>
-          <span className="font-semibold text-ink">{meta.title || "Untitled"}</span>
+          <span className="font-semibold text-ink">{meta.title || t("untitled")}</span>
           <span
             className="rounded-full px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider"
             style={{
@@ -451,13 +456,13 @@ export default function PageEditor({
               color: status === "published" ? "#22c55e" : "var(--muted)",
             }}
           >
-            {status}
+            {status === "published" ? tManager("statusPublished") : tManager("statusDraft")}
           </span>
-          {dirty && <span className="text-xs text-amber-500">Unsaved changes</span>}
+          {dirty && <span className="text-xs text-amber-500">{t("unsavedChanges")}</span>}
         </div>
         <div className="flex items-center gap-2">
           {msg && (
-            <span className="text-xs" style={{ color: msg === "Saved" || msg === "Published" ? "var(--brand-hot)" : "#ef4444" }}>
+            <span className="text-xs" style={{ color: msg === t("saved") || msg === t("published") ? "var(--brand-hot)" : "#ef4444" }}>
               {msg}
             </span>
           )}
@@ -467,7 +472,7 @@ export default function PageEditor({
             onClick={() => {
               if (undo()) touch();
             }}
-            title="Undo (⌘Z)"
+            title={t("undoTitle")}
             className="rounded-full border border-[--hair] px-3 py-1.5 text-sm text-ink transition hover:bg-base disabled:opacity-40"
           >
             ↶
@@ -478,7 +483,7 @@ export default function PageEditor({
             onClick={() => {
               if (redo()) touch();
             }}
-            title="Redo (⌘⇧Z)"
+            title={t("redoTitle")}
             className="rounded-full border border-[--hair] px-3 py-1.5 text-sm text-ink transition hover:bg-base disabled:opacity-40"
           >
             ↷
@@ -490,7 +495,7 @@ export default function PageEditor({
               panel === "elements" ? "border-brand bg-brand/10 text-brand" : "border-[--hair] text-ink hover:bg-base"
             }`}
           >
-            + Add
+            {t("add")}
           </button>
           <button
             type="button"
@@ -503,7 +508,7 @@ export default function PageEditor({
               panel === "background" ? "border-brand bg-brand/10 text-brand" : "border-[--hair] text-ink hover:bg-base"
             }`}
           >
-            Background
+            {t("background")}
           </button>
           <button
             type="button"
@@ -512,7 +517,7 @@ export default function PageEditor({
               panel === "settings" ? "border-brand bg-brand/10 text-brand" : "border-[--hair] text-ink hover:bg-base"
             }`}
           >
-            Settings
+            {t("settings")}
           </button>
           <a
             href={previewHref}
@@ -521,13 +526,13 @@ export default function PageEditor({
             title={previewTitle}
             className="rounded-full border border-[--hair] px-4 py-1.5 text-sm text-ink transition hover:bg-base"
           >
-            Preview
+            {t("preview")}
           </a>
           <button onClick={save} disabled={pending} className="rounded-full border border-[--hair] px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-base disabled:opacity-50">
-            {pending ? "Saving…" : "Save draft"}
+            {pending ? t("saving") : t("saveDraft")}
           </button>
           <button onClick={saveAndPublish} disabled={pending} className="rounded-full bg-brand px-4 py-1.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-50">
-            Publish
+            {t("publish")}
           </button>
         </div>
       </div>
@@ -592,23 +597,21 @@ export default function PageEditor({
             ) : selectedIds.length > 1 ? (
               <div className="space-y-4 p-4">
                 <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">
-                  {selectedIds.length} elements selected
+                  {t("elementsSelected", { count: selectedIds.length })}
                 </h3>
-                <p className="text-sm text-muted">
-                  Arrow keys move all selected elements. Delete removes them. Click one element without Shift to edit it individually.
-                </p>
+                <p className="text-sm text-muted">{t("multiSelectHint")}</p>
                 <button
                   type="button"
                   onClick={() => deleteBlocks(selectedIds)}
                   className="w-full rounded-lg border border-red-500/40 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10"
                 >
-                  Delete selected
+                  {t("deleteSelected")}
                 </button>
               </div>
             ) : (
               <div className="p-6 text-center text-sm text-muted">
-                <p>Click an element on the page to edit it.</p>
-                <p className="mt-2 text-xs">Or right-click the canvas to add headings, text boxes, images, or buttons.</p>
+                <p>{t("clickToEdit")}</p>
+                <p className="mt-2 text-xs">{t("rightClickHint")}</p>
               </div>
             )}
           </aside>
@@ -619,6 +622,8 @@ export default function PageEditor({
 }
 
 function ElementsPanel({ onAdd }: { onAdd: (type: BlockType) => void }) {
+  const t = useTranslations("site.editor");
+  const tSite = useTranslations("site");
   const basic: BlockType[] = ["heading", "paragraph", "imageBlock", "linkBlock", "spacer", "divider", "videoBlock"];
   const sections = BLOCK_LIBRARY.filter((d) => !basic.includes(d.type) && ["hero", "pageHeader", "richText", "cta"].includes(d.type));
   const content = BLOCK_LIBRARY.filter((d) => !basic.includes(d.type) && !sections.some((s) => s.type === d.type));
@@ -635,7 +640,7 @@ function ElementsPanel({ onAdd }: { onAdd: (type: BlockType) => void }) {
             title={def.description}
             className="rounded-lg border border-[--hair] bg-surface px-2 py-2.5 text-left text-xs text-ink transition hover:border-brand"
           >
-            {def.label}
+            {blockLabel(tSite, def.type)}
           </button>
         ))}
       </div>
@@ -645,17 +650,15 @@ function ElementsPanel({ onAdd }: { onAdd: (type: BlockType) => void }) {
   return (
     <div className="space-y-5 p-4">
       <div>
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Add element</h2>
-        <p className="mt-1 text-xs text-muted">
-          Click to add at the bottom, or right-click the canvas for a specific spot. Everything snaps to the 12-column grid.
-        </p>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("addElement")}</h2>
+        <p className="mt-1 text-xs text-muted">{t("addElementHint")}</p>
       </div>
       {renderGroup(
-        "Basic — text, images & buttons",
+        t("groupBasic"),
         BLOCK_LIBRARY.filter((d) => basic.includes(d.type)),
       )}
-      {renderGroup("Sections", sections)}
-      {renderGroup("Studio content", content)}
+      {renderGroup(t("groupSections"), sections)}
+      {renderGroup(t("groupStudioContent"), content)}
     </div>
   );
 }
@@ -677,35 +680,36 @@ function BlockQuickActions({
   onRotate: (delta: number) => void;
   onLayer: (dir: 1 | -1) => void;
 }) {
+  const t = useTranslations("site.editor");
   const btn =
     "rounded-md border border-[--hair] bg-surface px-2 py-1 text-[0.65rem] font-medium text-ink transition hover:border-brand hover:text-brand";
   return (
     <div className="space-y-2 rounded-xl border border-[--hair] bg-base p-3">
-      <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted">Quick actions</p>
+      <p className="text-[0.65rem] font-semibold uppercase tracking-wider text-muted">{t("quickActions")}</p>
       <div className="flex flex-wrap gap-1.5">
-        <button type="button" className={btn} onClick={() => onAlign("left")} title="Align left">
-          ⬅ Align
+        <button type="button" className={btn} onClick={() => onAlign("left")} title={t("alignLeft")}>
+          {t("alignLeft")}
         </button>
-        <button type="button" className={btn} onClick={() => onAlign("center")} title="Align center">
-          ↔ Center
+        <button type="button" className={btn} onClick={() => onAlign("center")} title={t("alignCenter")}>
+          {t("alignCenter")}
         </button>
-        <button type="button" className={btn} onClick={() => onAlign("right")} title="Align right">
-          ➡ Align
+        <button type="button" className={btn} onClick={() => onAlign("right")} title={t("alignRight")}>
+          {t("alignRight")}
         </button>
-        <button type="button" className={btn} onClick={() => onRotate(-15)} title="Rotate -15°">
-          ↺ −15°
+        <button type="button" className={btn} onClick={() => onRotate(-15)} title={t("rotateMinus")}>
+          {t("rotateMinus")}
         </button>
-        <button type="button" className={btn} onClick={() => onRotate(15)} title="Rotate +15°">
-          ↻ +15°
+        <button type="button" className={btn} onClick={() => onRotate(15)} title={t("rotatePlus")}>
+          {t("rotatePlus")}
         </button>
-        <button type="button" className={btn} onClick={() => onLayer(1)} title="Bring forward">
-          ▲ Layer
+        <button type="button" className={btn} onClick={() => onLayer(1)} title={t("layerUp")}>
+          {t("layerUp")}
         </button>
-        <button type="button" className={btn} onClick={() => onLayer(-1)} title="Send back">
-          ▼ Layer
+        <button type="button" className={btn} onClick={() => onLayer(-1)} title={t("layerDown")}>
+          {t("layerDown")}
         </button>
       </div>
-      <p className="text-[0.6rem] text-muted">Arrow keys nudge · ⌘D duplicate · ⌘Z undo · Shift+click multi-select</p>
+      <p className="text-[0.6rem] text-muted">{t("keyboardHint")}</p>
     </div>
   );
 }
@@ -733,6 +737,8 @@ function Inspector({
   onLayer: (dir: 1 | -1) => void;
   list: ListOps;
 }) {
+  const t = useTranslations("site.editor");
+  const tSite = useTranslations("site");
   const visibleFields = fields.filter((f) => {
     if (f.key === "buttonStyle" && block.type === "linkBlock" && str(block.props, "variant") === "text") {
       return false;
@@ -749,9 +755,11 @@ function Inspector({
   return (
     <div className="space-y-4 p-4">
       <h3 className="text-xs font-semibold uppercase tracking-widest text-muted">
-        {BLOCK_MAP[block.type].label}
+        {blockLabel(tSite, block.type)}
         {selectionCount > 1 && (
-          <span className="ml-2 font-normal normal-case text-muted">(+{selectionCount - 1} selected)</span>
+          <span className="ml-2 font-normal normal-case text-muted">
+            {t("selectedMore", { count: selectionCount - 1 })}
+          </span>
         )}
       </h3>
       <BlockQuickActions onAlign={onAlign} onRotate={onRotate} onLayer={onLayer} />
@@ -765,19 +773,19 @@ function Inspector({
       {hasAppearance && (
         <>
           <hr className="border-[--hair]" />
-          <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">Section appearance</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("sectionAppearance")}</h4>
           {APPEARANCE_FIELDS.map((f) => (
             <ScalarField key={f.key} field={f} value={block.props[f.key]} onSet={onSet} sitePages={sitePages} />
           ))}
         </>
       )}
       <hr className="border-[--hair]" />
-      <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">Frame & effects</h4>
+      <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("frameEffects")}</h4>
       {STYLE_FIELDS.map((f) => (
         <ScalarField key={f.key} field={f} value={block.props[f.key]} onSet={onSet} sitePages={sitePages} />
       ))}
       <hr className="border-[--hair]" />
-      <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">Position & size</h4>
+      <h4 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("positionSize")}</h4>
       {LAYOUT_FIELDS.map((f) => (
         <ScalarField key={f.key} field={f} value={block.props[f.key]} onSet={onSet} sitePages={sitePages} />
       ))}
@@ -845,6 +853,7 @@ function ScalarField({
 }
 
 function RichTextArea({ value, placeholder, onChange }: { value: string; placeholder?: string; onChange: (v: string) => void }) {
+  const t = useTranslations("site.editor");
   const ref = useRef<HTMLTextAreaElement>(null);
   const pendingSel = useRef<[number, number] | null>(null);
 
@@ -878,7 +887,7 @@ function RichTextArea({ value, placeholder, onChange }: { value: string; placeho
     if (!el) return;
     const s = el.selectionStart;
     const e = el.selectionEnd;
-    const text = value.slice(s, e) || "link text";
+    const text = value.slice(s, e) || t("linkText");
     const url = "https://";
     const inserted = `[${text}](${url})`;
     const next = value.slice(0, s) + inserted + value.slice(e);
@@ -891,8 +900,8 @@ function RichTextArea({ value, placeholder, onChange }: { value: string; placeho
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap gap-1.5">
-        <button type="button" onClick={() => wrap("**", "bold text")} title="Bold" className={`${btn} font-bold`}>B</button>
-        <button type="button" onClick={insertLink} title="Insert link" className={btn}>🔗 Link</button>
+        <button type="button" onClick={() => wrap("**", t("boldText"))} title="Bold" className={`${btn} font-bold`}>B</button>
+        <button type="button" onClick={insertLink} title="Insert link" className={btn}>{t("linkButton")}</button>
       </div>
       <textarea ref={ref} value={value} rows={6} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="field-premium font-mono text-xs leading-relaxed" />
     </div>
@@ -900,6 +909,7 @@ function RichTextArea({ value, placeholder, onChange }: { value: string; placeho
 }
 
 function ListField({ field, list }: { field: FieldDef; list: ListOps }) {
+  const t = useTranslations("site.editor");
   const items = list.get(field.key);
   const itemFields = field.itemFields ?? [];
   return (
@@ -908,7 +918,7 @@ function ListField({ field, list }: { field: FieldDef; list: ListOps }) {
       {items.map((item, i) => (
         <div key={i} className="space-y-2 rounded-lg border border-[--hair] bg-surface p-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted">Item {i + 1}</span>
+            <span className="text-xs text-muted">{t("itemN", { n: i + 1 })}</span>
             <span className="flex items-center gap-1">
               <button type="button" onClick={() => list.move(field.key, i, -1)} className="px-1 text-xs text-muted hover:text-ink">↑</button>
               <button type="button" onClick={() => list.move(field.key, i, 1)} className="px-1 text-xs text-muted hover:text-ink">↓</button>
@@ -930,7 +940,7 @@ function ListField({ field, list }: { field: FieldDef; list: ListOps }) {
         </div>
       ))}
       <button type="button" onClick={() => list.add(field.key, field.itemDefault ?? {})} className="w-full rounded-lg border border-dashed border-[--hair] py-2 text-xs text-muted transition hover:border-brand hover:text-ink">
-        + Add item
+        + {t("addItem")}
       </button>
     </div>
   );
@@ -947,38 +957,41 @@ type Meta = {
 };
 
 function PageSettings({ meta, isHome, onChange }: { meta: Meta; isHome: boolean; onChange: (m: Meta) => void }) {
+  const t = useTranslations("site.editor");
   const set = <K extends keyof Meta>(key: K, value: Meta[K]) => onChange({ ...meta, [key]: value });
   return (
     <div className="space-y-4 p-4">
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Page settings</h2>
+      <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("pageSettings")}</h2>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-ink">Title</span>
+        <span className="mb-1 block font-medium text-ink">{t("pageTitle")}</span>
         <input value={meta.title} onChange={(e) => set("title", e.target.value)} className="field-premium" />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-ink">URL slug</span>
+        <span className="mb-1 block font-medium text-ink">{t("urlSlug")}</span>
         <input value={isHome ? "home" : meta.slug} disabled={isHome} onChange={(e) => set("slug", e.target.value)} className="field-premium disabled:opacity-60" />
-        <span className="mt-1 block text-xs text-muted">{isHome ? "The homepage always lives at /." : `Public URL: /${meta.slug}`}</span>
+        <span className="mt-1 block text-xs text-muted">
+          {isHome ? t("homepageSlugHint") : t("publicUrlHint", { slug: meta.slug })}
+        </span>
       </label>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={meta.showInNav} onChange={(e) => set("showInNav", e.target.checked)} className="h-4 w-4 accent-[--brand]" />
-        <span className="text-ink">Show in navigation</span>
+        <span className="text-ink">{t("showInNav")}</span>
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-ink">Nav label (optional)</span>
+        <span className="mb-1 block font-medium text-ink">{t("navLabel")}</span>
         <input value={meta.navLabel} onChange={(e) => set("navLabel", e.target.value)} className="field-premium" />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-ink">Nav order</span>
+        <span className="mb-1 block font-medium text-ink">{t("navOrder")}</span>
         <input type="number" value={meta.navOrder} onChange={(e) => set("navOrder", e.target.value === "" ? 0 : Number(e.target.value))} className="field-premium" />
       </label>
       <hr className="border-[--hair]" />
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-ink">SEO title</span>
+        <span className="mb-1 block font-medium text-ink">{t("seoTitle")}</span>
         <input value={meta.seoTitle} onChange={(e) => set("seoTitle", e.target.value)} className="field-premium" />
       </label>
       <label className="block text-sm">
-        <span className="mb-1 block font-medium text-ink">SEO description</span>
+        <span className="mb-1 block font-medium text-ink">{t("seoDescription")}</span>
         <textarea rows={3} value={meta.seoDescription} onChange={(e) => set("seoDescription", e.target.value)} className="field-premium" />
       </label>
     </div>

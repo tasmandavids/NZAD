@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 // Allow next/image to optimise images served from the studio's Supabase
 // Storage bucket (public site-images). Derived from NEXT_PUBLIC_SUPABASE_URL so
@@ -44,4 +47,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

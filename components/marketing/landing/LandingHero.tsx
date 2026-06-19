@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 import { container, rise } from "./motion";
 import { PrimaryButton, SecondaryButton } from "./ui";
@@ -12,18 +13,19 @@ const ParticleBackground = dynamic(
   { ssr: false },
 );
 
-const MARQUEE = [
-  "Projects",
-  "Invoicing",
-  "Live Sites",
-  "Cash Flow",
-  "Clients",
-  "Tasks",
-  "Quotes",
-  "Expenses",
-];
+const MARQUEE_KEYS = [
+  "projects",
+  "invoicing",
+  "liveSites",
+  "cashFlow",
+  "clients",
+  "tasks",
+  "quotes",
+  "expenses",
+] as const;
 
 export function LandingHero() {
+  const t = useTranslations("marketing");
   const ref = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const reduce = useReducedMotion();
@@ -42,6 +44,8 @@ export function LandingHero() {
     if (reduce) v.pause();
     else v.play().catch(() => {});
   }, [reduce]);
+
+  const marqueeItems = MARQUEE_KEYS.map((key) => t(`hero.marquee.${key}`));
 
   return (
     <header
@@ -86,11 +90,11 @@ export function LandingHero() {
 
         <h1 className="font-display text-[clamp(2.6rem,9.5vw,7.5rem)] font-light leading-[0.95] tracking-[-0.02em] text-ink-black">
           <motion.span variants={rise} className="block">
-            Run your whole studio.
+            {t("hero.titleLine1")}
           </motion.span>
           <motion.span variants={rise} className="block">
             <span className="font-serif text-[1.05em] font-light italic text-iris">
-              Lose the chaos.
+              {t("hero.titleLine2")}
             </span>
           </motion.span>
         </h1>
@@ -99,21 +103,19 @@ export function LandingHero() {
           variants={rise}
           className="mt-[clamp(1.4rem,3vw,2rem)] max-w-[48ch] text-[clamp(1.05rem,1.8vw,1.25rem)] leading-relaxed text-ink-black/75"
         >
-          Projects, finances, and live client websites in one place — so the admin runs
-          itself and your time comes back.
+          {t("hero.subtitle")}
         </motion.p>
 
         <motion.div variants={rise} className="mt-[clamp(2rem,4vw,2.6rem)] flex flex-wrap gap-4">
-          <PrimaryButton href="/onboarding">Start free</PrimaryButton>
-          <SecondaryButton href="#features">See it in action</SecondaryButton>
+          <PrimaryButton href="/onboarding">{t("startFree")}</PrimaryButton>
+          <SecondaryButton href="#features">{t("hero.seeInAction")}</SecondaryButton>
         </motion.div>
 
         <motion.blockquote
           variants={rise}
           className="mt-[clamp(2.5rem,5vw,3.5rem)] max-w-[52ch] border-l-2 border-iris/40 pl-5 text-[clamp(.95rem,1.4vw,1.05rem)] italic leading-relaxed text-slate"
         >
-          No more juggling six tools, three spreadsheets, and a website that&apos;s always
-          one update behind.
+          {t("hero.quote")}
         </motion.blockquote>
       </motion.div>
 
@@ -123,7 +125,7 @@ export function LandingHero() {
           animate={reduce ? undefined : { x: ["0%", "-50%"] }}
           transition={{ duration: 32, ease: "linear", repeat: Infinity }}
         >
-          {[...MARQUEE, ...MARQUEE].map((item, i) => (
+          {[...marqueeItems, ...marqueeItems].map((item, i) => (
             <span
               key={i}
               className="flex items-center gap-12 whitespace-nowrap text-sm font-medium uppercase tracking-[0.28em] text-slate after:text-xs after:text-iris after:content-['✦']"

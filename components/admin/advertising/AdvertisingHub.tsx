@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import {
   createCampaign,
   deleteCampaign,
@@ -60,6 +61,7 @@ function SocialConnectionsPanel({
   tiktokConfigured: boolean;
   onDisconnect: (p: SocialPlatform) => void;
 }) {
+  const t = useTranslations("admin.advertising");
   const connMap = new Map(connections.map((c) => [c.platform, c]));
   const platforms: SocialPlatform[] = ["facebook", "instagram", "tiktok"];
 
@@ -84,7 +86,7 @@ function SocialConnectionsPanel({
               </span>
               <div>
                 <p className="font-bold text-ink">{meta.label}</p>
-                <p className="text-[0.65rem] text-muted">{conn ? "Connected" : "Not connected"}</p>
+                <p className="text-[0.65rem] text-muted">{conn ? t("social.connected") : t("social.notConnected")}</p>
               </div>
             </div>
             <p className="mb-4 text-xs leading-relaxed text-muted">{meta.description}</p>
@@ -99,7 +101,7 @@ function SocialConnectionsPanel({
                   onClick={() => onDisconnect(platform)}
                   className="text-xs font-semibold text-red-600 hover:underline"
                 >
-                  Disconnect
+                  {t("social.disconnect")}
                 </button>
               </div>
             ) : configured ? (
@@ -108,11 +110,11 @@ function SocialConnectionsPanel({
                 className="inline-flex rounded-xl px-4 py-2 text-xs font-bold text-white transition hover:brightness-105"
                 style={{ background: meta.color }}
               >
-                Connect {meta.label}
+                {t("social.connect", { platform: meta.label })}
               </a>
             ) : (
               <p className="text-[0.65rem] text-muted">
-                OAuth not configured — add API keys to .env.local
+                {t("social.oauthNotConfigured")}
               </p>
             )}
           </div>
@@ -129,6 +131,8 @@ function AdCreatorPanel({
   connectedPlatforms: SocialPlatform[];
   onCreated: () => void;
 }) {
+  const t = useTranslations("admin.advertising");
+  const tShared = useTranslations("admin.shared");
   const [prompt, setPrompt] = useState("");
   const [objective, setObjective] = useState<AdObjective>("traffic");
   const [platforms, setPlatforms] = useState<SocialPlatform[]>(["facebook"]);
@@ -156,7 +160,7 @@ function AdCreatorPanel({
         return;
       }
       setGenerated(res.copy);
-      if (!campaignName) setCampaignName(prompt.slice(0, 60) || "New campaign");
+      if (!campaignName) setCampaignName(prompt.slice(0, 60) || t("adCreator.untitledCampaign"));
     });
   }
 
@@ -165,7 +169,7 @@ function AdCreatorPanel({
     setError(null);
     startSave(async () => {
       const res = await createCampaign({
-        name: campaignName || "Untitled campaign",
+        name: campaignName || t("adCreator.untitledCampaign"),
         objective,
         platforms,
         headline: generated.headline,
@@ -195,32 +199,32 @@ function AdCreatorPanel({
     <div className="rounded-2xl border border-[--hair] bg-surface p-6">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-brand">AI Ad Creator</p>
-          <h2 className="text-lg font-black text-ink">Generate platform-ready copy</h2>
+          <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-brand">{t("adCreator.badge")}</p>
+          <h2 className="text-lg font-black text-ink">{t("adCreator.title")}</h2>
           <p className="mt-1 text-xs text-muted">
-            Describe your promotion — the AI assistant drafts headlines, body copy, and CTAs tuned for each platform.
+            {t("adCreator.description")}
           </p>
         </div>
         <span className="rounded-full bg-brand/10 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-wide text-brand">
-          AI Agent
+          {t("adCreator.aiAgent")}
         </span>
       </div>
 
       <div className="space-y-4">
         <div>
-          <label className="mb-1 block text-xs font-semibold text-ink">What are you promoting?</label>
+          <label className="mb-1 block text-xs font-semibold text-ink">{t("adCreator.promptLabel")}</label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             rows={3}
-            placeholder="e.g. Summer intensive programme for ages 8–14, starts July 7. Early bird 15% off until June 30."
+            placeholder={t("adCreator.promptPlaceholder")}
             className="w-full rounded-xl border border-[--hair] bg-base px-4 py-3 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
           />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-ink">Objective</label>
+            <label className="mb-1 block text-xs font-semibold text-ink">{t("adCreator.objective")}</label>
             <select
               value={objective}
               onChange={(e) => setObjective(e.target.value as AdObjective)}
@@ -232,19 +236,19 @@ function AdCreatorPanel({
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-ink">Target URL (optional)</label>
+            <label className="mb-1 block text-xs font-semibold text-ink">{t("adCreator.targetUrl")}</label>
             <input
               type="url"
               value={targetUrl}
               onChange={(e) => setTargetUrl(e.target.value)}
-              placeholder="https://yourstudio.com/enrol"
+              placeholder={t("adCreator.targetUrlPlaceholder")}
               className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink placeholder:text-muted"
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-xs font-semibold text-ink">Platforms</label>
+          <label className="mb-2 block text-xs font-semibold text-ink">{t("adCreator.platforms")}</label>
           <div className="flex flex-wrap gap-2">
             {(["facebook", "instagram", "tiktok"] as SocialPlatform[]).map((p) => {
               const active = platforms.includes(p);
@@ -260,10 +264,10 @@ function AdCreatorPanel({
                       : "border border-[--hair] bg-base text-muted hover:text-ink"
                   }`}
                   style={active ? { background: PLATFORM_META[p].color } : undefined}
-                  title={connected ? undefined : "Not connected — will save as draft"}
+                  title={connected ? undefined : t("adCreator.notConnectedTitle")}
                 >
                   {PLATFORM_META[p].label}
-                  {!connected && active && " (draft)"}
+                  {!connected && active && t("adCreator.draftSuffix")}
                 </button>
               );
             })}
@@ -276,7 +280,7 @@ function AdCreatorPanel({
           disabled={generating || !prompt.trim()}
           className="rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white hover:brightness-105 disabled:opacity-50"
         >
-          {generating ? "Generating…" : "Generate with AI"}
+          {generating ? tShared("generating") : t("adCreator.generate")}
         </button>
 
         <AnimatePresence>
@@ -288,10 +292,10 @@ function AdCreatorPanel({
               className="space-y-4 rounded-xl border border-brand/20 bg-brand/5 p-4"
             >
               <div>
-                <p className="text-[0.62rem] font-semibold uppercase tracking-wide text-brand">Generated copy</p>
+                <p className="text-[0.62rem] font-semibold uppercase tracking-wide text-brand">{t("adCreator.generatedCopy")}</p>
                 <p className="mt-2 text-sm font-bold text-ink">{generated.headline}</p>
                 <p className="mt-1 text-sm text-muted">{generated.bodyText}</p>
-                <p className="mt-2 text-xs font-semibold text-ink">CTA: {generated.callToAction}</p>
+                <p className="mt-2 text-xs font-semibold text-ink">{t("adCreator.cta", { cta: generated.callToAction })}</p>
                 {generated.hashtags.length > 0 && (
                   <p className="mt-1 text-xs text-muted">{generated.hashtags.join(" ")}</p>
                 )}
@@ -302,21 +306,21 @@ function AdCreatorPanel({
                   type="text"
                   value={campaignName}
                   onChange={(e) => setCampaignName(e.target.value)}
-                  placeholder="Campaign name"
+                  placeholder={t("adCreator.campaignName")}
                   className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
                 />
                 <input
                   type="url"
                   value={imageUrl}
                   onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="Image URL (required for Instagram)"
+                  placeholder={t("adCreator.imageUrl")}
                   className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
                 />
                 <input
                   type="url"
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder="Video URL (required for TikTok)"
+                  placeholder={t("adCreator.videoUrl")}
                   className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm sm:col-span-2"
                 />
               </div>
@@ -328,7 +332,7 @@ function AdCreatorPanel({
                   disabled={saving}
                   className="rounded-xl border border-[--hair] bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-base disabled:opacity-50"
                 >
-                  Save as draft
+                  {t("adCreator.saveDraft")}
                 </button>
                 <button
                   type="button"
@@ -336,7 +340,7 @@ function AdCreatorPanel({
                   disabled={saving}
                   className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:brightness-105 disabled:opacity-50"
                 >
-                  {saving ? "Publishing…" : "Save & publish now"}
+                  {saving ? tShared("publishing") : t("adCreator.saveAndPublish")}
                 </button>
               </div>
             </motion.div>
@@ -356,6 +360,8 @@ function CampaignsList({
   campaigns: AdCampaign[];
   onRefresh: () => void;
 }) {
+  const t = useTranslations("admin.advertising");
+  const tCommon = useTranslations("common");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -369,7 +375,7 @@ function CampaignsList({
   }
 
   function handleDelete(id: string) {
-    if (!window.confirm("Delete this campaign?")) return;
+    if (!window.confirm(t("campaigns.deleteConfirm"))) return;
     startTransition(async () => {
       await deleteCampaign(id);
       onRefresh();
@@ -379,7 +385,7 @@ function CampaignsList({
   if (campaigns.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-[--hair] bg-surface/50 px-6 py-12 text-center">
-        <p className="text-sm text-muted">No campaigns yet. Use the AI creator above to get started.</p>
+        <p className="text-sm text-muted">{t("campaigns.empty")}</p>
       </div>
     );
   }
@@ -395,7 +401,7 @@ function CampaignsList({
                 <h3 className="font-bold text-ink">{c.name}</h3>
                 <StatusBadge status={c.status} />
                 {c.aiGenerated && (
-                  <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[0.58rem] font-bold uppercase text-brand">AI</span>
+                  <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[0.58rem] font-bold uppercase text-brand">{t("campaigns.aiBadge")}</span>
                 )}
               </div>
               <p className="mt-1 text-xs text-muted">
@@ -412,7 +418,7 @@ function CampaignsList({
                   disabled={pending}
                   className="rounded-xl bg-brand px-3 py-1.5 text-xs font-bold text-white hover:brightness-105 disabled:opacity-50"
                 >
-                  Publish
+                  {t("campaigns.publish")}
                 </button>
               )}
               <button
@@ -421,7 +427,7 @@ function CampaignsList({
                 disabled={pending}
                 className="rounded-xl border border-[--hair] px-3 py-1.5 text-xs font-semibold text-muted hover:text-red-600 disabled:opacity-50"
               >
-                Delete
+                {tCommon("delete")}
               </button>
             </div>
           </div>
@@ -440,6 +446,8 @@ function SeoPanel({
   audits: SeoAudit[];
   onRefresh: () => void;
 }) {
+  const t = useTranslations("admin.advertising");
+  const tShared = useTranslations("admin.shared");
   const [focusPageId, setFocusPageId] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [lastSummary, setLastSummary] = useState<string | null>(null);
@@ -477,28 +485,28 @@ function SeoPanel({
       <div className="rounded-2xl border border-[--hair] bg-surface p-6">
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-brand">SEO Agent</p>
-            <h2 className="text-lg font-black text-ink">Modernize your search presence</h2>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-brand">{t("seo.badge")}</p>
+            <h2 className="text-lg font-black text-ink">{t("seo.title")}</h2>
             <p className="mt-1 text-xs text-muted">
-              AI audits your site pages, scores SEO health, and suggests modernized titles and descriptions.
+              {t("seo.description")}
             </p>
           </div>
           <span className="rounded-full bg-brand/10 px-3 py-1 text-[0.62rem] font-bold uppercase tracking-wide text-brand">
-            AI Agent
+            {t("adCreator.aiAgent")}
           </span>
         </div>
 
         <div className="mb-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-xs font-semibold text-ink">Audit scope</label>
+            <label className="mb-1 block text-xs font-semibold text-ink">{t("seo.auditScope")}</label>
             <select
               value={focusPageId}
               onChange={(e) => setFocusPageId(e.target.value)}
               className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm"
             >
-              <option value="">All pages</option>
+              <option value="">{t("seo.allPages")}</option>
               {pages.map((p) => (
-                <option key={p.id} value={p.id}>{p.title} (/{p.slug})</option>
+                <option key={p.id} value={p.id}>{t("seo.pageOption", { title: p.title, slug: p.slug })}</option>
               ))}
             </select>
           </div>
@@ -509,7 +517,7 @@ function SeoPanel({
               disabled={auditing || pages.length === 0}
               className="w-full rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white hover:brightness-105 disabled:opacity-50"
             >
-              {auditing ? "Running audit…" : "Run SEO audit"}
+              {auditing ? tShared("runningAudit") : t("seo.runAudit")}
             </button>
           </div>
         </div>
@@ -533,7 +541,7 @@ function SeoPanel({
 
       {latestAudit && latestAudit.recommendations.length > 0 && (
         <div className="rounded-2xl border border-[--hair] bg-surface p-6">
-          <h3 className="mb-4 font-bold text-ink">Recommendations</h3>
+          <h3 className="mb-4 font-bold text-ink">{t("seo.recommendations")}</h3>
           <div className="space-y-3">
             {latestAudit.recommendations.map((rec) => (
               <div key={rec.id} className="rounded-xl border border-[--hair] bg-base p-4">
@@ -551,7 +559,7 @@ function SeoPanel({
                 <p className="mt-1 text-xs text-muted">{rec.description}</p>
                 {rec.suggestedFix && (
                   <p className="mt-2 rounded-lg bg-brand/5 px-3 py-2 text-xs text-ink">
-                    Suggested: {rec.suggestedFix}
+                    {t("seo.suggested", { fix: rec.suggestedFix })}
                   </p>
                 )}
               </div>
@@ -562,14 +570,14 @@ function SeoPanel({
 
       <div className="rounded-2xl border border-[--hair] bg-surface p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-bold text-ink">Page SEO</h3>
+          <h3 className="font-bold text-ink">{t("seo.pageSeo")}</h3>
           <Link href="/portal/admin/site" className="text-xs font-semibold text-brand hover:underline">
-            Open website builder →
+            {t("seo.openBuilder")}
           </Link>
         </div>
         <div className="space-y-3">
           {pages.length === 0 ? (
-            <p className="text-sm text-muted">No site pages yet. Set up your website first.</p>
+            <p className="text-sm text-muted">{t("seo.noPages")}</p>
           ) : (
             pages.map((page) => (
               <div key={page.id} className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-[--hair] bg-base p-4">
@@ -577,10 +585,10 @@ function SeoPanel({
                   <p className="font-semibold text-ink">{page.title}</p>
                   <p className="text-[0.65rem] text-muted">/{page.slug} · {page.status}</p>
                   <p className="mt-2 text-xs text-ink">
-                    {page.seoTitle || <span className="text-red-500">No SEO title</span>}
+                    {page.seoTitle || <span className="text-red-500">{t("seo.noSeoTitle")}</span>}
                   </p>
                   <p className="mt-0.5 text-xs text-muted line-clamp-2">
-                    {page.seoDescription || "No meta description"}
+                    {page.seoDescription || t("seo.noMetaDescription")}
                   </p>
                 </div>
                 <button
@@ -589,7 +597,7 @@ function SeoPanel({
                   disabled={modernizing}
                   className="shrink-0 rounded-xl border border-brand/30 bg-brand/5 px-3 py-1.5 text-xs font-bold text-brand hover:bg-brand/10 disabled:opacity-50"
                 >
-                  AI modernize
+                  {modernizing ? tShared("modernizing") : t("seo.aiModernize")}
                 </button>
               </div>
             ))
@@ -619,6 +627,7 @@ export function AdvertisingHub({
   bannerError: string | null;
   bannerConnected: string | null;
 }) {
+  const t = useTranslations("admin.advertising");
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("campaigns");
   const [actionError, setActionError] = useState<string | null>(null);
@@ -631,7 +640,7 @@ export function AdvertisingHub({
   }
 
   function handleDisconnect(platform: SocialPlatform) {
-    if (!window.confirm(`Disconnect ${PLATFORM_META[platform].label}?`)) return;
+    if (!window.confirm(t("disconnectConfirm", { platform: PLATFORM_META[platform].label }))) return;
     setActionError(null);
     startDisconnect(async () => {
       const res = await disconnectSocialPlatform(platform);
@@ -652,9 +661,9 @@ export function AdvertisingHub({
       <motion.header
         variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
       >
-        <h1 className="text-2xl font-black tracking-tight text-ink">Advertising & SEO</h1>
+        <h1 className="text-2xl font-black tracking-tight text-ink">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted">
-          Connect social platforms, auto-publish ads, and modernize your studio&apos;s search presence with AI.
+          {t("subtitle")}
         </p>
       </motion.header>
 
@@ -663,8 +672,10 @@ export function AdvertisingHub({
           {bannerConnected && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
               {bannerConnected === "meta"
-                ? "Facebook & Instagram connected successfully."
-                : `${bannerConnected.charAt(0).toUpperCase()}${bannerConnected.slice(1)} connected successfully.`}
+                ? t("metaConnected")
+                : t("platformConnected", {
+                    platform: `${bannerConnected.charAt(0).toUpperCase()}${bannerConnected.slice(1)}`,
+                  })}
             </div>
           )}
           {displayError && (
@@ -680,18 +691,18 @@ export function AdvertisingHub({
         className="flex gap-1 rounded-xl border border-[--hair] bg-surface p-1"
       >
         {([
-          { id: "campaigns" as Tab, label: "Campaigns" },
-          { id: "seo" as Tab, label: "SEO" },
-        ]).map((t) => (
+          { id: "campaigns" as Tab, label: t("tabs.campaigns") },
+          { id: "seo" as Tab, label: t("tabs.seo") },
+        ]).map((tabItem) => (
           <button
-            key={t.id}
+            key={tabItem.id}
             type="button"
-            onClick={() => setTab(t.id)}
+            onClick={() => setTab(tabItem.id)}
             className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition ${
-              tab === t.id ? "bg-brand text-white shadow-sm" : "text-muted hover:text-ink"
+              tab === tabItem.id ? "bg-brand text-white shadow-sm" : "text-muted hover:text-ink"
             }`}
           >
-            {t.label}
+            {tabItem.label}
           </button>
         ))}
       </motion.div>
@@ -706,7 +717,7 @@ export function AdvertisingHub({
             className="space-y-6"
           >
             <section>
-              <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted">Connected platforms</h2>
+              <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted">{t("connectedPlatforms")}</h2>
               <SocialConnectionsPanel
                 connections={connections}
                 metaConfigured={metaConfigured}
@@ -718,7 +729,7 @@ export function AdvertisingHub({
             <AdCreatorPanel connectedPlatforms={connectedPlatforms} onCreated={refresh} />
 
             <section>
-              <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted">Your campaigns</h2>
+              <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted">{t("yourCampaigns")}</h2>
               <CampaignsList campaigns={campaigns} onRefresh={refresh} />
             </section>
           </motion.div>

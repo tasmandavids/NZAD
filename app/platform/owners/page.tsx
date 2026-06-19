@@ -1,9 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTranslations } from "@/lib/i18n/server";
 import { OwnersDirectory } from "@/components/platform/OwnersDirectory";
 import type { PlatformOwner } from "@/lib/platform/types";
 
 export default async function PlatformOwnersPage() {
   const admin = createAdminClient();
+  const t = await getTranslations("platform.dashboard");
 
   const { data: admins } = await admin
     .from("profiles")
@@ -33,7 +35,7 @@ export default async function PlatformOwnersPage() {
     return {
       profileId: a.id,
       studioId: studio?.id ?? a.studio_id!,
-      studioName: studio?.name ?? "Unknown",
+      studioName: studio?.name ?? t("unknownStudio"),
       studioSlug: studio?.slug ?? "",
       studioStatus: studio?.status ?? "trial",
       fullName: a.full_name,

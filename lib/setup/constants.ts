@@ -1,139 +1,85 @@
-export const DANCE_STYLES = [
-  "Ballet",
-  "Jazz",
-  "Hip-Hop",
-  "Contemporary",
-  "Tap",
-  "Lyrical",
-  "Acro",
-  "Pointe",
-  "Musical Theatre",
-  "Ballroom",
-  "Latin",
-  "Aerial",
-  "Preschool / Tiny Tots",
-  "Adult Open",
-  "Competition Team",
+export const DANCE_STYLE_KEYS = [
+  "ballet",
+  "jazz",
+  "hipHop",
+  "contemporary",
+  "tap",
+  "lyrical",
+  "acro",
+  "pointe",
+  "musicalTheatre",
+  "ballroom",
+  "latin",
+  "aerial",
+  "preschool",
+  "adultOpen",
+  "competitionTeam",
 ] as const;
+
+export type DanceStyleKey = (typeof DANCE_STYLE_KEYS)[number];
 
 export type SetupPath = "scratch" | "import";
 
-export type ImportSource =
-  | "studiopro"
-  | "classmanager"
-  | "jackrabbit"
-  | "dancestudio-pro"
-  | "spreadsheet"
-  | "other";
-
-export const IMPORT_SOURCES: {
-  id: ImportSource;
-  name: string;
-  hint: string;
-  sampleHeaders: string[];
-}[] = [
-  {
-    id: "studiopro",
-    name: "StudioPro",
-    hint: "Export your student list from Reports → Students → Export CSV.",
-    sampleHeaders: ["First Name", "Last Name", "Email", "Phone", "Parent Name", "Parent Email"],
-  },
-  {
-    id: "classmanager",
-    name: "Class Manager",
-    hint: "Download your roster from Settings → Data export.",
-    sampleHeaders: ["Student", "Email", "Mobile", "Guardian", "Guardian Email", "Class"],
-  },
-  {
-    id: "jackrabbit",
-    name: "Jackrabbit Dance",
-    hint: "Use Families → Export, or copy directly from your class roster grid.",
-    sampleHeaders: ["Student Name", "Student Email", "Family Email", "Phone", "Classes"],
-  },
-  {
-    id: "dancestudio-pro",
-    name: "DanceStudio-Pro",
-    hint: "Export students from the Students tab, or paste from your spreadsheet.",
-    sampleHeaders: ["Name", "Email", "Phone", "Parent", "Parent Email"],
-  },
-  {
-    id: "spreadsheet",
-    name: "Spreadsheet",
-    hint: "Copy rows from Excel or Google Sheets — we'll detect columns automatically.",
-    sampleHeaders: ["Name", "Email", "Phone"],
-  },
-  {
-    id: "other",
-    name: "Another system",
-    hint: "Paste any export — we'll try to match name, email, and phone columns.",
-    sampleHeaders: ["Name", "Email", "Phone"],
-  },
-];
-
-export const SETUP_STEPS = [
-  { id: "path", label: "Get started" },
-  { id: "profile", label: "Your studio" },
-  { id: "students", label: "Dancers" },
-  { id: "classes", label: "Classes" },
-  { id: "tour", label: "Tour" },
+export const IMPORT_SOURCE_IDS = [
+  "studiopro",
+  "classmanager",
+  "jackrabbit",
+  "dancestudio-pro",
+  "spreadsheet",
+  "other",
 ] as const;
 
-export type SetupStepId = (typeof SETUP_STEPS)[number]["id"];
+export type ImportSource = (typeof IMPORT_SOURCE_IDS)[number];
+
+export const SETUP_STEP_IDS = [
+  "path",
+  "profile",
+  "students",
+  "classes",
+  "tour",
+] as const;
+
+export type SetupStepId = (typeof SETUP_STEP_IDS)[number];
+
+export const SETUP_STEPS = SETUP_STEP_IDS.map((id) => ({ id }));
+
+export const TOUR_FEATURE_KEYS = [
+  "dashboard",
+  "classes",
+  "students",
+  "billing",
+  "website",
+  "leads",
+] as const;
+
+export type TourFeatureKey = (typeof TOUR_FEATURE_KEYS)[number];
 
 export const TOUR_FEATURES = [
-  {
-    href: "/portal/admin",
-    emoji: "📊",
-    title: "Dashboard",
-    body: "See enrolments, revenue, and today's schedule at a glance.",
-  },
-  {
-    href: "/portal/admin/classes",
-    emoji: "🩰",
-    title: "Classes",
-    body: "Build your timetable, set capacity, and manage waitlists.",
-  },
-  {
-    href: "/portal/admin/students",
-    emoji: "👨‍👩‍👧",
-    title: "Students & families",
-    body: "Roster, enrolments, progress notes, and parent accounts.",
-  },
-  {
-    href: "/portal/admin/billing",
-    emoji: "💳",
-    title: "Billing",
-    body: "Invoices, Stripe payments, and term fees in NZD.",
-  },
-  {
-    href: "/portal/admin/site",
-    emoji: "🌐",
-    title: "Website",
-    body: "Your public site — classes, enrolments, and your brand.",
-  },
-  {
-    href: "/portal/admin/leads",
-    emoji: "✉️",
-    title: "Leads & messages",
-    body: "Trial enquiries and two-way messaging with families.",
-  },
+  { id: "dashboard" as const, href: "/portal/admin", emoji: "📊" },
+  { id: "classes" as const, href: "/portal/admin/classes", emoji: "🩰" },
+  { id: "students" as const, href: "/portal/admin/students", emoji: "👨‍👩‍👧" },
+  { id: "billing" as const, href: "/portal/admin/billing", emoji: "💳" },
+  { id: "website" as const, href: "/portal/admin/site", emoji: "🌐" },
+  { id: "leads" as const, href: "/portal/admin/leads", emoji: "✉️" },
 ] as const;
 
-export const NZ_REGIONS = [
-  "Northland",
-  "Auckland",
-  "Waikato",
-  "Bay of Plenty",
-  "Gisborne",
-  "Hawke's Bay",
-  "Taranaki",
-  "Manawatū-Whanganui",
-  "Wellington",
-  "Tasman",
-  "Nelson",
-  "Marlborough",
-  "West Coast",
-  "Canterbury",
-  "Otago",
-  "Southland",
+export const NZ_REGION_KEYS = [
+  "northland",
+  "auckland",
+  "waikato",
+  "bayOfPlenty",
+  "gisborne",
+  "hawkesBay",
+  "taranaki",
+  "manawatuWhanganui",
+  "wellington",
+  "tasman",
+  "nelson",
+  "marlborough",
+  "westCoast",
+  "canterbury",
+  "otago",
+  "southland",
 ] as const;
+
+export type NzRegionKey = (typeof NZ_REGION_KEYS)[number];

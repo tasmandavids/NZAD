@@ -1,0 +1,17 @@
+{
+  "student": {
+    "timetable": {
+      "title": "Il mio orario",
+      "greetingWithName": "{greeting}, {name}.",
+      "greetingOnly": "{greeting}.",
+      "today": "Oggi · {day}",
+      "noClassesToday": "Nessun corso oggi — goditi il giorno di riposo.",
+      "until": "fino alle {time}",
+      "weeklySchedule": "Orario settimanale",
+      "myClasses": "I miei corsi · {count} iscritti",
+      "noEnrolments": "Nessuna iscrizione attiva.",
+      "noEnrolmentsHint": "L'amministratore dello studio ti assegnerà dei corsi.",
+      "withTeacher": "con {name}"
+    }
+  }
+}

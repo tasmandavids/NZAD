@@ -14,6 +14,8 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
+import { useShortDayNames } from "@/lib/i18n/client";
 import type { Child } from "@/app/portal/parent/page";
 import {
   getAvailableClasses,
@@ -28,7 +30,6 @@ import CheckoutForm from "@/components/payments/CheckoutForm";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const NZD = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" });
 
 function fmtTime(t: string | null) {
@@ -66,6 +67,8 @@ function ClassCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const t = useTranslations("parent.enroll");
+  const dayShort = useShortDayNames();
   const spotsLeft = cls.capacity - cls.enrolled;
   const isFull = spotsLeft <= 0;
 
@@ -89,19 +92,19 @@ function ClassCard({
             {cls.level ? ` · ${cls.level}` : ""}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {cls.dayOfWeek !== null ? DAY[cls.dayOfWeek] : ""}
+            {cls.dayOfWeek !== null ? dayShort[cls.dayOfWeek] : ""}
             {cls.startTime ? ` · ${fmtTime(cls.startTime)}` : ""}
           </p>
         </div>
         <div className="text-right shrink-0">
           <p className="text-sm font-bold text-ink">
-            {cls.priceCents > 0 ? NZD.format(cls.priceCents / 100) : "Free"}
+            {cls.priceCents > 0 ? NZD.format(cls.priceCents / 100) : t("free")}
           </p>
           <p
             className="mt-1 text-[0.62rem] font-semibold uppercase tracking-wide"
             style={{ color: isFull ? "#ef4444" : spotsLeft <= 3 ? "var(--brand-hot)" : "var(--muted)" }}
           >
-            {isFull ? "Full — waitlist" : `${spotsLeft} spot${spotsLeft !== 1 ? "s" : ""} left`}
+            {isFull ? t("fullWaitlist") : t("spotsLeft", { count: spotsLeft })}
           </p>
         </div>
       </div>
@@ -127,6 +130,8 @@ function Step1SelectClass({
   children: Child[];
   onNext: (data: { childId: string; childName: string | null; cls: AvailableClass }) => void;
 }) {
+  const t = useTranslations("parent.enroll");
+  const dayShort = useShortDayNames();
   const [childId, setChildId] = useState(children[0]?.studentId ?? "");
   const [classes, setClasses] = useState<AvailableClass[]>([]);
   const [filter, setFilter] = useState("");
@@ -149,7 +154,7 @@ function Step1SelectClass({
       c.name.toLowerCase().includes(q) ||
       (c.discipline?.toLowerCase().includes(q) ?? false) ||
       (c.level?.toLowerCase().includes(q) ?? false) ||
-      (c.dayOfWeek !== null && DAY[c.dayOfWeek].toLowerCase().includes(q))
+      (c.dayOfWeek !== null && dayShort[c.dayOfWeek].toLowerCase().includes(q))
     );
   });
 
@@ -158,13 +163,13 @@ function Step1SelectClass({
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-base font-bold text-ink">Choose a class</h3>
+      <h3 className="text-base font-bold text-ink">{t("chooseClass")}</h3>
 
       {/* Child selector */}
       {children.length > 1 && (
         <div>
           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
-            Enrolling for
+            {t("enrollingFor")}
           </label>
           <select
             value={childId}
@@ -173,7 +178,7 @@ function Step1SelectClass({
           >
             {children.map((c) => (
               <option key={c.studentId} value={c.studentId}>
-                {c.name ?? "Unnamed dancer"}
+                {c.name ?? t("unnamedDancer")}
               </option>
             ))}
           </select>
@@ -183,7 +188,7 @@ function Step1SelectClass({
       {/* Search */}
       <input
         type="text"
-        placeholder="Search classes…"
+        placeholder={t("searchClasses")}
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
         className="w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
@@ -191,11 +196,11 @@ function Step1SelectClass({
 
       {/* Class list */}
       {loading ? (
-        <div className="py-8 text-center text-sm text-muted animate-pulse">Loading classes…</div>
+        <div className="py-8 text-center text-sm text-muted animate-pulse">{t("loadingClasses")}</div>
       ) : error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>
       ) : filtered.length === 0 ? (
-        <div className="py-8 text-center text-sm text-muted">No classes match your search.</div>
+        <div className="py-8 text-center text-sm text-muted">{t("noClassesMatch")}</div>
       ) : (
         <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
           {filtered.map((cls) => (
@@ -218,7 +223,7 @@ function Step1SelectClass({
         className="mt-2 w-full rounded-xl py-3 text-sm font-bold text-white transition-opacity disabled:opacity-40"
         style={{ background: "var(--brand)" }}
       >
-        Continue
+        {t("continue")}
       </button>
     </div>
   );
@@ -235,6 +240,7 @@ function Step2SignWaivers({
   onNext: () => void;
   onBack: () => void;
 }) {
+  const t = useTranslations("parent.enroll");
   const [waivers, setWaivers] = useState<Waiver[]>([]);
   const [agreed, setAgreed] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -270,19 +276,21 @@ function Step2SignWaivers({
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-base font-bold text-ink">Studio waivers</h3>
+      <h3 className="text-base font-bold text-ink">{t("waiversTitle")}</h3>
       <p className="text-sm text-muted">
-        Please read and accept the following on behalf of{" "}
-        <strong>{childName ?? "your dancer"}</strong>.
+        {t.rich("waiversIntro", {
+          name: childName ?? t("yourDancer"),
+          strong: (chunks) => <strong>{chunks}</strong>,
+        })}
       </p>
 
       {loading ? (
-        <div className="py-8 text-center text-sm text-muted animate-pulse">Loading waivers…</div>
+        <div className="py-8 text-center text-sm text-muted animate-pulse">{t("loadingWaivers")}</div>
       ) : error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>
       ) : waivers.length === 0 ? (
         <div className="rounded-lg border border-[--hair] bg-surface p-4 text-sm text-muted">
-          No waivers required. Proceeding…
+          {t("noWaiversRequired")}
         </div>
       ) : (
         <div className="space-y-4">
@@ -307,7 +315,10 @@ function Step2SignWaivers({
                   className="mt-0.5 shrink-0 accent-[--brand]"
                 />
                 <span className="text-xs text-ink">
-                  I agree to the <strong>{w.title}</strong> on behalf of my child.
+                  {t.rich("agreeWaiver", {
+                    title: w.title,
+                    strong: (chunks) => <strong>{chunks}</strong>,
+                  })}
                 </span>
               </label>
             </div>
@@ -321,7 +332,7 @@ function Step2SignWaivers({
           onClick={onBack}
           className="flex-1 rounded-xl border border-[--hair] py-3 text-sm font-semibold text-muted transition-colors hover:border-[--brand] hover:text-ink"
         >
-          Back
+          {t("back")}
         </button>
         <button
           type="button"
@@ -330,7 +341,7 @@ function Step2SignWaivers({
           className="flex-1 rounded-xl py-3 text-sm font-bold text-white transition-opacity disabled:opacity-40"
           style={{ background: "var(--brand)" }}
         >
-          {saving ? "Signing…" : "Accept & Continue"}
+          {saving ? t("signing") : t("acceptContinue")}
         </button>
       </div>
     </div>
@@ -351,6 +362,7 @@ function Step3Payment({
   onComplete: (waitlisted: boolean) => void;
   onBack: () => void;
 }) {
+  const t = useTranslations("parent.enroll");
   const [phase, setPhase] = useState<"summary" | "pay">("summary");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -390,18 +402,18 @@ function Step3Payment({
   if (phase === "pay" && clientSecret) {
     return (
       <div className="flex flex-col gap-4">
-        <h3 className="text-base font-bold text-ink">Payment</h3>
+        <h3 className="text-base font-bold text-ink">{t("paymentTitle")}</h3>
         <div className="flex items-center justify-between rounded-xl border border-[--hair] bg-surface px-4 py-3">
           <span className="text-sm text-muted">{enrollData.className}</span>
           <span className="font-black text-ink">{NZD.format(enrollData.priceCents / 100)}</span>
         </div>
         <CheckoutForm
           clientSecret={clientSecret}
-          submitLabel={`Pay ${NZD.format(enrollData.priceCents / 100)}`}
+          submitLabel={t("payAmount", { amount: NZD.format(enrollData.priceCents / 100) })}
           onSuccess={() => onComplete(false)}
         />
         <p className="text-center text-[0.65rem] text-muted">
-          Your spot is reserved. Payment confirms your enrollment.
+          {t("paymentReservedHint")}
         </p>
       </div>
     );
@@ -410,30 +422,29 @@ function Step3Payment({
   // ── Summary phase ──────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-base font-bold text-ink">Payment summary</h3>
+      <h3 className="text-base font-bold text-ink">{t("summaryTitle")}</h3>
 
       <div className="rounded-xl border border-[--hair] bg-surface p-5 space-y-3">
         <div className="flex justify-between text-sm">
-          <span className="text-muted">Class</span>
+          <span className="text-muted">{t("summaryClass")}</span>
           <span className="font-semibold text-ink">{enrollData.className}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted">Dancer</span>
+          <span className="text-muted">{t("summaryDancer")}</span>
           <span className="font-semibold text-ink">{enrollData.childName ?? "—"}</span>
         </div>
         <div className="my-2 border-t border-[--hair]" />
         <div className="flex justify-between">
-          <span className="font-bold text-ink">Total due</span>
+          <span className="font-bold text-ink">{t("summaryTotalDue")}</span>
           <span className="font-black text-ink">
-            {isPaid ? NZD.format(enrollData.priceCents / 100) : "Free"}
+            {isPaid ? NZD.format(enrollData.priceCents / 100) : t("free")}
           </span>
         </div>
       </div>
 
       {isPaid && (
         <div className="rounded-lg border border-[--hair] bg-base p-3 text-xs text-muted">
-          You&apos;ll enter your card details on the next step. If the class is full
-          you&apos;ll be waitlisted and no payment is taken.
+          {t("paidCardHint")}
         </div>
       )}
 
@@ -448,7 +459,7 @@ function Step3Payment({
           disabled={busy}
           className="flex-1 rounded-xl border border-[--hair] py-3 text-sm font-semibold text-muted transition-colors hover:border-[--brand] hover:text-ink disabled:opacity-40"
         >
-          Back
+          {t("back")}
         </button>
         <button
           type="button"
@@ -457,7 +468,7 @@ function Step3Payment({
           className="flex-1 rounded-xl py-3 text-sm font-bold text-white transition-opacity disabled:opacity-40"
           style={{ background: "var(--brand)" }}
         >
-          {busy ? "Processing…" : isPaid ? "Continue to payment" : "Confirm Enrollment"}
+          {busy ? t("processing") : isPaid ? t("continueToPayment") : t("confirmEnrollment")}
         </button>
       </div>
     </div>
@@ -471,6 +482,9 @@ function Step4Confirmation({
   enrollData: EnrollData;
   onClose: () => void;
 }) {
+  const t = useTranslations("parent.enroll");
+  const dancerName = enrollData.childName ?? t("yourDancer");
+
   return (
     <div className="flex flex-col items-center gap-5 py-4 text-center">
       <div
@@ -481,16 +495,16 @@ function Step4Confirmation({
       </div>
       <div>
         <h3 className="text-lg font-black text-ink">
-          {enrollData.waitlisted ? "Added to waitlist!" : "Enrolled!"}
+          {enrollData.waitlisted ? t("waitlistedTitle") : t("enrolledTitle")}
         </h3>
         <p className="mt-1 text-sm text-muted">
           {enrollData.waitlisted
-            ? `${enrollData.childName ?? "Your dancer"} is on the waitlist for ${enrollData.className}. You'll be notified when a spot opens.`
-            : `${enrollData.childName ?? "Your dancer"} is now enrolled in ${enrollData.className}.`}
+            ? t("waitlistedBody", { name: dancerName, className: enrollData.className })
+            : t("enrolledBody", { name: dancerName, className: enrollData.className })}
         </p>
         {enrollData.priceCents > 0 && !enrollData.waitlisted && (
           <p className="mt-2 text-xs text-muted">
-            An invoice for {NZD.format(enrollData.priceCents / 100)} will appear in your account shortly.
+            {t("invoiceHint", { amount: NZD.format(enrollData.priceCents / 100) })}
           </p>
         )}
       </div>
@@ -500,15 +514,13 @@ function Step4Confirmation({
         className="rounded-xl px-8 py-3 text-sm font-bold text-white"
         style={{ background: "var(--brand)" }}
       >
-        Done
+        {t("done")}
       </button>
     </div>
   );
 }
 
 // ─── Main modal ──────────────────────────────────────────────────────────────
-
-const STEPS = ["Select class", "Waivers", "Payment", "Done"];
 
 export function EnrollModal({
   children,
@@ -517,6 +529,13 @@ export function EnrollModal({
   children: Child[];
   onClose: () => void;
 }) {
+  const t = useTranslations("parent.enroll");
+  const steps = [
+    t("steps.selectClass"),
+    t("steps.waivers"),
+    t("steps.payment"),
+    t("steps.done"),
+  ];
   const [step, setStep] = useState(0);
   const [enrollData, setEnrollData] = useState<Partial<EnrollData>>({});
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -544,12 +563,12 @@ export function EnrollModal({
         <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
           <div>
             <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">
-              Enrollment
+              {t("title")}
             </p>
-            <p className="text-sm font-bold text-ink">{STEPS[step]}</p>
+            <p className="text-sm font-bold text-ink">{steps[step]}</p>
           </div>
           <div className="flex items-center gap-4">
-            <StepIndicator step={step} total={STEPS.length} />
+            <StepIndicator step={step} total={steps.length} />
             <button
               type="button"
               onClick={onClose}

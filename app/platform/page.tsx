@@ -1,8 +1,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTranslations } from "@/lib/i18n/server";
 import { PlatformDashboard } from "@/components/platform/PlatformDashboard";
 
 export default async function PlatformHomePage() {
   const admin = createAdminClient();
+  const t = await getTranslations("platform.dashboard");
 
   const [studiosRes, tasksRes, threadsRes, studentsRes] = await Promise.all([
     admin.from("studios").select("id, name, slug, status, created_at").order("created_at", { ascending: false }),
@@ -27,10 +29,19 @@ export default async function PlatformHomePage() {
   const suspendedCount = studios.filter((s) => s.status === "suspended").length;
 
   const stats = [
-    { id: "studios", label: "Total studios", value: studios.length, hint: `${activeCount} active` },
-    { id: "trial", label: "On trial", value: trialCount },
-    { id: "suspended", label: "Suspended", value: suspendedCount },
-    { id: "students", label: "Students platform-wide", value: studentsRes.count ?? 0 },
+    {
+      id: "studios",
+      label: t("stats.totalStudios"),
+      value: studios.length,
+      hint: t("stats.activeHint", { count: activeCount }),
+    },
+    { id: "trial", label: t("stats.onTrial"), value: trialCount },
+    { id: "suspended", label: t("stats.suspended"), value: suspendedCount },
+    {
+      id: "students",
+      label: t("stats.studentsPlatformWide"),
+      value: studentsRes.count ?? 0,
+    },
   ];
 
   const recentStudios = studios.slice(0, 5).map((s) => ({
@@ -41,21 +52,21 @@ export default async function PlatformHomePage() {
     createdAt: s.created_at,
   }));
 
-  const openThreads = (threadsRes.data ?? []).map((t) => {
-    const studio = t.studios as unknown as { name: string } | null;
+  const openThreads = (threadsRes.data ?? []).map((thread) => {
+    const studio = thread.studios as unknown as { name: string } | null;
     return {
-      id: t.id,
-      subject: t.subject,
-      studioName: studio?.name ?? "Unknown",
-      priority: t.priority,
+      id: thread.id,
+      subject: thread.subject,
+      studioName: studio?.name ?? t("unknownStudio"),
+      priority: thread.priority,
     };
   });
 
-  const openTasks = (tasksRes.data ?? []).map((t) => ({
-    id: t.id,
-    title: t.title,
-    priority: t.priority,
-    dueAt: t.due_at,
+  const openTasks = (tasksRes.data ?? []).map((task) => ({
+    id: task.id,
+    title: task.title,
+    priority: task.priority,
+    dueAt: task.due_at,
   }));
 
   return (

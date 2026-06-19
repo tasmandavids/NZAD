@@ -2,23 +2,26 @@
 
 import { useState, useTransition } from "react";
 import { motion } from "framer-motion";
+import { useLocale, useTranslations } from "next-intl";
 import type { PlatformStudioSummary } from "@/lib/platform/types";
 import { updateStudioStatus } from "@/app/platform/studios/actions";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
 
 export function StudiosManager({ studios }: { studios: PlatformStudioSummary[] }) {
+  const t = useTranslations("platform.studios");
+  const locale = useLocale();
   const [filter, setFilter] = useState<string>("all");
   const [pending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
-  const filtered =
-    filter === "all" ? studios : studios.filter((s) => s.status === filter);
+  const filterKeys = ["all", "trial", "active", "suspended"] as const;
+  const filtered = filter === "all" ? studios : studios.filter((s) => s.status === filter);
 
   function setStatus(studioId: string, status: string) {
     startTransition(async () => {
       const res = await updateStudioStatus({ studioId, status });
-      setStatusMsg(res.ok ? "Updated" : res.error);
+      setStatusMsg(res.ok ? t("updated") : res.error);
       setTimeout(() => setStatusMsg(null), 2000);
     });
   }
@@ -26,12 +29,12 @@ export function StudiosManager({ studios }: { studios: PlatformStudioSummary[] }
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <header>
-        <h1 className="text-2xl font-black text-ink">Studios</h1>
-        <p className="text-sm text-muted">All tenants on the Olune platform.</p>
+        <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
+        <p className="text-sm text-muted">{t("subtitle")}</p>
       </header>
 
       <div className="flex flex-wrap gap-2">
-        {["all", "trial", "active", "suspended"].map((f) => (
+        {filterKeys.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -39,7 +42,7 @@ export function StudiosManager({ studios }: { studios: PlatformStudioSummary[] }
               filter === f ? "bg-brand text-white" : "border border-[--hair] text-muted hover:text-ink"
             }`}
           >
-            {f}
+            {t(`filters.${f}`)}
           </button>
         ))}
         {statusMsg && <span className="self-center text-xs text-muted">{statusMsg}</span>}
@@ -49,12 +52,12 @@ export function StudiosManager({ studios }: { studios: PlatformStudioSummary[] }
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-[--hair] text-xs uppercase tracking-widest text-muted">
-              <th className="p-4">Studio</th>
-              <th className="p-4">Owner</th>
-              <th className="p-4">Students</th>
-              <th className="p-4">Status</th>
-              <th className="p-4">Joined</th>
-              <th className="p-4">Actions</th>
+              <th className="p-4">{t("tableStudio")}</th>
+              <th className="p-4">{t("tableOwner")}</th>
+              <th className="p-4">{t("tableStudents")}</th>
+              <th className="p-4">{t("tableStatus")}</th>
+              <th className="p-4">{t("tableJoined")}</th>
+              <th className="p-4">{t("tableActions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -78,7 +81,7 @@ export function StudiosManager({ studios }: { studios: PlatformStudioSummary[] }
                   </span>
                 </td>
                 <td className="p-4 text-muted">
-                  {new Date(s.createdAt).toLocaleDateString("en-NZ")}
+                  {new Date(s.createdAt).toLocaleDateString(locale)}
                 </td>
                 <td className="p-4">
                   <select
@@ -87,9 +90,9 @@ export function StudiosManager({ studios }: { studios: PlatformStudioSummary[] }
                     onChange={(e) => setStatus(s.id, e.target.value)}
                     className="rounded-lg border border-[--hair] bg-base px-2 py-1 text-xs"
                   >
-                    <option value="trial">trial</option>
-                    <option value="active">active</option>
-                    <option value="suspended">suspended</option>
+                    <option value="trial">{t("filters.trial")}</option>
+                    <option value="active">{t("filters.active")}</option>
+                    <option value="suspended">{t("filters.suspended")}</option>
                   </select>
                 </td>
               </tr>
@@ -97,7 +100,7 @@ export function StudiosManager({ studios }: { studios: PlatformStudioSummary[] }
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <p className="p-8 text-center text-sm text-muted">No studios match this filter.</p>
+          <p className="p-8 text-center text-sm text-muted">{t("noMatch")}</p>
         )}
       </motion.div>
     </div>
