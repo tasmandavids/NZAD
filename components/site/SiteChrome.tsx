@@ -4,11 +4,11 @@
 //  PublicFooter). Footer content comes from studio_branding.site_settings.
 // ============================================================================
 
-import Link from "next/link";
 import type { SiteSettings } from "@/lib/types";
 import type { NavLink } from "@/lib/site/queries";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 import { SiteHeader } from "./SiteHeader";
+import { SiteNavLink } from "./SiteNavLink";
 
 export function SiteChrome({
   studioName,
@@ -55,13 +55,13 @@ export function SiteChrome({
           <div>
             <p className="mb-5 text-xs uppercase tracking-[0.2em] text-muted">Navigation</p>
             {nav.map((l) => (
-              <Link
+              <SiteNavLink
                 key={l.slug || "home"}
                 href={l.isHome ? "/" : `/${l.slug}`}
                 className="mb-2 block text-sm text-slate transition hover:text-ink"
               >
                 {l.label}
-              </Link>
+              </SiteNavLink>
             ))}
           </div>
 
@@ -89,12 +89,12 @@ export function SiteChrome({
                 </a>
               )}
             </div>
-            <Link
+            <SiteNavLink
               href="/login"
               className="mt-6 inline-block border border-ink px-4 py-2 text-xs uppercase tracking-[0.2em] text-ink transition hover:bg-ink hover:text-base"
             >
               {portalLabel}
-            </Link>
+            </SiteNavLink>
           </div>
         </div>
 

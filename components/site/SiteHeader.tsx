@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import type { NavLink } from "@/lib/site/queries";
 import { OluneMark } from "@/components/brand/OluneLogo";
 import { OptimizableImage } from "@/components/ui/OptimizableImage";
+import { SiteNavLink } from "./SiteNavLink";
 
 function StudioLogo({ logoUrl, studioName }: { logoUrl: string; studioName: string }) {
   return (
@@ -47,9 +47,9 @@ export function SiteHeader({
         <span className={className}>{link.label}</span>
       )
     : ({ link, className, onClick }: { link: NavLink; className: string; onClick?: () => void }) => (
-        <Link href={hrefFor(link)} className={className} onClick={onClick}>
+        <SiteNavLink href={hrefFor(link)} className={className} onClick={onClick}>
           {link.label}
-        </Link>
+        </SiteNavLink>
       );
 
   return (
@@ -69,18 +69,18 @@ export function SiteHeader({
             )}
           </span>
         ) : (
-        <Link href={homeHref} className="flex items-center gap-2" onClick={() => setOpen(false)}>
-          {logoUrl ? (
-            <StudioLogo logoUrl={logoUrl} studioName={studioName} />
-          ) : (
-            <span
-              className="text-xl font-light tracking-tight text-ink"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {studioName}
-            </span>
-          )}
-        </Link>
+          <SiteNavLink href={homeHref} className="flex items-center gap-2" onClick={() => setOpen(false)}>
+            {logoUrl ? (
+              <StudioLogo logoUrl={logoUrl} studioName={studioName} />
+            ) : (
+              <span
+                className="text-xl font-light tracking-tight text-ink"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                {studioName}
+              </span>
+            )}
+          </SiteNavLink>
         )}
 
         <nav className="hidden items-center gap-6 lg:flex">
@@ -91,12 +91,12 @@ export function SiteHeader({
               className="text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted transition hover:text-ink"
             />
           ))}
-          <Link
+          <SiteNavLink
             href="/login"
             className="border border-ink px-4 py-2 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-ink transition hover:bg-ink hover:text-base"
           >
             {portalLabel}
-          </Link>
+          </SiteNavLink>
           <span title="Powered by Olune" aria-label="Powered by Olune">
             <OluneMark className="h-7 w-7 opacity-80" />
           </span>
@@ -130,13 +130,13 @@ export function SiteHeader({
               onClick={() => setOpen(false)}
             />
           ))}
-          <Link
+          <SiteNavLink
             href="/login"
             className="block px-6 py-4 text-sm font-medium text-brand"
             onClick={() => setOpen(false)}
           >
             {portalLabel} →
-          </Link>
+          </SiteNavLink>
         </nav>
       )}
     </header>
