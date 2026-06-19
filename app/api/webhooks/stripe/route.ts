@@ -27,6 +27,11 @@ import {
   subscriptionPeriodEndIso,
   refundDescriptor,
 } from "@/lib/webhooks/stripe-events";
+import {
+  xeroSyncAfterPayment,
+  xeroSyncAfterRefund,
+  xeroSyncTicketByPaymentIntent,
+} from "@/lib/xero/webhook-sync";
 import type Stripe from "stripe";
 
 // Webhooks run anonymously, so we need a client that bypasses RLS. Prefer the
@@ -107,6 +112,8 @@ export async function POST(req: NextRequest) {
             description: intent.description,
           });
 
+          await xeroSyncAfterPayment(supabase, "invoice", target.invoiceId);
+
           console.log(`[stripe-webhook] payment_intent.succeeded — invoice ${target.invoiceId} marked paid`);
           break;
         }
@@ -121,6 +128,8 @@ export async function POST(req: NextRequest) {
               stripe_payment_intent_id: intent.id,
             })
             .eq("id", target.orderId);
+
+          await xeroSyncAfterPayment(supabase, "order", target.orderId);
 
           console.log(`[stripe-webhook] payment_intent.succeeded — order ${target.orderId} marked paid`);
           break;
@@ -137,6 +146,8 @@ export async function POST(req: NextRequest) {
             .eq("stripe_payment_intent_id", intent.id);
           if (target.userId) q = q.eq("user_id", target.userId);
           await q;
+
+          await xeroSyncTicketByPaymentIntent(supabase, target.eventId, intent.id, target.userId);
 
           console.log(`[stripe-webhook] payment_intent.succeeded — event ticket (${target.eventId}) marked paid`);
           break;
@@ -232,6 +243,10 @@ export async function POST(req: NextRequest) {
             ? `Auto-pay — ${subRow.plan_label}`
             : "Auto-pay subscription charge",
         });
+
+        if (newInvoice?.id) {
+          await xeroSyncAfterPayment(supabase, "invoice", newInvoice.id);
+        }
 
         console.log(`[stripe-webhook] invoice.paid — mirrored subscription charge ${stripeInvoiceId}`);
         break;
@@ -331,6 +346,8 @@ export async function POST(req: NextRequest) {
         let refStudioId: string | null = null;
         let refPayerId: string | null = null;
         let refInvoiceId: string | null = null;
+        let refOrderId: string | null = null;
+        let refTicketId: string | null = null;
 
         const { data: inv } = await supabase
           .from("invoices")
@@ -354,6 +371,7 @@ export async function POST(req: NextRequest) {
           if (ord && ord.length) {
             refStudioId = ord[0].studio_id;
             refPayerId = ord[0].user_id;
+            refOrderId = ord[0].id;
           }
         }
 
@@ -368,6 +386,7 @@ export async function POST(req: NextRequest) {
             const ev = tkt[0].events as unknown as { studio_id: string } | null;
             refStudioId = ev?.studio_id ?? null;
             refPayerId = tkt[0].user_id;
+            refTicketId = tkt[0].id;
           }
         }
 
@@ -383,6 +402,15 @@ export async function POST(req: NextRequest) {
             status: "refunded",
             description: "Refund (Stripe)",
           });
+
+          if (refInvoiceId) {
+            await xeroSyncAfterRefund(supabase, "invoice", refInvoiceId, refundedCents);
+          } else if (refOrderId) {
+            await xeroSyncAfterRefund(supabase, "order", refOrderId, refundedCents);
+          } else if (refTicketId) {
+            await xeroSyncAfterRefund(supabase, "ticket", refTicketId, refundedCents);
+          }
+
           console.log(`[stripe-webhook] charge.refunded — reconciled ${refundId} (${piId})`);
         } else {
           console.log(`[stripe-webhook] charge.refunded — no matching sale for ${piId}`);

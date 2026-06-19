@@ -1,6 +1,11 @@
 "use client";
 
-import { useId, type ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef } from "react";
+import {
+  OLUNE_MOON_CLIP_ID,
+  OLUNE_MOON_GLOW_ID,
+  OLUNE_MOON_GRAD_ID,
+} from "./OluneMoonDefs";
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl" | "hero";
 type Variant = "horizontal" | "stacked" | "mark" | "signature";
@@ -59,44 +64,29 @@ const sizeConfig: Record<
 };
 
 function OluneMoon({
-  id,
   glow = false,
   className = "",
 }: {
-  id: string;
   glow?: boolean;
   className?: string;
 }) {
-  const gradId = `${id}-moonGrad`;
-  const glowId = `${id}-moonGlow`;
-  const clipId = `${id}-moonClip`;
-
   return (
     <svg
       viewBox="0 0 100 100"
       className={`block shrink-0 ${className}`}
       aria-hidden
     >
-      <defs>
-        <linearGradient id={gradId} x1="0.28" y1="0.05" x2="0.72" y2="1">
-          <stop offset="0" stopColor="#DCD9FA" />
-          <stop offset="0.5" stopColor="#A6A2E8" />
-          <stop offset="1" stopColor="#7A75D6" />
-        </linearGradient>
-        {glow && (
-          <radialGradient id={glowId} cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0" stopColor="#7B77D6" stopOpacity="0.5" />
-            <stop offset="0.6" stopColor="#7B77D6" stopOpacity="0.1" />
-            <stop offset="1" stopColor="#7B77D6" stopOpacity="0" />
-          </radialGradient>
-        )}
-        <clipPath id={clipId}>
-          <circle cx="50" cy="50" r="33" />
-        </clipPath>
-      </defs>
-      {glow && <circle cx="50" cy="50" r="49" fill={`url(#${glowId})`} />}
-      <g clipPath={`url(#${clipId})`}>
-        <rect x="16" y="16" width="68" height="68" fill={`url(#${gradId})`} />
+      {glow && (
+        <circle cx="50" cy="50" r="49" fill={`url(#${OLUNE_MOON_GLOW_ID})`} />
+      )}
+      <g clipPath={`url(#${OLUNE_MOON_CLIP_ID})`}>
+        <rect
+          x="16"
+          y="16"
+          width="68"
+          height="68"
+          fill={`url(#${OLUNE_MOON_GRAD_ID})`}
+        />
         <circle cx="38.5" cy="41" r="33" fill="#1B1A38" />
       </g>
     </svg>
@@ -129,7 +119,6 @@ export function OluneLogo({
   className = "",
   ...rest
 }: OluneLogoProps) {
-  const uid = useId();
   const cfg = sizeConfig[size];
   const glow = theme === "dark";
   const textColor = theme === "dark" ? "text-paper" : "text-ink-black";
@@ -141,7 +130,6 @@ export function OluneLogo({
         {...rest}
       >
         <OluneMoon
-          id={uid}
           glow={glow}
           className={cfg.moon}
         />
@@ -158,7 +146,6 @@ export function OluneLogo({
         {...rest}
       >
         <OluneMoon
-          id={uid}
           glow={glow}
           className={`${cfg.moon} translate-y-[0.08em]`}
         />
@@ -169,7 +156,7 @@ export function OluneLogo({
 
   if (variant === "stacked") {
     const moon = (
-      <OluneMoon id={uid} glow={glow} className={cfg.stackMoon ?? cfg.moon} />
+      <OluneMoon glow={glow} className={cfg.stackMoon ?? cfg.moon} />
     );
     return (
       <span
@@ -193,7 +180,7 @@ export function OluneLogo({
       aria-label={label}
       {...rest}
     >
-      <OluneMoon id={uid} glow={glow} className={cfg.moon} />
+      <OluneMoon glow={glow} className={cfg.moon} />
       <Wordmark className={cfg.word}>olune</Wordmark>
     </span>
   );
@@ -207,10 +194,9 @@ export function OluneMark({
   className?: string;
   glow?: boolean;
 }) {
-  const uid = useId();
   return (
     <span className={`inline-flex ${className}`} aria-hidden>
-      <OluneMoon id={uid} glow={glow} className="h-full w-full" />
+      <OluneMoon glow={glow} className="h-full w-full" />
     </span>
   );
 }

@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { CURRENCY, gstComponentCents } from "@/lib/currency";
 import { siblingDiscountedCents } from "@/lib/discounts";
+import { xeroSyncOutstandingInvoice } from "@/lib/xero/webhook-sync";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -320,6 +321,10 @@ export async function createEnrollmentIntent(
     .from("invoices")
     .update({ stripe_payment_intent_id: intent.id })
     .eq("id", invoice.id);
+
+  await xeroSyncOutstandingInvoice(supabase, invoice.id as string, {
+    lineDescription: `Enrollment — ${className}`,
+  });
 
   if (!intent.client_secret) return { ok: false, error: "Stripe did not return a client secret." };
 

@@ -1,30 +1,33 @@
 "use client";
 
-// ============================================================================
-//  SubscriptionsManager — admin oversight of auto-pay subscriptions.
-//  Pre-fetched rows in; cancellation goes through the adminCancelSubscription
-//  server action. Active MRR summary + status filter.
-// ============================================================================
-
 import { useMemo, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { adminCancelSubscription } from "@/app/portal/admin/subscriptions/actions";
-import type { SubscriptionRow } from "@/app/portal/admin/subscriptions/page";
+import type {
+  ClassOption,
+  ParentOption,
+  ProductOption,
+  SubscriptionRow,
+} from "@/app/portal/admin/subscriptions/page";
+import { CreateSubscriptionModal } from "@/components/admin/subscriptions/CreateSubscriptionModal";
 import { formatMoney } from "@/lib/currency";
+import { intervalLabel, type BillingInterval } from "@/lib/subscriptions/pricing";
 
 const STATUS_STYLES: Record<string, string> = {
-  active:     "bg-green-500/15 text-green-500",
-  trialing:   "bg-blue-500/15 text-blue-500",
-  past_due:   "bg-amber-500/15 text-amber-500",
-  unpaid:     "bg-amber-500/15 text-amber-500",
+  active: "bg-green-500/15 text-green-500",
+  trialing: "bg-blue-500/15 text-blue-500",
+  past_due: "bg-amber-500/15 text-amber-500",
+  unpaid: "bg-amber-500/15 text-amber-500",
   incomplete: "bg-muted/15 text-muted",
-  canceled:   "bg-red-500/15 text-red-400",
+  canceled: "bg-red-500/15 text-red-400",
 };
 
 function StatusBadge({ status }: { status: string }) {
   const style = STATUS_STYLES[status] ?? "bg-muted/15 text-muted";
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider ${style}`}>
+    <span
+      className={`rounded-full px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider ${style}`}
+    >
       {status.replace("_", " ")}
     </span>
   );
@@ -32,15 +35,34 @@ function StatusBadge({ status }: { status: string }) {
 
 function fmtDate(iso: string | null) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-NZ", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-NZ", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function billingLabel(interval: string) {
+  try {
+    return intervalLabel(interval as BillingInterval);
+  } catch {
+    return interval;
+  }
 }
 
 export default function SubscriptionsManager({
   subscriptions,
+  parents,
+  classes,
+  products,
 }: {
   subscriptions: SubscriptionRow[];
+  parents: ParentOption[];
+  classes: ClassOption[];
+  products: ProductOption[];
 }) {
   const [filter, setFilter] = useState<"all" | "active" | "canceled">("all");
+  const [showCreate, setShowCreate] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -48,14 +70,16 @@ export default function SubscriptionsManager({
   const activeMrrCents = useMemo(
     () =>
       subscriptions
-        .filter((s) => s.status === "active" && s.interval === "month")
-        .reduce((sum, s) => sum + s.amountCents, 0),
+        .filter((s) => s.status === "active" || s.status === "trialing")
+        .reduce((sum, s) => sum + s.monthlyAmountCents, 0),
     [subscriptions],
   );
-  const activeCount = subscriptions.filter((s) => s.status === "active").length;
+  const activeCount = subscriptions.filter(
+    (s) => s.status === "active" || s.status === "trialing",
+  ).length;
 
   const filtered = subscriptions.filter((s) => {
-    if (filter === "active") return s.status === "active";
+    if (filter === "active") return s.status === "active" || s.status === "trialing";
     if (filter === "canceled") return s.status === "canceled";
     return true;
   });
@@ -77,29 +101,44 @@ export default function SubscriptionsManager({
       animate={{ opacity: 1, y: 0 }}
       className="mx-auto max-w-5xl space-y-6 p-6"
     >
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-black text-ink">Subscriptions</h1>
-        <p className="text-sm text-muted">Auto-pay tuition plans across your studio</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-ink">Subscriptions</h1>
+          <p className="text-sm text-muted">
+            Auto-pay plans with monthly invoices on the 1st while active
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCreate(true)}
+          disabled={parents.length === 0}
+          className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-paper disabled:opacity-50"
+        >
+          Create subscription
+        </button>
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-[--hair] bg-surface p-4">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">Active plans</p>
-          <p className="mt-1 text-2xl font-black text-ink tabular-nums">{activeCount}</p>
+          <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">
+            Active plans
+          </p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-ink">{activeCount}</p>
         </div>
         <div className="rounded-2xl border border-[--hair] bg-surface p-4">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">Monthly recurring</p>
-          <p className="mt-1 text-2xl font-black text-ink tabular-nums">{formatMoney(activeMrrCents)}</p>
+          <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">
+            Monthly recurring
+          </p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-ink">
+            {formatMoney(activeMrrCents)}
+          </p>
         </div>
         <div className="rounded-2xl border border-[--hair] bg-surface p-4">
           <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">Total</p>
-          <p className="mt-1 text-2xl font-black text-ink tabular-nums">{subscriptions.length}</p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-ink">{subscriptions.length}</p>
         </div>
       </div>
 
-      {/* Filter */}
       <div className="flex gap-1.5">
         {(["all", "active", "canceled"] as const).map((f) => (
           <button
@@ -121,49 +160,71 @@ export default function SubscriptionsManager({
         </p>
       )}
 
-      {/* Table */}
       <div className="overflow-hidden rounded-2xl border border-[--hair] bg-surface">
         {filtered.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <p className="text-sm text-muted">No subscriptions to show.</p>
+            {parents.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowCreate(true)}
+                className="mt-3 text-sm font-semibold text-ink underline"
+              >
+                Create your first subscription
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left">
+            <table className="w-full min-w-[720px] text-left">
               <thead>
                 <tr className="border-b border-[--hair]">
-                  {["Plan", "Payer", "Student", "Amount", "Status", "Next charge", ""].map((h) => (
-                    <th
-                      key={h}
-                      className={`px-4 py-3 text-[0.62rem] font-semibold uppercase tracking-wider text-muted ${
-                        !h ? "text-right" : ""
-                      }`}
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {["Plan", "Payer", "Student", "Monthly", "Charge", "Status", "Next charge", ""].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className={`px-4 py-3 text-[0.62rem] font-semibold uppercase tracking-wider text-muted ${
+                          !h ? "text-right" : ""
+                        }`}
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
                 <AnimatePresence initial={false}>
                   {filtered.map((s) => {
                     const canCancel =
-                      s.status !== "canceled" && !s.cancelAtPeriodEnd && Boolean(s.stripeSubscriptionId);
+                      s.status !== "canceled" &&
+                      !s.cancelAtPeriodEnd &&
+                      Boolean(s.stripeSubscriptionId);
                     return (
                       <tr
                         key={s.id}
-                        className="border-b border-[--hair] last:border-0 hover:bg-[color-mix(in_srgb,var(--brand)_3%,transparent)] transition-colors"
+                        className="border-b border-[--hair] transition-colors last:border-0 hover:bg-[color-mix(in_srgb,var(--brand)_3%,transparent)]"
                       >
                         <td className="px-4 py-3">
                           <p className="text-sm font-semibold text-ink">
                             {s.planLabel ?? s.className ?? "Subscription"}
                           </p>
-                          <p className="text-xs text-muted">per {s.interval}</p>
+                          {s.adminCreated && (
+                            <p className="text-[0.65rem] font-medium uppercase tracking-wider text-muted">
+                              Admin plan
+                            </p>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-sm text-ink">{s.payerName ?? "—"}</td>
                         <td className="px-4 py-3 text-sm text-muted">{s.studentName ?? "—"}</td>
                         <td className="px-4 py-3 text-sm tabular-nums text-ink">
+                          {formatMoney(s.monthlyAmountCents)}
+                        </td>
+                        <td className="px-4 py-3 text-sm tabular-nums text-ink">
                           {formatMoney(s.amountCents)}
+                          <span className="block text-xs text-muted">
+                            {billingLabel(s.billingInterval)}
+                          </span>
                         </td>
                         <td className="px-4 py-3">
                           <StatusBadge status={s.status} />
@@ -180,7 +241,7 @@ export default function SubscriptionsManager({
                               <button
                                 onClick={() => cancel(s, false)}
                                 disabled={pendingId === s.id}
-                                className="text-xs text-muted hover:text-amber-500 transition-colors disabled:opacity-50"
+                                className="text-xs text-muted transition-colors hover:text-amber-500 disabled:opacity-50"
                                 title="Stop at the end of the current period"
                               >
                                 {pendingId === s.id ? "…" : "Cancel at period end"}
@@ -188,7 +249,7 @@ export default function SubscriptionsManager({
                               <button
                                 onClick={() => cancel(s, true)}
                                 disabled={pendingId === s.id}
-                                className="text-xs text-muted hover:text-red-400 transition-colors disabled:opacity-50"
+                                className="text-xs text-muted transition-colors hover:text-red-400 disabled:opacity-50"
                                 title="Cancel immediately"
                               >
                                 Now
@@ -207,6 +268,15 @@ export default function SubscriptionsManager({
           </div>
         )}
       </div>
+
+      {showCreate && (
+        <CreateSubscriptionModal
+          parents={parents}
+          classes={classes}
+          products={products}
+          onClose={() => setShowCreate(false)}
+        />
+      )}
     </motion.div>
   );
 }

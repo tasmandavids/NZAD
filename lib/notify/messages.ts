@@ -15,6 +15,9 @@ export type NotificationType =
   | "class_reminder"
   | "payment_failed"
   | "invoice_overdue"
+  | "invoice_sent"
+  | "payment_reminder"
+  | "subscription_sent"
   | "birthday_greeting"
   | "message_received"
   | "waitlist_promoted";
@@ -56,6 +59,9 @@ export function channelsForType(type: string): DeliveryChannel[] {
     case "enrollment_confirmed":
     case "payment_failed":
     case "invoice_overdue":
+    case "invoice_sent":
+    case "payment_reminder":
+    case "subscription_sent":
     case "birthday_greeting":
       return ["email"];
     case "message_received":

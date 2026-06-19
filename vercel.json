@@ -5,6 +5,10 @@
       "schedule": "0 8 * * *"
     },
     {
+      "path": "/api/cron/subscription-invoices",
+      "schedule": "30 8 * * *"
+    },
+    {
       "path": "/api/cron/sweep-unpaid",
       "schedule": "0 9 * * *"
     },

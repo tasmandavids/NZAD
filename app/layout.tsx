@@ -12,6 +12,7 @@ import { resolveStudio } from "@/lib/tenant";
 import { createPublicClient } from "@/lib/supabase/public";
 import { googleFontsStylesheetUrl } from "@/lib/fonts";
 import { getBranding, brandingToCssVars, DEFAULT_BRANDING } from "@/lib/branding";
+import { OluneMoonDefs } from "@/components/brand/OluneMoonDefs";
 import type { CSSProperties } from "react";
 
 export const metadata: Metadata = {
@@ -43,7 +44,10 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {fontsUrl && <link href={fontsUrl} rel="stylesheet" />}
       </head>
-      <body>{children}</body>
+      <body>
+        <OluneMoonDefs />
+        {children}
+      </body>
     </html>
   );
 }
