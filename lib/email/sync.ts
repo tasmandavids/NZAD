@@ -62,6 +62,7 @@ export async function syncEmailAccount(
     }
 
     let synced = 0;
+    const upsertErrors: string[] = [];
 
     for (const [providerThreadId, threadMsgs] of byThread) {
       threadMsgs.sort((a, b) => (a.sentAt ?? "").localeCompare(b.sentAt ?? ""));
@@ -88,7 +89,10 @@ export async function syncEmailAccount(
         .select("id")
         .single();
 
-      if (threadErr || !threadRow) continue;
+      if (threadErr || !threadRow) {
+        if (threadErr) upsertErrors.push(threadErr.message);
+        continue;
+      }
 
       for (const msg of threadMsgs) {
         const { error: msgErr } = await supabase.from("email_messages").upsert(
@@ -112,6 +116,10 @@ export async function syncEmailAccount(
         );
         if (!msgErr) synced += 1;
       }
+    }
+
+    if (messages.length > 0 && synced === 0 && upsertErrors.length) {
+      throw new Error(upsertErrors[0] ?? "Failed to save synced messages");
     }
 
     await supabase

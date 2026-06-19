@@ -11,7 +11,56 @@ type GoogleApiError = {
   error?: { message?: string; status?: string; code?: number };
   emailAddress?: string;
   email?: string;
+  threads?: { id: string }[];
 };
+
+function formatGmailApiError(status: number, message: string | undefined, fallback: string): string {
+  const msg = message ?? fallback;
+  if (status === 403) {
+    if (/insufficient|scope|permission/i.test(msg)) {
+      return "Gmail permissions missing — disconnect this inbox and reconnect, then approve all Gmail permissions.";
+    }
+    if (/not been used|disabled|accessNotConfigured/i.test(msg)) {
+      return "Gmail API is not enabled — enable it in Google Cloud Console, then reconnect.";
+    }
+  }
+  return msg;
+}
+
+export async function assertGmailAccess(accessToken: string): Promise<void> {
+  const info = (await fetch(
+    `https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`,
+  ).then((r) => r.json())) as { scope?: string; error?: string };
+  if (info.error) {
+    throw new Error("Gmail token is invalid — disconnect and reconnect this inbox.");
+  }
+  const scopes = info.scope?.split(" ") ?? [];
+  if (!scopes.some((s) => s.includes("gmail"))) {
+    throw new Error(
+      "Gmail permissions were not granted. Disconnect this inbox and reconnect, then approve all requested permissions.",
+    );
+  }
+}
+
+async function listGmailThreadIds(accessToken: string): Promise<string[]> {
+  const headers = { Authorization: `Bearer ${accessToken}` };
+  await assertGmailAccess(accessToken);
+
+  const urls = [
+    "https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=40&labelIds=INBOX",
+    "https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=40",
+  ];
+
+  let lastError = "Failed to list Gmail threads";
+  for (const url of urls) {
+    const res = await fetch(url, { headers });
+    const body = (await res.json()) as GoogleApiError;
+    if (res.ok) return (body.threads ?? []).map((t) => t.id);
+    lastError = formatGmailApiError(res.status, body.error?.message, lastError);
+    if (res.status === 401 || res.status === 403) break;
+  }
+  throw new Error(lastError);
+}
 
 async function fetchGoogleAccountEmail(accessToken: string): Promise<string> {
   const profileRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
@@ -89,6 +138,7 @@ export async function exchangeGmailCode(
   }
 
   const email = await fetchGoogleAccountEmail(tokenJson.access_token);
+  await assertGmailAccess(tokenJson.access_token);
 
   return {
     kind: "oauth",
@@ -246,16 +296,11 @@ export async function syncGmailInbox(
   }
 
   if (!syncCursor || messages.length === 0) {
-    const listRes = await fetch(
-      "https://gmail.googleapis.com/gmail/v1/users/me/threads?maxResults=40&labelIds=INBOX",
-      { headers },
-    );
-    const list = (await listRes.json()) as { threads?: { id: string }[] };
-    if (!listRes.ok) throw new Error("Failed to list Gmail threads");
+    const threadIds = await listGmailThreadIds(refreshedCreds.accessToken);
 
-    for (const t of list.threads ?? []) {
+    for (const id of threadIds) {
       const threadRes = await fetch(
-        `https://gmail.googleapis.com/gmail/v1/users/me/threads/${t.id}?format=full`,
+        `https://gmail.googleapis.com/gmail/v1/users/me/threads/${id}?format=full`,
         { headers },
       );
       if (!threadRes.ok) continue;

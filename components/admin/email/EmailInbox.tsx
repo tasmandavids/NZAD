@@ -180,6 +180,7 @@ export function EmailInbox({
   const [sending, setSending] = useState(false);
   const [pending, startTransition] = useTransition();
   const [showConnect, setShowConnect] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   useEffect(() => {
     setAccounts(initialAccounts);
@@ -221,9 +222,14 @@ export function EmailInbox({
   };
 
   const refresh = () => {
+    setSyncError(null);
     startTransition(async () => {
       const accountId = selectedAccountId === "all" ? undefined : selectedAccountId;
-      await syncEmailAccountAction(accountId);
+      const result = await syncEmailAccountAction(accountId);
+      if (!result.ok) {
+        setSyncError(result.error);
+        return;
+      }
       window.location.reload();
     });
   };
@@ -287,13 +293,15 @@ export function EmailInbox({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {(bannerError || bannerConnected) && (
+      {(bannerError || bannerConnected || syncError) && (
         <div
           className={`border-b px-6 py-3 text-sm ${
-            bannerError ? "border-red-200 bg-red-50 text-red-700" : "border-green-200 bg-green-50 text-green-800"
+            bannerError || syncError
+              ? "border-red-200 bg-red-50 text-red-700"
+              : "border-green-200 bg-green-50 text-green-800"
           }`}
         >
-          {bannerError ?? `Connected ${bannerConnected} successfully. Syncing your inbox…`}
+          {bannerError ?? syncError ?? `Connected ${bannerConnected} successfully. Syncing your inbox…`}
         </div>
       )}
 
@@ -374,11 +382,19 @@ export function EmailInbox({
           </div>
           <div className="border-t border-[--hair] p-3 text-[0.62rem] text-muted">
             {accounts.map((a) => (
-              <div key={a.id} className="flex items-center justify-between gap-2 py-1">
-                <span className="truncate">{a.email_address}</span>
-                <button type="button" onClick={() => disconnect(a.id)} className="shrink-0 text-red-500 hover:underline">
-                  Disconnect
-                </button>
+              <div key={a.id} className="py-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate">{a.email_address}</span>
+                  <button type="button" onClick={() => disconnect(a.id)} className="shrink-0 text-red-500 hover:underline">
+                    Disconnect
+                  </button>
+                </div>
+                {a.sync_error && (
+                  <p className="mt-1 text-red-500">{a.sync_error}</p>
+                )}
+                {a.last_sync_at && !a.sync_error && (
+                  <p className="mt-0.5 text-muted">Last sync {formatWhen(a.last_sync_at)}</p>
+                )}
               </div>
             ))}
           </div>
