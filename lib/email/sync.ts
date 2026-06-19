@@ -4,6 +4,7 @@ import { syncGmailInbox, sendGmailReply } from "./providers/gmail";
 import { syncMicrosoftInbox, sendMicrosoftReply } from "./providers/microsoft";
 import { syncImapInbox, sendImapReply } from "./providers/imap";
 import type { EmailAccountRow, EmailCredentials, EmailProvider, SyncedMessage } from "./types";
+import { archiveThreadForParents, loadParentsByEmails } from "./parent-archive";
 
 function participantsFromMessages(msgs: SyncedMessage[]): string[] {
   const set = new Set<string>();
@@ -54,6 +55,13 @@ export async function syncEmailAccount(
     const { messages, nextCursor, refreshedCreds } = await pullMessages(account, creds);
     if (refreshedCreds) creds = refreshedCreds;
 
+    const participantEmails = messages.flatMap((m) => [
+      ...(m.fromAddress ? [m.fromAddress] : []),
+      ...m.toAddresses,
+      ...m.ccAddresses,
+    ]);
+    const parentsByEmail = await loadParentsByEmails(supabase, account.studio_id, participantEmails);
+
     const byThread = new Map<string, SyncedMessage[]>();
     for (const msg of messages) {
       const list = byThread.get(msg.providerThreadId) ?? [];
@@ -94,27 +102,52 @@ export async function syncEmailAccount(
         continue;
       }
 
+      const archivedMessages: { sourceMessageId: string; synced: SyncedMessage }[] = [];
+
       for (const msg of threadMsgs) {
-        const { error: msgErr } = await supabase.from("email_messages").upsert(
-          {
-            thread_id: threadRow.id,
-            account_id: account.id,
-            studio_id: account.studio_id,
-            provider_message_id: msg.providerMessageId,
-            from_address: msg.fromAddress,
-            from_name: msg.fromName,
-            to_addresses: msg.toAddresses,
-            cc_addresses: msg.ccAddresses,
-            subject: msg.subject,
-            body_text: msg.bodyText,
-            body_html: msg.bodyHtml,
-            sent_at: msg.sentAt,
-            is_outbound: msg.isOutbound,
-            in_reply_to: msg.inReplyTo,
-          },
-          { onConflict: "account_id,provider_message_id" },
-        );
-        if (!msgErr) synced += 1;
+        const { data: msgRow, error: msgErr } = await supabase
+          .from("email_messages")
+          .upsert(
+            {
+              thread_id: threadRow.id,
+              account_id: account.id,
+              studio_id: account.studio_id,
+              provider_message_id: msg.providerMessageId,
+              from_address: msg.fromAddress,
+              from_name: msg.fromName,
+              to_addresses: msg.toAddresses,
+              cc_addresses: msg.ccAddresses,
+              subject: msg.subject,
+              body_text: msg.bodyText,
+              body_html: msg.bodyHtml,
+              sent_at: msg.sentAt,
+              is_outbound: msg.isOutbound,
+              in_reply_to: msg.inReplyTo,
+            },
+            { onConflict: "account_id,provider_message_id" },
+          )
+          .select("id")
+          .single();
+
+        if (!msgErr && msgRow) {
+          archivedMessages.push({ sourceMessageId: msgRow.id, synced: msg });
+          synced += 1;
+        }
+      }
+
+      if (archivedMessages.length) {
+        await archiveThreadForParents(supabase, {
+          studioId: account.studio_id,
+          accountEmail: account.email_address,
+          sourceThreadId: threadRow.id,
+          participants,
+          subject: latest.subject,
+          snippet: latest.snippet,
+          lastMessageAt: latest.sentAt,
+          messageCount: threadMsgs.length,
+          messages: archivedMessages,
+          parentsByEmail,
+        });
       }
     }
 

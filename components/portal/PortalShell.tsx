@@ -49,6 +49,7 @@ const ADMIN_NAV: NavSection[] = [
     title: "Finance",
     items: [
       { href: "/portal/admin/billing", label: "Billing" },
+      { href: "/portal/admin/accounting", label: "Accounting" },
       { href: "/portal/admin/subscriptions", label: "Subscriptions" },
     ],
   },
@@ -79,6 +80,7 @@ const NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
   ],
   parent: [
     { href: "/portal/parent", label: "Family Hub", exact: true },
+    { href: "/portal/parent/messages", label: "Studio email" },
   ],
   student: [
     { href: "/portal/student", label: "My Timetable", exact: true },

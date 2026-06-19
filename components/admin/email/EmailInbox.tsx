@@ -607,7 +607,14 @@ export function EmailInbox({
                                   <span className="ml-2 text-sm font-normal text-muted">(you)</span>
                                 )}
                               </p>
-                              {contact && !msg.is_outbound && <ContactBadge contact={contact} />}
+                              {contact && !msg.is_outbound && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <ContactBadge contact={contact} />
+                                  {contact.type === "parent" && (
+                                    <span className="text-xs text-muted">Saved to parent portal</span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                             {msg.from_address && (
                               <p className="text-sm text-muted">{msg.from_address}</p>
