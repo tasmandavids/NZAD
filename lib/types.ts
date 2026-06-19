@@ -1,6 +1,6 @@
 // Shared domain types for the tenant + branding backbone.
 
-export type Role = "admin" | "teacher" | "parent" | "student";
+export type Role = "admin" | "teacher" | "office" | "parent" | "student";
 export type ThemeBase = "dark" | "light";
 
 export interface Studio {

@@ -65,6 +65,7 @@
   "roles": {
     "admin": "Studio admin",
     "teacher": "Teacher",
+    "office": "Office staff",
     "parent": "Parent",
     "student": "Student"
   },
@@ -76,6 +77,7 @@
   },
   "nav": {
     "sections": {
+      "teamManagement": "Team",
       "clientManagement": "Client management",
       "finance": "Finance",
       "digital": "Digital",
@@ -85,6 +87,7 @@
       "dashboard": "Dashboard",
       "classes": "Classes",
       "events": "Events",
+      "staff": "Staff",
       "parents": "Parents",
       "students": "Students",
       "leads": "Leads",
@@ -101,6 +104,9 @@
     },
     "teacher": {
       "schedule": "Schedule & Roll"
+    },
+    "office": {
+      "dashboard": "Front desk"
     },
     "parent": {
       "familyHub": "Family Hub",

@@ -9,13 +9,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { checkPlatformOperator } from "@/lib/platform/operator-edge";
+import { canAccessPortalPath } from "@/lib/portal/office-access";
 import { mergeSessionCookies, redirectWithSession, refreshSession } from "@/lib/supabase/middleware";
-
-type Role = "admin" | "teacher" | "parent" | "student";
+import type { Role } from "@/lib/types";
 
 const ROLE_HOME: Record<Role, string> = {
   admin:   "/portal/admin",
   teacher: "/portal/teacher",
+  office:  "/portal/office",
   parent:  "/portal/parent",
   student: "/portal/student",
 };
@@ -42,8 +43,9 @@ export async function middleware(request: NextRequest) {
     }
     const isOperator = await checkPlatformOperator(supabase, user.id, user.email);
     if (!isOperator) {
-      const role = await getRole(supabase, user.id);
-      const dest = role ? ROLE_HOME[role] : "/onboarding";
+      const profile = await getProfile(supabase, user.id);
+      const dest =
+        profile?.studioId && profile.role ? ROLE_HOME[profile.role] : "/onboarding";
       return mergeSessionCookies(NextResponse.redirect(new URL(dest, request.url)), response);
     }
     return response;
@@ -55,11 +57,11 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user) {
-    const role = await getRole(supabase, user.id);
+    const profile = await getProfile(supabase, user.id);
 
-    // Signed up but hasn't created/joined a studio yet.
-    if (!role) {
-      if (inPortal) {
+    // Signed up but hasn't created/joined a studio yet (role defaults to parent).
+    if (!profile?.studioId) {
+      if (inPortal || inLogin || pathname === "/portal" || pathname === "/portal/") {
         return mergeSessionCookies(
           NextResponse.redirect(new URL("/onboarding", request.url)),
           response,
@@ -68,7 +70,7 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    const home = ROLE_HOME[role];
+    const home = ROLE_HOME[profile.role!];
 
     // On /login or bare /portal → send to the intended destination.
     if (pathname === "/login" || pathname === "/portal" || pathname === "/portal/") {
@@ -83,7 +85,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Wandered into another role's portal → bounce to their own.
-    if (inPortal && !pathname.startsWith(home)) {
+    if (inPortal && !canAccessPortalPath(profile.role!, pathname)) {
       return mergeSessionCookies(NextResponse.redirect(new URL(home, request.url)), response);
     }
   }
@@ -111,7 +113,12 @@ async function resolveSignedInDestination(
   }
 
   if (next.startsWith("/portal")) {
-    return next.startsWith(home) ? next : home;
+    return canAccessPortalPath(
+      (await getProfile(supabase, userId))?.role ?? "parent",
+      next,
+    )
+      ? next
+      : home;
   }
 
   return home;
@@ -129,13 +136,22 @@ async function resolveSignedInDestination(
  *
  * Then you can delete getRole() and skip the round-trip.
  */
-async function getRole(supabase: SupabaseClient, userId: string): Promise<Role | null> {
+type ProfileAccess = { role: Role; studioId: string | null };
+
+async function getProfile(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<ProfileAccess | null> {
   const { data } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, studio_id")
     .eq("id", userId)
     .single();
-  return (data?.role as Role) ?? null;
+  if (!data?.role) return null;
+  return {
+    role: data.role as Role,
+    studioId: (data.studio_id as string | null) ?? null,
+  };
 }
 
 export const config = {

@@ -56,8 +56,8 @@ describe("renderNotificationEmail", () => {
     const prev = process.env.NEXT_PUBLIC_APP_URL;
     process.env.NEXT_PUBLIC_APP_URL = "https://demo.olune.app";
     const e = renderNotificationEmail(sample({ link: "/portal/student" }));
-    expect(e.html).toContain("https://demo.olune.app/portal/student");
-    expect(e.text).toContain("https://demo.olune.app/portal/student");
+    expect(e.html).toContain("https://www.demo.olune.app/portal/student");
+    expect(e.text).toContain("https://www.demo.olune.app/portal/student");
     process.env.NEXT_PUBLIC_APP_URL = prev;
   });
 

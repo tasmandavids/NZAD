@@ -20,6 +20,10 @@ export const ADMIN_NAV: NavSection[] = [
     ],
   },
   {
+    titleKey: "nav.sections.teamManagement",
+    items: [{ href: "/portal/admin/staff", labelKey: "nav.admin.staff" }],
+  },
+  {
     titleKey: "nav.sections.clientManagement",
     items: [
       { href: "/portal/admin/parents", labelKey: "nav.admin.parents" },
@@ -56,8 +60,28 @@ export const ADMIN_NAV: NavSection[] = [
   },
 ];
 
+export const OFFICE_NAV: NavSection[] = [
+  {
+    items: [{ href: "/portal/office", labelKey: "nav.office.dashboard", exact: true }],
+  },
+  {
+    titleKey: "nav.sections.clientManagement",
+    items: [
+      { href: "/portal/admin/parents", labelKey: "nav.admin.parents" },
+      { href: "/portal/admin/students", labelKey: "nav.admin.students" },
+      { href: "/portal/admin/leads", labelKey: "nav.admin.leads" },
+      { href: "/portal/admin/classes", labelKey: "nav.admin.classes" },
+    ],
+  },
+  {
+    titleKey: "nav.sections.communications",
+    items: [{ href: "/portal/admin/messages", labelKey: "nav.admin.messages" }],
+  },
+];
+
 export const PORTAL_NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
   teacher: [{ href: "/portal/teacher", labelKey: "nav.teacher.schedule", exact: true }],
+  office: [{ href: "/portal/office", labelKey: "nav.office.dashboard", exact: true }],
   parent: [
     { href: "/portal/parent", labelKey: "nav.parent.familyHub", exact: true },
     { href: "/portal/parent/messages", labelKey: "nav.parent.studioEmail" },
@@ -68,6 +92,7 @@ export const PORTAL_NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
 export const ROLE_BADGE_KEYS: Record<Role, string> = {
   admin: "roles.admin",
   teacher: "roles.teacher",
+  office: "roles.office",
   parent: "roles.parent",
   student: "roles.student",
 };

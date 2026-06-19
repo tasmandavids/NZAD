@@ -3,7 +3,7 @@
 // Minimal starter sign-in. Middleware routes you to the right /portal/<role>.
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { OluneLogo } from "@/components/brand/OluneLogo";
@@ -13,7 +13,6 @@ import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 function LoginForm() {
   const t = useTranslations("auth");
   const tCommon = useTranslations("common");
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams?.get("next") ?? "/portal";
   const callbackError = searchParams?.get("error") === "auth_callback_error";
@@ -35,8 +34,8 @@ function LoginForm() {
     });
     setBusy(false);
     if (signInError) return setError(signInError.message);
-    router.replace(next);
-    router.refresh();
+    // Full navigation so middleware sees the fresh session cookie.
+    window.location.assign(next);
   }
 
   return (

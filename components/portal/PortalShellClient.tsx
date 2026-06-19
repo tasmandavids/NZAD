@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { signOut } from "@/app/portal/actions";
 import type { Role } from "@/lib/types";
-import { ADMIN_NAV, PORTAL_NAV, ROLE_BADGE_KEYS, type NavItem } from "@/lib/portal/nav-config";
+import { ADMIN_NAV, OFFICE_NAV, PORTAL_NAV, ROLE_BADGE_KEYS, type NavItem } from "@/lib/portal/nav-config";
 import { OptimizableImage } from "@/components/ui/OptimizableImage";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
@@ -124,6 +124,17 @@ function SidebarContent({
       <nav className="flex-1 overflow-y-auto p-3">
         {role === "admin" ? (
           ADMIN_NAV.map((section, index) => (
+            <div key={section.titleKey ?? `section-${index}`} className={index > 0 ? "mt-4" : ""}>
+              {section.titleKey && (
+                <p className="mb-1 px-3 text-[0.62rem] font-semibold uppercase tracking-widest text-muted">
+                  {t(section.titleKey as Parameters<typeof t>[0])}
+                </p>
+              )}
+              <div className="space-y-0.5">{section.items.map(renderNavItem)}</div>
+            </div>
+          ))
+        ) : role === "office" ? (
+          OFFICE_NAV.map((section, index) => (
             <div key={section.titleKey ?? `section-${index}`} className={index > 0 ? "mt-4" : ""}>
               {section.titleKey && (
                 <p className="mb-1 px-3 text-[0.62rem] font-semibold uppercase tracking-widest text-muted">

@@ -453,10 +453,12 @@ function ClassRowItem({
   cls,
   onEdit,
   onDelete,
+  readOnly = false,
 }: {
   cls: ClassRow;
   onEdit: () => void;
   onDelete: () => void;
+  readOnly?: boolean;
 }) {
   const t = useTranslations("admin.classes");
   const tShared = useTranslations("admin.shared");
@@ -523,20 +525,22 @@ function ClassRowItem({
         {cls.priceCents > 0 ? formatMoney(cls.priceCents) : tShared("dash")}
       </td>
 
-      <td className="px-4 py-3 text-right">
-        <button
-          onClick={onEdit}
-          className="mr-2 text-xs text-muted hover:text-ink transition-colors"
-        >
-          {tCommon("edit")}
-        </button>
-        <button
-          onClick={onDelete}
-          className="text-xs text-muted hover:text-red-400 transition-colors"
-        >
-          {tCommon("delete")}
-        </button>
-      </td>
+      {!readOnly && (
+        <td className="px-4 py-3 text-right">
+          <button
+            onClick={onEdit}
+            className="mr-2 text-xs text-muted hover:text-ink transition-colors"
+          >
+            {tCommon("edit")}
+          </button>
+          <button
+            onClick={onDelete}
+            className="text-xs text-muted hover:text-red-400 transition-colors"
+          >
+            {tCommon("delete")}
+          </button>
+        </td>
+      )}
     </tr>
   );
 }
@@ -544,9 +548,11 @@ function ClassRowItem({
 export default function ClassesManager({
   classes,
   teachers,
+  readOnly = false,
 }: {
   classes: ClassRow[];
   teachers: TeacherOption[];
+  readOnly?: boolean;
 }) {
   const t = useTranslations("admin.classes");
 
@@ -573,7 +579,7 @@ export default function ClassesManager({
     t("table.teacher"),
     t("table.enrolled"),
     t("table.price"),
-    "",
+    ...(readOnly ? [] : [""]),
   ];
 
   return (
@@ -589,13 +595,15 @@ export default function ClassesManager({
             {t("subtitle", { count: classes.length })}
           </p>
         </div>
-        <button
-          onClick={() => setPanel({ type: "create" })}
-          className="rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90"
-          style={{ background: "var(--brand)" }}
-        >
-          {t("newClass")}
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => setPanel({ type: "create" })}
+            className="rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90"
+            style={{ background: "var(--brand)" }}
+          >
+            {t("newClass")}
+          </button>
+        )}
       </div>
 
       <div>
@@ -638,6 +646,7 @@ export default function ClassesManager({
                   <ClassRowItem
                     key={cls.id}
                     cls={cls}
+                    readOnly={readOnly}
                     onEdit={() => setPanel({ type: "edit", cls })}
                     onDelete={() => setPanel({ type: "delete", cls })}
                   />

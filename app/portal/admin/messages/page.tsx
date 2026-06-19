@@ -5,6 +5,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { MessagesPanel } from "@/components/admin/messages/MessagesPanel";
+import { isStudioOpsRole } from "@/lib/portal/access";
+import type { Role } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +29,9 @@ export default async function MessagesPage({
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.role !== "admin") redirect("/portal/admin");
+  if (!profile || !isStudioOpsRole(profile.role as Role)) {
+    redirect(profile?.role === "office" ? "/portal/office" : "/portal/admin");
+  }
 
   const { data: contacts } = await supabase
     .from("profiles")

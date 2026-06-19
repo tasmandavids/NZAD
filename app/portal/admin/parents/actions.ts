@@ -5,25 +5,16 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getStudioOpsStudio } from "@/lib/portal/access";
 import type { GuardianRelationship } from "@/lib/parents/types";
 
 async function getAdminStudio() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not signed in.", supabase, studioId: null };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("studio_id, role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") return { error: "Admin only.", supabase, studioId: null };
-  if (!profile.studio_id) return { error: "No studio found.", supabase, studioId: null };
-
-  return { error: null, supabase, studioId: profile.studio_id as string };
+  const ctx = await getStudioOpsStudio();
+  return {
+    error: ctx.error,
+    supabase: ctx.supabase,
+    studioId: ctx.studioId,
+  };
 }
 
 export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };

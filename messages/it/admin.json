@@ -884,6 +884,83 @@
     },
     "placeholder": {
       "comingSoon": "Prossimamente"
+    },
+    "staff": {
+      "title": "Staff",
+      "subtitle": "{count, plural, one {# team member} other {# team members}}",
+      "addStaff": "Add staff",
+      "searchPlaceholder": "Search by name, email, or manager…",
+      "empty": "No staff yet. Add your first team member.",
+      "inactive": "Inactive",
+      "reportsTo": "Reports to {name}",
+      "tabs": { "roster": "Roster", "calendar": "Calendar" },
+      "roles": { "teacher": "Teacher", "office": "Office", "admin": "Studio admin" },
+      "employment": {
+        "full_time": "Full-time",
+        "part_time": "Part-time",
+        "casual": "Casual",
+        "contractor": "Contractor"
+      },
+      "workLocationOptions": {
+        "on_site": "On-site",
+        "remote": "Remote",
+        "hybrid": "Hybrid"
+      },
+      "add": {
+        "title": "Add staff member",
+        "role": "Portal role",
+        "employmentType": "Employment type",
+        "workLocation": "Work location",
+        "manager": "Manager",
+        "locations": "Studio locations",
+        "startDate": "Start date",
+        "scheduleNotes": "Schedule / availability notes",
+        "submit": "Add staff member",
+        "roles": { "teacher": "Teacher", "office": "Office" },
+        "employment": {
+          "full_time": "Full-time",
+          "part_time": "Part-time",
+          "casual": "Casual",
+          "contractor": "Contractor"
+        },
+        "workLocationOptions": {
+          "on_site": "On-site",
+          "remote": "Remote",
+          "hybrid": "Hybrid"
+        }
+      },
+      "calendar": {
+        "prevWeek": "Previous",
+        "nextWeek": "Next",
+        "filterAllRoles": "All roles",
+        "filterTeachers": "Teachers",
+        "filterOffice": "Office",
+        "filterAllLocations": "All locations",
+        "teachingClass": "Scheduled class (teaching)",
+        "addShift": "Add shift",
+        "editShift": "Edit shift",
+        "startTime": "Start",
+        "endTime": "End",
+        "location": "Location",
+        "notes": "Notes"
+      },
+      "detail": {
+        "back": "Back to staff",
+        "endDate": "End date",
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate",
+        "contractNotes": "Contract notes",
+        "payNotes": "Pay notes",
+        "addShift": "Add shift",
+        "noShifts": "No shifts recorded yet.",
+        "shiftDateRequired": "Shift date is required.",
+        "tabs": {
+          "profile": "Profile",
+          "employment": "Employment",
+          "contract": "Contract & pay",
+          "shifts": "Shifts"
+        }
+      }
     }
   }
 }
