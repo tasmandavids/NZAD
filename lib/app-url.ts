@@ -1,7 +1,35 @@
 const LOCAL_APP_URL = "http://localhost:3000";
 
+/** Ensure a full origin with protocol; apex domains use www for stable OAuth callbacks. */
 function normalizeOrigin(url: string): string {
-  return url.replace(/\/$/, "");
+  let raw = url.trim().replace(/\/$/, "");
+  if (!raw) return LOCAL_APP_URL;
+
+  if (!/^https?:\/\//i.test(raw)) {
+    raw = `https://${raw}`;
+  }
+
+  try {
+    const parsed = new URL(raw);
+    const { protocol, hostname, port } = parsed;
+
+    if (hostname === "localhost" || hostname.endsWith(".localhost")) {
+      return port ? `${protocol}//${hostname}:${port}` : `${protocol}//${hostname}`;
+    }
+
+    // Bare apex (olune.co.nz) → www.olune.co.nz so OAuth matches Google/Xero registration.
+    const labels = hostname.split(".");
+    let host = hostname;
+    if (labels.length === 2) {
+      host = `www.${hostname}`;
+    }
+
+    const defaultPort = protocol === "https:" ? "443" : "80";
+    const portSuffix = port && port !== defaultPort ? `:${port}` : "";
+    return `${protocol}//${host}${portSuffix}`;
+  } catch {
+    return raw;
+  }
 }
 
 /**
@@ -15,7 +43,7 @@ export function canonicalAppUrl(): string {
 
   const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN?.replace(/^www\./, "").trim();
   if (root && root !== "localhost") {
-    return `https://www.${root}`;
+    return normalizeOrigin(root);
   }
 
   return LOCAL_APP_URL;
