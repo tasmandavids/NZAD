@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { EmailInbox } from "@/components/admin/email/EmailInbox";
-import { syncEmailAccount } from "@/lib/email/sync";
-import type { EmailAccountRow } from "@/lib/email/types";
 
 export const dynamic = "force-dynamic";
 
@@ -50,36 +48,11 @@ export default async function EmailPage({
       .limit(200),
   ]);
 
-  if (params.connected && accounts?.length) {
-    const latest = accounts.find((a) => a.provider === params.connected);
-    if (latest) {
-      const { data: fullAccount } = await supabase
-        .from("email_accounts")
-        .select("*")
-        .eq("id", latest.id)
-        .single();
-      if (fullAccount) {
-        await syncEmailAccount(supabase, fullAccount as EmailAccountRow);
-      }
-    }
-  }
-
-  let refreshedThreads = threads ?? [];
-  if (params.connected) {
-    const { data } = await supabase
-      .from("email_threads")
-      .select("*")
-      .eq("studio_id", profile.studio_id)
-      .order("last_message_at", { ascending: false })
-      .limit(200);
-    refreshedThreads = data ?? [];
-  }
-
   return (
     <div className="h-full min-h-[calc(100vh-3rem)]">
       <EmailInbox
         accounts={accounts ?? []}
-        threads={refreshedThreads}
+        threads={threads ?? []}
         bannerError={params.error ? safeDecodeURIComponent(params.error) : null}
         bannerConnected={params.connected ?? null}
       />

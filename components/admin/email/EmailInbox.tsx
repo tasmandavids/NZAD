@@ -10,9 +10,19 @@ import {
   disconnectEmailAccount,
   markThreadReadAction,
   summarizeThreadAction,
-  syncEmailAccountAction,
 } from "@/app/portal/admin/email/actions";
 import { oauthConnectPath } from "@/lib/email/oauth-paths";
+
+async function runEmailSync(accountId?: string): Promise<{ ok: true; synced: number } | { ok: false; error: string }> {
+  const res = await fetch("/api/email/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(accountId ? { accountId } : {}),
+  });
+  const data = (await res.json()) as { synced?: number; error?: string };
+  if (!res.ok) return { ok: false, error: data.error ?? "Sync failed" };
+  return { ok: true, synced: data.synced ?? 0 };
+}
 
 type Account = Pick<
   EmailAccountRow,
@@ -181,6 +191,24 @@ export function EmailInbox({
   const [pending, startTransition] = useTransition();
   const [showConnect, setShowConnect] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [initialSyncDone, setInitialSyncDone] = useState(!bannerConnected);
+
+  useEffect(() => {
+    if (!bannerConnected || initialSyncDone) return;
+
+    let cancelled = false;
+    void (async () => {
+      const result = await runEmailSync();
+      if (cancelled) return;
+      if (!result.ok) setSyncError(result.error);
+      window.history.replaceState(null, "", "/portal/admin/email");
+      window.location.reload();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bannerConnected, initialSyncDone]);
 
   useEffect(() => {
     setAccounts(initialAccounts);
@@ -206,10 +234,15 @@ export function EmailInbox({
     try {
       const res = await fetch(`/api/email/threads/${threadId}`);
       const data = await res.json();
+      if (!res.ok) {
+        setSyncError(data.error ?? "Could not load conversation");
+        return;
+      }
       setActiveThread(data.thread ?? null);
       setMessages(data.messages ?? []);
-      await markThreadReadAction(threadId);
-      setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, is_read: true } : t)));
+      void markThreadReadAction(threadId).then(() => {
+        setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, is_read: true } : t)));
+      });
     } finally {
       setLoadingThread(false);
     }
@@ -225,7 +258,7 @@ export function EmailInbox({
     setSyncError(null);
     startTransition(async () => {
       const accountId = selectedAccountId === "all" ? undefined : selectedAccountId;
-      const result = await syncEmailAccountAction(accountId);
+      const result = await runEmailSync(accountId);
       if (!result.ok) {
         setSyncError(result.error);
         return;
@@ -264,7 +297,6 @@ export function EmailInbox({
       if (!res.ok) throw new Error(data.error ?? "Send failed");
       setDraft("");
       await loadThread(selectedThreadId);
-      refresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to send");
     } finally {
@@ -293,7 +325,7 @@ export function EmailInbox({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {(bannerError || bannerConnected || syncError) && (
+      {(bannerError || syncError || (bannerConnected && !initialSyncDone)) && (
         <div
           className={`border-b px-6 py-3 text-sm ${
             bannerError || syncError
@@ -301,7 +333,9 @@ export function EmailInbox({
               : "border-green-200 bg-green-50 text-green-800"
           }`}
         >
-          {bannerError ?? syncError ?? `Connected ${bannerConnected} successfully. Syncing your inbox…`}
+          {bannerError ??
+            syncError ??
+            (bannerConnected && !initialSyncDone ? "Connected — syncing your inbox in the background…" : null)}
         </div>
       )}
 

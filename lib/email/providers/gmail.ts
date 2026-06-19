@@ -222,6 +222,37 @@ function headerValue(headers: { name: string; value: string }[] | undefined, nam
   return headers?.find((h) => h.name.toLowerCase() === name.toLowerCase())?.value;
 }
 
+async function fetchGmailThreadMessages(
+  threadIds: string[],
+  accessToken: string,
+): Promise<SyncedMessage[]> {
+  const headers = { Authorization: `Bearer ${accessToken}` };
+  const messages: SyncedMessage[] = [];
+  const batchSize = 5;
+
+  for (let i = 0; i < threadIds.length; i += batchSize) {
+    const batch = threadIds.slice(i, i + batchSize);
+    const batchMessages = await Promise.all(
+      batch.map(async (id) => {
+        const threadRes = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/threads/${id}?format=full`,
+          { headers },
+        );
+        if (!threadRes.ok) return [] as SyncedMessage[];
+        const thread = (await threadRes.json()) as {
+          messages?: Parameters<typeof messageToSynced>[0][];
+        };
+        return (thread.messages ?? []).map(messageToSynced);
+      }),
+    );
+    for (const threadMsgs of batchMessages) {
+      messages.push(...threadMsgs);
+    }
+  }
+
+  return messages;
+}
+
 function messageToSynced(
   msg: {
     id: string;
@@ -297,18 +328,7 @@ export async function syncGmailInbox(
 
   if (!syncCursor || messages.length === 0) {
     const threadIds = await listGmailThreadIds(refreshedCreds.accessToken);
-
-    for (const id of threadIds) {
-      const threadRes = await fetch(
-        `https://gmail.googleapis.com/gmail/v1/users/me/threads/${id}?format=full`,
-        { headers },
-      );
-      if (!threadRes.ok) continue;
-      const thread = (await threadRes.json()) as { messages?: Parameters<typeof messageToSynced>[0][] };
-      for (const msg of thread.messages ?? []) {
-        messages.push(messageToSynced(msg));
-      }
-    }
+    messages.push(...(await fetchGmailThreadMessages(threadIds, refreshedCreds.accessToken)));
 
     const profileRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", { headers });
     const profile = (await profileRes.json()) as { historyId?: string };
