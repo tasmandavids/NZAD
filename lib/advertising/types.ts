@@ -1,0 +1,81 @@
+export type SocialPlatform = "facebook" | "instagram" | "tiktok";
+
+export type AdCampaignStatus = "draft" | "scheduled" | "active" | "paused" | "completed" | "failed";
+
+export type AdObjective = "awareness" | "traffic" | "engagement" | "conversions" | "leads";
+
+export type SocialConnection = {
+  id: string;
+  platform: SocialPlatform;
+  accountId: string | null;
+  accountName: string | null;
+  lastSyncAt: string | null;
+  syncError: string | null;
+};
+
+export type AdCampaign = {
+  id: string;
+  name: string;
+  objective: AdObjective;
+  status: AdCampaignStatus;
+  platforms: SocialPlatform[];
+  headline: string | null;
+  bodyText: string | null;
+  callToAction: string | null;
+  imageUrl: string | null;
+  videoUrl: string | null;
+  targetUrl: string | null;
+  budgetCents: number | null;
+  scheduledAt: string | null;
+  publishedAt: string | null;
+  platformIds: Record<string, string>;
+  publishError: string | null;
+  aiGenerated: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SeoPageSnapshot = {
+  id: string;
+  title: string;
+  slug: string;
+  status: string;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  isHome: boolean;
+};
+
+export type SeoRecommendation = {
+  id: string;
+  priority: "high" | "medium" | "low";
+  category: string;
+  title: string;
+  description: string;
+  suggestedFix?: string;
+};
+
+export type SeoAudit = {
+  id: string;
+  pageId: string | null;
+  pageTitle: string | null;
+  score: number | null;
+  recommendations: SeoRecommendation[];
+  aiSummary: string | null;
+  createdAt: string;
+};
+
+export type GeneratedAdCopy = {
+  headline: string;
+  bodyText: string;
+  callToAction: string;
+  hashtags: string[];
+  platformVariants: Partial<Record<SocialPlatform, { headline: string; bodyText: string }>>;
+};
+
+export type SocialCredentials = {
+  accessToken: string;
+  refreshToken?: string;
+  expiresAt?: number;
+  scopes?: string[];
+  meta?: Record<string, string>;
+};
