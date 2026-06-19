@@ -7,17 +7,15 @@
 
 import { headers } from "next/headers";
 import { resolveStudio } from "@/lib/tenant";
-import { createClient } from "@/lib/supabase/server";
-import { getBranding, DEFAULT_BRANDING } from "@/lib/branding";
+import { getBrandingCached, DEFAULT_BRANDING } from "@/lib/branding";
 import EnrolPage from "@/components/marketing/EnrolPage";
 
 export default async function EnrolRoute() {
   const host = (await headers()).get("host");
   const studio = await resolveStudio(host);
 
-  const supabase = await createClient();
   const branding = studio
-    ? await getBranding(supabase, studio.id)
+    ? await getBrandingCached(studio.id)
     : { ...DEFAULT_BRANDING };
 
   return (

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminEmailContext } from "@/lib/email/admin-context";
 import { identifyContactsByEmail } from "@/lib/email/identify-contact";
+import { isUuid } from "@/lib/validation/uuid";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,9 @@ export async function GET(
   }
 
   const { threadId } = await params;
+  if (!isUuid(threadId)) {
+    return NextResponse.json({ error: "Invalid thread id" }, { status: 400 });
+  }
 
   const { data: thread } = await ctx.supabase
     .from("email_threads")

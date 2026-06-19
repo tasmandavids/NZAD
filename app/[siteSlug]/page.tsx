@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { resolveStudio } from "@/lib/tenant";
-import { getPublishedPage } from "@/lib/site/queries";
+import { getPublishedPageCached } from "@/lib/site/cached-queries";
 import { PublicSite } from "@/components/site/PublicSite";
 
 export async function generateMetadata({
@@ -22,7 +22,7 @@ export async function generateMetadata({
   const studio = await resolveStudio(host);
   if (!studio) return {};
 
-  const page = await getPublishedPage(studio.id, siteSlug);
+  const page = await getPublishedPageCached(studio.id, siteSlug);
   if (!page) return {};
 
   return {
@@ -41,7 +41,7 @@ export default async function SitePage({
   const studio = await resolveStudio(host);
   if (!studio) notFound();
 
-  const page = await getPublishedPage(studio.id, siteSlug);
+  const page = await getPublishedPageCached(studio.id, siteSlug);
   if (!page) notFound();
 
   return <PublicSite studio={{ id: studio.id, name: studio.name }} page={page} />;

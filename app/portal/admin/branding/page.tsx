@@ -3,7 +3,7 @@
 // role === 'admin'; this page assumes that guard has run.
 
 import { createClient } from "@/lib/supabase/server";
-import { getBranding, DEFAULT_BRANDING } from "@/lib/branding";
+import { getBrandingCached, DEFAULT_BRANDING } from "@/lib/branding";
 import { BrandingEditor } from "@/components/admin/BrandingEditor";
 
 export default async function BrandingPage() {
@@ -15,7 +15,7 @@ export default async function BrandingPage() {
     : { data: null };
 
   const branding = profile?.studio_id
-    ? await getBranding(supabase, profile.studio_id)
+    ? await getBrandingCached(profile.studio_id)
     : DEFAULT_BRANDING;
 
   return <BrandingEditor initial={branding} />;

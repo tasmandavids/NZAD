@@ -2,8 +2,19 @@
 //  /portal/admin/billing — AR hub: create invoices, chase payments, revenue.
 // ============================================================================
 
-import { createClient } from "@/lib/supabase/server";
-import { BillingDashboard } from "@/components/admin/billing/BillingDashboard";
+import dynamic from "next/dynamic";
+import { requirePortalSession } from "@/lib/portal/session";
+
+const BillingDashboard = dynamic(
+  () => import("@/components/admin/billing/BillingDashboard").then((m) => m.BillingDashboard),
+  {
+    loading: () => (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      </div>
+    ),
+  },
+);
 
 export type InvoiceRow = {
   id: string;
@@ -46,18 +57,6 @@ export type SourceBreakdown = {
 const YEAR_AGO = () => new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
 const YEAR_START = () => `${new Date().getFullYear()}-01-01`;
 
-async function currentStudioId(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data } = await supabase
-    .from("profiles")
-    .select("studio_id")
-    .eq("id", user!.id)
-    .single();
-  return data?.studio_id as string;
-}
-
 function mapInvoice(inv: Record<string, unknown>): InvoiceRow {
   const student = inv.profiles as { full_name: string | null } | null;
   const payer = inv.payer as { full_name: string | null } | null;
@@ -77,8 +76,7 @@ function mapInvoice(inv: Record<string, unknown>): InvoiceRow {
 }
 
 export default async function BillingPage() {
-  const supabase = await createClient();
-  const studioId = await currentStudioId(supabase);
+  const { supabase, studioId } = await requirePortalSession();
 
   const invoiceSelect = `
     id, payer_id, amount_cents, status, due_date, issued_at, paid_at,

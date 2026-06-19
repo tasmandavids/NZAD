@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getAdminXeroContext } from "@/lib/xero/admin-context";
 import { revokeXeroConnection, xeroRedirectUri } from "@/lib/xero/client";
 import { resolveAppOriginFromHeaders } from "@/lib/xero/app-origin";
-import type { XeroConnectionSettings } from "@/lib/xero/types";
+import { xeroSettingsSchema } from "@/lib/xero/schemas";
 
 export async function disconnectXero(): Promise<{ ok: true } | { ok: false; error: string }> {
   const ctx = await getAdminXeroContext();
@@ -29,15 +29,20 @@ export async function refreshAccountingData(): Promise<{ ok: true } | { ok: fals
 }
 
 export async function updateXeroSettings(
-  settings: XeroConnectionSettings,
+  settings: unknown,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const ctx = await getAdminXeroContext();
   if (ctx.error) return { ok: false, error: ctx.error };
 
+  const parsed = xeroSettingsSchema.safeParse(settings);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid settings" };
+  }
+
   const { error } = await ctx.supabase
     .from("xero_connections")
     .update({
-      settings,
+      settings: parsed.data,
       updated_at: new Date().toISOString(),
     })
     .eq("studio_id", ctx.studioId);

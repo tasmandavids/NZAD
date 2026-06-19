@@ -1,9 +1,20 @@
+import nextDynamic from "next/dynamic";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { EmailInbox } from "@/components/admin/email/EmailInbox";
 import { identifyContactsByEmail } from "@/lib/email/identify-contact";
 
 export const dynamic = "force-dynamic";
+
+const EmailInbox = nextDynamic(
+  () => import("@/components/admin/email/EmailInbox").then((m) => m.EmailInbox),
+  {
+    loading: () => (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      </div>
+    ),
+  },
+);
 
 function safeDecodeURIComponent(value: string): string {
   try {

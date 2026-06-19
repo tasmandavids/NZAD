@@ -2,8 +2,19 @@
 //  /portal/admin/leads — CRM pipeline (server component).
 // ============================================================================
 
-import { createClient } from "@/lib/supabase/server";
-import { LeadsBoard } from "@/components/admin/leads/LeadsBoard";
+import dynamic from "next/dynamic";
+import { requirePortalSession } from "@/lib/portal/session";
+
+const LeadsBoard = dynamic(
+  () => import("@/components/admin/leads/LeadsBoard").then((m) => m.LeadsBoard),
+  {
+    loading: () => (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      </div>
+    ),
+  },
+);
 
 export type Lead = {
   id: string;
@@ -18,21 +29,8 @@ export type Lead = {
   updatedAt: string;
 };
 
-async function currentStudioId(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data } = await supabase
-    .from("profiles")
-    .select("studio_id")
-    .eq("id", user!.id)
-    .single();
-  return data?.studio_id as string;
-}
-
 export default async function LeadsPage() {
-  const supabase = await createClient();
-  const studioId = await currentStudioId(supabase);
+  const { supabase, studioId } = await requirePortalSession();
 
   const { data } = await supabase
     .from("leads")

@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { formatMoney } from "@/lib/currency";
+import { OptimizableImage } from "@/components/ui/OptimizableImage";
 import type { SiteProduct } from "@/lib/site/queries";
 
 export function ShopBlock({
@@ -106,8 +107,15 @@ export function ShopBlock({
           shown.map((p) => (
             <div key={p.id} className="flex flex-col rounded-2xl border border-[--hair] bg-surface p-5">
               {p.imageUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.imageUrl} alt={p.name} className="mb-4 h-40 w-full rounded-lg object-cover" />
+                <div className="relative mb-4 h-40 w-full overflow-hidden rounded-lg">
+                  <OptimizableImage
+                    src={p.imageUrl}
+                    alt={p.name}
+                    fill
+                    sizes="(max-width: 640px) 100vw, 33vw"
+                    className="object-cover"
+                  />
+                </div>
               )}
               <h3 className="font-semibold text-ink">{p.name}</h3>
               {p.description && <p className="mt-1 flex-1 text-sm text-muted">{p.description}</p>}

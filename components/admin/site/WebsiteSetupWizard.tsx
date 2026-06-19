@@ -9,7 +9,7 @@ import { useMemo, useState, useTransition, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { setupStudioWebsite } from "@/app/portal/admin/site/actions";
-import { BlockRenderer } from "@/components/site/BlockRenderer";
+import { EditorBlockPreview } from "@/components/admin/site/EditorBlockPreview";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { TemplateGallery } from "@/components/admin/site/TemplateGallery";
 import { TypographyGallery } from "@/components/admin/site/TypographyGallery";
@@ -239,7 +239,7 @@ export function WebsiteSetupWizard({
               portalLabel="Portal"
               preview
             />
-            <BlockRenderer blocks={homeBlocks} context={EDITOR_PREVIEW_CONTEXT} />
+            <EditorBlockPreview blocks={homeBlocks} context={EDITOR_PREVIEW_CONTEXT} />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[--hair] bg-surface px-4 py-3">
             <p className="text-xs text-muted">
@@ -342,7 +342,7 @@ export function WebsiteSetupWizard({
                   preview
                 />
                 <div className="max-h-48 overflow-hidden">
-                  <BlockRenderer blocks={homeBlocks.slice(0, 2)} context={EDITOR_PREVIEW_CONTEXT} />
+                  <EditorBlockPreview blocks={homeBlocks.slice(0, 2)} context={EDITOR_PREVIEW_CONTEXT} />
                 </div>
               </div>
               <div className="flex flex-col gap-2 pt-2">

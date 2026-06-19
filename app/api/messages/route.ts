@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isUuid } from "@/lib/validation/uuid";
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
 
   const peerId = req.nextUrl.searchParams.get("with");
   if (!peerId) return NextResponse.json({ error: "Missing ?with param" }, { status: 400 });
+  if (!isUuid(peerId)) return NextResponse.json({ error: "Invalid peer id" }, { status: 400 });
 
   // Fetch the thread (bidirectional) ordered oldest-first
   const { data, error } = await supabase
@@ -65,6 +67,19 @@ export async function POST(req: NextRequest) {
   if (!toUserId || !message?.trim()) {
     return NextResponse.json({ error: "Missing toUserId or message" }, { status: 400 });
   }
+  if (!isUuid(toUserId)) {
+    return NextResponse.json({ error: "Invalid toUserId" }, { status: 400 });
+  }
+
+  const trimmed = message.trim();
+  if (trimmed.length > 4000) {
+    return NextResponse.json({ error: "Message too long" }, { status: 400 });
+  }
+
+  const allowedChannels = ["internal", "email", "sms"] as const;
+  if (!allowedChannels.includes(channel as (typeof allowedChannels)[number])) {
+    return NextResponse.json({ error: "Invalid channel" }, { status: 400 });
+  }
 
   // Resolve studio_id from profile
   const { data: profile } = await supabase
@@ -77,13 +92,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Profile not found" }, { status: 400 });
   }
 
+  const { data: recipient } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", toUserId)
+    .eq("studio_id", profile.studio_id)
+    .maybeSingle();
+
+  if (!recipient) {
+    return NextResponse.json({ error: "Recipient not found" }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from("messages")
     .insert({
       studio_id:    profile.studio_id,
       from_user_id: user.id,
       to_user_id:   toUserId,
-      body:         message.trim(),
+      body:         trimmed,
       channel,
     })
     .select(

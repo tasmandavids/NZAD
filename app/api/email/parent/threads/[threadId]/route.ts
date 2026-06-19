@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isUuid } from "@/lib/validation/uuid";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,9 @@ export async function GET(
   }
 
   const { threadId } = await params;
+  if (!isUuid(threadId)) {
+    return NextResponse.json({ error: "Invalid thread id" }, { status: 400 });
+  }
 
   const { data: thread } = await supabase
     .from("parent_email_threads")

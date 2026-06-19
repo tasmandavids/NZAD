@@ -4,9 +4,12 @@
 //  and the save action (to cache derived shades). Keep it framework-agnostic.
 // ============================================================================
 
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Branding, Palette, SiteSettings, ThemeBase } from "./types";
 import { DEFAULT_SITE_SETTINGS } from "./types";
+import { createPublicClient } from "./supabase/public";
 
 export const DEFAULT_BRANDING: Branding = {
   studioId: "",
@@ -117,7 +120,7 @@ export async function getBranding(
 ): Promise<Branding> {
   const { data } = await supabase
     .from("studio_branding")
-    .select("*")
+    .select("tagline, logo_url, brand_color, base, font_display, font_body, site_settings")
     .eq("studio_id", studioId)
     .single();
 
@@ -134,3 +137,12 @@ export async function getBranding(
     siteSettings: parseSiteSettings(data.site_settings),
   };
 }
+
+/** Request-scoped dedup for layout + page branding reads. */
+export const getBrandingCached = cache(async (studioId: string): Promise<Branding> => {
+  return unstable_cache(
+    () => getBranding(createPublicClient(), studioId),
+    ["branding", studioId],
+    { tags: [`branding-${studioId}`], revalidate: 300 },
+  )();
+});

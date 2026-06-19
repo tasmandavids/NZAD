@@ -2,16 +2,21 @@
 // Root domain (localhost:3000 / olune.app) → Olune platform marketing page.
 // Studio subdomain (nzad.localhost:3000) → that studio's branded cinematic hero.
 
+import dynamic from "next/dynamic";
 import { headers } from "next/headers";
 import { resolveStudio } from "@/lib/tenant";
-import { createPublicClient } from "@/lib/supabase/public";
-import { getBranding } from "@/lib/branding";
-import { getPublishedHome } from "@/lib/site/queries";
+import { getBrandingCached } from "@/lib/branding";
+import { getPublishedHomeCached } from "@/lib/site/cached-queries";
 import { PublicSite } from "@/components/site/PublicSite";
-import { ParticleBackground } from "@/components/landing/ParticleBackground";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 import Hero from "@/components/marketing/Hero";
-import OluneLanding from "@/components/marketing/OluneLanding";
+
+const OluneLanding = dynamic(() => import("@/components/marketing/OluneLanding"));
+
+const ParticleBackground = dynamic(
+  () => import("@/components/landing/ParticleBackground").then((m) => m.ParticleBackground),
+  { ssr: false },
+);
 
 export default async function HomePage() {
   const host = (await headers()).get("host");
@@ -23,14 +28,13 @@ export default async function HomePage() {
   }
 
   // If the studio has built and published a custom homepage, render it.
-  const home = await getPublishedHome(studio.id);
+  const home = await getPublishedHomeCached(studio.id);
   if (home) {
     return <PublicSite studio={{ id: studio.id, name: studio.name }} page={home} />;
   }
 
   // Fallback — studio hasn't published a homepage yet: branded hero.
-  const supabase = createPublicClient();
-  const branding = await getBranding(supabase, studio.id);
+  const branding = await getBrandingCached(studio.id);
 
   return (
     <div className="relative min-h-screen">

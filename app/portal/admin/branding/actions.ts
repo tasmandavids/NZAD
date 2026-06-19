@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { z } from "zod";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { derivePalette } from "@/lib/branding";
 import type { SiteSettings } from "@/lib/types";
@@ -77,5 +77,6 @@ export async function saveBranding(input: unknown): Promise<SaveResult> {
 
   // Re-render every route with the new tokens (the layout reads branding).
   revalidatePath("/", "layout");
+  revalidateTag(`branding-${profile.studio_id}`);
   return { ok: true };
 }

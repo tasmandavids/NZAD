@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import QRCode from "qrcode";
 import { CURRENCY } from "@/lib/currency";
 import { familyDiscountInfo } from "@/lib/discounts";
+import { isUuid } from "@/lib/validation/uuid";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
   const { eventId, quantity = 1 } = body as { eventId: string; quantity?: number };
 
   if (!eventId) return NextResponse.json({ error: "Missing eventId" }, { status: 400 });
+  if (!isUuid(eventId)) return NextResponse.json({ error: "Invalid eventId" }, { status: 400 });
   if (quantity < 1 || quantity > 10) return NextResponse.json({ error: "Quantity 1–10" }, { status: 400 });
 
   // Fetch event

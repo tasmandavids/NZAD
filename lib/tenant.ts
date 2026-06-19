@@ -6,10 +6,12 @@
 //  Studio identity is public-readable (see RLS), so this works pre-login.
 // ============================================================================
 
+import { cache } from "react";
 import { createPublicClient } from "./supabase/public";
 import type { Studio } from "./types";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
+const STUDIO_COLUMNS = "id, name, slug, custom_domain, status";
 
 /** Extract the studio slug from a host, or null if this is a custom/root domain. */
 export function slugFromHost(host: string | null): string | null {
@@ -27,16 +29,29 @@ export function slugFromHost(host: string | null): string | null {
   return sub;
 }
 
+function isPlatformHost(hostname: string): boolean {
+  return (
+    hostname === ROOT ||
+    hostname.endsWith(`.${ROOT}`) ||
+    hostname === "localhost" ||
+    hostname.endsWith(".localhost")
+  );
+}
+
 /** Resolve the studio for a host. Returns null on the marketing root / unknown host. */
-export async function resolveStudio(host: string | null): Promise<Studio | null> {
+export const resolveStudio = cache(async (host: string | null): Promise<Studio | null> => {
   if (!host) return null;
-  const supabase = createPublicClient();
+  const hostname = host.split(":")[0];
   const slug = slugFromHost(host);
 
-  const query = supabase.from("studios").select("*");
+  // Marketing apex / dev root — no tenant; skip the custom_domain lookup.
+  if (!slug && isPlatformHost(hostname)) return null;
+
+  const supabase = createPublicClient();
+  const query = supabase.from("studios").select(STUDIO_COLUMNS);
   const { data } = slug
     ? await query.eq("slug", slug).single()
-    : await query.eq("custom_domain", host.split(":")[0]).single();
+    : await query.eq("custom_domain", hostname).single();
 
   if (!data) return null;
   return {
@@ -46,4 +61,4 @@ export async function resolveStudio(host: string | null): Promise<Studio | null>
     customDomain: data.custom_domain,
     status: data.status,
   };
-}
+});

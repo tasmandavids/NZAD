@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isUuid } from "@/lib/validation/uuid";
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const limit = Number(req.nextUrl.searchParams.get("limit") ?? "30");
+  const limit = Math.min(Math.max(Number(req.nextUrl.searchParams.get("limit") ?? "30") || 30, 1), 100);
 
   const { data, error } = await supabase
     .from("notifications")
@@ -40,11 +41,14 @@ export async function POST(req: NextRequest) {
   const { ids } = body as { ids?: string[] };
 
   if (ids?.length) {
-    // Mark specific notifications as read
+    const validIds = ids.filter(isUuid);
+    if (!validIds.length) {
+      return NextResponse.json({ error: "No valid notification ids" }, { status: 400 });
+    }
     await supabase
       .from("notifications")
       .update({ read_at: new Date().toISOString() })
-      .in("id", ids)
+      .in("id", validIds)
       .eq("user_id", user.id);
   } else {
     // Mark all as read

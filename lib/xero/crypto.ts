@@ -1,16 +1,14 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { requireSecret } from "@/lib/env/required-secret";
 import type { XeroTokenSet } from "./types";
 
 const ALGO = "aes-256-gcm";
 
 function encryptionKey(): Buffer {
-  const secret =
-    process.env.XERO_TOKEN_ENCRYPTION_KEY ??
-    process.env.EMAIL_TOKEN_ENCRYPTION_KEY ??
-    process.env.CRON_SECRET;
-  if (!secret) {
-    throw new Error("XERO_TOKEN_ENCRYPTION_KEY (or EMAIL_TOKEN_ENCRYPTION_KEY / CRON_SECRET) is required");
-  }
+  const secret = requireSecret(
+    "XERO_TOKEN_ENCRYPTION_KEY",
+    process.env.EMAIL_TOKEN_ENCRYPTION_KEY ?? process.env.CRON_SECRET,
+  );
   return createHash("sha256").update(secret).digest();
 }
 

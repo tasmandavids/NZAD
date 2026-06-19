@@ -2,7 +2,7 @@
 //  /portal/admin/subscriptions — auto-pay subscription oversight + admin plans
 // ============================================================================
 
-import { createClient } from "@/lib/supabase/server";
+import { requirePortalSession } from "@/lib/portal/session";
 import SubscriptionsManager from "@/components/admin/subscriptions/SubscriptionsManager";
 
 export type SubscriptionRow = {
@@ -40,18 +40,9 @@ export type ProductOption = {
   priceCents: number;
 };
 
-async function getStudioId(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data } = await supabase.from("profiles").select("studio_id").eq("id", user.id).single();
-  return (data?.studio_id as string) ?? null;
-}
-
 export default async function SubscriptionsPage() {
-  const supabase = await createClient();
-  const studioId = await getStudioId(supabase);
+  const session = await requirePortalSession();
+  const { supabase, studioId } = session;
 
   const [subsRes, parentsRes, classesRes, productsRes, guardianshipsRes] = await Promise.all([
     supabase

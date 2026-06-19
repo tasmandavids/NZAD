@@ -7,7 +7,8 @@
 // ============================================================================
 
 import { z } from "zod";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { siteCacheTag } from "@/lib/site/cached-queries";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeBlocks } from "@/lib/site/blocks";
 import { normalizePageBackground } from "@/lib/site/background";
@@ -58,9 +59,11 @@ async function getAdminStudio() {
   return { error: null, supabase, studioId: profile.studio_id as string };
 }
 
-function refresh() {
+function refresh(studioId: string) {
   revalidatePath("/portal/admin/site");
-  revalidatePath("/", "layout"); // public site is studio-host-scoped
+  revalidatePath("/", "layout");
+  revalidateTag(siteCacheTag(studioId));
+  revalidateTag(`branding-${studioId}`);
 }
 
 // ─── CREATE ───────────────────────────────────────────────────────────────────
@@ -109,7 +112,7 @@ export async function createPage(input: unknown): Promise<ActionResult<{ id: str
     return { ok: false, error: dbErr.message };
   }
 
-  refresh();
+  refresh(studioId);
   return { ok: true, data: { id: data.id as string } };
 }
 
@@ -173,7 +176,7 @@ export async function createPageFromTemplate(
     return { ok: false, error: dbErr.message };
   }
 
-  refresh();
+  refresh(studioId);
   return { ok: true, data: { id: data.id as string } };
 }
 
@@ -283,7 +286,7 @@ export async function setupStudioWebsite(input: unknown): Promise<ActionResult<{
     if (draft.isHome) homePageId = id;
   }
 
-  refresh();
+  refresh(studioId);
   return { ok: true, data: { homePageId, pageIds } };
 }
 
@@ -341,7 +344,7 @@ export async function updatePageMeta(input: unknown): Promise<ActionResult> {
     return { ok: false, error: dbErr.message };
   }
 
-  refresh();
+  refresh(studioId);
   return { ok: true, data: null };
 }
 
@@ -372,7 +375,7 @@ export async function savePageBlocks(
 
   if (dbErr) return { ok: false, error: dbErr.message };
 
-  refresh();
+  refresh(studioId);
   return { ok: true, data: null };
 }
 
@@ -389,7 +392,7 @@ async function setStatus(pageId: string, status: "draft" | "published"): Promise
     .eq("studio_id", studioId);
 
   if (dbErr) return { ok: false, error: dbErr.message };
-  refresh();
+  refresh(studioId);
   return { ok: true, data: null };
 }
 
@@ -418,7 +421,7 @@ export async function setHomePage(pageId: string): Promise<ActionResult> {
     .eq("studio_id", studioId);
 
   if (dbErr) return { ok: false, error: dbErr.message };
-  refresh();
+  refresh(studioId);
   return { ok: true, data: null };
 }
 
@@ -435,6 +438,6 @@ export async function deletePage(pageId: string): Promise<ActionResult> {
     .eq("studio_id", studioId);
 
   if (dbErr) return { ok: false, error: dbErr.message };
-  refresh();
+  refresh(studioId);
   return { ok: true, data: null };
 }

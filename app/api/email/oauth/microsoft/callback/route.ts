@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { encryptCredentials } from "@/lib/email/crypto";
 import { verifyOAuthState } from "@/lib/email/oauth-state";
+import { verifyAdminOAuthCallback } from "@/lib/oauth/verify-admin-callback";
 import { resolveAppOrigin } from "@/lib/email/app-origin";
 import { exchangeMicrosoftCode } from "@/lib/email/providers/microsoft";
 
@@ -29,6 +30,13 @@ export async function GET(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user || user.id !== payload.userId) {
     return NextResponse.redirect(new URL("/login?next=/portal/admin/email", req.url));
+  }
+
+  const authz = await verifyAdminOAuthCallback(supabase, user, payload);
+  if (!authz.ok) {
+    return NextResponse.redirect(
+      new URL(`${base}?error=${encodeURIComponent(authz.reason)}`, req.url),
+    );
   }
 
   try {

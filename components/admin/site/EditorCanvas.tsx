@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { BackgroundShell } from "@/components/site/BackgroundShell";
-import { BlockRenderer } from "@/components/site/BlockRenderer";
+import { EditorBlockPreview } from "@/components/admin/site/EditorBlockPreview";
 import {
   movingRect,
   rectsFromBlocks,
@@ -132,7 +132,7 @@ function StackSectionBlock({
           ✕
         </button>
       </div>
-      <BlockRenderer blocks={[block]} context={EDITOR_PREVIEW_CONTEXT} embedded />
+      <EditorBlockPreview blocks={[block]} context={EDITOR_PREVIEW_CONTEXT} />
     </div>
   );
 }
@@ -340,7 +340,7 @@ function CanvasBlock({
       )}
 
       <div className={`${hasHeight ? "h-full overflow-auto" : ""} ${blockFramePaddingClass(block.props)}`}>
-        <BlockRenderer blocks={[block]} context={EDITOR_PREVIEW_CONTEXT} embedded />
+        <EditorBlockPreview blocks={[block]} context={EDITOR_PREVIEW_CONTEXT} />
       </div>
     </div>
   );

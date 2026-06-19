@@ -9,6 +9,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { isOptimizableImageUrl } from "@/lib/images/optimizable";
 import { formatMoney } from "@/lib/currency";
 import { str, num, list, bool } from "@/lib/site/props";
 import { APPEARANCE_DEFAULTS, type Block, type BlockProps, type BlockType } from "@/lib/site/blocks";
@@ -248,20 +249,8 @@ function renderRichBody(body: string): ReactNode {
 }
 
 // ─── next/image: optimise our own Storage uploads; leave arbitrary URLs alone ────
-const SUPA_HOST = (() => {
-  try {
-    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").host;
-  } catch {
-    return "";
-  }
-})();
-
 function isOptimizable(url: string): boolean {
-  try {
-    return !!SUPA_HOST && new URL(url).host === SUPA_HOST;
-  } catch {
-    return false;
-  }
+  return isOptimizableImageUrl(url);
 }
 
 /** Fills its (positioned, sized) parent. next/image for our Storage host,

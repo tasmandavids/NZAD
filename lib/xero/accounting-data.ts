@@ -74,9 +74,8 @@ export async function fetchAccountingSnapshot(
   let mtdSummary = emptySummary();
   let activity: XeroActivityRow[] = [];
 
-  try {
-    // Xero allows max 11 comparison periods (= 12 monthly columns incl. current month).
-    const monthlyPl = await loaded.client.accountingApi.getReportProfitAndLoss(
+  const [monthlyResult, ytdResult, mtdResult, invoicesResult] = await Promise.allSettled([
+    loaded.client.accountingApi.getReportProfitAndLoss(
       loaded.tenantId,
       monthStart,
       today,
@@ -87,14 +86,8 @@ export async function fetchAccountingSnapshot(
       undefined,
       undefined,
       true,
-    );
-    monthlySeries = parseProfitAndLossReport(monthlyPl.body.reports?.[0]);
-  } catch (err) {
-    errors.push(`P&L chart: ${xeroErrorMessage(err)}`);
-  }
-
-  try {
-    const ytdPl = await loaded.client.accountingApi.getReportProfitAndLoss(
+    ),
+    loaded.client.accountingApi.getReportProfitAndLoss(
       loaded.tenantId,
       yearStart,
       today,
@@ -105,14 +98,8 @@ export async function fetchAccountingSnapshot(
       undefined,
       undefined,
       true,
-    );
-    ytdSummary = parseProfitAndLossReport(ytdPl.body.reports?.[0]);
-  } catch (err) {
-    errors.push(`P&L year: ${xeroErrorMessage(err)}`);
-  }
-
-  try {
-    const mtdPl = await loaded.client.accountingApi.getReportProfitAndLoss(
+    ),
+    loaded.client.accountingApi.getReportProfitAndLoss(
       loaded.tenantId,
       monthStart,
       today,
@@ -123,14 +110,8 @@ export async function fetchAccountingSnapshot(
       undefined,
       undefined,
       true,
-    );
-    mtdSummary = parseProfitAndLossReport(mtdPl.body.reports?.[0]);
-  } catch (err) {
-    errors.push(`P&L month: ${xeroErrorMessage(err)}`);
-  }
-
-  try {
-    const invoicesRes = await loaded.client.accountingApi.getInvoices(
+    ),
+    loaded.client.accountingApi.getInvoices(
       loaded.tenantId,
       undefined,
       undefined,
@@ -145,10 +126,31 @@ export async function fetchAccountingSnapshot(
       undefined,
       undefined,
       10,
-    );
-    activity = mapRecentInvoices(invoicesRes.body.invoices);
-  } catch (err) {
-    errors.push(`Invoices: ${xeroErrorMessage(err)}`);
+    ),
+  ]);
+
+  if (monthlyResult.status === "fulfilled") {
+    monthlySeries = parseProfitAndLossReport(monthlyResult.value.body.reports?.[0]);
+  } else {
+    errors.push(`P&L chart: ${xeroErrorMessage(monthlyResult.reason)}`);
+  }
+
+  if (ytdResult.status === "fulfilled") {
+    ytdSummary = parseProfitAndLossReport(ytdResult.value.body.reports?.[0]);
+  } else {
+    errors.push(`P&L year: ${xeroErrorMessage(ytdResult.reason)}`);
+  }
+
+  if (mtdResult.status === "fulfilled") {
+    mtdSummary = parseProfitAndLossReport(mtdResult.value.body.reports?.[0]);
+  } else {
+    errors.push(`P&L month: ${xeroErrorMessage(mtdResult.reason)}`);
+  }
+
+  if (invoicesResult.status === "fulfilled") {
+    activity = mapRecentInvoices(invoicesResult.value.body.invoices);
+  } else {
+    errors.push(`Invoices: ${xeroErrorMessage(invoicesResult.reason)}`);
   }
 
   const summary: PlSummary = {

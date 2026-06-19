@@ -4,6 +4,7 @@ import { encryptTokenSet } from "@/lib/xero/crypto";
 import { exchangeXeroCallback } from "@/lib/xero/client";
 import { xeroRedirectUri } from "@/lib/xero/config";
 import { verifyXeroOAuthState } from "@/lib/xero/oauth-state";
+import { verifyAdminOAuthCallback } from "@/lib/oauth/verify-admin-callback";
 import { resolveAppOrigin } from "@/lib/email/app-origin";
 import { DEFAULT_XERO_SETTINGS } from "@/lib/xero/types";
 
@@ -33,6 +34,13 @@ export async function GET(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user || user.id !== payload.userId) {
     return NextResponse.redirect(new URL("/login?next=/portal/admin/accounting", req.url));
+  }
+
+  const authz = await verifyAdminOAuthCallback(supabase, user, payload);
+  if (!authz.ok) {
+    return NextResponse.redirect(
+      new URL(`${base}?error=${encodeURIComponent(authz.reason)}`, req.url),
+    );
   }
 
   try {

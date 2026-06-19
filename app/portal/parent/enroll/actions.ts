@@ -6,6 +6,7 @@
 // ============================================================================
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { CURRENCY, gstComponentCents } from "@/lib/currency";
 import { siblingDiscountedCents } from "@/lib/discounts";
@@ -38,6 +39,8 @@ export type Waiver = {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+const uuidField = z.string().uuid();
+
 async function getParentContext() {
   const supabase = await createClient();
   const {
@@ -51,7 +54,7 @@ async function getParentContext() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "parent" && profile?.role !== "admin") {
+  if (profile?.role !== "parent") {
     return { error: "Parent access required.", supabase, userId: null, studioId: null };
   }
 
@@ -172,6 +175,9 @@ export async function enrollChildInClass(
 ): Promise<ActionResult<{ enrollmentId: string; waitlisted: boolean }>> {
   const { error, supabase, userId, studioId } = await getParentContext();
   if (error || !userId || !studioId) return { ok: false, error: error ?? "Unknown" };
+  if (!uuidField.safeParse(studentId).success || !uuidField.safeParse(classId).success) {
+    return { ok: false, error: "Invalid student or class." };
+  }
 
   // Verify guardian relationship
   const { data: guardianship } = await supabase
@@ -208,6 +214,7 @@ export async function enrollChildInClass(
   const { data: enrollment, error: dbErr } = await supabase
     .from("enrollments")
     .insert({
+      studio_id: studioId,
       student_id: studentId,
       class_id: classId,
       status,
@@ -240,6 +247,9 @@ export async function createEnrollmentIntent(
 ): Promise<ActionResult<{ clientSecret: string; invoiceId: string }>> {
   const { error, supabase, userId, studioId } = await getParentContext();
   if (error || !userId || !studioId) return { ok: false, error: error ?? "Unknown" };
+  if (!uuidField.safeParse(studentId).success || !uuidField.safeParse(classId).success) {
+    return { ok: false, error: "Invalid student or class." };
+  }
   if (priceCents <= 0) return { ok: false, error: "Class has no fee." };
 
   // Verify guardian relationship.

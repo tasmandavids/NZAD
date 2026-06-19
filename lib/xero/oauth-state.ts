@@ -1,12 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { requireSecret } from "@/lib/env/required-secret";
 
 function secret(): string {
-  const s =
-    process.env.XERO_OAUTH_STATE_SECRET ??
-    process.env.EMAIL_OAUTH_STATE_SECRET ??
-    process.env.CRON_SECRET;
-  if (!s) throw new Error("XERO_OAUTH_STATE_SECRET (or CRON_SECRET) is required");
-  return s;
+  return requireSecret(
+    "XERO_OAUTH_STATE_SECRET",
+    process.env.EMAIL_OAUTH_STATE_SECRET ?? process.env.CRON_SECRET,
+  );
 }
 
 export type XeroOAuthStatePayload = {

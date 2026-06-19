@@ -1,9 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { requireSecret } from "@/lib/env/required-secret";
 
 function secret(): string {
-  const s = process.env.EMAIL_OAUTH_STATE_SECRET ?? process.env.CRON_SECRET;
-  if (!s) throw new Error("EMAIL_OAUTH_STATE_SECRET (or CRON_SECRET) is required");
-  return s;
+  return requireSecret("EMAIL_OAUTH_STATE_SECRET", process.env.CRON_SECRET);
 }
 
 export type OAuthStatePayload = {

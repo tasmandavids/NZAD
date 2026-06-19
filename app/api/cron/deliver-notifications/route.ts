@@ -24,6 +24,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { authorizedCron } from "@/lib/cron/auth";
 import {
   channelsForType,
   renderNotificationEmail,
@@ -37,19 +38,10 @@ export const dynamic = "force-dynamic";
 const MAX_ATTEMPTS = 3;
 const DEFAULT_BATCH = 200;
 
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return process.env.NODE_ENV !== "production";
-  const header = req.headers.get("authorization");
-  if (header === `Bearer ${secret}`) return true;
-  if (req.nextUrl.searchParams.get("secret") === secret) return true;
-  return false;
-}
-
 type ProfileContact = { id: string; email: string | null; phone: string | null };
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!authorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

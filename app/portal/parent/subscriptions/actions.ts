@@ -8,10 +8,14 @@
 // ============================================================================
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { CURRENCY } from "@/lib/currency";
 import { siblingDiscountInfo } from "@/lib/discounts";
+import { getOrCreateClassStripePrice } from "@/lib/stripe/class-price";
 import type Stripe from "stripe";
+
+const uuidField = z.string().uuid();
 
 export type ActionResult<T = null> =
   | { ok: true; data: T }
@@ -30,7 +34,7 @@ async function getParentContext() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "parent" && profile?.role !== "admin") {
+  if (profile?.role !== "parent") {
     return { error: "Parent access required.", supabase, userId: null, studioId: null };
   }
 
@@ -65,71 +69,6 @@ function periodEndFromSubscription(sub: Stripe.Subscription): string | null {
   return epoch ? new Date(epoch * 1000).toISOString() : null;
 }
 
-type SupaClient = Awaited<ReturnType<typeof createClient>>;
-
-// Return a reusable monthly Stripe Price id for this class, creating the
-// Product and/or Price on demand and caching their ids on the classes row.
-// Stripe Prices are immutable, so if the class's tuition has changed since the
-// cached Price was minted, we create a fresh Price and update the cache.
-async function getOrCreateClassPrice(
-  stripe: Stripe,
-  supabase: SupaClient,
-  classId: string,
-  studioId: string,
-  className: string,
-  priceCents: number,
-): Promise<string> {
-  const { data: cls } = await supabase
-    .from("classes")
-    .select("stripe_product_id, stripe_price_id, stripe_price_cents")
-    .eq("id", classId)
-    .single();
-
-  let productId = (cls?.stripe_product_id as string | null) ?? null;
-  let priceId = (cls?.stripe_price_id as string | null) ?? null;
-  const cachedCents = cls?.stripe_price_cents as number | null;
-
-  if (!productId) {
-    const product = await stripe.products.create({
-      name: `Tuition — ${className}`,
-      metadata: { studio_id: studioId, class_id: classId },
-    });
-    productId = product.id;
-    await supabase.from("classes").update({ stripe_product_id: productId }).eq("id", classId);
-  }
-
-  if (!priceId || cachedCents !== priceCents) {
-    // Stripe Prices are immutable. When tuition changes we mint a fresh Price
-    // and ARCHIVE the previous one so it doesn't linger as an active, orphaned
-    // Price. Existing subscriptions already reference the old Price object and
-    // keep billing correctly even after it's deactivated.
-    const previousPriceId = priceId;
-
-    const price = await stripe.prices.create({
-      product: productId,
-      currency: CURRENCY,
-      unit_amount: priceCents,
-      recurring: { interval: "month" },
-      metadata: { studio_id: studioId, class_id: classId },
-    });
-    priceId = price.id;
-    await supabase
-      .from("classes")
-      .update({ stripe_price_id: priceId, stripe_price_cents: priceCents })
-      .eq("id", classId);
-
-    if (previousPriceId && previousPriceId !== priceId) {
-      try {
-        await stripe.prices.update(previousPriceId, { active: false });
-      } catch (e) {
-        // Non-fatal: a stale active Price is harmless; just log it.
-        console.warn(`[subscriptions] could not archive old price ${previousPriceId}:`, e);
-      }
-    }
-  }
-
-  return priceId;
-}
 
 // Return a reusable forever percent-off coupon id for the given whole-number
 // percentage, creating it on first use. Stable id so we don't accumulate
@@ -158,6 +97,9 @@ export async function createEnrollmentSubscription(
 ): Promise<ActionResult<{ clientSecret: string; subscriptionId: string }>> {
   const { error, supabase, userId, studioId } = await getParentContext();
   if (error || !userId || !studioId) return { ok: false, error: error ?? "Unknown" };
+  if (!uuidField.safeParse(studentId).success || !uuidField.safeParse(classId).success) {
+    return { ok: false, error: "Invalid student or class." };
+  }
   if (priceCents <= 0) return { ok: false, error: "Class has no recurring fee." };
 
   // Verify guardian relationship.
@@ -198,9 +140,7 @@ export async function createEnrollmentSubscription(
   // minting a throwaway Product on every subscription.
   let sub: Stripe.Subscription;
   try {
-    const priceId = await getOrCreateClassPrice(
-      stripe,
-      supabase,
+    const priceId = await getOrCreateClassStripePrice(
       classId,
       studioId,
       className,

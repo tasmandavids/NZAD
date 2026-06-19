@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PortalShell } from "@/components/portal/PortalShell";
 import { PlatformAnnouncementsBanner } from "@/components/admin/PlatformAnnouncementsBanner";
 import { SetupResumeBanner } from "@/components/setup/SetupResumeBanner";
-import { getBranding } from "@/lib/branding";
+import { getBrandingCached } from "@/lib/branding";
 import { fetchStudioSetupState, setupBlocksPortal, setupNeedsBanner } from "@/lib/setup/server";
 import type { Role } from "@/lib/types";
 
@@ -34,39 +34,35 @@ export default async function PortalLayout({
 
   if (!profile?.studio_id) redirect("/onboarding");
 
-  if (profile.role === "admin") {
-    const { state: setupState } = await fetchStudioSetupState(supabase, profile.studio_id);
-    if (setupState && setupBlocksPortal(setupState)) {
-      redirect("/setup");
-    }
-  }
-
-  // Supabase's TS inference treats every join as an array; cast through unknown.
   const studio = profile.studios as unknown as { name: string } | null;
-
+  const isAdmin = profile.role === "admin";
   const now = new Date().toISOString();
-  const { data: announcementRows } =
-    profile.role === "admin"
-      ? await supabase
+
+  const [setupResult, announcementsResult, branding] = await Promise.all([
+    isAdmin
+      ? fetchStudioSetupState(supabase, profile.studio_id)
+      : Promise.resolve({ state: null }),
+    isAdmin
+      ? supabase
           .from("platform_announcements")
           .select("id, title, body, severity, expires_at")
           .not("published_at", "is", null)
           .lte("published_at", now)
           .order("published_at", { ascending: false })
           .limit(10)
-      : { data: null };
+      : Promise.resolve({ data: null }),
+    getBrandingCached(profile.studio_id),
+  ]);
 
-  const announcements = (announcementRows ?? [])
+  const setupState = setupResult.state;
+  if (isAdmin && setupState && setupBlocksPortal(setupState)) {
+    redirect("/setup");
+  }
+
+  const announcements = (announcementsResult.data ?? [])
     .filter((a) => !a.expires_at || a.expires_at > now)
     .slice(0, 3)
     .map(({ id, title, body, severity }) => ({ id, title, body, severity }));
-
-  const branding = await getBranding(supabase, profile.studio_id);
-
-  const setupBanner =
-    profile.role === "admin"
-      ? await fetchStudioSetupState(supabase, profile.studio_id)
-      : { state: null };
 
   return (
     <PortalShell
@@ -75,15 +71,13 @@ export default async function PortalLayout({
       logoUrl={branding.logoUrl}
       userName={profile.full_name}
     >
-      {profile.role === "admin" &&
-        setupBanner.state &&
-        setupNeedsBanner(setupBanner.state) && (
-          <SetupResumeBanner
-            setupStep={setupBanner.state.setupStep}
-            snoozed={!!setupBanner.state.setupSnoozedAt}
-          />
-        )}
-      {profile.role === "admin" && announcements.length > 0 && (
+      {isAdmin && setupState && setupNeedsBanner(setupState) && (
+        <SetupResumeBanner
+          setupStep={setupState.setupStep}
+          snoozed={!!setupState.setupSnoozedAt}
+        />
+      )}
+      {isAdmin && announcements.length > 0 && (
         <PlatformAnnouncementsBanner announcements={announcements} />
       )}
       {children}

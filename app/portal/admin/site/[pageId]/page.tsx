@@ -2,14 +2,22 @@
 //  /portal/admin/site/[pageId] — Block editor for a single website page.
 // ============================================================================
 
+import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getBranding } from "@/lib/branding";
+import { getBrandingCached } from "@/lib/branding";
 import { normalizeBlocks } from "@/lib/site/blocks";
 import { normalizePageBackground } from "@/lib/site/background";
 import { mergePageLinks, toPageLink, toStudioPageNavSource } from "@/lib/site/page-links";
 import { publicPageUrl } from "@/lib/site/domain-setup";
-import PageEditor from "@/components/admin/site/PageEditor";
+
+const PageEditor = dynamic(() => import("@/components/admin/site/PageEditor"), {
+  loading: () => (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+    </div>
+  ),
+});
 
 export default async function SitePageEditor({
   params,
@@ -45,7 +53,7 @@ export default async function SitePageEditor({
     .eq("studio_id", page.studio_id as string)
     .order("nav_order", { ascending: true });
 
-  const branding = await getBranding(supabase, page.studio_id as string);
+  const branding = await getBrandingCached(page.studio_id as string);
   const { data: studio } = await supabase
     .from("studios")
     .select("name")

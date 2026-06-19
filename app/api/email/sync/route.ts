@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminEmailContext } from "@/lib/email/admin-context";
 import { syncEmailAccount } from "@/lib/email/sync";
+import { isUuid } from "@/lib/validation/uuid";
 import type { EmailAccountRow } from "@/lib/email/types";
 
 export const runtime = "nodejs";
@@ -13,6 +14,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = (await req.json().catch(() => ({}))) as { accountId?: string };
+  if (body.accountId && !isUuid(body.accountId)) {
+    return NextResponse.json({ error: "Invalid account id" }, { status: 400 });
+  }
   let query = ctx.supabase.from("email_accounts").select("*").eq("studio_id", ctx.studioId);
   if (body.accountId) query = query.eq("id", body.accountId);
 

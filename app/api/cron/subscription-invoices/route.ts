@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { authorizedCron } from "@/lib/cron/auth";
 import { runSubscriptionInvoicesForStudio } from "@/lib/subscriptions/cron-run";
 
 export const dynamic = "force-dynamic";
-
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return process.env.NODE_ENV !== "production";
-  const header = req.headers.get("authorization");
-  if (header === `Bearer ${secret}`) return true;
-  if (req.nextUrl.searchParams.get("secret") === secret) return true;
-  return false;
-}
 
 function localYmd(timezone: string, base = new Date()): string {
   try {
@@ -30,7 +22,7 @@ function localYmd(timezone: string, base = new Date()): string {
 }
 
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!authorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,11 +1,16 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { ParticleBackground } from "@/components/landing/ParticleBackground";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 import { container, rise } from "./motion";
 import { PrimaryButton, SecondaryButton } from "./ui";
+
+const ParticleBackground = dynamic(
+  () => import("@/components/landing/ParticleBackground").then((m) => m.ParticleBackground),
+  { ssr: false },
+);
 
 const MARQUEE = [
   "Projects",

@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
 import { CURRENCY } from "@/lib/currency";
+import { isUuid } from "@/lib/validation/uuid";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,6 +30,9 @@ export async function POST(req: NextRequest) {
 
     if (!invoiceId) {
       return NextResponse.json({ error: "invoiceId required" }, { status: 400 });
+    }
+    if (!isUuid(invoiceId)) {
+      return NextResponse.json({ error: "Invalid invoiceId" }, { status: 400 });
     }
 
     // Fetch invoice — RLS ensures the user can only access their own invoices

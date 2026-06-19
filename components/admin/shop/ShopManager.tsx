@@ -16,6 +16,7 @@ import {
   type ProductFormData,
 } from "@/app/portal/admin/shop/actions";
 import { refundSale } from "@/app/portal/admin/billing/refund-actions";
+import { OptimizableImage } from "@/components/ui/OptimizableImage";
 
 interface Product {
   id:          string;
@@ -266,11 +267,17 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                     className={`rounded-2xl border border-[--hair] bg-surface p-4 transition-opacity ${!p.active ? "opacity-50" : ""}`}
                   >
                     {/* Product image */}
-                    <div className="mb-3 h-32 w-full overflow-hidden rounded-xl bg-base flex items-center justify-center">
+                    <div className="relative mb-3 h-32 w-full overflow-hidden rounded-xl bg-base">
                       {p.image_url ? (
-                        <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
+                        <OptimizableImage
+                          src={p.image_url}
+                          alt={p.name}
+                          fill
+                          sizes="128px"
+                          className="object-cover"
+                        />
                       ) : (
-                        <span className="text-4xl">📦</span>
+                        <span className="absolute inset-0 grid place-items-center text-4xl">📦</span>
                       )}
                     </div>
 

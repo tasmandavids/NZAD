@@ -4,20 +4,32 @@
 //  Falls back to MOCK_HEAT if no classes have been created yet.
 // ============================================================================
 
-import { createClient } from "@/lib/supabase/server";
-import { AdminDashboard } from "@/components/admin/dashboard/AdminDashboard";
+import dynamic from "next/dynamic";
+import { getPortalSession } from "@/lib/portal/session";
 import { MOCK_HEAT, UNSCHEDULED, type Stat, type HeatClass, type ClassBlock } from "@/components/admin/dashboard/types";
+
+const AdminDashboard = dynamic(
+  () => import("@/components/admin/dashboard/AdminDashboard").then((m) => m.AdminDashboard),
+  {
+    loading: () => (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+      </div>
+    ),
+  },
+);
 
 // Full day names indexed by JS getDay() convention: 0=Sun … 6=Sat
 const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default async function AdminDashboardPage() {
-  const supabase = await createClient();
+  const session = await getPortalSession();
+  if (!session) throw new Error("Not signed in");
+
+  const { supabase, studioId } = session;
 
   const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
   const todayDow = new Date().getDay();
-
-  const studioId = await currentStudioId(supabase);
 
   // Run all reads in parallel.
   const [studioRes, studentsRes, paidRes, todayRes, capacityRes, allClassesRes] = await Promise.all([
@@ -26,7 +38,8 @@ export default async function AdminDashboardPage() {
     supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
-      .eq("role", "student"),
+      .eq("role", "student")
+      .eq("studio_id", studioId),
 
     supabase
       .from("invoices")
@@ -138,15 +151,3 @@ export default async function AdminDashboardPage() {
   );
 }
 
-// Tiny helper mirroring the SQL current_studio(): the admin's own studio_id.
-async function currentStudioId(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data } = await supabase
-    .from("profiles")
-    .select("studio_id")
-    .eq("id", user!.id)
-    .single();
-  return data?.studio_id as string;
-}

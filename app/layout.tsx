@@ -1,17 +1,13 @@
 // ============================================================================
 //  Root layout — the single place a tenant's brand enters the DOM.
-//  Resolve studio from host → read branding → inject CSS custom properties on
-//  <html>. Every Tailwind token (bg-brand, text-brand-hot, …) maps to these
-//  vars in globals.css, so the whole tree follows the tenant automatically.
 // ============================================================================
 
 import "./globals.css";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { resolveStudio } from "@/lib/tenant";
-import { createPublicClient } from "@/lib/supabase/public";
-import { googleFontsStylesheetUrl } from "@/lib/fonts";
-import { getBranding, brandingToCssVars, DEFAULT_BRANDING } from "@/lib/branding";
+import { fontsForBranding } from "@/lib/fonts/google-registry";
+import { getBrandingCached, brandingToCssVars, DEFAULT_BRANDING } from "@/lib/branding";
 import { OluneMoonDefs } from "@/components/brand/OluneMoonDefs";
 import type { CSSProperties } from "react";
 
@@ -29,21 +25,19 @@ export default async function RootLayout({
   const host = (await headers()).get("host");
   const studio = await resolveStudio(host);
 
-  const supabase = createPublicClient();
   const branding = studio
-    ? await getBranding(supabase, studio.id)
+    ? await getBrandingCached(studio.id)
     : { ...DEFAULT_BRANDING };
 
-  const vars = brandingToCssVars(branding) as CSSProperties;
-  const fontsUrl = googleFontsStylesheetUrl(branding.fontDisplay, branding.fontBody);
+  const fonts = fontsForBranding(branding.fontDisplay, branding.fontBody);
+  const vars = {
+    ...brandingToCssVars(branding),
+    "--font-display": fonts.fontDisplay,
+    "--font-body": fonts.fontBody,
+  } as CSSProperties;
 
   return (
-    <html lang="en-NZ" data-base={branding.base} style={vars}>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {fontsUrl && <link href={fontsUrl} rel="stylesheet" />}
-      </head>
+    <html lang="en-NZ" data-base={branding.base} className={fonts.className} style={vars}>
       <body>
         <OluneMoonDefs />
         {children}

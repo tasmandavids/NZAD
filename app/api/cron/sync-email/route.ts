@@ -1,25 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { authorizedCron } from "@/lib/cron/auth";
 import { syncStudioAccounts } from "@/lib/email/sync";
+import { isUuid } from "@/lib/validation/uuid";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function authorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return process.env.NODE_ENV !== "production";
-  const auth = req.headers.get("authorization");
-  const query = req.nextUrl.searchParams.get("secret");
-  return auth === `Bearer ${secret}` || query === secret;
-}
-
 export async function GET(req: NextRequest) {
-  if (!authorized(req)) {
+  if (!authorizedCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const supabase = createAdminClient();
   const studioId = req.nextUrl.searchParams.get("studioId");
+
+  if (studioId && !isUuid(studioId)) {
+    return NextResponse.json({ error: "Invalid studio id" }, { status: 400 });
+  }
 
   if (studioId) {
     const result = await syncStudioAccounts(supabase, studioId);

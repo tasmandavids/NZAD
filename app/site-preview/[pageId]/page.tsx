@@ -5,12 +5,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getBranding } from "@/lib/branding";
+import { getBrandingCached } from "@/lib/branding";
 import { normalizeBlocks } from "@/lib/site/blocks";
 import { normalizePageBackground } from "@/lib/site/background";
 import { publicPageUrl } from "@/lib/site/domain-setup";
 import {
-  getNavLinks,
   getSiteClasses,
   getSiteEvents,
   getSiteProducts,
@@ -18,6 +17,7 @@ import {
   getSiteStaff,
   pageDataNeeds,
 } from "@/lib/site/queries";
+import { getNavLinksCached } from "@/lib/site/cached-queries";
 import { EMPTY_RENDER_CONTEXT } from "@/lib/site/render-context";
 import { BlockRenderer } from "@/components/site/BlockRenderer";
 import { SiteChrome } from "@/components/site/SiteChrome";
@@ -58,8 +58,8 @@ export default async function SitePreviewPage({
   const needs = pageDataNeeds(blocks);
 
   const [branding, nav, classes, scheduleClasses, events, products, staff] = await Promise.all([
-    getBranding(supabase, page.studio_id as string),
-    getNavLinks(page.studio_id as string),
+    getBrandingCached(page.studio_id as string),
+    getNavLinksCached(page.studio_id as string),
     needs.classLimit > 0
       ? getSiteClasses(page.studio_id as string, needs.classLimit)
       : Promise.resolve(EMPTY_RENDER_CONTEXT.classes),

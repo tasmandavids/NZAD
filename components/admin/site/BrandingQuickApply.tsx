@@ -1,6 +1,7 @@
 "use client";
 
 import type { ThemeBase } from "@/lib/types";
+import { OptimizableImage } from "@/components/ui/OptimizableImage";
 
 const COLOR_PRESETS = [
   { label: "Iris", color: "#6B66C9" },
@@ -46,8 +47,13 @@ export function BrandingQuickApply({ studioName, value, onChange }: Props) {
             style={{ color: value.brandColor }}
           >
             {value.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={value.logoUrl} alt="" className="h-full w-full object-contain p-1" />
+              <OptimizableImage
+                src={value.logoUrl}
+                alt=""
+                width={64}
+                height={64}
+                className="h-full w-full object-contain p-1"
+              />
             ) : (
               studioName.charAt(0).toUpperCase()
             )}

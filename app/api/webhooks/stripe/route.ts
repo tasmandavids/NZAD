@@ -34,11 +34,12 @@ import {
 } from "@/lib/xero/webhook-sync";
 import type Stripe from "stripe";
 
-// Webhooks run anonymously, so we need a client that bypasses RLS. Prefer the
-// service-role client (SUPABASE_SERVICE_ROLE_KEY); fall back to the anon-keyed
-// server client in local dev where the service key may not be set.
+// Webhooks run anonymously — require service-role in production.
 async function getServiceSupabase() {
   if (process.env.SUPABASE_SERVICE_ROLE_KEY) return createAdminClient();
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for Stripe webhooks in production");
+  }
   return createClient();
 }
 
@@ -63,7 +64,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  const supabase = await getServiceSupabase();
+  let supabase;
+  try {
+    supabase = await getServiceSupabase();
+  } catch (err) {
+    console.error("[stripe-webhook] service client unavailable:", err);
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+  }
 
   // ── Idempotency ledger (migration 0020) ──────────────────────────────────
   // Stripe retries on non-2xx and can deliver the same event more than once.
@@ -92,14 +99,23 @@ export async function POST(req: NextRequest) {
 
         // ── Invoice payment ────────────────────────────────────────────────
         if (target.kind === "invoice") {
-          await supabase
+          const { data: updatedInvoices, error: invUpdateErr } = await supabase
             .from("invoices")
             .update({
               status: "paid",
               paid_at: new Date().toISOString(),
               stripe_payment_intent_id: intent.id,
             })
-            .eq("id", target.invoiceId);
+            .eq("id", target.invoiceId)
+            .eq("stripe_payment_intent_id", intent.id)
+            .select("id");
+
+          if (invUpdateErr || !updatedInvoices?.length) {
+            console.warn(
+              `[stripe-webhook] payment_intent.succeeded — invoice ${target.invoiceId} PI mismatch or not found`,
+            );
+            break;
+          }
 
           await supabase.from("payments").insert({
             studio_id: target.studioId,
@@ -121,13 +137,22 @@ export async function POST(req: NextRequest) {
         // ── Shop order payment ─────────────────────────────────────────────
         // Setting status='paid' fires the stock-decrement DB trigger.
         if (target.kind === "order") {
-          await supabase
+          const { data: updatedOrders, error: orderUpdateErr } = await supabase
             .from("orders")
             .update({
               status: "paid",
               stripe_payment_intent_id: intent.id,
             })
-            .eq("id", target.orderId);
+            .eq("id", target.orderId)
+            .eq("stripe_payment_intent_id", intent.id)
+            .select("id");
+
+          if (orderUpdateErr || !updatedOrders?.length) {
+            console.warn(
+              `[stripe-webhook] payment_intent.succeeded — order ${target.orderId} PI mismatch or not found`,
+            );
+            break;
+          }
 
           await xeroSyncAfterPayment(supabase, "order", target.orderId);
 

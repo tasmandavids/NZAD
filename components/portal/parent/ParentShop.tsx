@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import CheckoutForm from "@/components/payments/CheckoutForm";
+import { OptimizableImage } from "@/components/ui/OptimizableImage";
 
 interface Product {
   id:          string;
@@ -181,11 +182,17 @@ export function ParentShop({ products }: Props) {
 
             return (
               <div key={p.id} className="rounded-2xl border border-[--hair] bg-surface p-4">
-                <div className="mb-3 h-28 overflow-hidden rounded-xl bg-base flex items-center justify-center">
+                <div className="relative mb-3 h-28 overflow-hidden rounded-xl bg-base">
                   {p.image_url ? (
-                    <img src={p.image_url} alt={p.name} className="h-full w-full object-cover" />
+                    <OptimizableImage
+                      src={p.image_url}
+                      alt={p.name}
+                      fill
+                      sizes="200px"
+                      className="object-cover"
+                    />
                   ) : (
-                    <span className="text-3xl">📦</span>
+                    <span className="absolute inset-0 grid place-items-center text-3xl">📦</span>
                   )}
                 </div>
                 <p className="font-semibold text-ink text-sm truncate">{p.name}</p>
@@ -255,11 +262,17 @@ export function ParentShop({ products }: Props) {
                   <div className="space-y-4">
                     {cart.map((item) => (
                       <div key={item.product.id} className="flex items-center gap-3">
-                        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-base flex items-center justify-center">
+                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-base">
                           {item.product.image_url ? (
-                            <img src={item.product.image_url} alt={item.product.name} className="h-full w-full object-cover" />
+                            <OptimizableImage
+                              src={item.product.image_url}
+                              alt={item.product.name}
+                              fill
+                              sizes="56px"
+                              className="object-cover"
+                            />
                           ) : (
-                            <span className="text-xl">📦</span>
+                            <span className="absolute inset-0 grid place-items-center text-xl">📦</span>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">

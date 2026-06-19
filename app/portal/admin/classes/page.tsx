@@ -4,7 +4,7 @@
 //  teacher list for the assignment dropdown.
 // ============================================================================
 
-import { createClient } from "@/lib/supabase/server";
+import { requirePortalSession } from "@/lib/portal/session";
 import ClassesManager from "@/components/admin/classes/ClassesManager";
 
 export type ClassRow = {
@@ -29,24 +29,8 @@ export type TeacherOption = {
   email: string | null;
 };
 
-async function getStudioId(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-): Promise<string | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data } = await supabase
-    .from("profiles")
-    .select("studio_id")
-    .eq("id", user.id)
-    .single();
-  return (data?.studio_id as string) ?? null;
-}
-
 export default async function ClassesPage() {
-  const supabase = await createClient();
-  const studioId = await getStudioId(supabase);
+  const { supabase, studioId } = await requirePortalSession();
 
   // Use class_capacity view for live enrolled counts
   const [capacityRes, teachersRes] = await Promise.all([

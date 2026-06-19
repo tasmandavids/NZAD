@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { CURRENCY } from "@/lib/currency";
 import { familyDiscountInfo } from "@/lib/discounts";
+import { isUuid } from "@/lib/validation/uuid";
 
 interface OrderItem { productId: string; qty: number }
 
@@ -33,6 +34,9 @@ export async function POST(req: NextRequest) {
 
   // Fetch products and validate stock
   const productIds = items.map((i) => i.productId);
+  if (productIds.some((id) => !isUuid(id))) {
+    return NextResponse.json({ error: "Invalid product id" }, { status: 400 });
+  }
   const { data: products, error: pErr } = await supabase
     .from("products")
     .select("id, name, price_cents, stock_qty, active")

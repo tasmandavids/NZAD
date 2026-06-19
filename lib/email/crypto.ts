@@ -1,13 +1,11 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
+import { requireSecret } from "@/lib/env/required-secret";
 import type { EmailCredentials } from "./types";
 
 const ALGO = "aes-256-gcm";
 
 function encryptionKey(): Buffer {
-  const secret = process.env.EMAIL_TOKEN_ENCRYPTION_KEY ?? process.env.CRON_SECRET;
-  if (!secret) {
-    throw new Error("EMAIL_TOKEN_ENCRYPTION_KEY (or CRON_SECRET) is required for email credentials");
-  }
+  const secret = requireSecret("EMAIL_TOKEN_ENCRYPTION_KEY", process.env.CRON_SECRET);
   return createHash("sha256").update(secret).digest();
 }
 

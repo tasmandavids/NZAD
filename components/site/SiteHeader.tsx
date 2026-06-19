@@ -4,6 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import type { NavLink } from "@/lib/site/queries";
 import { OluneMark } from "@/components/brand/OluneLogo";
+import { OptimizableImage } from "@/components/ui/OptimizableImage";
+
+function StudioLogo({ logoUrl, studioName }: { logoUrl: string; studioName: string }) {
+  return (
+    <OptimizableImage
+      src={logoUrl}
+      alt={studioName}
+      width={160}
+      height={32}
+      className="h-8 w-auto"
+    />
+  );
+}
 
 export function SiteHeader({
   studioName,
@@ -45,8 +58,7 @@ export function SiteHeader({
         {preview ? (
           <span className="flex items-center gap-2">
             {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={studioName} className="h-8 w-auto" />
+              <StudioLogo logoUrl={logoUrl} studioName={studioName} />
             ) : (
               <span
                 className="text-xl font-light tracking-tight text-ink"
@@ -59,8 +71,7 @@ export function SiteHeader({
         ) : (
         <Link href={homeHref} className="flex items-center gap-2" onClick={() => setOpen(false)}>
           {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt={studioName} className="h-8 w-auto" />
+            <StudioLogo logoUrl={logoUrl} studioName={studioName} />
           ) : (
             <span
               className="text-xl font-light tracking-tight text-ink"

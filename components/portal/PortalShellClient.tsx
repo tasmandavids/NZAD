@@ -1,0 +1,290 @@
+"use client";
+
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { signOut } from "@/app/portal/actions";
+import type { Role } from "@/lib/types";
+import { ADMIN_NAV, PORTAL_NAV, ROLE_BADGE, type NavItem } from "@/lib/portal/nav-config";
+import { OptimizableImage } from "@/components/ui/OptimizableImage";
+import { OluneLogo } from "@/components/brand/OluneLogo";
+import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
+
+const NotificationBell = dynamic(
+  () =>
+    import("@/components/admin/notifications/NotificationBell").then((m) => ({
+      default: m.NotificationBell,
+    })),
+  { ssr: false },
+);
+
+function StudioAvatar({
+  studioName,
+  logoUrl,
+}: {
+  studioName: string;
+  logoUrl: string | null;
+}) {
+  if (logoUrl) {
+    return (
+      <OptimizableImage
+        src={logoUrl}
+        alt=""
+        width={32}
+        height={32}
+        className="h-8 w-8 shrink-0 rounded-lg border border-[--hair] bg-surface object-contain p-0.5"
+      />
+    );
+  }
+
+  return (
+    <span
+      className="grid h-8 w-8 shrink-0 place-items-center border text-xs font-black text-ink"
+      style={{ borderColor: "var(--brand)" }}
+    >
+      {studioName[0]?.toUpperCase() ?? "S"}
+    </span>
+  );
+}
+
+function SidebarContent({
+  role,
+  studioName,
+  logoUrl,
+  userName,
+  pathname,
+  onNavClick,
+  collapsed,
+  onToggleCollapse,
+}: {
+  role: Role;
+  studioName: string;
+  logoUrl: string | null;
+  userName: string | null;
+  pathname: string;
+  onNavClick?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+}) {
+  const isActive = (item: NavItem) =>
+    item.exact
+      ? pathname === item.href
+      : pathname === item.href || pathname.startsWith(item.href + "/");
+
+  const renderNavItem = (item: NavItem) => {
+    const active = isActive(item);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        prefetch={false}
+        scroll={false}
+        onClick={onNavClick}
+        className={`flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
+          active ? "bg-brand text-white" : "text-muted hover:text-ink"
+        }`}
+      >
+        {item.label}
+      </Link>
+    );
+  };
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-[--hair] p-5">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <StudioAvatar studioName={studioName} logoUrl={logoUrl} />
+            <h2 className="truncate text-sm font-black text-ink">{studioName}</h2>
+          </div>
+          {onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              title={collapsed ? "Keep sidebar open" : "Hide sidebar"}
+              aria-label={collapsed ? "Keep sidebar open" : "Hide sidebar"}
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-[--hair] text-xs text-muted transition hover:bg-base hover:text-ink"
+            >
+              {collapsed ? "›" : "‹"}
+            </button>
+          )}
+        </div>
+        <p className="text-[0.62rem] uppercase tracking-widest text-muted">{ROLE_BADGE[role]}</p>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto p-3">
+        {role === "admin" ? (
+          ADMIN_NAV.map((section, index) => (
+            <div key={section.title ?? `section-${index}`} className={index > 0 ? "mt-4" : ""}>
+              {section.title && (
+                <p className="mb-1 px-3 text-[0.62rem] font-semibold uppercase tracking-widest text-muted">
+                  {section.title}
+                </p>
+              )}
+              <div className="space-y-0.5">{section.items.map(renderNavItem)}</div>
+            </div>
+          ))
+        ) : (
+          <div className="space-y-0.5">{PORTAL_NAV[role].map(renderNavItem)}</div>
+        )}
+      </nav>
+
+      <div className="border-t border-[--hair] p-4">
+        <PoweredByOlune className="mb-4" />
+        <p className="mb-2.5 truncate text-xs font-medium text-ink">{userName ?? "You"}</p>
+        <form action={signOut}>
+          <button type="submit" className="text-xs text-muted transition-colors hover:text-ink">
+            Sign out →
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export function PortalShellClient({
+  role,
+  studioName,
+  logoUrl = null,
+  userName,
+  children,
+}: {
+  role: Role;
+  studioName: string;
+  logoUrl?: string | null;
+  userName: string | null;
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [hoverPeek, setHoverPeek] = useState(false);
+  const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showBell = role === "admin";
+
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem("portal-sidebar-collapsed") === "1");
+    } catch {
+      /* ignore */
+    }
+    return () => {
+      if (peekTimer.current) clearTimeout(peekTimer.current);
+    };
+  }, []);
+
+  const openPeek = () => {
+    if (!collapsed) return;
+    if (peekTimer.current) clearTimeout(peekTimer.current);
+    setHoverPeek(true);
+  };
+
+  const closePeek = () => {
+    if (!collapsed) return;
+    peekTimer.current = setTimeout(() => setHoverPeek(false), 100);
+  };
+
+  const hideSidebar = () => {
+    setCollapsed(true);
+    setHoverPeek(false);
+    try {
+      localStorage.setItem("portal-sidebar-collapsed", "1");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const pinSidebarOpen = () => {
+    setCollapsed(false);
+    setHoverPeek(false);
+    try {
+      localStorage.setItem("portal-sidebar-collapsed", "0");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const toggleCollapse = () => {
+    if (collapsed) pinSidebarOpen();
+    else hideSidebar();
+  };
+
+  const sidebarOpen = !collapsed || hoverPeek;
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-base">
+      <div
+        className="relative hidden shrink-0 md:block"
+        style={{ width: collapsed && !hoverPeek ? 12 : 224 }}
+      >
+        {collapsed && !hoverPeek && (
+          <div
+            className="absolute inset-y-0 left-0 z-30 w-3 cursor-pointer border-r border-[--hair] bg-surface/80"
+            aria-label="Show sidebar"
+            onMouseEnter={openPeek}
+          />
+        )}
+
+        <aside
+          onMouseEnter={openPeek}
+          onMouseLeave={closePeek}
+          className={`h-full w-56 border-r border-[--hair] bg-surface transition-transform duration-200 ease-out ${
+            collapsed && hoverPeek ? "fixed left-0 top-0 z-40 shadow-2xl" : "relative"
+          } ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        >
+          <SidebarContent
+            role={role}
+            studioName={studioName}
+            logoUrl={logoUrl}
+            userName={userName}
+            pathname={pathname ?? ""}
+            collapsed={collapsed}
+            onToggleCollapse={toggleCollapse}
+          />
+        </aside>
+      </div>
+
+      <div className="fixed inset-x-0 top-0 z-50 md:hidden">
+        <div className="flex items-center justify-between border-b border-[--hair] bg-surface/95 px-4 py-3 backdrop-blur">
+          <div className="flex items-center gap-2">
+            <StudioAvatar studioName={studioName} logoUrl={logoUrl} />
+            <span className="text-sm font-black text-ink">{studioName}</span>
+          </div>
+          <button
+            onClick={() => setMobileOpen((o) => !o)}
+            className="grid h-8 w-8 place-items-center text-muted transition-colors hover:text-ink"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? "✕" : "☰"}
+          </button>
+        </div>
+
+        <div
+          className={`overflow-hidden border-b border-[--hair] bg-surface shadow-2xl transition-[max-height,opacity] duration-200 ease-out ${
+            mobileOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+          <SidebarContent
+            role={role}
+            studioName={studioName}
+            logoUrl={logoUrl}
+            userName={userName}
+            pathname={pathname ?? ""}
+            onNavClick={() => setMobileOpen(false)}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {showBell && (
+          <div className="flex items-center justify-between border-b border-[--hair] bg-surface px-5 py-2">
+            <OluneLogo size="xs" className="hidden sm:inline-flex" />
+            <NotificationBell />
+          </div>
+        )}
+        <main className={`flex-1 overflow-auto ${showBell ? "" : "md:pt-0 pt-[53px]"}`}>{children}</main>
+      </div>
+    </div>
+  );
+}

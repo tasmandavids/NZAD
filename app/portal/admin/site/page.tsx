@@ -5,7 +5,7 @@
 // ============================================================================
 
 import { createClient } from "@/lib/supabase/server";
-import { getBranding } from "@/lib/branding";
+import { getBrandingCached } from "@/lib/branding";
 import SiteManager, { type SitePageRow } from "@/components/admin/site/SiteManager";
 import { WebsiteSetupWizard } from "@/components/admin/site/WebsiteSetupWizard";
 import { PublicSiteUrlBanner } from "@/components/admin/site/PublicSiteUrlBanner";
@@ -22,25 +22,24 @@ export default async function SitePagesPage() {
     .eq("id", user!.id)
     .single();
 
-  const { data: studio } = profile?.studio_id
-    ? await supabase.from("studios").select("name").eq("id", profile.studio_id).single()
-    : { data: null };
+  const [studioRes, branding, pagesRes] = profile?.studio_id
+    ? await Promise.all([
+        supabase.from("studios").select("name").eq("id", profile.studio_id).single(),
+        getBrandingCached(profile.studio_id),
+        supabase
+          .from("site_pages")
+          .select("id, title, slug, status, is_home, show_in_nav, nav_order, updated_at")
+          .eq("studio_id", profile.studio_id)
+          .order("is_home", { ascending: false })
+          .order("nav_order", { ascending: true })
+          .order("created_at", { ascending: true }),
+      ])
+    : [ { data: null }, null, { data: null } ];
 
-  const branding = profile?.studio_id
-    ? await getBranding(supabase, profile.studio_id)
-    : null;
+  const studio = studioRes.data;
+  const pages = pagesRes.data ?? [];
 
-  const { data: pages } = profile?.studio_id
-    ? await supabase
-        .from("site_pages")
-        .select("id, title, slug, status, is_home, show_in_nav, nav_order, updated_at")
-        .eq("studio_id", profile.studio_id)
-        .order("is_home", { ascending: false })
-        .order("nav_order", { ascending: true })
-        .order("created_at", { ascending: true })
-    : { data: [] };
-
-  const rows: SitePageRow[] = (pages ?? []).map((p) => ({
+  const rows: SitePageRow[] = pages.map((p) => ({
     id: p.id as string,
     title: p.title as string,
     slug: p.slug as string,
