@@ -24,10 +24,17 @@ Use the same Google Cloud project as login OAuth, or create a dedicated one.
 1. [Credentials](https://console.cloud.google.com/apis/credentials) → your Web client (or create one)
 2. **Authorized JavaScript origins**
    - `http://localhost:3000`
-3. **Authorized redirect URIs** — add **both** (login + inbox):
-   - `https://wnoxcwihrzbxvogvmhqv.supabase.co/auth/v1/callback` (login)
-   - `http://localhost:3000/api/email/oauth/google/callback` (inbox)
-   - Production: `https://YOUR_DOMAIN/api/email/oauth/google/callback`
+3. **Authorized redirect URIs** — add **both**:
+   - `http://localhost:3000/api/email/oauth/google/callback` (local dev)
+   - `https://www.olune.co.nz/api/email/oauth/google/callback` (production)
+   - Keep existing Supabase login callback if present: `https://wnoxcwihrzbxvogvmhqv.supabase.co/auth/v1/callback`
+4. **Authorized JavaScript origins** (if shown):
+   - `http://localhost:3000`
+   - `https://www.olune.co.nz`
+
+Direct link to edit your email OAuth client:
+
+https://console.cloud.google.com/auth/clients/178044438344-v69e94ktvrs1akiuks5stml3kd0n0l55.apps.googleusercontent.com?project=178044438344
 
 Copy **Client ID** and **Client secret** into `.env.local`:
 

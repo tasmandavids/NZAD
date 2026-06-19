@@ -2,19 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { encryptCredentials } from "@/lib/email/crypto";
 import { verifyOAuthState } from "@/lib/email/oauth-state";
+import { resolveAppOrigin } from "@/lib/email/app-origin";
 import { exchangeGmailCode } from "@/lib/email/providers/gmail";
 
 export const runtime = "nodejs";
-
-function appOrigin(req: NextRequest): string {
-  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? req.nextUrl.origin;
-}
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
   const state = req.nextUrl.searchParams.get("state");
   const oauthError = req.nextUrl.searchParams.get("error");
-  const base = `${appOrigin(req)}/portal/admin/email`;
+  const origin = resolveAppOrigin(req);
+  const base = `${origin}/portal/admin/email`;
 
   if (oauthError || !code || !state) {
     return NextResponse.redirect(new URL(`${base}?error=${encodeURIComponent(oauthError ?? "Authorization cancelled")}`, req.url));
@@ -30,11 +28,11 @@ export async function GET(req: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user || user.id !== payload.userId) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/login?next=/portal/admin/email", req.url));
   }
 
   try {
-    const redirectUri = `${appOrigin(req)}/api/email/oauth/google/callback`;
+    const redirectUri = `${origin}/api/email/oauth/google/callback`;
     const result = await exchangeGmailCode(code, redirectUri);
     const { email, displayName, ...creds } = result;
 

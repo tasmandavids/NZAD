@@ -43,6 +43,11 @@ function callbackUrls() {
     urls.add(`${APP_URL.replace(/\/$/, "")}/auth/callback`);
   }
 
+  // Production domains (always allow — safe to merge)
+  for (const host of ["olune.co.nz", "www.olune.co.nz", "olune.app", "www.olune.app"]) {
+    urls.add(`https://${host}/auth/callback`);
+  }
+
   if (ROOT && ROOT !== "localhost") {
     urls.add(`https://${ROOT}/auth/callback`);
     urls.add(`https://www.${ROOT}/auth/callback`);
@@ -75,8 +80,12 @@ async function main() {
     .filter(Boolean);
 
   const merged = [...new Set([...existing, ...callbackUrls()])];
+  const productionSite =
+    process.env.SUPABASE_SITE_URL?.replace(/\/$/, "") ||
+    (APP_URL && !APP_URL.includes("localhost") ? APP_URL.replace(/\/$/, "") : null) ||
+    "https://www.olune.co.nz";
   const patch = {
-    site_url: APP_URL?.replace(/\/$/, "") || current.site_url || "http://localhost:3000",
+    site_url: productionSite,
     uri_allow_list: merged.join(","),
   };
 

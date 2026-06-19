@@ -1,22 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminEmailContext } from "@/lib/email/admin-context";
 import { signOAuthState } from "@/lib/email/oauth-state";
+import { resolveAppOrigin } from "@/lib/email/app-origin";
 import { microsoftAuthUrl } from "@/lib/email/providers/microsoft";
 
 export const runtime = "nodejs";
 
-function appOrigin(req: NextRequest): string {
-  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? req.nextUrl.origin;
-}
-
 export async function GET(req: NextRequest) {
   const ctx = await getAdminEmailContext();
   if (ctx.error) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL("/login?next=/portal/admin/email", req.url));
   }
 
   try {
-    const redirectUri = `${appOrigin(req)}/api/email/oauth/microsoft/callback`;
+    const redirectUri = `${resolveAppOrigin(req)}/api/email/oauth/microsoft/callback`;
     const state = signOAuthState({
       studioId: ctx.studioId,
       userId: ctx.userId,

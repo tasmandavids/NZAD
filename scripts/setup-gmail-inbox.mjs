@@ -30,8 +30,14 @@ for (const [label, pass] of checks) {
   if (!pass) ok = false;
 }
 
-console.log("\n── Add this redirect URI in Google Cloud ───────────────\n");
+console.log("\n── Add these redirect URIs in Google Cloud ─────────────\n");
+console.log("  Local:");
 console.log(`  ${callback}\n`);
+console.log("  Production:");
+console.log(`  https://www.olune.co.nz/api/email/oauth/google/callback\n`);
+console.log("── JavaScript origins (if prompted) ────────────────────\n");
+console.log("  http://localhost:3000");
+console.log("  https://www.olune.co.nz\n");
 
 console.log("── Google Cloud checklist ──────────────────────────────\n");
 console.log("  1. Enable Gmail API");
