@@ -1,5 +1,12 @@
 const LOCAL_APP_URL = "http://localhost:3000";
 
+function shouldUseWww(hostname: string): boolean {
+  if (hostname === "localhost" || hostname.endsWith(".localhost")) return false;
+  if (hostname.startsWith("www.")) return false;
+  // Apex like olune.co.nz (3) or olune.app (2); studio subdomains like nzad.olune.co.nz (4+).
+  return hostname.split(".").length < 4;
+}
+
 /** Ensure a full origin with protocol; apex domains use www for stable OAuth callbacks. */
 function normalizeOrigin(url: string): string {
   let raw = url.trim().replace(/\/$/, "");
@@ -17,13 +24,7 @@ function normalizeOrigin(url: string): string {
       return port ? `${protocol}//${hostname}:${port}` : `${protocol}//${hostname}`;
     }
 
-    // Bare apex (olune.co.nz) → www.olune.co.nz so OAuth matches Google/Xero registration.
-    const labels = hostname.split(".");
-    let host = hostname;
-    if (labels.length === 2) {
-      host = `www.${hostname}`;
-    }
-
+    const host = shouldUseWww(hostname) ? `www.${hostname}` : hostname;
     const defaultPort = protocol === "https:" ? "443" : "80";
     const portSuffix = port && port !== defaultPort ? `:${port}` : "";
     return `${protocol}//${host}${portSuffix}`;
