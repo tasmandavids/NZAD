@@ -4,7 +4,40 @@ const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/gmail.modify",
+  "https://www.googleapis.com/auth/userinfo.email",
 ].join(" ");
+
+type GoogleApiError = {
+  error?: { message?: string; status?: string; code?: number };
+  emailAddress?: string;
+  email?: string;
+};
+
+async function fetchGoogleAccountEmail(accessToken: string): Promise<string> {
+  const profileRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const profile = (await profileRes.json()) as GoogleApiError;
+  if (profileRes.ok && profile.emailAddress) {
+    return profile.emailAddress;
+  }
+
+  const userinfoRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const userinfo = (await userinfoRes.json()) as GoogleApiError;
+  if (userinfoRes.ok && userinfo.email) {
+    return userinfo.email;
+  }
+
+  const gmailMsg = profile.error?.message ?? (profileRes.status === 403
+    ? "Gmail API access denied — enable the Gmail API in Google Cloud Console and reconnect."
+    : `Gmail profile HTTP ${profileRes.status}`);
+  const userinfoMsg = userinfo.error?.message;
+  throw new Error(
+    userinfoMsg ? `${gmailMsg} (${userinfoMsg})` : gmailMsg,
+  );
+}
 
 export function gmailClientConfig() {
   const clientId = process.env.GOOGLE_MAIL_CLIENT_ID ?? process.env.GOOGLE_OAUTH_CLIENT_ID;
@@ -55,20 +88,14 @@ export async function exchangeGmailCode(
     throw new Error(tokenJson.error ?? "Failed to exchange Google authorization code");
   }
 
-  const profileRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
-    headers: { Authorization: `Bearer ${tokenJson.access_token}` },
-  });
-  const profile = (await profileRes.json()) as { emailAddress?: string };
-  if (!profileRes.ok || !profile.emailAddress) {
-    throw new Error("Failed to read Gmail profile");
-  }
+  const email = await fetchGoogleAccountEmail(tokenJson.access_token);
 
   return {
     kind: "oauth",
     accessToken: tokenJson.access_token,
     refreshToken: tokenJson.refresh_token ?? null,
     expiresAt: tokenJson.expires_in ? Date.now() + tokenJson.expires_in * 1000 : null,
-    email: profile.emailAddress,
+    email,
     displayName: null,
   };
 }

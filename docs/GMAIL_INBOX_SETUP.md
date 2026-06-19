@@ -17,7 +17,10 @@ Use the same Google Cloud project as login OAuth, or create a dedicated one.
    - `https://www.googleapis.com/auth/gmail.readonly`
    - `https://www.googleapis.com/auth/gmail.send`
    - `https://www.googleapis.com/auth/gmail.modify`
+   - `https://www.googleapis.com/auth/userinfo.email`
 3. If the app is in **Testing**, add your Gmail address under **Test users**
+4. **Enable the Gmail API** (required — without this you get “Failed to read Gmail profile”):
+   https://console.cloud.google.com/apis/library/gmail.googleapis.com?project=178044438344
 
 ### OAuth client (Web application)
 
@@ -84,6 +87,7 @@ npm run dev
 |-------|-----|
 | `redirect_uri_mismatch` | Add exact callback URL in Google Cloud redirect URIs |
 | `access_denied` | Add your Google account as a Test user on consent screen |
+| `Failed to read Gmail profile` | Enable [Gmail API](https://console.cloud.google.com/apis/library/gmail.googleapis.com?project=178044438344); add scopes on consent screen; reconnect |
 | `Gmail API has not been used...` | Enable Gmail API in the project |
 | `GOOGLE_MAIL_CLIENT_ID... required` | Set `GOOGLE_MAIL_*` or `GOOGLE_OAUTH_*` in `.env.local` |
 | `EMAIL_TOKEN_ENCRYPTION_KEY... required` | Add a random secret to `.env.local` |
