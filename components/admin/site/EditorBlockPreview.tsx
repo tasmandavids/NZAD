@@ -1,8 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { BLOCK_MAP, type Block } from "@/lib/site/blocks";
 import { str, list } from "@/lib/site/props";
 import { typographyClasses } from "@/lib/site/block-styles";
+import { blockLabel } from "@/lib/site/i18n-labels";
 import type { RenderContext } from "@/lib/site/render-context";
 
 /** Lightweight client block preview for the site editor (avoids importing BlockRenderer). */
@@ -23,6 +25,7 @@ export function EditorBlockPreview({
 }
 
 function PreviewBlock({ block, context }: { block: Block; context: RenderContext }) {
+  const t = useTranslations("site");
   const meta = BLOCK_MAP[block.type];
   const p = block.props;
 
@@ -31,20 +34,24 @@ function PreviewBlock({ block, context }: { block: Block; context: RenderContext
     case "pageHeader":
       return (
         <div className={`px-6 py-8 ${typographyClasses(p)}`}>
-          <h2 className="text-3xl font-semibold text-ink">{str(p, "text", meta.label)}</h2>
+          <h2 className="text-3xl font-semibold text-ink">
+            {str(p, "text", blockLabel(t, block.type))}
+          </h2>
         </div>
       );
     case "paragraph":
     case "richText":
       return (
         <div className={`px-6 py-4 text-ink/90 ${typographyClasses(p)}`}>
-          <p>{str(p, "text", "Add your copy here.")}</p>
+          <p>{str(p, "text", t("editor.previewCopyPlaceholder"))}</p>
         </div>
       );
     case "classGrid":
       return (
         <div className="px-6 py-8">
-          <h3 className="mb-4 text-xl font-semibold text-ink">{str(p, "title", "Classes")}</h3>
+          <h3 className="mb-4 text-xl font-semibold text-ink">
+            {str(p, "title", blockLabel(t, "classGrid"))}
+          </h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {context.classes.slice(0, 3).map((c) => (
               <div key={c.id} className="rounded-xl border border-[--hair] bg-surface p-4">
@@ -58,7 +65,9 @@ function PreviewBlock({ block, context }: { block: Block; context: RenderContext
     case "shopGrid":
       return (
         <div className="px-6 py-8">
-          <h3 className="mb-4 text-xl font-semibold text-ink">{str(p, "title", "Shop")}</h3>
+          <h3 className="mb-4 text-xl font-semibold text-ink">
+            {str(p, "title", blockLabel(t, "shopGrid"))}
+          </h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {context.products.slice(0, 2).map((pr) => (
               <div key={pr.id} className="rounded-xl border border-[--hair] bg-surface p-4">
@@ -73,7 +82,7 @@ function PreviewBlock({ block, context }: { block: Block; context: RenderContext
         <div className="grid gap-4 px-6 py-8 sm:grid-cols-3">
           {list(p, "items").slice(0, 3).map((item, i) => (
             <div key={i} className="rounded-xl border border-[--hair] bg-surface p-4">
-              <p className="font-medium text-ink">{str(item, "title", "Feature")}</p>
+              <p className="font-medium text-ink">{str(item, "title", t("editor.previewFeature"))}</p>
               <p className="mt-1 text-sm text-muted">{str(item, "body", "")}</p>
             </div>
           ))}
@@ -86,7 +95,7 @@ function PreviewBlock({ block, context }: { block: Block; context: RenderContext
     default:
       return (
         <div className="border border-dashed border-[--hair] bg-surface/50 px-6 py-10 text-center text-sm text-muted">
-          {meta?.label ?? block.type} preview
+          {t("editor.previewBlock", { label: meta ? blockLabel(t, block.type) : block.type })}
         </div>
       );
   }

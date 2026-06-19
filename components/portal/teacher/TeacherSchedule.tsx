@@ -1,25 +1,14 @@
 "use client";
 
-// ============================================================================
-//  TeacherSchedule — schedule overview + interactive roll-call card.
-//  Today's classes are expanded at the top with per-student attendance toggles.
-//  The rest of the week is shown as a compact schedule below.
-// ============================================================================
-
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocale, useTranslations } from "next-intl";
+import { useFullDayNames, useTimeGreeting } from "@/lib/i18n/client";
 import { markAttendance } from "@/app/portal/teacher/actions";
 import type { TeacherClass } from "@/app/portal/teacher/page";
 
 type AttStatus = "present" | "absent" | "late" | "excused" | null;
-
-const ATT_OPTS: { value: AttStatus; label: string; color: string }[] = [
-  { value: "present", label: "Present", color: "#22c55e" },
-  { value: "late",    label: "Late",    color: "#f59e0b" },
-  { value: "absent",  label: "Absent",  color: "#ef4444" },
-  { value: "excused", label: "Excused", color: "#8b8b92" },
-];
 
 function fmt(time: string | null) {
   if (!time) return "";
@@ -28,27 +17,36 @@ function fmt(time: string | null) {
   return `${h % 12 || 12}${m ? `:${m.toString().padStart(2, "0")}` : ""}${ampm}`;
 }
 
-// ── Roll-call card for one class ────────────────────────────────────────────
 function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string }) {
+  const t = useTranslations("teacher.schedule");
   const [statuses, setStatuses] = useState<Record<string, AttStatus>>(() =>
     Object.fromEntries(cls.students.map((s) => [s.studentId, s.attendanceStatus])),
   );
   const [pending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<string | null>(null);
 
+  const attOpts: { value: AttStatus; label: string; color: string }[] = [
+    { value: "present", label: t("attendance.present"), color: "#22c55e" },
+    { value: "late", label: t("attendance.late"), color: "#f59e0b" },
+    { value: "absent", label: t("attendance.absent"), color: "#ef4444" },
+    { value: "excused", label: t("attendance.excused"), color: "#8b8b92" },
+  ];
+
   const toggle = (studentId: string, next: AttStatus) => {
-    // Optimistic update
     setStatuses((prev) => ({ ...prev, [studentId]: next }));
     startTransition(async () => {
       const result = await markAttendance({
-        classId:   cls.id,
+        classId: cls.id,
         studentId,
-        date:      todayDate,
-        status:    next ?? "present",
+        date: todayDate,
+        status: next ?? "present",
       });
       if (!result.ok) {
-        // Roll back
-        setStatuses((prev) => ({ ...prev, [studentId]: cls.students.find(s => s.studentId === studentId)?.attendanceStatus ?? null }));
+        setStatuses((prev) => ({
+          ...prev,
+          [studentId]:
+            cls.students.find((s) => s.studentId === studentId)?.attendanceStatus ?? null,
+        }));
         setFeedback(result.error);
         setTimeout(() => setFeedback(null), 3000);
       }
@@ -60,7 +58,6 @@ function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[--hair] bg-surface">
-      {/* Class header */}
       <div
         className="flex items-center justify-between px-5 py-4 border-b border-[--hair]"
         style={{ background: "color-mix(in srgb, var(--brand) 8%, var(--surface))" }}
@@ -70,25 +67,26 @@ function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string
           <p className="text-xs text-muted">
             {cls.discipline && <>{cls.discipline} · </>}
             {cls.level && <>{cls.level} · </>}
-            {fmt(cls.startTime)}{cls.endTime && ` – ${fmt(cls.endTime)}`}
+            {fmt(cls.startTime)}
+            {cls.endTime && ` – ${fmt(cls.endTime)}`}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-lg font-black tabular-nums text-ink">{markedCount}/{total}</p>
-          <p className="text-xs text-muted">marked</p>
+          <p className="text-lg font-black tabular-nums text-ink">
+            {markedCount}/{total}
+          </p>
+          <p className="text-xs text-muted">{t("marked")}</p>
         </div>
       </div>
 
-      {/* Student roster */}
       {cls.students.length === 0 ? (
-        <p className="px-5 py-6 text-center text-sm text-muted">No enrolled students.</p>
+        <p className="px-5 py-6 text-center text-sm text-muted">{t("noStudents")}</p>
       ) : (
         <ul className="divide-y divide-[--hair]">
           {cls.students.map((student) => {
             const status = statuses[student.studentId];
             return (
               <li key={student.studentId} className="flex items-center gap-3 px-5 py-3">
-                {/* Avatar */}
                 <span
                   className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-black text-white"
                   style={{ background: "var(--brand-deep)" }}
@@ -99,21 +97,22 @@ function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string
                   href={`/portal/teacher/students/${student.studentId}`}
                   className="flex-1 text-sm font-medium text-ink hover:text-[--brand] hover:underline"
                 >
-                  {student.name ?? "Unknown student"}
+                  {student.name ?? t("unknownStudent")}
                 </Link>
-                {/* Attendance toggles */}
                 <div className="flex gap-1">
-                  {ATT_OPTS.map((opt) => {
+                  {attOpts.map((opt) => {
                     const active = status === opt.value;
                     return (
                       <button
-                        key={opt.value}
+                        key={opt.value ?? "null"}
                         onClick={() => toggle(student.studentId, active ? null : opt.value)}
                         disabled={pending}
                         title={opt.label}
                         className="rounded-full px-2.5 py-1 text-[0.6rem] font-semibold uppercase tracking-wide transition-all"
                         style={{
-                          background: active ? opt.color : "color-mix(in srgb, var(--text) 6%, transparent)",
+                          background: active
+                            ? opt.color
+                            : "color-mix(in srgb, var(--text) 6%, transparent)",
                           color: active ? "#fff" : "var(--muted)",
                           borderWidth: 1,
                           borderStyle: "solid",
@@ -131,7 +130,6 @@ function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string
         </ul>
       )}
 
-      {/* Error feedback */}
       <AnimatePresence>
         {feedback && (
           <motion.div
@@ -148,8 +146,9 @@ function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string
   );
 }
 
-// ── Compact schedule row ─────────────────────────────────────────────────────
 function ScheduleRow({ cls, dayName }: { cls: TeacherClass; dayName: string }) {
+  const t = useTranslations("teacher.schedule");
+
   return (
     <div className="flex items-center gap-4 rounded-xl border border-[--hair] px-4 py-3 bg-surface">
       <div className="w-12 shrink-0 text-center">
@@ -163,34 +162,37 @@ function ScheduleRow({ cls, dayName }: { cls: TeacherClass; dayName: string }) {
         <p className="text-xs text-muted">
           {cls.discipline && <>{cls.discipline} · </>}
           {cls.level && <>{cls.level} · </>}
-          {cls.students.length} students
+          {t("studentCount", { count: cls.students.length })}
         </p>
       </div>
     </div>
   );
 }
 
-// ── Main component ───────────────────────────────────────────────────────────
 export default function TeacherSchedule({
   teacherName,
   classes,
   todayDow,
   todayDate,
-  dayNames,
 }: {
   teacherName: string | null;
   classes: TeacherClass[];
   todayDow: number;
   todayDate: string;
-  dayNames: string[];
+  dayNames?: string[];
 }) {
+  const t = useTranslations("teacher.schedule");
+  const locale = useLocale();
+  const dayNames = useFullDayNames();
+  const greeting = useTimeGreeting();
+
   const todayClasses = classes.filter((c) => c.dayOfWeek === todayDow);
   const otherClasses = classes.filter((c) => c.dayOfWeek !== todayDow);
 
-  const greeting = (() => {
-    const h = new Date().getHours();
-    return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  })();
+  const firstName = teacherName?.split(" ")[0];
+  const greetingLine = firstName
+    ? t("greetingWithName", { greeting, name: firstName })
+    : t("greetingOnly", { greeting });
 
   return (
     <motion.div
@@ -199,32 +201,30 @@ export default function TeacherSchedule({
       variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
       className="mx-auto max-w-3xl space-y-10 p-6"
     >
-      {/* Header */}
       <motion.header
         variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
         className="flex flex-wrap items-end justify-between gap-3"
       >
         <div>
-          <p className="text-sm text-muted">
-            {greeting}{teacherName ? `, ${teacherName.split(" ")[0]}` : ""}.
-          </p>
-          <h1 className="text-2xl font-black tracking-tight text-ink">Schedule & Roll</h1>
+          <p className="text-sm text-muted">{greetingLine}</p>
+          <h1 className="text-2xl font-black tracking-tight text-ink">{t("title")}</h1>
         </div>
         <p className="text-sm text-muted">
-          {new Date().toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long" })}
+          {new Date().toLocaleDateString(locale, {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          })}
         </p>
       </motion.header>
 
-      {/* Today's roll call */}
-      <motion.section
-        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
-      >
+      <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
         <h2 className="mb-3 text-xs uppercase tracking-widest text-muted">
-          Today's roll · {dayNames[todayDow]}
+          {t("todayRoll", { day: dayNames[todayDow] })}
         </h2>
         {todayClasses.length === 0 ? (
           <div className="rounded-2xl border border-[--hair] bg-surface px-6 py-8 text-center">
-            <p className="text-sm text-muted">No classes today.</p>
+            <p className="text-sm text-muted">{t("noClassesToday")}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -235,33 +235,23 @@ export default function TeacherSchedule({
         )}
       </motion.section>
 
-      {/* Rest of week */}
       {otherClasses.length > 0 && (
-        <motion.section
-          variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
-        >
+        <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
           <h2 className="mb-3 text-xs uppercase tracking-widest text-muted">
-            This week · {classes.length} class{classes.length !== 1 ? "es" : ""} total
+            {t("thisWeek", { count: classes.length })}
           </h2>
           <div className="space-y-2">
             {otherClasses.map((cls) => (
-              <ScheduleRow
-                key={cls.id}
-                cls={cls}
-                dayName={dayNames[cls.dayOfWeek]}
-              />
+              <ScheduleRow key={cls.id} cls={cls} dayName={dayNames[cls.dayOfWeek]} />
             ))}
           </div>
         </motion.section>
       )}
 
-      {/* Empty state */}
       {classes.length === 0 && (
         <div className="rounded-2xl border border-[--hair] bg-surface px-6 py-12 text-center">
-          <p className="text-sm text-muted">No classes assigned to you yet.</p>
-          <p className="mt-1 text-xs text-muted">
-            Ask your studio admin to assign classes to your teacher account.
-          </p>
+          <p className="text-sm text-muted">{t("noClassesAssigned")}</p>
+          <p className="mt-1 text-xs text-muted">{t("noClassesAssignedHint")}</p>
         </div>
       )}
     </motion.div>

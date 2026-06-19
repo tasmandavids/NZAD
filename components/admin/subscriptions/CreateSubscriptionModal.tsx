@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   createAdminSubscription,
   type CreateAdminSubscriptionInput,
@@ -13,7 +14,6 @@ import type {
 } from "@/app/portal/admin/subscriptions/page";
 import {
   chargeAmountCents,
-  intervalLabel,
   lineTotalCents,
   monthlyAmountCents,
   type BillingInterval,
@@ -38,6 +38,10 @@ export function CreateSubscriptionModal({
   products: ProductOption[];
   onClose: () => void;
 }) {
+  const t = useTranslations("admin.subscriptions.createModal");
+  const tShared = useTranslations("admin.shared");
+  const tIntervals = useTranslations("admin.shared.billingIntervals");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [payerId, setPayerId] = useState(parents[0]?.id ?? "");
   const [studentId, setStudentId] = useState("");
@@ -94,7 +98,7 @@ export function CreateSubscriptionModal({
       {
         key: newKey(),
         itemType: "discount",
-        description: "Discount",
+        description: tShared("discount"),
         quantity: 1,
         unitMonthlyCents: -1000,
       },
@@ -112,9 +116,9 @@ export function CreateSubscriptionModal({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!payerId) return setError("Select a parent.");
-    if (lines.length === 0) return setError("Add at least one class or product.");
-    if (monthlyCents <= 0) return setError("Monthly total must be greater than zero.");
+    if (!payerId) return setError(t("selectParentError"));
+    if (lines.length === 0) return setError(t("addLineError"));
+    if (monthlyCents <= 0) return setError(t("positiveTotalError"));
 
     const payload: CreateAdminSubscriptionInput = {
       payerId,
@@ -138,16 +142,13 @@ export function CreateSubscriptionModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[--hair] bg-surface p-6 shadow-xl">
-        <h2 className="text-lg font-bold text-ink">Create subscription</h2>
-        <p className="mt-1 text-sm text-muted">
-          Build a monthly plan from classes and products. Parents pay weekly, fortnightly, or monthly —
-          a full invoice is generated on the 1st while the plan is active.
-        </p>
+        <h2 className="text-lg font-bold text-ink">{t("title")}</h2>
+        <p className="mt-1 text-sm text-muted">{t("description")}</p>
 
         <form onSubmit={submit} className="mt-5 space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-              Parent
+              {t("parent")}
               <select
                 value={payerId}
                 onChange={(e) => {
@@ -166,13 +167,13 @@ export function CreateSubscriptionModal({
 
             {students.length > 0 && (
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-                Student <span className="font-normal normal-case">(optional)</span>
+                {t("student")} <span className="font-normal normal-case">{tShared("optional")}</span>
                 <select
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink"
                 >
-                  <option value="">— Family plan —</option>
+                  <option value="">{tShared("familyPlan")}</option>
                   {students.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
@@ -185,23 +186,23 @@ export function CreateSubscriptionModal({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-              Payment frequency
+              {t("paymentFrequency")}
               <select
                 value={billingInterval}
                 onChange={(e) => setBillingInterval(e.target.value as BillingInterval)}
                 className="mt-1 w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink"
               >
-                <option value="week">Weekly</option>
-                <option value="fortnight">Fortnightly</option>
-                <option value="month">Monthly</option>
+                <option value="week">{tIntervals("week")}</option>
+                <option value="fortnight">{tIntervals("fortnight")}</option>
+                <option value="month">{tIntervals("month")}</option>
               </select>
             </label>
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-              Plan name <span className="font-normal normal-case">(optional)</span>
+              {t("planName")} <span className="font-normal normal-case">{tShared("optional")}</span>
               <input
                 value={planLabel}
                 onChange={(e) => setPlanLabel(e.target.value)}
-                placeholder="e.g. Term 2 — Emma"
+                placeholder={t("planNamePlaceholder")}
                 className="mt-1 w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink"
               />
             </label>
@@ -217,10 +218,10 @@ export function CreateSubscriptionModal({
                 }}
                 className="rounded-lg border border-[--hair] bg-surface px-3 py-1.5 text-xs font-semibold text-ink"
               >
-                <option value="">+ Add class</option>
+                <option value="">{t("addClass")}</option>
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} — {formatMoney(c.priceCents)}/mo
+                    {t("classOption", { name: c.name, price: formatMoney(c.priceCents) })}
                   </option>
                 ))}
               </select>
@@ -232,10 +233,10 @@ export function CreateSubscriptionModal({
                 }}
                 className="rounded-lg border border-[--hair] bg-surface px-3 py-1.5 text-xs font-semibold text-ink"
               >
-                <option value="">+ Add product</option>
+                <option value="">{t("addProduct")}</option>
                 {products.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} — {formatMoney(p.priceCents)}/mo
+                    {t("productOption", { name: p.name, price: formatMoney(p.priceCents) })}
                   </option>
                 ))}
               </select>
@@ -244,12 +245,12 @@ export function CreateSubscriptionModal({
                 onClick={addDiscount}
                 className="rounded-lg border border-[--hair] bg-surface px-3 py-1.5 text-xs font-semibold text-ink"
               >
-                + Add discount
+                {t("addDiscount")}
               </button>
             </div>
 
             {lines.length === 0 ? (
-              <p className="mt-4 text-sm text-muted">Add classes or products to build the monthly plan.</p>
+              <p className="mt-4 text-sm text-muted">{t("emptyLines")}</p>
             ) : (
               <ul className="mt-4 space-y-2">
                 {lines.map((line) => (
@@ -294,7 +295,7 @@ export function CreateSubscriptionModal({
                       onClick={() => removeLine(line.key)}
                       className="text-xs text-red-600 hover:underline"
                     >
-                      Remove
+                      {tCommon("delete")}
                     </button>
                   </li>
                 ))}
@@ -304,11 +305,13 @@ export function CreateSubscriptionModal({
 
           <div className="rounded-xl border border-[--hair] bg-base px-4 py-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted">Monthly plan total</span>
+              <span className="text-muted">{t("monthlyTotal")}</span>
               <span className="font-bold tabular-nums">{formatMoney(monthlyCents)}</span>
             </div>
             <div className="mt-1 flex justify-between">
-              <span className="text-muted">{intervalLabel(billingInterval)} charge</span>
+              <span className="text-muted">
+                {t("chargeLabel", { interval: tIntervals(billingInterval) })}
+              </span>
               <span className="font-semibold tabular-nums">{formatMoney(perChargeCents)}</span>
             </div>
           </div>
@@ -321,14 +324,14 @@ export function CreateSubscriptionModal({
               onClick={onClose}
               className="rounded-xl border border-[--hair] px-4 py-2 text-sm font-semibold text-muted"
             >
-              Cancel
+              {tCommon("cancel")}
             </button>
             <button
               type="submit"
               disabled={pending || parents.length === 0}
               className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-paper disabled:opacity-50"
             >
-              {pending ? "Creating…" : "Create & send to parent"}
+              {pending ? tShared("creating") : t("createAndSend")}
             </button>
           </div>
         </form>

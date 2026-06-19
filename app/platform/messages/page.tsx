@@ -1,9 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTranslations } from "@/lib/i18n/server";
 import { SupportInbox } from "@/components/platform/SupportInbox";
 import type { SupportThread } from "@/lib/platform/types";
 
 export default async function PlatformMessagesPage() {
   const admin = createAdminClient();
+  const t = await getTranslations("platform.dashboard");
 
   const { data: rows } = await admin
     .from("platform_support_threads")
@@ -29,7 +31,7 @@ export default async function PlatformMessagesPage() {
     return {
       id: r.id,
       studioId: r.studio_id,
-      studioName: studio?.name ?? "Unknown",
+      studioName: studio?.name ?? t("unknownStudio"),
       subject: r.subject,
       status: r.status as SupportThread["status"],
       priority: r.priority as SupportThread["priority"],

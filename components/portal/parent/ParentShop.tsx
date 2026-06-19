@@ -1,28 +1,24 @@
 "use client";
 
-// ============================================================================
-//  ParentShop — browse and purchase merchandise from the parent portal.
-//  Cart lives in React state. Checkout calls /api/shop/checkout → Stripe intent.
-// ============================================================================
-
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import CheckoutForm from "@/components/payments/CheckoutForm";
 import { OptimizableImage } from "@/components/ui/OptimizableImage";
 
 interface Product {
-  id:          string;
-  name:        string;
+  id: string;
+  name: string;
   description: string | null;
   price_cents: number;
-  stock_qty:   number;
-  category:    string | null;
-  image_url:   string | null;
+  stock_qty: number;
+  category: string | null;
+  image_url: string | null;
 }
 
 interface CartItem {
   product: Product;
-  qty:     number;
+  qty: number;
 }
 
 interface Props {
@@ -34,17 +30,20 @@ function formatPrice(cents: number) {
 }
 
 export function ParentShop({ products }: Props) {
-  const [cart,         setCart]         = useState<CartItem[]>([]);
-  const [cartOpen,     setCartOpen]     = useState(false);
-  const [search,       setSearch]       = useState("");
-  const [catFilter,    setCatFilter]    = useState("all");
-  const [checkingOut,  setCheckingOut]  = useState(false);
+  const t = useTranslations("parent.shop");
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [catFilter, setCatFilter] = useState("all");
+  const [checkingOut, setCheckingOut] = useState(false);
   const [checkoutDone, setCheckoutDone] = useState(false);
-  const [error,        setError]        = useState<string | null>(null);
-  // Set when a paid order's PaymentIntent is created — drives the card form.
+  const [error, setError] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
-  const categories = ["all", ...Array.from(new Set(products.map((p) => p.category).filter((c): c is string => c != null)))];
+  const categories = [
+    "all",
+    ...Array.from(new Set(products.map((p) => p.category).filter((c): c is string => c != null))),
+  ];
   const filtered = products.filter((p) => {
     const q = search.toLowerCase();
     return (
@@ -62,7 +61,7 @@ export function ParentShop({ products }: Props) {
       if (existing) {
         const newQty = existing.qty + 1;
         if (newQty > p.stock_qty) return prev;
-        return prev.map((i) => i.product.id === p.id ? { ...i, qty: newQty } : i);
+        return prev.map((i) => (i.product.id === p.id ? { ...i, qty: newQty } : i));
       }
       if (p.stock_qty < 1) return prev;
       return [...prev, { product: p, qty: 1 }];
@@ -74,8 +73,11 @@ export function ParentShop({ products }: Props) {
   }
 
   function updateQty(productId: string, qty: number) {
-    if (qty <= 0) { removeFromCart(productId); return; }
-    setCart((prev) => prev.map((i) => i.product.id === productId ? { ...i, qty } : i));
+    if (qty <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+    setCart((prev) => prev.map((i) => (i.product.id === productId ? { ...i, qty } : i)));
   }
 
   async function checkout() {
@@ -85,29 +87,30 @@ export function ParentShop({ products }: Props) {
 
     try {
       const res = await fetch("/api/shop/checkout", {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({
+        body: JSON.stringify({
           items: cart.map((i) => ({ productId: i.product.id, qty: i.qty })),
         }),
       });
       const data = await res.json();
 
-      if (!res.ok) { setError(data.error ?? "Checkout failed"); return; }
+      if (!res.ok) {
+        setError(data.error ?? t("checkoutFailed"));
+        return;
+      }
 
       if (data.free) {
-        // Order confirmed without payment
         setCart([]);
         setCartOpen(false);
         setCheckoutDone(true);
       } else if (data.clientSecret) {
-        // Paid order — reveal the Stripe card form (cart stays for context).
         setClientSecret(data.clientSecret);
       } else {
-        setError("Could not start payment. Please try again.");
+        setError(t("paymentStartFailed"));
       }
-    } catch (e) {
-      setError("Network error. Please try again.");
+    } catch {
+      setError(t("networkError"));
     } finally {
       setCheckingOut(false);
     }
@@ -118,13 +121,13 @@ export function ParentShop({ products }: Props) {
       <div className="flex h-64 items-center justify-center">
         <div className="text-center">
           <p className="text-4xl mb-3">🎉</p>
-          <p className="font-semibold text-ink">Order confirmed!</p>
-          <p className="text-sm text-muted mt-1">Your items have been reserved. The studio will confirm shortly.</p>
+          <p className="font-semibold text-ink">{t("orderConfirmed")}</p>
+          <p className="text-sm text-muted mt-1">{t("orderConfirmedHint")}</p>
           <button
             onClick={() => setCheckoutDone(false)}
             className="mt-4 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
           >
-            Continue Shopping
+            {t("continueShopping")}
           </button>
         </div>
       </div>
@@ -133,27 +136,25 @@ export function ParentShop({ products }: Props) {
 
   return (
     <div className="relative">
-      {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-black text-ink">Studio Shop</h2>
+        <h2 className="text-lg font-black text-ink">{t("title")}</h2>
         <button
           onClick={() => setCartOpen(true)}
           className="relative flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
         >
-          🛒 Cart
+          {t("cart")}
           {cartCount > 0 && (
-            <span className="rounded-full bg-white/30 px-1.5 text-xs font-bold">
-              {cartCount}
-            </span>
+            <span className="rounded-full bg-white/30 px-1.5 text-xs font-bold">{cartCount}</span>
           )}
         </button>
       </div>
 
-      {/* Search + filter */}
       <div className="mb-4 flex flex-wrap gap-3">
         <input
-          type="search" value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search…"
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t("searchPlaceholder")}
           className="w-48 rounded-xl border border-[--hair] bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
         />
         <div className="flex flex-wrap gap-1.5">
@@ -165,20 +166,19 @@ export function ParentShop({ products }: Props) {
                 catFilter === c ? "bg-brand text-white" : "border border-[--hair] text-muted hover:text-ink"
               }`}
             >
-              {c}
+              {c === "all" ? t("categoryAll") : c}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Product grid */}
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted">No products available.</p>
+        <p className="py-8 text-center text-sm text-muted">{t("noProducts")}</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => {
-            const inCart   = cart.find((i) => i.product.id === p.id);
-            const soldOut  = p.stock_qty === 0;
+            const inCart = cart.find((i) => i.product.id === p.id);
+            const soldOut = p.stock_qty === 0;
 
             return (
               <div key={p.id} className="rounded-2xl border border-[--hair] bg-surface p-4">
@@ -202,26 +202,30 @@ export function ParentShop({ products }: Props) {
                 <div className="mt-2 flex items-center justify-between">
                   <span className="font-black text-brand">{formatPrice(p.price_cents)}</span>
                   {soldOut ? (
-                    <span className="text-xs text-muted">Out of stock</span>
+                    <span className="text-xs text-muted">{t("outOfStock")}</span>
                   ) : inCart ? (
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={() => updateQty(p.id, inCart.qty - 1)}
                         className="h-6 w-6 rounded-md border border-[--hair] text-xs text-muted hover:text-ink"
-                      >−</button>
+                      >
+                        −
+                      </button>
                       <span className="text-xs font-semibold text-ink">{inCart.qty}</span>
                       <button
                         onClick={() => addToCart(p)}
                         disabled={inCart.qty >= p.stock_qty}
                         className="h-6 w-6 rounded-md border border-[--hair] text-xs text-muted hover:text-ink disabled:opacity-30"
-                      >+</button>
+                      >
+                        +
+                      </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => addToCart(p)}
                       className="rounded-lg bg-brand px-3 py-1 text-xs font-semibold text-white hover:opacity-90"
                     >
-                      Add
+                      {t("add")}
                     </button>
                   )}
                 </div>
@@ -231,23 +235,28 @@ export function ParentShop({ products }: Props) {
         </div>
       )}
 
-      {/* ── Cart slide-over ───────────────────────────────────────────────── */}
       <AnimatePresence>
         {cartOpen && (
           <>
             <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
               onClick={() => setCartOpen(false)}
             />
             <motion.div
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
               transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
               className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-surface shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
-                <h2 className="font-semibold text-ink">Your Cart ({cartCount})</h2>
-                <button onClick={() => setCartOpen(false)} className="text-muted hover:text-ink text-lg">✕</button>
+                <h2 className="font-semibold text-ink">{t("yourCart", { count: cartCount })}</h2>
+                <button onClick={() => setCartOpen(false)} className="text-muted hover:text-ink text-lg">
+                  ✕
+                </button>
               </div>
 
               <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -255,7 +264,7 @@ export function ParentShop({ products }: Props) {
                   <div className="flex h-full items-center justify-center text-center">
                     <div>
                       <p className="text-4xl mb-3">🛒</p>
-                      <p className="text-sm text-muted">Your cart is empty.</p>
+                      <p className="text-sm text-muted">{t("cartEmpty")}</p>
                     </div>
                   </div>
                 ) : (
@@ -277,18 +286,24 @@ export function ParentShop({ products }: Props) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-ink truncate">{item.product.name}</p>
-                          <p className="text-xs text-muted">{formatPrice(item.product.price_cents)} each</p>
+                          <p className="text-xs text-muted">
+                            {t("priceEach", { price: formatPrice(item.product.price_cents) })}
+                          </p>
                           <div className="mt-1 flex items-center gap-1.5">
                             <button
                               onClick={() => updateQty(item.product.id, item.qty - 1)}
                               className="h-5 w-5 rounded border border-[--hair] text-[0.6rem] text-muted hover:text-ink"
-                            >−</button>
+                            >
+                              −
+                            </button>
                             <span className="text-xs font-medium text-ink">{item.qty}</span>
                             <button
                               onClick={() => addToCart(item.product)}
                               disabled={item.qty >= item.product.stock_qty}
                               className="h-5 w-5 rounded border border-[--hair] text-[0.6rem] text-muted hover:text-ink disabled:opacity-30"
-                            >+</button>
+                            >
+                              +
+                            </button>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
@@ -299,7 +314,7 @@ export function ParentShop({ products }: Props) {
                             onClick={() => removeFromCart(item.product.id)}
                             className="text-[0.65rem] text-muted hover:text-red-500 mt-1"
                           >
-                            Remove
+                            {t("remove")}
                           </button>
                         </div>
                       </div>
@@ -314,13 +329,13 @@ export function ParentShop({ products }: Props) {
                     <p className="rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-500">{error}</p>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-ink">Total</span>
+                    <span className="font-semibold text-ink">{t("total")}</span>
                     <span className="text-lg font-black text-brand">{formatPrice(cartTotal)}</span>
                   </div>
                   {clientSecret ? (
                     <CheckoutForm
                       clientSecret={clientSecret}
-                      submitLabel={`Pay ${formatPrice(cartTotal)}`}
+                      submitLabel={t("payAmount", { amount: formatPrice(cartTotal) })}
                       onSuccess={() => {
                         setCart([]);
                         setClientSecret(null);
@@ -328,7 +343,7 @@ export function ParentShop({ products }: Props) {
                         setCheckoutDone(true);
                       }}
                       onCancel={() => setClientSecret(null)}
-                      cancelLabel="Cancel"
+                      cancelLabel={t("cancel")}
                     />
                   ) : (
                     <button
@@ -336,7 +351,7 @@ export function ParentShop({ products }: Props) {
                       disabled={checkingOut}
                       className="w-full rounded-xl bg-brand py-3 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40"
                     >
-                      {checkingOut ? "Processing…" : "Checkout →"}
+                      {checkingOut ? t("processing") : t("checkout")}
                     </button>
                   )}
                 </div>

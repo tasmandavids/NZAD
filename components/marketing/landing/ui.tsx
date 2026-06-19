@@ -2,7 +2,9 @@
 
 import { useRef, useEffect, type ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { OluneLogo } from "@/components/brand/OluneLogo";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { rise } from "./motion";
 
 export function Eyebrow({ children }: { children: ReactNode }) {
@@ -107,6 +109,7 @@ export function ProductDemo({
   reversed?: boolean;
   accent?: "iris" | "apricot" | "lumen";
 }) {
+  const t = useTranslations("marketing");
   const videoRef = useRef<HTMLVideoElement>(null);
   const reduce = useReducedMotion();
 
@@ -173,7 +176,7 @@ export function ProductDemo({
               </div>
             </div>
             <div className="absolute bottom-4 left-4 rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-white/90 backdrop-blur-md">
-              Live preview
+              {t("livePreview")}
             </div>
           </div>
         </div>
@@ -183,11 +186,13 @@ export function ProductDemo({
 }
 
 export function LandingNav() {
+  const t = useTranslations("marketing");
+
   const links = [
-    { href: "#features", label: "Features" },
-    { href: "#pricing", label: "Pricing" },
-    { href: "#about", label: "About" },
-    { href: "#compare", label: "Compare" },
+    { href: "#features", label: t("features") },
+    { href: "#pricing", label: t("pricing") },
+    { href: "#about", label: t("about") },
+    { href: "#compare", label: t("compare") },
   ];
 
   return (
@@ -208,17 +213,18 @@ export function LandingNav() {
           ))}
         </div>
         <div className="flex items-center gap-4">
+          <LanguageSwitcher compact className="hidden sm:inline-flex" />
           <a
             href="/login"
             className="hidden text-[0.68rem] font-medium uppercase tracking-[0.22em] text-slate transition-colors hover:text-ink-black sm:inline"
           >
-            Sign in
+            {t("signIn")}
           </a>
           <a
             href="/onboarding"
             className="rounded-full border border-ink-black/15 bg-paper px-5 py-2 text-[0.68rem] font-bold uppercase tracking-wide text-ink-black shadow-sm transition-colors hover:border-iris/40 hover:bg-ivory"
           >
-            Start free
+            {t("startFree")}
           </a>
         </div>
       </div>
@@ -227,18 +233,21 @@ export function LandingNav() {
 }
 
 export function LandingFooter() {
+  const t = useTranslations("marketing");
+
   return (
     <footer className="relative border-t border-ink-black/[0.08] bg-midnight px-[clamp(1.25rem,4vw,4rem)] py-12 text-white/80">
       <div className="mx-auto flex max-w-[1320px] flex-col items-start justify-between gap-8 sm:flex-row sm:items-center">
         <div>
           <OluneLogo theme="dark" size="md" />
-          <p className="mt-3 text-sm text-white/60">The calm way to run a studio.</p>
+          <p className="mt-3 text-sm text-white/60">{t("tagline")}</p>
         </div>
-        <div className="flex flex-wrap gap-6 text-[0.68rem] font-medium uppercase tracking-[0.2em] text-white/50">
-          <a href="#features" className="transition-colors hover:text-white">Features</a>
-          <a href="#pricing" className="transition-colors hover:text-white">Pricing</a>
-          <a href="/login" className="transition-colors hover:text-white">Sign in</a>
-          <a href="/onboarding" className="transition-colors hover:text-white">Start free</a>
+        <div className="flex flex-wrap items-center gap-6 text-[0.68rem] font-medium uppercase tracking-[0.2em] text-white/50">
+          <LanguageSwitcher compact className="text-white/70" />
+          <a href="#features" className="transition-colors hover:text-white">{t("features")}</a>
+          <a href="#pricing" className="transition-colors hover:text-white">{t("pricing")}</a>
+          <a href="/login" className="transition-colors hover:text-white">{t("signIn")}</a>
+          <a href="/onboarding" className="transition-colors hover:text-white">{t("startFree")}</a>
         </div>
       </div>
     </footer>

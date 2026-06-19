@@ -12,6 +12,7 @@ export type ContactMatch = {
 const ROLE_LABEL: Record<Role, string> = {
   admin: "Admin",
   teacher: "Teacher",
+  office: "Office",
   parent: "Parent",
   student: "Student",
 };
@@ -23,7 +24,8 @@ function profileHref(role: Role, id: string): string | null {
     case "parent":
       return `/portal/admin/parents`;
     case "teacher":
-      return `/portal/admin/teachers`;
+    case "office":
+      return `/portal/admin/staff/${id}`;
     case "admin":
       return null;
     default:

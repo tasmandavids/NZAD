@@ -1,0 +1,17 @@
+{
+  "student": {
+    "timetable": {
+      "title": "My Timetable",
+      "greetingWithName": "{greeting}, {name}.",
+      "greetingOnly": "{greeting}.",
+      "today": "Today · {day}",
+      "noClassesToday": "No classes today — enjoy the rest day.",
+      "until": "until {time}",
+      "weeklySchedule": "Weekly schedule",
+      "myClasses": "My classes · {count} enrolled",
+      "noEnrolments": "No active enrolments found.",
+      "noEnrolmentsHint": "Your studio admin will assign you to classes.",
+      "withTeacher": "with {name}"
+    }
+  }
+}

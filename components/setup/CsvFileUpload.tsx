@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { readTextFile } from "@/lib/setup/csv-file";
 
 export function CsvFileUpload({
@@ -12,6 +13,7 @@ export function CsvFileUpload({
   onLoad: (text: string) => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations("setup.csvUpload");
   const inputRef = useRef<HTMLInputElement>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export function CsvFileUpload({
       setFileName(file.name);
       onLoad(text);
     } catch (err) {
-      setFileError(err instanceof Error ? err.message : "Could not read file");
+      setFileError(err instanceof Error ? err.message : t("readError"));
       setFileName(null);
     }
     e.target.value = "";
@@ -48,7 +50,7 @@ export function CsvFileUpload({
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[--hair] bg-base/40 px-4 py-3 text-sm text-muted transition hover:border-brand/40 hover:text-ink disabled:opacity-50"
       >
         <span aria-hidden>📁</span>
-        {fileName ? `Loaded ${fileName}` : label}
+        {fileName ? t("loaded", { fileName }) : label}
       </button>
       {fileError && (
         <p className="mt-1.5 text-xs text-red-400">{fileError}</p>

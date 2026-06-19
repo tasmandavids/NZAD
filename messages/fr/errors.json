@@ -1,0 +1,27 @@
+{
+  "errors": {
+    "generic": {
+      "eyebrow": "Une erreur s'est produite",
+      "title": "Nous avons rencontré une erreur inattendue",
+      "body": "Réessayez ou retournez à l'accueil si le problème persiste.",
+      "retry": "Réessayer",
+      "goHome": "Retour à l'accueil"
+    },
+    "global": {
+      "title": "Une erreur s'est produite",
+      "body": "L'application a rencontré une erreur critique.",
+      "retry": "Réessayer"
+    },
+    "notFound": {
+      "eyebrow": "404",
+      "title": "Page introuvable",
+      "platformBody": "Sur <localhost>localhost</localhost>, cette URL correspond à la plateforme Olune — pas au site d'un studio. Vos pages publiques sont sur le sous-domaine de votre studio.",
+      "exampleLabel": "Exemple :",
+      "oluneHome": "Accueil Olune",
+      "signIn": "Se connecter",
+      "websiteAdmin": "Administration du site",
+      "studioBody": "Cette page n'a pas encore été publiée, ou l'URL est incorrecte. Vérifiez l'orthographe et le statut de publication dans l'onglet Site web.",
+      "backHome": "Retour à l'accueil"
+    }
+  }
+}

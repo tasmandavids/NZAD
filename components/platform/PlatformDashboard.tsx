@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
+import { useTimeGreeting } from "@/lib/i18n/client";
 
 type Stat = { id: string; label: string; value: string | number; hint?: string };
 
@@ -16,10 +18,9 @@ export function PlatformDashboard({
   openTasks: { id: string; title: string; priority: string; dueAt: string | null }[];
   openThreads: { id: string; subject: string; studioName: string; priority: string }[];
 }) {
-  const greeting = (() => {
-    const h = new Date().getHours();
-    return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
-  })();
+  const t = useTranslations("platform.dashboard");
+  const locale = useLocale();
+  const greeting = useTimeGreeting();
 
   return (
     <motion.div
@@ -33,11 +34,15 @@ export function PlatformDashboard({
         className="flex flex-wrap items-end justify-between gap-3"
       >
         <div>
-          <p className="text-sm text-muted">{greeting},</p>
-          <h1 className="text-2xl font-black tracking-tight text-ink">Platform overview</h1>
+          <p className="text-sm text-muted">{t("greeting", { greeting })}</p>
+          <h1 className="text-2xl font-black tracking-tight text-ink">{t("title")}</h1>
         </div>
         <p className="text-sm text-muted">
-          {new Date().toLocaleDateString("en-NZ", { weekday: "long", day: "numeric", month: "long" })}
+          {new Date().toLocaleDateString(locale, {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          })}
         </p>
       </motion.header>
 
@@ -58,14 +63,16 @@ export function PlatformDashboard({
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-[--hair] bg-surface p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-muted">Recent signups</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-muted">
+              {t("recentSignups")}
+            </h2>
             <Link href="/platform/studios" className="text-xs text-brand hover:underline">
-              All studios →
+              {t("allStudios")}
             </Link>
           </div>
           <ul className="space-y-3">
             {recentStudios.length === 0 && (
-              <li className="text-sm text-muted">No studios yet.</li>
+              <li className="text-sm text-muted">{t("noStudios")}</li>
             )}
             {recentStudios.map((s) => (
               <li key={s.id} className="flex items-center justify-between gap-3 text-sm">
@@ -83,20 +90,22 @@ export function PlatformDashboard({
 
         <section className="rounded-2xl border border-[--hair] bg-surface p-5">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-muted">Open support</h2>
+            <h2 className="text-sm font-bold uppercase tracking-widest text-muted">
+              {t("openSupport")}
+            </h2>
             <Link href="/platform/messages" className="text-xs text-brand hover:underline">
-              Inbox →
+              {t("inbox")}
             </Link>
           </div>
           <ul className="space-y-3">
             {openThreads.length === 0 && (
-              <li className="text-sm text-muted">Inbox clear.</li>
+              <li className="text-sm text-muted">{t("inboxClear")}</li>
             )}
-            {openThreads.map((t) => (
-              <li key={t.id} className="text-sm">
-                <p className="font-semibold text-ink">{t.subject}</p>
+            {openThreads.map((thread) => (
+              <li key={thread.id} className="text-sm">
+                <p className="font-semibold text-ink">{thread.subject}</p>
                 <p className="text-xs text-muted">
-                  {t.studioName} · {t.priority}
+                  {thread.studioName} · {thread.priority}
                 </p>
               </li>
             ))}
@@ -106,21 +115,22 @@ export function PlatformDashboard({
 
       <section className="rounded-2xl border border-[--hair] bg-surface p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-widest text-muted">Ops queue</h2>
+          <h2 className="text-sm font-bold uppercase tracking-widest text-muted">{t("opsQueue")}</h2>
           <Link href="/platform/tasks" className="text-xs text-brand hover:underline">
-            All tasks →
+            {t("allTasks")}
           </Link>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {openTasks.length === 0 && (
-            <p className="text-sm text-muted">No open tasks.</p>
-          )}
-          {openTasks.map((t) => (
-            <div key={t.id} className="rounded-xl border border-[--hair] bg-base p-4 text-sm">
-              <p className="font-semibold text-ink">{t.title}</p>
+          {openTasks.length === 0 && <p className="text-sm text-muted">{t("noOpenTasks")}</p>}
+          {openTasks.map((task) => (
+            <div key={task.id} className="rounded-xl border border-[--hair] bg-base p-4 text-sm">
+              <p className="font-semibold text-ink">{task.title}</p>
               <p className="mt-1 text-xs text-muted">
-                {t.priority}
-                {t.dueAt && ` · due ${new Date(t.dueAt).toLocaleDateString("en-NZ")}`}
+                {task.priority}
+                {task.dueAt &&
+                  ` · ${t("dueDate", {
+                    date: new Date(task.dueAt).toLocaleDateString(locale),
+                  })}`}
               </p>
             </div>
           ))}

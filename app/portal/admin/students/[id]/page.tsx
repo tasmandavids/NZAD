@@ -6,6 +6,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import ProgressTracker, {
   type ProgressEntry,
@@ -28,6 +29,8 @@ export default async function StudentDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const t = await getTranslations("admin.students.detail");
+  const tShared = await getTranslations("admin.shared");
 
   const [studentRes, progressRes] = await Promise.all([
     supabase
@@ -97,7 +100,7 @@ export default async function StudentDetailPage({
           href="/portal/admin/students"
           className="text-xs text-muted hover:text-ink"
         >
-          ← Back to students
+          {t("back")}
         </Link>
         <div className="mt-3 flex items-center gap-4">
           <span
@@ -113,10 +116,10 @@ export default async function StudentDetailPage({
           </span>
           <div>
             <h1 className="text-2xl font-black tracking-tight text-ink">
-              {student.name ?? "Unknown student"}
+              {student.name ?? tShared("unknownStudent")}
             </h1>
             <p className="text-sm text-muted">
-              {student.email ?? student.phone ?? "No contact on file"}
+              {student.email ?? student.phone ?? t("noContactOnFile")}
             </p>
             {student.classes.length > 0 && (
               <p className="mt-1 text-xs text-muted">

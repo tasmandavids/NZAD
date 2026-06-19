@@ -1,18 +1,30 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ThemeBase } from "@/lib/types";
 import { OptimizableImage } from "@/components/ui/OptimizableImage";
 
-const COLOR_PRESETS = [
-  { label: "Iris", color: "#6B66C9" },
-  { label: "Crimson", color: "#C8102E" },
-  { label: "Voltage", color: "#5B5BFF" },
-  { label: "Aurum", color: "#C9A227" },
-  { label: "Bloom", color: "#E84A8A" },
-  { label: "Jade", color: "#13B6A4" },
-  { label: "Forest", color: "#22C55E" },
-  { label: "Slate", color: "#2D3748" },
-];
+const COLOR_PRESET_KEYS = [
+  "iris",
+  "crimson",
+  "voltage",
+  "aurum",
+  "bloom",
+  "jade",
+  "forest",
+  "slate",
+] as const;
+
+const COLOR_PRESET_VALUES: Record<(typeof COLOR_PRESET_KEYS)[number], string> = {
+  iris: "#6B66C9",
+  crimson: "#C8102E",
+  voltage: "#5B5BFF",
+  aurum: "#C9A227",
+  bloom: "#E84A8A",
+  jade: "#13B6A4",
+  forest: "#22C55E",
+  slate: "#2D3748",
+};
 
 export type BrandingDraft = {
   brandColor: string;
@@ -28,16 +40,15 @@ type Props = {
 };
 
 export function BrandingQuickApply({ studioName, value, onChange }: Props) {
+  const t = useTranslations("site.branding");
   const set = <K extends keyof BrandingDraft>(key: K, val: BrandingDraft[K]) =>
     onChange({ ...value, [key]: val });
 
   return (
     <section className="space-y-4 rounded-2xl border border-brand/20 bg-brand/5 p-5">
       <div>
-        <h2 className="font-semibold text-ink">Your branding</h2>
-        <p className="mt-0.5 text-sm text-muted">
-          Drop in your logo and colours — they apply instantly to the preview below.
-        </p>
+        <h2 className="font-semibold text-ink">{t("title")}</h2>
+        <p className="mt-0.5 text-sm text-muted">{t("subtitle")}</p>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -60,62 +71,62 @@ export function BrandingQuickApply({ studioName, value, onChange }: Props) {
           </div>
           <div className="min-w-0">
             <p className="truncate font-semibold text-ink">{studioName}</p>
-            <p className="truncate text-xs text-muted">{value.tagline || "Your tagline"}</p>
+            <p className="truncate text-xs text-muted">{value.tagline || t("taglineFallback")}</p>
           </div>
         </div>
 
         <div className="grid flex-1 gap-3 sm:grid-cols-2">
           <label className="block text-sm sm:col-span-2">
-            <span className="mb-1 block font-medium text-ink">Logo URL</span>
+            <span className="mb-1 block font-medium text-ink">{t("logoUrl")}</span>
             <input
               type="url"
               value={value.logoUrl}
               onChange={(e) => set("logoUrl", e.target.value)}
-              placeholder="https://…/logo.png"
+              placeholder={t("logoUrlPlaceholder")}
               className="field-premium"
             />
           </label>
 
           <label className="block text-sm sm:col-span-2">
-            <span className="mb-1 block font-medium text-ink">Tagline</span>
+            <span className="mb-1 block font-medium text-ink">{t("tagline")}</span>
             <input
               value={value.tagline}
               onChange={(e) => set("tagline", e.target.value)}
-              placeholder="e.g. Auckland · All ages welcome"
+              placeholder={t("taglinePlaceholder")}
               className="field-premium"
             />
           </label>
 
           <div className="space-y-2">
-            <span className="block text-sm font-medium text-ink">Brand colour</span>
+            <span className="block text-sm font-medium text-ink">{t("brandColor")}</span>
             <div className="flex items-center gap-2">
               <input
                 type="color"
                 value={value.brandColor}
                 onChange={(e) => set("brandColor", e.target.value)}
                 className="h-10 w-12 cursor-pointer rounded-lg border border-[--hair] bg-transparent p-0.5"
-                aria-label="Brand colour"
+                aria-label={t("brandColorAria")}
               />
               <code className="text-xs text-muted">{value.brandColor.toUpperCase()}</code>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {COLOR_PRESETS.map((p) => (
+              {COLOR_PRESET_KEYS.map((key) => (
                 <button
-                  key={p.color}
+                  key={key}
                   type="button"
-                  title={p.label}
-                  onClick={() => set("brandColor", p.color)}
+                  title={t(`colorPresets.${key}`)}
+                  onClick={() => set("brandColor", COLOR_PRESET_VALUES[key])}
                   className={`h-7 w-7 rounded-full border-2 transition ${
-                    value.brandColor === p.color ? "border-ink scale-110" : "border-transparent"
+                    value.brandColor === COLOR_PRESET_VALUES[key] ? "border-ink scale-110" : "border-transparent"
                   }`}
-                  style={{ background: p.color }}
+                  style={{ background: COLOR_PRESET_VALUES[key] }}
                 />
               ))}
             </div>
           </div>
 
           <div className="space-y-2">
-            <span className="block text-sm font-medium text-ink">Site theme</span>
+            <span className="block text-sm font-medium text-ink">{t("siteTheme")}</span>
             <div className="inline-flex rounded-full border border-[--hair] bg-base p-1">
               {(["light", "dark"] as ThemeBase[]).map((mode) => (
                 <button
@@ -126,7 +137,7 @@ export function BrandingQuickApply({ studioName, value, onChange }: Props) {
                     value.base === mode ? "bg-brand text-white" : "text-muted hover:text-ink"
                   }`}
                 >
-                  {mode === "dark" ? "Dark" : "Light"}
+                  {mode === "dark" ? t("dark") : t("light")}
                 </button>
               ))}
             </div>

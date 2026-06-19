@@ -1,11 +1,7 @@
 "use client";
 
-// ============================================================================
-//  AdminSettings — Studio settings form.
-//  Currently: edit studio name. Slug + custom domain shown as read-only info.
-// ============================================================================
-
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import {
   updateStudioName,
@@ -16,8 +12,6 @@ import {
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
 
-// Common IANA timezones for the studio picker. Admins can self-host more by
-// extending this list; the server action accepts any valid IANA name.
 const TIMEZONES = [
   "Pacific/Auckland",
   "Australia/Sydney",
@@ -47,6 +41,10 @@ type StudioInfo = {
 };
 
 export default function AdminSettings({ studio }: { studio: StudioInfo | null }) {
+  const t = useTranslations("admin.settings");
+  const tShared = useTranslations("admin.shared");
+  const tStatus = useTranslations("admin.shared.status");
+
   const [name, setName] = useState(studio?.name ?? "");
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState<string | null>(null);
@@ -66,14 +64,14 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
   const onSave = () =>
     startTransition(async () => {
       const res = await updateStudioName({ name });
-      setStatus(res.ok ? "Saved" : res.ok === false ? res.error : "Error");
+      setStatus(res.ok ? "saved" : res.ok === false ? res.error : "error");
       setTimeout(() => setStatus(null), 2500);
     });
 
   const onSaveDiscount = () =>
     startDiscountTransition(async () => {
       const res = await updateSiblingDiscount({ pct: Number(discount) });
-      setDiscountStatus(res.ok ? "Saved" : res.error);
+      setDiscountStatus(res.ok ? "saved" : res.error);
       setTimeout(() => setDiscountStatus(null), 2500);
     });
 
@@ -82,10 +80,10 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
     startRetailTransition(async () => {
       const res = await updateFamilyRetailDiscount({ enabled });
       if (!res.ok) {
-        setRetailDiscount(!enabled); // revert on failure
+        setRetailDiscount(!enabled);
         setRetailStatus(res.error);
       } else {
-        setRetailStatus("Saved");
+        setRetailStatus("saved");
       }
       setTimeout(() => setRetailStatus(null), 2500);
     });
@@ -94,17 +92,22 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
   const onSaveTimezone = () =>
     startTzTransition(async () => {
       const res = await updateStudioTimezone({ timezone });
-      setTzStatus(res.ok ? "Saved" : res.error);
+      setTzStatus(res.ok ? "saved" : res.error);
       setTimeout(() => setTzStatus(null), 2500);
     });
 
   if (!studio) {
     return (
       <div className="grid min-h-screen place-items-center p-8 text-ink">
-        <p className="text-sm text-muted">Studio not found.</p>
+        <p className="text-sm text-muted">{t("notFound")}</p>
       </div>
     );
   }
+
+  const statusLabel =
+    studio.status in { active: 1, trial: 1, canceled: 1, lost: 1 }
+      ? tStatus(studio.status as "active")
+      : studio.status;
 
   return (
     <motion.div
@@ -113,26 +116,23 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="mx-auto max-w-2xl space-y-10 p-6"
     >
-      {/* Header */}
       <header>
-        <h1 className="text-xl font-bold text-ink">Studio settings</h1>
-        <p className="text-sm text-muted">Manage your studio's identity and configuration.</p>
+        <h1 className="text-xl font-bold text-ink">{t("title")}</h1>
+        <p className="text-sm text-muted">{t("subtitle")}</p>
       </header>
 
-      {/* Identity card */}
       <section className="space-y-6 rounded-2xl border border-[--hair] bg-surface p-6">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Identity</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("identity")}</h2>
 
-        {/* Studio name */}
         <div className="space-y-2">
           <label className="block text-sm">
-            <span className="mb-1.5 block font-medium text-ink">Studio name</span>
+            <span className="mb-1.5 block font-medium text-ink">{t("studioName")}</span>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="field-premium"
-              placeholder="My Dance Studio"
+              placeholder={t("studioNamePlaceholder")}
             />
           </label>
           <div className="flex items-center gap-3">
@@ -141,32 +141,29 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
               disabled={pending || !name.trim() || name.trim() === studio.name}
               className="btn-glow btn-glow--solid px-5 py-2 text-sm disabled:opacity-50"
             >
-              {pending ? "Saving…" : "Save name"}
+              {pending ? tShared("saving") : t("saveName")}
             </button>
             {status && (
               <p
                 className="text-sm"
-                style={{ color: status === "Saved" ? "var(--brand-hot)" : "#ef4444" }}
+                style={{ color: status === "saved" ? "var(--brand-hot)" : "#ef4444" }}
               >
-                {status === "Saved" ? "Name updated." : status}
+                {status === "saved" ? t("nameUpdated") : status}
               </p>
             )}
           </div>
         </div>
       </section>
 
-      {/* Billing — sibling discount */}
       <section className="space-y-6 rounded-2xl border border-[--hair] bg-surface p-6">
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Billing</h2>
-          <p className="mt-1 text-sm text-muted">
-            Sibling / family discount applied at checkout when a family enrols a 2nd+ student. Set to 0 to disable.
-          </p>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("billing")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("siblingDiscountDescription")}</p>
         </div>
 
         <div className="space-y-2">
           <label className="block text-sm">
-            <span className="mb-1.5 block font-medium text-ink">Sibling discount (%)</span>
+            <span className="mb-1.5 block font-medium text-ink">{t("siblingDiscount")}</span>
             <input
               type="number"
               min={0}
@@ -174,7 +171,7 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
               className="field-premium"
-              placeholder="e.g. 10"
+              placeholder={t("siblingDiscountPlaceholder")}
             />
           </label>
           <div className="flex items-center gap-3">
@@ -187,20 +184,19 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
               }
               className="btn-glow btn-glow--solid px-5 py-2 text-sm disabled:opacity-50"
             >
-              {discountPending ? "Saving…" : "Save discount"}
+              {discountPending ? tShared("saving") : t("saveDiscount")}
             </button>
             {discountStatus && (
               <p
                 className="text-sm"
-                style={{ color: discountStatus === "Saved" ? "var(--brand-hot)" : "#ef4444" }}
+                style={{ color: discountStatus === "saved" ? "var(--brand-hot)" : "#ef4444" }}
               >
-                {discountStatus === "Saved" ? "Discount updated." : discountStatus}
+                {discountStatus === "saved" ? t("discountUpdated") : discountStatus}
               </p>
             )}
           </div>
         </div>
 
-        {/* Extend the discount to merch + event tickets (opt-in) */}
         <div className="space-y-2 border-t border-[--hair] pt-5">
           <label className="flex items-start gap-3 text-sm">
             <input
@@ -211,37 +207,32 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
               className="mt-0.5 h-4 w-4 shrink-0 accent-[--brand]"
             />
             <span>
-              <span className="block font-medium text-ink">Also apply to shop &amp; event tickets</span>
-              <span className="block text-muted">
-                When on, the discount above is applied to merchandise orders and event-ticket
-                purchases for families with an active enrolment.
-              </span>
+              <span className="block font-medium text-ink">{t("retailDiscount")}</span>
+              <span className="block text-muted">{t("retailDiscountDescription")}</span>
             </span>
           </label>
           {retailStatus && (
             <p
               className="pl-7 text-sm"
-              style={{ color: retailStatus === "Saved" ? "var(--brand-hot)" : "#ef4444" }}
+              style={{ color: retailStatus === "saved" ? "var(--brand-hot)" : "#ef4444" }}
             >
-              {retailStatus === "Saved" ? "Saved." : retailStatus}
+              {retailStatus === "saved" ? tShared("saved") : retailStatus}
             </p>
           )}
         </div>
       </section>
 
-      {/* Localization — timezone */}
       <section className="space-y-6 rounded-2xl border border-[--hair] bg-surface p-6">
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">Localization</h2>
-          <p className="mt-1 text-sm text-muted">
-            Your studio's timezone. Class reminders, birthday greetings and overdue-invoice
-            sweeps are scheduled in this local time.
-          </p>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">
+            {t("localization")}
+          </h2>
+          <p className="mt-1 text-sm text-muted">{t("timezoneDescription")}</p>
         </div>
 
         <div className="space-y-2">
           <label className="block text-sm">
-            <span className="mb-1.5 block font-medium text-ink">Timezone</span>
+            <span className="mb-1.5 block font-medium text-ink">{t("timezone")}</span>
             <select
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
@@ -261,39 +252,38 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
               disabled={tzPending || timezone === studio.timezone}
               className="btn-glow btn-glow--solid px-5 py-2 text-sm disabled:opacity-50"
             >
-              {tzPending ? "Saving…" : "Save timezone"}
+              {tzPending ? tShared("saving") : t("saveTimezone")}
             </button>
             {tzStatus && (
               <p
                 className="text-sm"
-                style={{ color: tzStatus === "Saved" ? "var(--brand-hot)" : "#ef4444" }}
+                style={{ color: tzStatus === "saved" ? "var(--brand-hot)" : "#ef4444" }}
               >
-                {tzStatus === "Saved" ? "Timezone updated." : tzStatus}
+                {tzStatus === "saved" ? t("timezoneUpdated") : tzStatus}
               </p>
             )}
           </div>
         </div>
       </section>
 
-      {/* Read-only info */}
       <section className="space-y-4 rounded-2xl border border-[--hair] bg-surface p-6">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">URLs & status</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("urlsStatus")}</h2>
 
-        <InfoRow label="Subdomain URL">
+        <InfoRow label={t("subdomainUrl")}>
           <code className="rounded bg-base px-2 py-0.5 text-xs text-ink">
             {studio.slug}.{ROOT}
           </code>
         </InfoRow>
 
         {studio.customDomain && (
-          <InfoRow label="Custom domain">
+          <InfoRow label={t("customDomain")}>
             <code className="rounded bg-base px-2 py-0.5 text-xs text-ink">
               {studio.customDomain}
             </code>
           </InfoRow>
         )}
 
-        <InfoRow label="Status">
+        <InfoRow label={t("status")}>
           <span
             className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wider text-white"
             style={{
@@ -305,35 +295,35 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
                   : "#8b8b92",
             }}
           >
-            {studio.status}
+            {statusLabel}
           </span>
         </InfoRow>
 
-        <InfoRow label="Created">
+        <InfoRow label={t("created")}>
           <span className="text-sm text-muted">
-            {new Date(studio.createdAt).toLocaleDateString("en-NZ", {
-              day: "numeric", month: "long", year: "numeric",
+            {new Date(studio.createdAt).toLocaleDateString(undefined, {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
             })}
           </span>
         </InfoRow>
 
-        <InfoRow label="Studio ID">
+        <InfoRow label={t("studioId")}>
           <code className="text-[0.62rem] text-muted">{studio.id}</code>
         </InfoRow>
       </section>
 
-      {/* Custom domain */}
       <section className="rounded-2xl border border-dashed border-[--hair] p-5">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted">Custom domain</h2>
-        <p className="text-sm text-muted leading-relaxed">
-          Connect your own domain (e.g. <code className="text-ink">www.mystudio.co.nz</code>) with our step-by-step
-          guide — no DNS jargon required.
-        </p>
+        <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted">
+          {t("customDomainSection")}
+        </h2>
+        <p className="text-sm text-muted leading-relaxed">{t("customDomainDescription")}</p>
         <a
           href="/portal/admin/site/domain"
           className="mt-3 inline-flex rounded-full border border-brand/40 px-4 py-2 text-sm font-medium text-brand transition hover:bg-brand/10"
         >
-          Open domain setup wizard →
+          {t("openDomainWizard")}
         </a>
       </section>
     </motion.div>

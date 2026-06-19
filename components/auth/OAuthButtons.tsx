@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { authCallbackUrl } from "@/lib/auth/oauth";
 
@@ -13,6 +14,7 @@ export function OAuthButtons({
   next: string;
   disabled?: boolean;
 }) {
+  const t = useTranslations("auth");
   const [busy, setBusy] = useState<Provider | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +53,7 @@ export function OAuthButtons({
         className="flex w-full items-center justify-center gap-3 rounded-xl border border-[--hair] bg-surface px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-base disabled:opacity-60"
       >
         <GoogleIcon />
-        {busy === "google" ? "Redirecting…" : "Continue with Google"}
+        {busy === "google" ? t("redirecting") : t("continueWithGoogle")}
       </button>
 
       <button
@@ -61,20 +63,22 @@ export function OAuthButtons({
         className="flex w-full items-center justify-center gap-3 rounded-xl bg-ink px-4 py-2.5 text-sm font-medium text-base transition hover:opacity-90 disabled:opacity-60"
       >
         <AppleIcon />
-        {busy === "apple" ? "Redirecting…" : "Continue with Apple"}
+        {busy === "apple" ? t("redirecting") : t("continueWithApple")}
       </button>
     </div>
   );
 }
 
-export function AuthDivider({ label = "or continue with email" }: { label?: string }) {
+export function AuthDivider({ label }: { label?: string }) {
+  const t = useTranslations("auth");
+  const text = label ?? t("orContinueWithEmail");
   return (
     <div className="relative my-6">
       <div className="absolute inset-0 flex items-center" aria-hidden>
         <div className="w-full border-t border-[--hair]" />
       </div>
       <p className="relative mx-auto w-fit bg-surface px-3 text-xs uppercase tracking-widest text-muted">
-        {label}
+        {text}
       </p>
     </div>
   );

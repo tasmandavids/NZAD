@@ -39,8 +39,6 @@ export function buildTemplateBlocks(blocks: TemplateBlock[]): Block[] {
 
 const HOME_CLASSIC: PageTemplate = {
   id: "home-classic",
-  label: "Classic",
-  description: "Hero, feature grid, class showcase, testimonials, call-to-action and contact.",
   kind: "home",
   category: "professional",
   title: "Home",
@@ -62,8 +60,6 @@ const HOME_CLASSIC: PageTemplate = {
 
 const HOME_SHOWCASE: PageTemplate = {
   id: "home-showcase",
-  label: "Showcase",
-  description: "Image-led layout: bold hero, class showcase, gallery and testimonials.",
   kind: "home",
   category: "visual",
   title: "Home",
@@ -93,8 +89,6 @@ const HOME_SHOWCASE: PageTemplate = {
 
 const HOME_MINIMAL: PageTemplate = {
   id: "home-minimal",
-  label: "Minimal",
-  description: "A clean, focused single-message homepage: hero, intro, classes and a CTA.",
   kind: "home",
   category: "minimal",
   title: "Home",
@@ -134,8 +128,6 @@ const HOME_MINIMAL: PageTemplate = {
 
 const HOME_BOLD: PageTemplate = {
   id: "home-bold",
-  label: "Bold",
-  description: "Full-bleed hero, stats strip, class streams, news preview and enrol CTA.",
   kind: "home",
   category: "bold",
   title: "Home",
@@ -207,8 +199,6 @@ const HOME_BOLD: PageTemplate = {
 
 const PAGE_SCHEDULE: PageTemplate = {
   id: "page-schedule",
-  label: "Schedule",
-  description: "Weekly timetable with day and studio filters.",
   kind: "page",
   title: "Schedule",
   slug: "schedule",
@@ -229,8 +219,6 @@ const PAGE_SCHEDULE: PageTemplate = {
 
 const PAGE_PEOPLE: PageTemplate = {
   id: "page-people",
-  label: "People",
-  description: "Instructor grid from staff profiles.",
   kind: "page",
   title: "People",
   slug: "people",
@@ -252,8 +240,6 @@ const PAGE_PEOPLE: PageTemplate = {
 
 const PAGE_STUDIOS: PageTemplate = {
   id: "page-studios",
-  label: "Studios",
-  description: "Multi-location studio cards and contact.",
   kind: "page",
   title: "Studios",
   slug: "studios",
@@ -280,8 +266,6 @@ const PAGE_STUDIOS: PageTemplate = {
 
 const PAGE_NEWS: PageTemplate = {
   id: "page-news",
-  label: "News & Events",
-  description: "Filterable news and events feed.",
   kind: "page",
   title: "News",
   slug: "news",
@@ -303,8 +287,6 @@ const PAGE_NEWS: PageTemplate = {
 
 const PAGE_SHOP: PageTemplate = {
   id: "page-shop",
-  label: "Shop",
-  description: "Product catalogue with category filters and checkout.",
   kind: "page",
   title: "Shop",
   slug: "shop",
@@ -327,8 +309,6 @@ const PAGE_SHOP: PageTemplate = {
 
 const PAGE_ABOUT: PageTemplate = {
   id: "page-about",
-  label: "About",
-  description: "Tell your story: intro hero, narrative text, values and a closing CTA.",
   kind: "page",
   title: "About",
   slug: "about",
@@ -368,8 +348,6 @@ const PAGE_ABOUT: PageTemplate = {
 
 const PAGE_CLASSES: PageTemplate = {
   id: "page-classes",
-  label: "Classes",
-  description: "A dedicated class listing page with FAQ and a sign-up CTA.",
   kind: "page",
   title: "Classes",
   slug: "classes",
@@ -399,8 +377,6 @@ const PAGE_CLASSES: PageTemplate = {
 
 const PAGE_CONTACT: PageTemplate = {
   id: "page-contact",
-  label: "Contact",
-  description: "Contact details and opening hours, plus a short FAQ.",
   kind: "page",
   title: "Contact",
   slug: "contact",

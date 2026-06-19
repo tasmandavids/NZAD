@@ -16,14 +16,14 @@ export const SETUP_HOME_IDS = HOME_TEMPLATES.map((t) => t.id) as [
 export type SetupHomeId = (typeof SETUP_HOME_IDS)[number];
 
 /** Optional sub-pages the owner can tick during setup. */
-export const SETUP_PAGE_OPTIONS: Array<{ id: string; label: string; defaultChecked: boolean }> = [
-  { id: "page-about", label: "About", defaultChecked: true },
-  { id: "page-classes", label: "Classes", defaultChecked: true },
-  { id: "page-contact", label: "Contact", defaultChecked: true },
-  { id: "page-schedule", label: "Schedule", defaultChecked: false },
-  { id: "page-people", label: "People / instructors", defaultChecked: false },
-  { id: "page-news", label: "News & events", defaultChecked: false },
-  { id: "page-shop", label: "Shop", defaultChecked: false },
+export const SETUP_PAGE_OPTIONS: Array<{ id: string; defaultChecked: boolean }> = [
+  { id: "page-about", defaultChecked: true },
+  { id: "page-classes", defaultChecked: true },
+  { id: "page-contact", defaultChecked: true },
+  { id: "page-schedule", defaultChecked: false },
+  { id: "page-people", defaultChecked: false },
+  { id: "page-news", defaultChecked: false },
+  { id: "page-shop", defaultChecked: false },
 ];
 
 export { TYPOGRAPHY_PAIRS as FONT_PAIRS, TYPOGRAPHY_PAIRS } from "./typography";

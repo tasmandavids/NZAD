@@ -1,0 +1,33 @@
+{
+  "enrol": {
+    "title": "Réserver un essai gratuit",
+    "subtitle": "Sans engagement. Nous vous contacterons pour trouver le cours idéal pour votre danseur.",
+    "fields": {
+      "name": "Votre nom",
+      "namePlaceholder": "Jane Smith",
+      "email": "Adresse e-mail",
+      "emailPlaceholder": "vous@exemple.com",
+      "interest": "Style de danse souhaité"
+    },
+    "disciplines": {
+      "ballet": "Ballet",
+      "contemporary": "Contemporain",
+      "jazz": "Jazz",
+      "hipHop": "Hip-Hop",
+      "tap": "Claquettes",
+      "lyrical": "Lyrical",
+      "acro": "Acro",
+      "pointe": "Pointes",
+      "notSure": "Pas encore sûr"
+    },
+    "submitting": "Envoi…",
+    "submit": "Demander mon essai gratuit →",
+    "hasAccount": "Vous avez déjà un compte ?",
+    "signIn": "Se connecter",
+    "success": {
+      "title": "Vous êtes inscrit !",
+      "body": "Nous vous contacterons bientôt, {name}. Surveillez {email}.",
+      "backHome": "Retour à l'accueil"
+    }
+  }
+}

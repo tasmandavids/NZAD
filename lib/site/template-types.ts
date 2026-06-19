@@ -22,8 +22,6 @@ export type TemplateCategory =
 
 export type PageTemplate = {
   id: string;
-  label: string;
-  description: string;
   kind: "home" | "page";
   /** Filter chip in the template gallery. */
   category?: TemplateCategory;
@@ -47,15 +45,15 @@ export type PageTemplate = {
   previewAccent?: string;
 };
 
-export const TEMPLATE_CATEGORIES: { id: TemplateCategory | "all"; label: string }[] = [
-  { id: "all", label: "All templates" },
-  { id: "minimal", label: "Minimal" },
-  { id: "bold", label: "Bold" },
-  { id: "visual", label: "Visual" },
-  { id: "community", label: "Community" },
-  { id: "professional", label: "Professional" },
-  { id: "elegant", label: "Elegant" },
-  { id: "modern", label: "Modern" },
-  { id: "editorial", label: "Editorial" },
-  { id: "complete", label: "Complete" },
+export const TEMPLATE_CATEGORIES: { id: TemplateCategory | "all" }[] = [
+  { id: "all" },
+  { id: "minimal" },
+  { id: "bold" },
+  { id: "visual" },
+  { id: "community" },
+  { id: "professional" },
+  { id: "elegant" },
+  { id: "modern" },
+  { id: "editorial" },
+  { id: "complete" },
 ];

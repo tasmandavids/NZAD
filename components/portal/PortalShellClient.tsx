@@ -4,12 +4,14 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { signOut } from "@/app/portal/actions";
 import type { Role } from "@/lib/types";
-import { ADMIN_NAV, PORTAL_NAV, ROLE_BADGE, type NavItem } from "@/lib/portal/nav-config";
+import { ADMIN_NAV, OFFICE_NAV, PORTAL_NAV, ROLE_BADGE_KEYS, type NavItem } from "@/lib/portal/nav-config";
 import { OptimizableImage } from "@/components/ui/OptimizableImage";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 
 const NotificationBell = dynamic(
   () =>
@@ -67,6 +69,10 @@ function SidebarContent({
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }) {
+  const t = useTranslations();
+  const tCommon = useTranslations("common");
+  const tShell = useTranslations("shell");
+
   const isActive = (item: NavItem) =>
     item.exact
       ? pathname === item.href
@@ -85,7 +91,7 @@ function SidebarContent({
           active ? "bg-brand text-white" : "text-muted hover:text-ink"
         }`}
       >
-        {item.label}
+        {t(item.labelKey as Parameters<typeof t>[0])}
       </Link>
     );
   };
@@ -102,24 +108,37 @@ function SidebarContent({
             <button
               type="button"
               onClick={onToggleCollapse}
-              title={collapsed ? "Keep sidebar open" : "Hide sidebar"}
-              aria-label={collapsed ? "Keep sidebar open" : "Hide sidebar"}
+              title={collapsed ? tShell("keepSidebarOpen") : tShell("hideSidebar")}
+              aria-label={collapsed ? tShell("keepSidebarOpen") : tShell("hideSidebar")}
               className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-[--hair] text-xs text-muted transition hover:bg-base hover:text-ink"
             >
               {collapsed ? "›" : "‹"}
             </button>
           )}
         </div>
-        <p className="text-[0.62rem] uppercase tracking-widest text-muted">{ROLE_BADGE[role]}</p>
+        <p className="text-[0.62rem] uppercase tracking-widest text-muted">
+          {t(ROLE_BADGE_KEYS[role] as Parameters<typeof t>[0])}
+        </p>
       </div>
 
       <nav className="flex-1 overflow-y-auto p-3">
         {role === "admin" ? (
           ADMIN_NAV.map((section, index) => (
-            <div key={section.title ?? `section-${index}`} className={index > 0 ? "mt-4" : ""}>
-              {section.title && (
+            <div key={section.titleKey ?? `section-${index}`} className={index > 0 ? "mt-4" : ""}>
+              {section.titleKey && (
                 <p className="mb-1 px-3 text-[0.62rem] font-semibold uppercase tracking-widest text-muted">
-                  {section.title}
+                  {t(section.titleKey as Parameters<typeof t>[0])}
+                </p>
+              )}
+              <div className="space-y-0.5">{section.items.map(renderNavItem)}</div>
+            </div>
+          ))
+        ) : role === "office" ? (
+          OFFICE_NAV.map((section, index) => (
+            <div key={section.titleKey ?? `section-${index}`} className={index > 0 ? "mt-4" : ""}>
+              {section.titleKey && (
+                <p className="mb-1 px-3 text-[0.62rem] font-semibold uppercase tracking-widest text-muted">
+                  {t(section.titleKey as Parameters<typeof t>[0])}
                 </p>
               )}
               <div className="space-y-0.5">{section.items.map(renderNavItem)}</div>
@@ -132,10 +151,11 @@ function SidebarContent({
 
       <div className="border-t border-[--hair] p-4">
         <PoweredByOlune className="mb-4" />
-        <p className="mb-2.5 truncate text-xs font-medium text-ink">{userName ?? "You"}</p>
+        <LanguageSwitcher className="mb-4 w-full justify-between" />
+        <p className="mb-2.5 truncate text-xs font-medium text-ink">{userName ?? tCommon("you")}</p>
         <form action={signOut}>
           <button type="submit" className="text-xs text-muted transition-colors hover:text-ink">
-            Sign out →
+            {tCommon("signOut")}
           </button>
         </form>
       </div>
@@ -157,6 +177,7 @@ export function PortalShellClient({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const tShell = useTranslations("shell");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [hoverPeek, setHoverPeek] = useState(false);
@@ -221,7 +242,7 @@ export function PortalShellClient({
         {collapsed && !hoverPeek && (
           <div
             className="absolute inset-y-0 left-0 z-30 w-3 cursor-pointer border-r border-[--hair] bg-surface/80"
-            aria-label="Show sidebar"
+            aria-label={tShell("showSidebar")}
             onMouseEnter={openPeek}
           />
         )}
@@ -254,7 +275,7 @@ export function PortalShellClient({
           <button
             onClick={() => setMobileOpen((o) => !o)}
             className="grid h-8 w-8 place-items-center text-muted transition-colors hover:text-ink"
-            aria-label="Toggle menu"
+            aria-label={tShell("toggleMenu")}
           >
             {mobileOpen ? "✕" : "☰"}
           </button>

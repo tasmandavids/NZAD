@@ -30,7 +30,8 @@ export type TeacherOption = {
 };
 
 export default async function ClassesPage() {
-  const { supabase, studioId } = await requirePortalSession();
+  const { supabase, studioId, role } = await requirePortalSession();
+  const readOnly = role === "office";
 
   // Use class_capacity view for live enrolled counts
   const [capacityRes, teachersRes] = await Promise.all([
@@ -108,5 +109,5 @@ export default async function ClassesPage() {
     email: t.email,
   }));
 
-  return <ClassesManager classes={classes} teachers={teachers} />;
+  return <ClassesManager classes={classes} teachers={teachers} readOnly={readOnly} />;
 }

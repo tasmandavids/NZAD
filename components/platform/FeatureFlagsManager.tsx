@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import type { FeatureFlag } from "@/lib/platform/types";
 import { toggleFeatureFlag } from "@/app/platform/features/actions";
 
 export function FeatureFlagsManager({ flags }: { flags: FeatureFlag[] }) {
+  const t = useTranslations("platform.features");
   const [items, setItems] = useState(flags);
   const [pending, startTransition] = useTransition();
 
@@ -23,14 +25,14 @@ export function FeatureFlagsManager({ flags }: { flags: FeatureFlag[] }) {
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-6">
       <header>
-        <h1 className="text-2xl font-black text-ink">Feature flags</h1>
-        <p className="text-sm text-muted">
-          Toggle platform modules globally or per studio — shop, events, SMS, AI beta, and more.
-        </p>
+        <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
+        <p className="text-sm text-muted">{t("subtitle")}</p>
       </header>
 
       <section>
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted">Global defaults</h2>
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted">
+          {t("globalDefaults")}
+        </h2>
         <ul className="grid gap-3 sm:grid-cols-2">
           {globalFlags.map((f) => (
             <li
@@ -49,7 +51,7 @@ export function FeatureFlagsManager({ flags }: { flags: FeatureFlag[] }) {
                   f.enabled ? "bg-brand text-white" : "border border-[--hair] text-muted"
                 }`}
               >
-                {f.enabled ? "On" : "Off"}
+                {f.enabled ? t("on") : t("off")}
               </button>
             </li>
           ))}
@@ -59,7 +61,7 @@ export function FeatureFlagsManager({ flags }: { flags: FeatureFlag[] }) {
       {studioFlags.length > 0 && (
         <section>
           <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted">
-            Studio overrides
+            {t("studioOverrides")}
           </h2>
           <ul className="space-y-2">
             {studioFlags.map((f) => (
@@ -77,7 +79,7 @@ export function FeatureFlagsManager({ flags }: { flags: FeatureFlag[] }) {
                     f.enabled ? "bg-brand text-white" : "border border-[--hair]"
                   }`}
                 >
-                  {f.enabled ? "On" : "Off"}
+                  {f.enabled ? t("on") : t("off")}
                 </button>
               </li>
             ))}

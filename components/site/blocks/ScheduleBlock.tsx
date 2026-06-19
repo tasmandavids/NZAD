@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { formatMoney } from "@/lib/currency";
 import type { SiteClass } from "@/lib/site/queries";
-
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 function formatTime(t: string | null): string {
   if (!t) return "";
@@ -28,6 +27,10 @@ export function ScheduleBlock({
   subheading: string;
   footnote: string;
 }) {
+  const t = useTranslations("site.schedule");
+  const dayNames = t.raw("days") as string[];
+  const allStudios = t("allStudios");
+
   const days = useMemo(() => {
     const set = new Set<number>();
     for (const c of classes) {
@@ -41,15 +44,15 @@ export function ScheduleBlock({
     for (const c of classes) {
       if (c.room) set.add(c.room);
     }
-    return ["All Studios", ...[...set].sort()];
-  }, [classes]);
+    return [allStudios, ...[...set].sort()];
+  }, [classes, allStudios]);
 
   const [day, setDay] = useState(days[0] ?? 1);
-  const [room, setRoom] = useState("All Studios");
+  const [room, setRoom] = useState(allStudios);
 
   const filtered = classes.filter((c) => {
     if (c.dayOfWeek !== day) return false;
-    if (room !== "All Studios" && c.room !== room) return false;
+    if (room !== allStudios && c.room !== room) return false;
     return true;
   });
 
@@ -75,7 +78,7 @@ export function ScheduleBlock({
               day === d ? "bg-ink text-base" : "border border-[--hair] text-muted hover:text-ink"
             }`}
           >
-            {DAY_NAMES[d]}
+            {dayNames[d]}
           </button>
         ))}
       </div>
@@ -97,7 +100,7 @@ export function ScheduleBlock({
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.length === 0 ? (
-          <p className="col-span-full text-center text-muted">No classes scheduled for this day.</p>
+          <p className="col-span-full text-center text-muted">{t("noClassesDay")}</p>
         ) : (
           filtered.map((c) => (
             <div key={c.id} className="rounded-xl border border-[--hair] bg-surface p-4">
@@ -130,6 +133,7 @@ export function ClassTabsBlock({
   heading: string;
   subheading: string;
 }) {
+  const t = useTranslations("site.schedule");
   const streams = useMemo(() => {
     const map = new Map<string, SiteClass[]>();
     for (const c of classes) {
@@ -174,7 +178,7 @@ export function ClassTabsBlock({
 
       <div className="mt-8 rounded-2xl border border-[--hair] bg-surface p-6 sm:p-8">
         {activeClasses.length === 0 ? (
-          <p className="text-center text-muted">Classes coming soon for this stream.</p>
+          <p className="text-center text-muted">{t("streamComingSoon")}</p>
         ) : (
           <div className="space-y-6">
             {activeClasses.map((c) => (
@@ -185,7 +189,7 @@ export function ClassTabsBlock({
                 </p>
                 {c.priceCents > 0 && (
                   <p className="mt-2 text-sm font-semibold text-brand">
-                    From {formatMoney(c.priceCents)} / term
+                    {t("fromPerTerm", { price: formatMoney(c.priceCents) })}
                   </p>
                 )}
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import type { SupportThread, SupportMessage } from "@/lib/platform/types";
 import {
   replyToThread,
@@ -8,11 +9,9 @@ import {
   loadThreadMessages,
 } from "@/app/platform/messages/actions";
 
-export function SupportInbox({
-  threads: initialThreads,
-}: {
-  threads: SupportThread[];
-}) {
+export function SupportInbox({ threads: initialThreads }: { threads: SupportThread[] }) {
+  const t = useTranslations("platform.support");
+  const locale = useLocale();
   const [threads, setThreads] = useState(initialThreads);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
@@ -44,36 +43,35 @@ export function SupportInbox({
     startTransition(async () => {
       await updateThreadStatus({ threadId: selectedId, status });
       setThreads((prev) =>
-        prev.map((t) => (t.id === selectedId ? { ...t, status } : t)),
+        prev.map((thread) => (thread.id === selectedId ? { ...thread, status } : thread)),
       );
     });
   }
 
-  const selected = threads.find((t) => t.id === selectedId);
+  const selected = threads.find((thread) => thread.id === selectedId);
+  const statusKeys = ["open", "pending", "resolved"] as const;
 
   return (
     <div className="mx-auto flex h-[calc(100vh-53px)] max-w-6xl flex-col gap-0 p-6 md:h-screen md:flex-row md:p-6">
       <div className="mb-4 w-full shrink-0 md:mb-0 md:w-80 md:pr-4">
-        <h1 className="mb-4 text-2xl font-black text-ink">Support inbox</h1>
+        <h1 className="mb-4 text-2xl font-black text-ink">{t("title")}</h1>
         <ul className="max-h-96 space-y-2 overflow-y-auto md:max-h-[calc(100vh-8rem)]">
-          {threads.map((t) => (
-            <li key={t.id}>
+          {threads.map((thread) => (
+            <li key={thread.id}>
               <button
-                onClick={() => selectThread(t.id)}
+                onClick={() => selectThread(thread.id)}
                 className={`w-full rounded-xl border p-3 text-left text-sm ${
-                  selectedId === t.id ? "border-brand bg-surface" : "border-[--hair] bg-surface"
+                  selectedId === thread.id ? "border-brand bg-surface" : "border-[--hair] bg-surface"
                 }`}
               >
-                <p className="font-semibold text-ink">{t.subject}</p>
+                <p className="font-semibold text-ink">{thread.subject}</p>
                 <p className="text-xs text-muted">
-                  {t.studioName} · {t.status} · {t.priority}
+                  {thread.studioName} · {t(`status.${thread.status}`)} · {thread.priority}
                 </p>
               </button>
             </li>
           ))}
-          {threads.length === 0 && (
-            <li className="text-sm text-muted">No support threads yet.</li>
-          )}
+          {threads.length === 0 && <li className="text-sm text-muted">{t("noThreads")}</li>}
         </ul>
       </div>
 
@@ -86,7 +84,7 @@ export function SupportInbox({
                 <p className="text-xs text-muted">{selected.studioName}</p>
               </div>
               <div className="flex gap-2">
-                {(["open", "pending", "resolved"] as const).map((s) => (
+                {statusKeys.map((s) => (
                   <button
                     key={s}
                     onClick={() => setStatus(s)}
@@ -95,7 +93,7 @@ export function SupportInbox({
                       selected.status === s ? "bg-brand text-white" : "border border-[--hair]"
                     }`}
                   >
-                    {s}
+                    {t(`status.${s}`)}
                   </button>
                 ))}
               </div>
@@ -112,11 +110,11 @@ export function SupportInbox({
                   }`}
                 >
                   <p className="mb-1 text-[0.65rem] opacity-70">
-                    {m.senderName ?? (m.isOperator ? "Olune" : "Owner")}
+                    {m.senderName ?? (m.isOperator ? t("senderOperator") : t("senderOwner"))}
                   </p>
                   <p className="whitespace-pre-wrap">{m.body}</p>
                   <p className="mt-1 text-[0.6rem] opacity-60">
-                    {new Date(m.createdAt).toLocaleString("en-NZ")}
+                    {new Date(m.createdAt).toLocaleString(locale)}
                   </p>
                 </div>
               ))}
@@ -127,7 +125,7 @@ export function SupportInbox({
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
                 rows={2}
-                placeholder="Reply to studio owner…"
+                placeholder={t("replyPlaceholder")}
                 className="mb-2 w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
               />
               <button
@@ -135,14 +133,12 @@ export function SupportInbox({
                 disabled={pending || !reply.trim()}
                 className="rounded-full bg-brand px-5 py-2 text-xs font-bold uppercase text-white disabled:opacity-50"
               >
-                Send reply
+                {t("sendReply")}
               </button>
             </div>
           </>
         ) : (
-          <div className="grid flex-1 place-items-center text-sm text-muted">
-            Select a thread to view the conversation.
-          </div>
+          <div className="grid flex-1 place-items-center text-sm text-muted">{t("selectThread")}</div>
         )}
       </div>
     </div>

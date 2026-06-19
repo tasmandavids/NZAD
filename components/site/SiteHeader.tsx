@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import type { NavLink } from "@/lib/site/queries";
 import { OluneMark } from "@/components/brand/OluneLogo";
 import { OptimizableImage } from "@/components/ui/OptimizableImage";
@@ -37,6 +38,8 @@ export function SiteHeader({
   /** Non-interactive preview chrome (setup wizard). */
   preview?: boolean;
 }) {
+  const t = useTranslations("site.public");
+  const tBrand = useTranslations("site.brand");
   const [open, setOpen] = useState(false);
 
   const hrefFor = (link: NavLink) =>
@@ -97,7 +100,7 @@ export function SiteHeader({
           >
             {portalLabel}
           </SiteNavLink>
-          <span title="Powered by Olune" aria-label="Powered by Olune">
+          <span title={tBrand("poweredByOlune")} aria-label={tBrand("poweredByOlune")}>
             <OluneMark className="h-7 w-7 opacity-80" />
           </span>
         </nav>
@@ -105,7 +108,7 @@ export function SiteHeader({
         <button
           type="button"
           className="lg:hidden text-ink"
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? t("closeMenu") : t("openMenu")}
           onClick={() => setOpen((v) => !v)}
         >
           {open ? (
@@ -135,7 +138,7 @@ export function SiteHeader({
             className="block px-6 py-4 text-sm font-medium text-brand"
             onClick={() => setOpen(false)}
           >
-            {portalLabel} →
+            {t("portalArrow", { label: portalLabel })}
           </SiteNavLink>
         </nav>
       )}

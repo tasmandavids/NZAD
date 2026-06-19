@@ -1,26 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import type { PageTemplate, TemplateCategory } from "@/lib/site/template-types";
 import { TEMPLATE_CATEGORIES, getTemplateBlockPreview } from "@/lib/site/templates";
-
-const BLOCK_LABELS: Record<string, string> = {
-  hero: "Hero",
-  features: "Features",
-  classGrid: "Classes",
-  testimonials: "Reviews",
-  cta: "CTA",
-  contact: "Contact",
-  gallery: "Gallery",
-  statsRow: "Stats",
-  classStreams: "Streams",
-  newsFeed: "News",
-  richText: "Story",
-  peopleGrid: "Team",
-  schedule: "Schedule",
-  faq: "FAQ",
-  pageHeader: "Header",
-};
+import { templateCategoryLabel, templateDescription, templateLabel } from "@/lib/site/i18n-labels";
 
 type Props = {
   templates: PageTemplate[];
@@ -30,16 +14,17 @@ type Props = {
 };
 
 export function TemplateGallery({ templates, selectedId, onSelect, disabled }: Props) {
+  const t = useTranslations("site");
   const [category, setCategory] = useState<TemplateCategory | "all">("all");
 
   const filtered =
-    category === "all" ? templates : templates.filter((t) => t.category === category);
+    category === "all" ? templates : templates.filter((tpl) => tpl.category === category);
 
   return (
     <div className="space-y-3">
       <div className="flex gap-2 overflow-x-auto pb-1">
         {TEMPLATE_CATEGORIES.filter((c) =>
-          c.id === "all" || templates.some((t) => t.category === c.id),
+          c.id === "all" || templates.some((tpl) => tpl.category === c.id),
         ).map((c) => (
           <button
             key={c.id}
@@ -51,25 +36,25 @@ export function TemplateGallery({ templates, selectedId, onSelect, disabled }: P
                 : "border border-[--hair] text-muted hover:text-ink"
             }`}
           >
-            {c.label}
+            {templateCategoryLabel(t, c.id)}
           </button>
         ))}
       </div>
 
       <div className="grid max-h-[420px] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
-        {filtered.map((t) => (
+        {filtered.map((tpl) => (
           <TemplateCard
-            key={t.id}
-            template={t}
-            selected={selectedId === t.id}
+            key={tpl.id}
+            template={tpl}
+            selected={selectedId === tpl.id}
             disabled={disabled}
-            onClick={() => onSelect(t.id)}
+            onClick={() => onSelect(tpl.id)}
           />
         ))}
       </div>
 
       {filtered.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted">No templates in this category.</p>
+        <p className="py-6 text-center text-sm text-muted">{t("templateGallery.noTemplatesInCategory")}</p>
       )}
     </div>
   );
@@ -86,6 +71,7 @@ function TemplateCard({
   disabled?: boolean;
   onClick: () => void;
 }) {
+  const t = useTranslations("site");
   const accent = template.previewAccent ?? template.suggestedBrandColor ?? "#6B66C9";
   const blocks = getTemplateBlockPreview(template);
 
@@ -119,25 +105,25 @@ function TemplateCard({
         </div>
         {selected && (
           <span className="absolute right-2 top-2 rounded-full bg-brand px-2 py-0.5 text-[0.6rem] font-bold uppercase text-white">
-            Selected
+            {t("templateGallery.selected")}
           </span>
         )}
         <span
           className="relative text-lg font-bold leading-tight"
           style={{ fontFamily: "var(--font-display, system-ui)", color: accent }}
         >
-          {template.label}
+          {templateLabel(t, template.id)}
         </span>
       </div>
       <div className="space-y-2 bg-surface p-3">
-        <p className="text-xs leading-relaxed text-muted">{template.description}</p>
+        <p className="text-xs leading-relaxed text-muted">{templateDescription(t, template.id)}</p>
         <div className="flex flex-wrap gap-1">
           {blocks.map((type, i) => (
             <span
               key={`${type}-${i}`}
               className="rounded-md bg-base px-1.5 py-0.5 text-[0.6rem] font-medium text-muted"
             >
-              {BLOCK_LABELS[type] ?? type}
+              {t(`templateGallery.blockLabels.${type}` as "templateGallery.blockLabels.hero")}
             </span>
           ))}
         </div>

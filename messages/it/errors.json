@@ -1,0 +1,27 @@
+{
+  "errors": {
+    "generic": {
+      "eyebrow": "Qualcosa è andato storto",
+      "title": "Si è verificato un errore imprevisto",
+      "body": "Riprova o torna alla home se il problema persiste.",
+      "retry": "Riprova",
+      "goHome": "Vai alla home"
+    },
+    "global": {
+      "title": "Qualcosa è andato storto",
+      "body": "L'app ha riscontrato un errore critico.",
+      "retry": "Riprova"
+    },
+    "notFound": {
+      "eyebrow": "404",
+      "title": "Pagina non trovata",
+      "platformBody": "Su <localhost>localhost</localhost> questo URL è la piattaforma Olune — non il sito di uno studio. Le pagine pubbliche sono sul sottodominio del tuo studio.",
+      "exampleLabel": "Esempio:",
+      "oluneHome": "Home Olune",
+      "signIn": "Accedi",
+      "websiteAdmin": "Admin sito web",
+      "studioBody": "Questa pagina non è ancora stata pubblicata, o l'URL non è corretto. Controlla l'ortografia e lo stato di pubblicazione nella scheda Sito web.",
+      "backHome": "Torna alla home"
+    }
+  }
+}

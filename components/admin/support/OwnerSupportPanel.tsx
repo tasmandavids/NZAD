@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import { createOwnerSupportThread, replyOwnerSupport } from "@/app/portal/admin/support/actions";
 
 type Thread = {
@@ -26,6 +27,8 @@ export function OwnerSupportPanel({
   initialMessages: Message[];
   selectedThreadId: string | null;
 }) {
+  const t = useTranslations("admin.support");
+  const tShared = useTranslations("admin.shared");
   const [threads] = useState(initialThreads);
   const [selectedId, setSelectedId] = useState(selectedThreadId);
   const [messages, setMessages] = useState(initialMessages);
@@ -39,7 +42,7 @@ export function OwnerSupportPanel({
     if (!subject.trim() || !body.trim()) return;
     startTransition(async () => {
       const res = await createOwnerSupportThread({ subject: subject.trim(), body: body.trim() });
-      setFeedback(res.ok ? "Message sent to Olune support" : res.error);
+      setFeedback(res.ok ? t("messageSent") : res.error);
       if (res.ok) {
         setSubject("");
         setBody("");
@@ -72,26 +75,26 @@ export function OwnerSupportPanel({
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <header>
-        <h1 className="text-2xl font-black text-ink">Olune support</h1>
-        <p className="text-sm text-muted">Message the Olune team — billing, domains, features, anything.</p>
+        <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
+        <p className="text-sm text-muted">{t("subtitle")}</p>
       </header>
 
       {feedback && <p className="text-sm text-muted">{feedback}</p>}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-[--hair] bg-surface p-5 space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-muted">New conversation</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-muted">{t("newConversation")}</h2>
           <input
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="Subject"
+            placeholder={t("subject")}
             className="w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
           />
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={4}
-            placeholder="How can we help?"
+            placeholder={t("bodyPlaceholder")}
             className="w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
           />
           <button
@@ -99,27 +102,27 @@ export function OwnerSupportPanel({
             disabled={pending}
             className="rounded-full bg-brand px-5 py-2 text-xs font-bold uppercase text-white"
           >
-            Send to Olune
+            {t("sendToOlune")}
           </button>
         </div>
 
         <div className="rounded-2xl border border-[--hair] bg-surface p-5">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted">Your threads</h2>
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-muted">{t("yourThreads")}</h2>
           <ul className="space-y-2">
-            {threads.map((t) => (
-              <li key={t.id}>
+            {threads.map((thread) => (
+              <li key={thread.id}>
                 <button
-                  onClick={() => setSelectedId(t.id)}
+                  onClick={() => setSelectedId(thread.id)}
                   className={`w-full rounded-xl border p-3 text-left text-sm ${
-                    selectedId === t.id ? "border-brand" : "border-[--hair]"
+                    selectedId === thread.id ? "border-brand" : "border-[--hair]"
                   }`}
                 >
-                  <p className="font-semibold text-ink">{t.subject}</p>
-                  <p className="text-xs text-muted">{t.status}</p>
+                  <p className="font-semibold text-ink">{thread.subject}</p>
+                  <p className="text-xs text-muted">{thread.status}</p>
                 </button>
               </li>
             ))}
-            {threads.length === 0 && <li className="text-sm text-muted">No conversations yet.</li>}
+            {threads.length === 0 && <li className="text-sm text-muted">{t("noConversations")}</li>}
           </ul>
         </div>
       </div>
@@ -144,14 +147,14 @@ export function OwnerSupportPanel({
             onChange={(e) => setReply(e.target.value)}
             rows={2}
             className="mb-2 w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
-            placeholder="Reply…"
+            placeholder={t("replyPlaceholder")}
           />
           <button
             onClick={sendReply}
             disabled={pending}
             className="rounded-full border border-[--hair] px-4 py-1.5 text-xs font-bold uppercase"
           >
-            Send reply
+            {pending ? tShared("sending") : t("sendReply")}
           </button>
         </div>
       )}

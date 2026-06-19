@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -15,6 +16,9 @@ function initials(name: string | null) {
 }
 
 function ParentCard({ parent }: { parent: ParentRow }) {
+  const t = useTranslations("admin.parents");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   return (
     <Link
       href={`/portal/admin/parents/${parent.id}`}
@@ -29,35 +33,37 @@ function ParentCard({ parent }: { parent: ParentRow }) {
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <p className="truncate font-semibold text-ink">{parent.name ?? "Unknown"}</p>
+            <p className="truncate font-semibold text-ink">{parent.name ?? tShared("unknown")}</p>
             {parent.isPrimaryContact && (
               <span className="shrink-0 rounded-full bg-brand/15 px-1.5 py-0.5 text-[0.55rem] font-semibold uppercase tracking-wider text-brand">
-                Primary
+                {t("primary")}
               </span>
             )}
           </div>
           <p className="truncate text-xs text-muted">
-            {parent.email ?? parent.phone ?? "No contact"}
+            {parent.email ?? parent.phone ?? tShared("noContact")}
           </p>
         </div>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {parent.children.length === 0 ? (
-          <span className="text-xs italic text-muted">No linked students</span>
+          <span className="text-xs italic text-muted">{t("noLinkedStudents")}</span>
         ) : (
           parent.children.map((child) => (
             <span
               key={child.id}
               className="rounded-full border border-[--hair] px-2 py-0.5 text-[0.62rem] font-medium text-ink"
             >
-              {child.name ?? "Student"}
+              {child.name ?? tCommon("student")}
             </span>
           ))
         )}
       </div>
       {parent.coParents.length > 0 && (
         <p className="mt-2 text-[0.62rem] text-muted">
-          With {parent.coParents.map((c) => c.name ?? "co-parent").join(", ")}
+          {tShared("withCoParents", {
+            names: parent.coParents.map((c) => c.name ?? tShared("coParentFallback")).join(", "),
+          })}
         </p>
       )}
     </Link>
@@ -71,6 +77,9 @@ export default function ParentsManager({
   parents: ParentRow[];
   students: StudentOption[];
 }) {
+  const t = useTranslations("admin.parents");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
 
@@ -91,9 +100,9 @@ export default function ParentsManager({
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-ink">Parents</h1>
+          <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
           <p className="text-sm text-muted">
-            {parents.length} parent{parents.length !== 1 ? "s" : ""} · guardians linked to students
+            {t("subtitle", { count: parents.length })}
           </p>
         </div>
         <button
@@ -101,7 +110,7 @@ export default function ParentsManager({
           onClick={() => setShowAdd(true)}
           className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-paper"
         >
-          Add family
+          {t("addFamilyButton")}
         </button>
       </div>
 
@@ -109,7 +118,7 @@ export default function ParentsManager({
         type="search"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by name, email, child, or co-parent…"
+        placeholder={t("searchPlaceholder")}
         className="w-full max-w-sm rounded-xl border border-[--hair] bg-surface px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
       />
 
@@ -117,8 +126,8 @@ export default function ParentsManager({
         <div className="rounded-2xl border border-[--hair] bg-surface px-6 py-12 text-center">
           <p className="text-sm text-muted">
             {search
-              ? "No parents match your search."
-              : "No parents yet — add a family or import during setup."}
+              ? t("emptySearch")
+              : t("empty")}
           </p>
           {!search && (
             <button
@@ -126,7 +135,7 @@ export default function ParentsManager({
               onClick={() => setShowAdd(true)}
               className="mt-3 text-sm font-semibold text-ink underline"
             >
-              Add your first family
+              {t("addFirstFamily")}
             </button>
           )}
         </div>

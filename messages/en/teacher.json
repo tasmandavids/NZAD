@@ -1,0 +1,24 @@
+{
+  "teacher": {
+    "schedule": {
+      "title": "Schedule & Roll",
+      "greetingWithName": "{greeting}, {name}.",
+      "greetingOnly": "{greeting}.",
+      "todayRoll": "Today's roll · {day}",
+      "noClassesToday": "No classes today.",
+      "marked": "marked",
+      "noStudents": "No enrolled students.",
+      "unknownStudent": "Unknown student",
+      "attendance": {
+        "present": "Present",
+        "late": "Late",
+        "absent": "Absent",
+        "excused": "Excused"
+      },
+      "thisWeek": "This week · {count, plural, one {# class total} other {# classes total}}",
+      "studentCount": "{count, plural, one {# student} other {# students}}",
+      "noClassesAssigned": "No classes assigned to you yet.",
+      "noClassesAssignedHint": "Ask your studio admin to assign classes to your teacher account."
+    }
+  }
+}

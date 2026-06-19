@@ -1,0 +1,27 @@
+{
+  "errors": {
+    "generic": {
+      "eyebrow": "Something went wrong",
+      "title": "We hit an unexpected error",
+      "body": "Try again, or return home if the problem persists.",
+      "retry": "Try again",
+      "goHome": "Go home"
+    },
+    "global": {
+      "title": "Something went wrong",
+      "body": "The app encountered a critical error.",
+      "retry": "Try again"
+    },
+    "notFound": {
+      "eyebrow": "404",
+      "title": "Page not found",
+      "platformBody": "On <localhost>localhost</localhost> this URL is the Olune platform — not a studio website. Your public pages live on your studio subdomain.",
+      "exampleLabel": "Example:",
+      "oluneHome": "Olune home",
+      "signIn": "Sign in",
+      "websiteAdmin": "Website admin",
+      "studioBody": "This page hasn't been published yet, or the URL is wrong. Check spelling and publish status in the admin Website tab.",
+      "backHome": "Back to home"
+    }
+  }
+}

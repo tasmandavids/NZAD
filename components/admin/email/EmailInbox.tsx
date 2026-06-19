@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { EmailAccountRow, EmailMessageRow, EmailThreadRow } from "@/lib/email/types";
 import { PROVIDER_META } from "@/lib/email/types";
 import {
@@ -22,7 +23,7 @@ async function runEmailSync(accountId?: string): Promise<{ ok: true; synced: num
     body: JSON.stringify(accountId ? { accountId } : {}),
   });
   const data = (await res.json()) as { synced?: number; error?: string };
-  if (!res.ok) return { ok: false, error: data.error ?? "Sync failed" };
+  if (!res.ok) return { ok: false, error: data.error ?? "" };
   return { ok: true, synced: data.synced ?? 0 };
 }
 
@@ -103,14 +104,17 @@ function threadPrimaryLabel(
   thread: Thread,
   accountEmails: Set<string>,
   contacts: Record<string, ContactMatch>,
+  unknownSenderLabel: string,
 ): string {
   const external = thread.participant_addresses?.find((p) => !accountEmails.has(p.toLowerCase()));
   const key = (external ?? thread.participant_addresses?.[0])?.toLowerCase();
   if (key && contacts[key]) return contacts[key].label;
-  return external ?? thread.participant_addresses?.[0] ?? "Unknown sender";
+  return external ?? thread.participant_addresses?.[0] ?? unknownSenderLabel;
 }
 
 function EmailBody({ message }: { message: EmailMessageRow }) {
+  const tShared = useTranslations("admin.shared");
+
   if (message.body_html) {
     const wrappedHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><base target="_blank"><style>
       body { margin: 0; padding: 24px; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 15px; line-height: 1.65; color: #111; }
@@ -119,7 +123,7 @@ function EmailBody({ message }: { message: EmailMessageRow }) {
     </style></head><body>${message.body_html}</body></html>`;
     return (
       <iframe
-        title="Email content"
+        title={tShared("emailContentTitle")}
         sandbox=""
         srcDoc={wrappedHtml}
         className="min-h-[28rem] w-full rounded-2xl border border-[--hair] bg-white shadow-sm"
@@ -128,12 +132,15 @@ function EmailBody({ message }: { message: EmailMessageRow }) {
   }
   return (
     <div className="min-h-[12rem] whitespace-pre-wrap rounded-2xl border border-[--hair] bg-base px-6 py-5 text-[15px] leading-relaxed text-ink">
-      {message.body_text ?? "(No content)"}
+      {message.body_text ?? tShared("noContent")}
     </div>
   );
 }
 
 function ConnectPanel({ onConnected }: { onConnected: () => void }) {
+  const t = useTranslations("admin.email");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [imapProvider, setImapProvider] = useState<"icloud" | "mailru" | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -158,10 +165,8 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-black text-ink">Email</h1>
-        <p className="text-sm text-muted">
-          Connect your real inbox — Gmail, Microsoft, iCloud, or Mail.ru. Messages sync exactly as they appear in your mail app.
-        </p>
+        <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
+        <p className="text-sm text-muted">{t("connectDescription")}</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -173,7 +178,7 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
           >
             <p className="font-semibold text-ink">{PROVIDER_META[provider].label}</p>
             <p className="mt-1 text-xs text-muted">{PROVIDER_META[provider].description}</p>
-            <p className="mt-3 text-xs font-semibold text-brand">Connect with OAuth →</p>
+            <p className="mt-3 text-xs font-semibold text-brand">{t("connectOAuth")}</p>
           </Link>
         ))}
         {(["icloud", "mailru"] as const).map((provider) => (
@@ -185,7 +190,7 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
           >
             <p className="font-semibold text-ink">{PROVIDER_META[provider].label}</p>
             <p className="mt-1 text-xs text-muted">{PROVIDER_META[provider].description}</p>
-            <p className="mt-3 text-xs font-semibold text-brand">Connect with password →</p>
+            <p className="mt-3 text-xs font-semibold text-brand">{t("connectPassword")}</p>
           </button>
         ))}
       </div>
@@ -198,20 +203,22 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
             exit={{ opacity: 0, y: 8 }}
             className="rounded-2xl border border-[--hair] bg-surface p-5"
           >
-            <h2 className="mb-4 font-black text-ink">Connect {PROVIDER_META[imapProvider].label}</h2>
+            <h2 className="mb-4 font-black text-ink">
+              {t("connectTitle", { provider: PROVIDER_META[imapProvider].label })}
+            </h2>
             <div className="space-y-3">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
+                placeholder={t("emailAddress")}
                 className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm"
               />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={imapProvider === "icloud" ? "App-specific password" : "Password"}
+                placeholder={imapProvider === "icloud" ? t("appPassword") : t("password")}
                 className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm"
               />
               {error && <p className="text-sm text-red-500">{error}</p>}
@@ -223,10 +230,10 @@ function ConnectPanel({ onConnected }: { onConnected: () => void }) {
                   className="rounded-xl px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
                   style={{ background: "var(--brand)" }}
                 >
-                  {pending ? "Connecting…" : "Connect"}
+                  {pending ? tShared("connecting") : t("connect")}
                 </button>
                 <button type="button" onClick={() => setImapProvider(null)} className="text-sm text-muted">
-                  Cancel
+                  {tCommon("cancel")}
                 </button>
               </div>
             </div>
@@ -250,6 +257,9 @@ export function EmailInbox({
   bannerError?: string | null;
   bannerConnected?: string | null;
 }) {
+  const t = useTranslations("admin.email");
+  const tShared = useTranslations("admin.shared");
+  const tAdvertising = useTranslations("admin.advertising");
   const [accounts, setAccounts] = useState(initialAccounts);
   const [threads, setThreads] = useState(initialThreads);
   const [contacts, setContacts] = useState(initialContacts);
@@ -273,7 +283,7 @@ export function EmailInbox({
     void (async () => {
       const result = await runEmailSync();
       if (cancelled) return;
-      if (!result.ok) setSyncError(result.error);
+      if (!result.ok) setSyncError(result.error || t("syncFailed"));
       window.history.replaceState(null, "", "/portal/admin/email");
       window.location.reload();
     })();
@@ -281,7 +291,7 @@ export function EmailInbox({
     return () => {
       cancelled = true;
     };
-  }, [bannerConnected, initialSyncDone]);
+  }, [bannerConnected, initialSyncDone, t]);
 
   useEffect(() => {
     setAccounts(initialAccounts);
@@ -296,39 +306,42 @@ export function EmailInbox({
 
   const filteredThreads = useMemo(() => {
     return threads
-      .filter((t) => selectedAccountId === "all" || t.account_id === selectedAccountId)
-      .filter((t) => {
+      .filter((thread) => selectedAccountId === "all" || thread.account_id === selectedAccountId)
+      .filter((thread) => {
         if (!search) return true;
         const q = search.toLowerCase();
         return (
-          (t.subject ?? "").toLowerCase().includes(q) ||
-          (t.snippet ?? "").toLowerCase().includes(q) ||
-          t.participant_addresses.some((p) => p.includes(q))
+          (thread.subject ?? "").toLowerCase().includes(q) ||
+          (thread.snippet ?? "").toLowerCase().includes(q) ||
+          thread.participant_addresses.some((p) => p.includes(q))
         );
       });
   }, [threads, selectedAccountId, search]);
 
-  const loadThread = useCallback(async (threadId: string) => {
-    setLoadingThread(true);
-    try {
-      const res = await fetch(`/api/email/threads/${threadId}`);
-      const data = await res.json();
-      if (!res.ok) {
-        setSyncError(data.error ?? "Could not load conversation");
-        return;
+  const loadThread = useCallback(
+    async (threadId: string) => {
+      setLoadingThread(true);
+      try {
+        const res = await fetch(`/api/email/threads/${threadId}`);
+        const data = await res.json();
+        if (!res.ok) {
+          setSyncError(data.error ?? t("loadError"));
+          return;
+        }
+        setActiveThread(data.thread ?? null);
+        setMessages(data.messages ?? []);
+        if (data.contacts) {
+          setContacts((prev) => ({ ...prev, ...data.contacts }));
+        }
+        void markThreadReadAction(threadId).then(() => {
+          setThreads((prev) => prev.map((thread) => (thread.id === threadId ? { ...thread, is_read: true } : thread)));
+        });
+      } finally {
+        setLoadingThread(false);
       }
-      setActiveThread(data.thread ?? null);
-      setMessages(data.messages ?? []);
-      if (data.contacts) {
-        setContacts((prev) => ({ ...prev, ...data.contacts }));
-      }
-      void markThreadReadAction(threadId).then(() => {
-        setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, is_read: true } : t)));
-      });
-    } finally {
-      setLoadingThread(false);
-    }
-  }, []);
+    },
+    [t],
+  );
 
   const selectThread = (threadId: string) => {
     setSelectedThreadId(threadId);
@@ -342,7 +355,7 @@ export function EmailInbox({
       const accountId = selectedAccountId === "all" ? undefined : selectedAccountId;
       const result = await runEmailSync(accountId);
       if (!result.ok) {
-        setSyncError(result.error);
+        setSyncError(result.error || t("syncFailed"));
         return;
       }
       window.location.reload();
@@ -356,7 +369,7 @@ export function EmailInbox({
       if (result.ok && result.data?.summary) {
         setActiveThread((prev) => (prev ? { ...prev, summary: result.data!.summary } : prev));
         setThreads((prev) =>
-          prev.map((t) => (t.id === selectedThreadId ? { ...t, summary: result.data!.summary } : t)),
+          prev.map((thread) => (thread.id === selectedThreadId ? { ...thread, summary: result.data!.summary } : thread)),
         );
       }
     });
@@ -376,18 +389,18 @@ export function EmailInbox({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Send failed");
+      if (!res.ok) throw new Error(data.error ?? t("sendFailed"));
       setDraft("");
       await loadThread(selectedThreadId);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to send");
+      alert(err instanceof Error ? err.message : t("sendFailed"));
     } finally {
       setSending(false);
     }
   };
 
   const disconnect = (accountId: string) => {
-    if (!confirm("Disconnect this email account?")) return;
+    if (!confirm(t("disconnectConfirm"))) return;
     startTransition(async () => {
       await disconnectEmailAccount(accountId);
       window.location.reload();
@@ -417,14 +430,14 @@ export function EmailInbox({
         >
           {bannerError ??
             syncError ??
-            (bannerConnected && !initialSyncDone ? "Connected — syncing your inbox in the background…" : null)}
+            (bannerConnected && !initialSyncDone ? t("connectedSyncing") : null)}
         </div>
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[--hair] px-5 py-3">
         <div>
-          <h1 className="text-lg font-black text-ink">Email</h1>
-          <p className="text-xs text-muted">Real mail from your connected accounts</p>
+          <h1 className="text-lg font-black text-ink">{t("title")}</h1>
+          <p className="text-xs text-muted">{t("realMail")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <select
@@ -432,10 +445,10 @@ export function EmailInbox({
             onChange={(e) => setSelectedAccountId(e.target.value)}
             className="rounded-lg border border-[--hair] bg-surface px-3 py-2 text-sm"
           >
-            <option value="all">All inboxes</option>
+            <option value="all">{t("allInboxes")}</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.email_address} ({providerLabel(a.provider)})
+                {t("accountOption", { email: a.email_address, provider: providerLabel(a.provider) })}
               </option>
             ))}
           </select>
@@ -445,36 +458,35 @@ export function EmailInbox({
             disabled={pending}
             className="rounded-lg border border-[--hair] px-3 py-2 text-sm font-medium text-ink hover:bg-base"
           >
-            {pending ? "Syncing…" : "Sync now"}
+            {pending ? tShared("syncing") : t("syncNow")}
           </button>
           <button
             type="button"
             onClick={() => setShowConnect(true)}
             className="rounded-lg border border-[--hair] px-3 py-2 text-sm text-muted hover:text-ink"
           >
-            + Connect
+            {t("connectMore")}
           </button>
         </div>
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* Thread list */}
         <aside className="flex w-[17.5rem] shrink-0 flex-col border-r border-[--hair] bg-surface/60 lg:w-80">
           <div className="border-b border-[--hair] p-4">
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search conversations…"
+              placeholder={t("searchPlaceholder")}
               className="w-full rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm"
             />
           </div>
           <div className="flex-1 overflow-y-auto">
             {filteredThreads.length === 0 ? (
-              <p className="p-5 text-sm leading-relaxed text-muted">No conversations yet. Try syncing your inbox.</p>
+              <p className="p-5 text-sm leading-relaxed text-muted">{t("noConversations")}</p>
             ) : (
               filteredThreads.map((thread) => {
-                const primary = threadPrimaryLabel(thread, accountEmails, contacts);
+                const primary = threadPrimaryLabel(thread, accountEmails, contacts, tShared("unknownSender"));
                 const external = thread.participant_addresses?.find((p) => !accountEmails.has(p.toLowerCase()));
                 const contact = resolveContact(external, contacts);
 
@@ -493,7 +505,9 @@ export function EmailInbox({
                       </p>
                       <span className="shrink-0 text-xs text-muted">{formatWhen(thread.last_message_at)}</span>
                     </div>
-                    <p className="mt-1 truncate text-sm font-medium text-ink/80">{thread.subject ?? "(no subject)"}</p>
+                    <p className="mt-1 truncate text-sm font-medium text-ink/80">
+                      {thread.subject ?? tShared("noSubject")}
+                    </p>
                     {contact && (
                       <div className="mt-2">
                         <ContactBadge contact={contact} />
@@ -516,40 +530,35 @@ export function EmailInbox({
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate">{a.email_address}</span>
                   <button type="button" onClick={() => disconnect(a.id)} className="shrink-0 text-red-500 hover:underline">
-                    Disconnect
+                    {tAdvertising("social.disconnect")}
                   </button>
                 </div>
-                {a.sync_error && (
-                  <p className="mt-1 text-red-500">{a.sync_error}</p>
-                )}
+                {a.sync_error && <p className="mt-1 text-red-500">{a.sync_error}</p>}
                 {a.last_sync_at && !a.sync_error && (
-                  <p className="mt-0.5 text-muted">Last sync {formatWhen(a.last_sync_at)}</p>
+                  <p className="mt-0.5 text-muted">{t("lastSync", { time: formatWhen(a.last_sync_at) })}</p>
                 )}
               </div>
             ))}
           </div>
         </aside>
 
-        {/* Conversation */}
         <section className="flex min-w-0 flex-1 flex-col bg-base/30">
           {!selectedThreadId ? (
             <div className="grid flex-1 place-items-center px-8 text-center">
               <div>
-                <p className="text-lg font-semibold text-ink">Select a conversation</p>
-                <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
-                  Choose a thread from the left to read and reply. Olune will identify parents, students, and leads when their email is in your studio.
-                </p>
+                <p className="text-lg font-semibold text-ink">{t("selectConversation")}</p>
+                <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">{t("selectDescription")}</p>
               </div>
             </div>
           ) : loadingThread && !messages.length ? (
-            <div className="grid flex-1 place-items-center text-sm text-muted">Loading conversation…</div>
+            <div className="grid flex-1 place-items-center text-sm text-muted">{tShared("loadingConversation")}</div>
           ) : (
             <>
               <div className="shrink-0 border-b border-[--hair] bg-surface px-6 py-5 lg:px-8">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0 flex-1 space-y-3">
                     <h2 className="text-2xl font-black tracking-tight text-ink">
-                      {activeThread?.subject ?? "Conversation"}
+                      {activeThread?.subject ?? tShared("conversation")}
                     </h2>
                     <div className="flex flex-wrap gap-2">
                       {(activeThread?.participant_addresses ?? [])
@@ -574,12 +583,12 @@ export function EmailInbox({
                     disabled={pending}
                     className="rounded-xl border border-[--hair] bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:bg-base"
                   >
-                    {pending ? "Summarizing…" : "Summarize"}
+                    {pending ? tShared("summarizing") : t("summarize")}
                   </button>
                 </div>
                 {activeThread?.summary && (
                   <div className="mt-5 rounded-2xl border border-brand/20 bg-brand/5 px-5 py-4">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand">Summary</p>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-brand">{tShared("summary")}</p>
                     <p className="whitespace-pre-wrap text-sm leading-relaxed text-ink">{activeThread.summary}</p>
                   </div>
                 )}
@@ -602,23 +611,21 @@ export function EmailInbox({
                           <div className="space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="text-base font-semibold text-ink">
-                                {contact?.label ?? msg.from_name ?? msg.from_address ?? "Unknown"}
+                                {contact?.label ?? msg.from_name ?? msg.from_address ?? tShared("unknown")}
                                 {msg.is_outbound && (
-                                  <span className="ml-2 text-sm font-normal text-muted">(you)</span>
+                                  <span className="ml-2 text-sm font-normal text-muted">({tShared("you")})</span>
                                 )}
                               </p>
                               {contact && !msg.is_outbound && (
                                 <div className="flex flex-wrap items-center gap-2">
                                   <ContactBadge contact={contact} />
                                   {contact.type === "parent" && (
-                                    <span className="text-xs text-muted">Saved to parent portal</span>
+                                    <span className="text-xs text-muted">{tShared("savedToParentPortal")}</span>
                                   )}
                                 </div>
                               )}
                             </div>
-                            {msg.from_address && (
-                              <p className="text-sm text-muted">{msg.from_address}</p>
-                            )}
+                            {msg.from_address && <p className="text-sm text-muted">{msg.from_address}</p>}
                           </div>
                           <time className="text-sm text-muted">{formatFullWhen(msg.sent_at)}</time>
                         </header>
@@ -643,17 +650,11 @@ export function EmailInbox({
                     const replyContact = resolveContact(replyTo, contacts);
                     return (
                       <p className="text-sm text-muted">
-                        Reply from your connected inbox
+                        {t("replyFrom")}
                         {replyContact ? (
-                          <>
-                            {" "}
-                            to <span className="font-medium text-ink">{replyContact.label}</span>
-                          </>
+                          <> {t("replyTo", { name: replyContact.label })}</>
                         ) : replyTo ? (
-                          <>
-                            {" "}
-                            to <span className="font-medium text-ink">{replyTo}</span>
-                          </>
+                          <> {t("replyTo", { name: replyTo })}</>
                         ) : null}
                       </p>
                     );
@@ -661,7 +662,7 @@ export function EmailInbox({
                   <textarea
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
-                    placeholder="Write your reply…"
+                    placeholder={t("replyPlaceholder")}
                     rows={6}
                     className="min-h-[10rem] w-full resize-y rounded-2xl border border-[--hair] bg-base px-5 py-4 text-base leading-relaxed text-ink outline-none ring-brand/30 transition focus:ring-2"
                   />
@@ -673,7 +674,7 @@ export function EmailInbox({
                       className="rounded-xl px-6 py-2.5 text-sm font-bold text-white disabled:opacity-50"
                       style={{ background: "var(--brand)" }}
                     >
-                      {sending ? "Sending…" : "Send reply"}
+                      {sending ? tShared("sending") : t("sendReply")}
                     </button>
                   </div>
                 </div>

@@ -1,17 +1,7 @@
 "use client";
 
-// ============================================================================
-//  ImageInput — upload-or-paste control for site-builder `image` fields.
-//  Uploads bytes straight to Supabase Storage via a server-minted signed URL,
-//  then stores the resulting public URL. Pasting a URL by hand still works.
-//
-//  • Large raster images are downscaled in the browser before upload (caps
-//    dimensions + bytes; SVG/GIF pass through untouched).
-//  • When an image is replaced or removed, the previous Storage object is
-//    deleted (best-effort orphan cleanup).
-// ============================================================================
-
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import {
   createSiteImageUploadUrl,
@@ -19,12 +9,9 @@ import {
 } from "@/app/portal/admin/site/upload-actions";
 
 const BUCKET = "site-images";
-const MAX_DIM = 1920; // longest edge after downscale
+const MAX_DIM = 1920;
 const DOWNSCALE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-/** Downscale a raster image to MAX_DIM on its longest edge. Returns the
- *  original file if it's already small enough, not a raster type, or if
- *  anything goes wrong (best-effort). */
 async function maybeDownscale(file: File): Promise<Blob> {
   if (!DOWNSCALE_TYPES.has(file.type)) return file;
   try {
@@ -63,20 +50,20 @@ export default function ImageInput({
   value: string;
   onChange: (url: string) => void;
 }) {
+  const t = useTranslations("site.media");
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const pick = () => inputRef.current?.click();
 
-  // Best-effort delete of a previous Storage object (orphan cleanup).
   const cleanup = (url: string) => {
     if (url) void deleteSiteImage(url).catch(() => {});
   };
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-selecting the same file later
+    e.target.value = "";
     if (!file) return;
 
     setError(null);
@@ -100,9 +87,9 @@ export default function ImageInput({
         return;
       }
       onChange(ticket.data.publicUrl);
-      cleanup(previous); // drop the image we just replaced
+      cleanup(previous);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed.");
+      setError(err instanceof Error ? err.message : t("uploadFailed"));
     } finally {
       setBusy(false);
     }
@@ -126,14 +113,14 @@ export default function ImageInput({
           />
         ) : (
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-dashed border-[--hair] text-[0.6rem] text-muted">
-            none
+            {t("none")}
           </div>
         )}
         <div className="flex flex-1 flex-col gap-1.5">
           <input
             type="text"
             value={value}
-            placeholder="Paste an image URL or upload"
+            placeholder={t("imagePlaceholder")}
             onChange={(e) => onChange(e.target.value)}
             className="field-premium"
           />
@@ -144,7 +131,7 @@ export default function ImageInput({
               disabled={busy}
               className="rounded-full border border-[--hair] px-3 py-1 text-xs font-medium text-ink transition hover:bg-base disabled:opacity-50"
             >
-              {busy ? "Uploading…" : value ? "Replace" : "Upload"}
+              {busy ? t("uploading") : value ? t("replace") : t("upload")}
             </button>
             {value && !busy && (
               <button
@@ -152,7 +139,7 @@ export default function ImageInput({
                 onClick={remove}
                 className="text-xs text-red-500 hover:underline"
               >
-                Remove
+                {t("remove")}
               </button>
             )}
           </div>

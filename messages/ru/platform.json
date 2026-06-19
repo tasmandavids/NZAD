@@ -1,0 +1,151 @@
+{
+  "platform": {
+    "dashboard": {
+      "title": "Обзор платформы",
+      "greeting": "{greeting},",
+      "stats": {
+        "totalStudios": "Всего студий",
+        "activeHint": "{count} активных",
+        "onTrial": "На пробном периоде",
+        "suspended": "Приостановлены",
+        "studentsPlatformWide": "Учеников на платформе"
+      },
+      "recentSignups": "Недавние регистрации",
+      "allStudios": "Все студии →",
+      "noStudios": "Студий пока нет.",
+      "openSupport": "Открытая поддержка",
+      "inbox": "Входящие →",
+      "inboxClear": "Входящие пусты.",
+      "opsQueue": "Очередь ops",
+      "allTasks": "Все задачи →",
+      "noOpenTasks": "Нет открытых задач.",
+      "dueDate": "срок {date}",
+      "unknownStudio": "Неизвестно"
+    },
+    "studios": {
+      "title": "Студии",
+      "subtitle": "Все арендаторы на платформе Olune.",
+      "filters": {
+        "all": "все",
+        "trial": "пробный",
+        "active": "активный",
+        "suspended": "приостановлен"
+      },
+      "updated": "Обновлено",
+      "tableStudio": "Студия",
+      "tableOwner": "Владелец",
+      "tableStudents": "Ученики",
+      "tableStatus": "Статус",
+      "tableJoined": "Регистрация",
+      "tableActions": "Действия",
+      "noMatch": "Нет студий по этому фильтру."
+    },
+    "owners": {
+      "title": "Владельцы бизнеса",
+      "subtitle": "Администраторы студий — прямая связь с каждым арендатором.",
+      "searchPlaceholder": "Поиск по студии, имени или e-mail…",
+      "unnamedOwner": "Владелец без имени",
+      "ownerFallback": "Владелец",
+      "adminSince": "Админ с {date}",
+      "privateNotes": "Личные заметки",
+      "notesPlaceholder": "Заметки о взаимодействии, итоги звонков, предпочтения…",
+      "saveNotes": "Сохранить заметки",
+      "messageOwner": "Сообщение владельцу",
+      "subjectDefault": "Re: {studioName}",
+      "messagePlaceholder": "Сообщение появится в их потоке поддержки…",
+      "sendViaSupport": "Отправить через поддержку",
+      "notesSaved": "Заметки сохранены",
+      "messageSent": "Сообщение отправлено — см. поддержку"
+    },
+    "support": {
+      "title": "Входящие поддержки",
+      "noThreads": "Потоков поддержки пока нет.",
+      "selectThread": "Выберите поток для просмотра переписки.",
+      "status": {
+        "open": "открыт",
+        "pending": "ожидание",
+        "resolved": "решён"
+      },
+      "senderOperator": "Olune",
+      "senderOwner": "Владелец",
+      "replyPlaceholder": "Ответ владельцу студии…",
+      "sendReply": "Отправить ответ"
+    },
+    "tasks": {
+      "title": "Задачи ops",
+      "subtitle": "Внутренняя очередь — онбординг, биллинг, домены, раскатки и другое.",
+      "newTask": "Новая задача",
+      "cancel": "Отмена",
+      "type": "Тип",
+      "priority": "Приоритет",
+      "priorities": {
+        "low": "Низкий",
+        "normal": "Обычный",
+        "high": "Высокий",
+        "urgent": "Срочный"
+      },
+      "titleLabel": "Название",
+      "studioOptional": "Студия (необязательно)",
+      "platformWide": "Вся платформа",
+      "detailsPlaceholder": "Детали, ссылки, контекст…",
+      "createTask": "Создать задачу",
+      "columns": {
+        "todo": "К выполнению",
+        "in_progress": "В работе",
+        "blocked": "Заблокировано",
+        "done": "Готово"
+      }
+    },
+    "features": {
+      "title": "Флаги функций",
+      "subtitle": "Включайте модули глобально или по студии — магазин, события, SMS, AI-бета и др.",
+      "globalDefaults": "Глобальные настройки",
+      "studioOverrides": "Переопределения по студии",
+      "on": "Вкл.",
+      "off": "Выкл."
+    },
+    "announcements": {
+      "title": "Объявления",
+      "subtitle": "Рассылка обновлений админам студий — обслуживание, новые функции, изменения политики.",
+      "titlePlaceholder": "Заголовок",
+      "bodyPlaceholder": "Текст сообщения (в админ-портале студии)…",
+      "severity": {
+        "info": "Инфо",
+        "warning": "Предупреждение",
+        "critical": "Критично"
+      },
+      "target": {
+        "all": "Все студии",
+        "trial": "Только пробные",
+        "active": "Только активные",
+        "suspended": "Только приостановленные"
+      },
+      "draft": "Черновик объявления",
+      "publishedAt": "опубликовано {date}",
+      "draftStatus": "черновик",
+      "publishNow": "Опубликовать сейчас"
+    },
+    "settings": {
+      "title": "Настройки платформы",
+      "subtitle": "Глобальная конфигурация Olune — регистрация, пробные периоды, обслуживание.",
+      "maintenanceMode": "Режим обслуживания",
+      "signupEnabled": "Регистрация включена",
+      "defaultTrialDays": "Дней пробного периода по умолчанию",
+      "supportEmail": "E-mail поддержки",
+      "welcomeMessage": "Приветственное сообщение",
+      "saveSettings": "Сохранить настройки",
+      "saved": "Сохранено",
+      "operatorAccessTitle": "Доступ оператора",
+      "operatorAccessBody": "Выдайте доступ, добавив e-mail в <envVar></envVar> в env или вставив строку в <table></table>, связанную с пользователем auth."
+    },
+    "audit": {
+      "title": "Журнал аудита",
+      "subtitle": "Неизменяемая запись действий операторов.",
+      "when": "Когда",
+      "operator": "Оператор",
+      "action": "Действие",
+      "target": "Цель",
+      "noEntries": "Записей аудита пока нет."
+    }
+  }
+}

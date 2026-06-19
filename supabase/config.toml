@@ -26,3 +26,16 @@ sql_paths = ["./seed.sql"]
 # Dashboard: Project Settings → General → Reference ID
 [remotes.production]
 project_id = "wnoxcwihrzbxvogvmhqv"
+
+# Auth hardening (local dev; mirror in Dashboard → Authentication for hosted).
+# Leaked-password protection (HaveIBeenPwned) is Dashboard-only on hosted
+# projects: Authentication → Providers → Email → Prevent use of leaked passwords.
+[auth]
+enabled = true
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true

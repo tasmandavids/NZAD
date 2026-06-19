@@ -1,13 +1,7 @@
 "use client";
 
-// ============================================================================
-//  MessagesPanel — internal messaging UI
-//  Left: contact list with last-message preview + unread badge
-//  Right: MessageThread for selected contact
-//  SSE stream auto-appends incoming messages without polling
-// ============================================================================
-
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { MessageThread, type ThreadMessage } from "@/components/admin/messages/MessageThread";
 
 interface Contact {
@@ -50,22 +44,14 @@ function formatTime(iso: string) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  const today = new Date();
-  if (d.toDateString() === today.toDateString()) return "Today";
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return d.toLocaleDateString([], { month: "short", day: "numeric" });
-}
-
 export function MessagesPanel({
   currentUserId,
   contacts,
   recentMessages,
   initialContactId = null,
 }: Props) {
+  const t = useTranslations("admin.messages");
+  const tShared = useTranslations("admin.shared");
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     initialContactId && contacts.some((c) => c.id === initialContactId)
       ? initialContactId
@@ -144,12 +130,22 @@ export function MessagesPanel({
     return tb.localeCompare(ta);
   });
 
+  function formatDate(iso: string) {
+    const d = new Date(iso);
+    const today = new Date();
+    if (d.toDateString() === today.toDateString()) return tShared("today");
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) return tShared("yesterday");
+    return d.toLocaleDateString([], { month: "short", day: "numeric" });
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-base">
       <aside className="flex w-72 shrink-0 flex-col border-r border-[--hair] bg-surface">
         <div className="border-b border-[--hair] px-5 py-4">
-          <h1 className="text-lg font-black text-ink">Messages</h1>
-          <p className="text-xs text-muted">{contacts.length} contacts</p>
+          <h1 className="text-lg font-black text-ink">{t("title")}</h1>
+          <p className="text-xs text-muted">{t("contacts", { count: contacts.length })}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -157,6 +153,7 @@ export function MessagesPanel({
             const unread = unreadCounts[c.id] ?? 0;
             const last = lastMessages[c.id];
             const isSelected = selectedContactId === c.id;
+            const name = displayName(c) === "Unknown" ? tShared("unknown") : displayName(c);
 
             return (
               <button
@@ -179,11 +176,11 @@ export function MessagesPanel({
                     <span
                       className={`truncate text-sm font-semibold ${isSelected ? "text-brand" : "text-ink"}`}
                     >
-                      {displayName(c)}
+                      {name}
                     </span>
                     {last && (
                       <span className="shrink-0 text-[0.65rem] text-muted">
-                        {formatDate(last.sent_at) === "Today"
+                        {formatDate(last.sent_at) === tShared("today")
                           ? formatTime(last.sent_at)
                           : formatDate(last.sent_at)}
                       </span>
@@ -192,7 +189,7 @@ export function MessagesPanel({
                   <div className="flex items-center justify-between gap-1">
                     <p className="truncate text-xs text-muted">
                       {last ? (
-                        (last.from_user_id === currentUserId ? "You: " : "") + last.body
+                        (last.from_user_id === currentUserId ? t("youPrefix") : "") + last.body
                       ) : (
                         <span className="capitalize text-muted/60">{c.role}</span>
                       )}
@@ -217,7 +214,7 @@ export function MessagesPanel({
             peerId={selectedContactId}
             contact={{
               id: selectedContact.id,
-              name: displayName(selectedContact),
+              name: displayName(selectedContact) === "Unknown" ? tShared("unknown") : displayName(selectedContact),
               role: selectedContact.role,
             }}
             onNewMessage={handleThreadMessage}
@@ -226,8 +223,8 @@ export function MessagesPanel({
           <div className="flex flex-1 items-center justify-center text-center text-muted">
             <div>
               <p className="mb-4 text-5xl">✉️</p>
-              <p className="text-lg font-semibold text-ink">Select a contact</p>
-              <p className="mt-1 text-sm">Choose someone from the list to start a conversation.</p>
+              <p className="text-lg font-semibold text-ink">{t("selectContact")}</p>
+              <p className="mt-1 text-sm">{t("selectDescription")}</p>
             </div>
           </div>
         )}

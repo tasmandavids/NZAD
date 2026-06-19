@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import {
   Bar,
@@ -33,23 +34,29 @@ import { formatMonthKey, formatShortDate } from "@/lib/xero/format";
 const NZD = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 0 });
 const NZD2 = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" });
 
-const STATUS_STYLES: Record<string, { label: string; bg: string; text: string }> = {
-  paid: { label: "Paid", bg: "#dcfce7", text: "#16a34a" },
-  sent: { label: "Sent", bg: "#fef9c3", text: "#ca8a04" },
-  overdue: { label: "Overdue", bg: "#fee2e2", text: "#dc2626" },
-  draft: { label: "Draft", bg: "#f1f5f9", text: "#64748b" },
-  void: { label: "Void", bg: "#f1f5f9", text: "#94a3b8" },
-  refunded: { label: "Refunded", bg: "#ede9fe", text: "#7c3aed" },
+const STATUS_KEYS = ["paid", "sent", "overdue", "draft", "void", "refunded"] as const;
+
+const STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+  paid: { bg: "#dcfce7", text: "#16a34a" },
+  sent: { bg: "#fef9c3", text: "#ca8a04" },
+  overdue: { bg: "#fee2e2", text: "#dc2626" },
+  draft: { bg: "#f1f5f9", text: "#64748b" },
+  void: { bg: "#f1f5f9", text: "#94a3b8" },
+  refunded: { bg: "#ede9fe", text: "#7c3aed" },
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const s = STATUS_STYLES[status] ?? { label: status, bg: "#f1f5f9", text: "#64748b" };
+  const tStatus = useTranslations("admin.shared.status");
+  const s = STATUS_STYLES[status] ?? { bg: "#f1f5f9", text: "#64748b" };
+  const label = (STATUS_KEYS as readonly string[]).includes(status)
+    ? tStatus(status as (typeof STATUS_KEYS)[number])
+    : status;
   return (
     <span
       className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wider"
       style={{ background: s.bg, color: s.text }}
     >
-      {s.label}
+      {label}
     </span>
   );
 }
@@ -79,6 +86,9 @@ function CreateInvoiceModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const t = useTranslations("admin.billing");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [payerId, setPayerId] = useState(parents[0]?.id ?? "");
   const [studentId, setStudentId] = useState("");
   const [amount, setAmount] = useState("");
@@ -95,8 +105,8 @@ function CreateInvoiceModal({
     e.preventDefault();
     setError(null);
     const dollars = Number.parseFloat(amount);
-    if (!payerId) return setError("Select a parent.");
-    if (!Number.isFinite(dollars) || dollars <= 0) return setError("Enter a valid amount.");
+    if (!payerId) return setError(t("createModal.selectParentError"));
+    if (!Number.isFinite(dollars) || dollars <= 0) return setError(t("createModal.validAmountError"));
 
     startTransition(async () => {
       const res = await createInvoice({
@@ -110,7 +120,7 @@ function CreateInvoiceModal({
       if (!res.ok) setError(res.error);
       else {
         if (res.xeroError) {
-          setError(`Invoice created, but Xero sync failed: ${res.xeroError}`);
+          setError(t("createModal.xeroSyncError", { error: res.xeroError }));
         }
         onCreated();
         if (!res.xeroError) onClose();
@@ -121,14 +131,12 @@ function CreateInvoiceModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-2xl border border-[--hair] bg-surface p-6 shadow-xl">
-        <h2 className="text-lg font-bold text-ink">Create invoice</h2>
-        <p className="mt-1 text-sm text-muted">
-          Bill a parent for tuition, fees, or other charges. They&apos;ll get a notification to pay in Olune.
-        </p>
+        <h2 className="text-lg font-bold text-ink">{t("createModal.title")}</h2>
+        <p className="mt-1 text-sm text-muted">{t("createModal.description")}</p>
 
         <form onSubmit={submit} className="mt-5 space-y-4">
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-            Parent
+            {t("createModal.parent")}
             <select
               value={payerId}
               onChange={(e) => {
@@ -137,7 +145,7 @@ function CreateInvoiceModal({
               }}
               className="mt-1 w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink"
             >
-              {parents.length === 0 && <option value="">No parents found</option>}
+              {parents.length === 0 && <option value="">{tShared("noParentsFound")}</option>}
               {parents.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -149,13 +157,14 @@ function CreateInvoiceModal({
 
           {students.length > 0 && (
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-              Student <span className="font-normal normal-case">(optional)</span>
+              {t("createModal.student")}{" "}
+              <span className="font-normal normal-case">{tShared("optional")}</span>
               <select
                 value={studentId}
                 onChange={(e) => setStudentId(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink"
               >
-                <option value="">— Not linked to a student —</option>
+                <option value="">{tShared("notLinkedStudent")}</option>
                 {students.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -167,20 +176,20 @@ function CreateInvoiceModal({
 
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-              Amount (NZD)
+              {t("createModal.amount")}
               <input
                 type="number"
                 min="0.01"
                 step="0.01"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="120.00"
+                placeholder={t("createModal.amountPlaceholder")}
                 className="mt-1 w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink"
                 required
               />
             </label>
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-              Due date
+              {t("createModal.dueDate")}
               <input
                 type="date"
                 value={dueDate}
@@ -192,12 +201,12 @@ function CreateInvoiceModal({
           </div>
 
           <label className="block text-xs font-semibold uppercase tracking-wider text-muted">
-            Description
+            {t("createModal.descriptionLabel")}
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Term 2 tuition, costume fee…"
+              placeholder={t("createModal.descriptionPlaceholder")}
               className="mt-1 w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink"
             />
           </label>
@@ -209,7 +218,7 @@ function CreateInvoiceModal({
               onChange={(e) => setSendNow(e.target.checked)}
               className="rounded border-[--hair]"
             />
-            Send to parent now (email + in-app notification)
+            {t("createModal.sendNow")}
           </label>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -220,14 +229,18 @@ function CreateInvoiceModal({
               onClick={onClose}
               className="rounded-xl border border-[--hair] px-4 py-2 text-sm font-semibold text-muted hover:bg-base"
             >
-              Cancel
+              {tCommon("cancel")}
             </button>
             <button
               type="submit"
               disabled={pending || parents.length === 0}
               className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-paper disabled:opacity-50"
             >
-              {pending ? "Creating…" : sendNow ? "Create & send" : "Save draft"}
+              {pending
+                ? tShared("creating")
+                : sendNow
+                  ? t("createModal.createAndSend")
+                  : t("createModal.saveDraft")}
             </button>
           </div>
         </form>
@@ -238,13 +251,14 @@ function CreateInvoiceModal({
 
 function RemindButton({
   invoiceId,
-  label = "Remind",
+  label,
   onDone,
 }: {
   invoiceId: string;
   label?: string;
   onDone?: () => void;
 }) {
+  const tShared = useTranslations("admin.shared");
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
 
@@ -263,7 +277,7 @@ function RemindButton({
         }}
         className="rounded-lg border border-[--hair] bg-base px-2.5 py-1 text-[0.7rem] font-semibold text-ink hover:bg-surface disabled:opacity-50"
       >
-        {pending ? "Sending…" : label}
+        {pending ? tShared("sending") : (label ?? tShared("remind"))}
       </button>
       {err && <p className="mt-0.5 text-[0.65rem] text-red-600">{err}</p>}
     </div>
@@ -271,12 +285,14 @@ function RemindButton({
 }
 
 function RefundButton({ invoice, onDone }: { invoice: InvoiceRow; onDone: (id: string) => void }) {
+  const t = useTranslations("admin.billing");
+  const tShared = useTranslations("admin.shared");
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
 
-  if (invoice.status !== "paid") return <span className="text-muted">—</span>;
+  if (invoice.status !== "paid") return <span className="text-muted">{tShared("dash")}</span>;
   if (!invoice.stripePaymentIntentId) {
-    return <span className="text-[0.7rem] text-muted">No card payment</span>;
+    return <span className="text-[0.7rem] text-muted">{tShared("noCardPayment")}</span>;
   }
 
   return (
@@ -287,7 +303,10 @@ function RefundButton({ invoice, onDone }: { invoice: InvoiceRow; onDone: (id: s
           setErr(null);
           if (
             !window.confirm(
-              `Refund ${NZD2.format(invoice.amountCents / 100)} to ${invoice.payerName ?? "the payer"}?`,
+              t("refundConfirm", {
+                amount: NZD2.format(invoice.amountCents / 100),
+                payer: invoice.payerName ?? tShared("unknown"),
+              }),
             )
           ) {
             return;
@@ -301,7 +320,7 @@ function RefundButton({ invoice, onDone }: { invoice: InvoiceRow; onDone: (id: s
         disabled={pending}
         className="rounded-lg border border-[--hair] px-2.5 py-1 text-[0.7rem] font-semibold text-[#dc2626] hover:bg-[#fee2e2] disabled:opacity-50"
       >
-        {pending ? "Refunding…" : "Refund"}
+        {pending ? tShared("refunding") : tShared("refund")}
       </button>
       {err && <span className="text-[0.65rem] text-[#dc2626]">{err}</span>}
     </div>
@@ -333,6 +352,9 @@ export function BillingDashboard({
   totalOutstandingCents: number;
   overdueCount: number;
 }) {
+  const t = useTranslations("admin.billing");
+  const tShared = useTranslations("admin.shared");
+  const tStatus = useTranslations("admin.shared.status");
   const router = useRouter();
   const [showCreate, setShowCreate] = useState(false);
   const [showInsights, setShowInsights] = useState(false);
@@ -381,6 +403,25 @@ export function BillingDashboard({
 
   const sourceTotal = sources.tuitionCents + sources.shopCents + sources.eventsCents;
 
+  const reminderHeaders = [
+    t("reminders.table.parent"),
+    t("reminders.table.student"),
+    t("reminders.table.amount"),
+    t("reminders.table.due"),
+    t("reminders.table.status"),
+    "",
+  ];
+
+  const invoiceHeaders = [
+    t("allInvoices.table.dancer"),
+    t("allInvoices.table.parent"),
+    t("allInvoices.table.amount"),
+    t("allInvoices.table.status"),
+    t("allInvoices.table.due"),
+    t("allInvoices.table.paid"),
+    "",
+  ];
+
   return (
     <>
       {showCreate && (
@@ -402,17 +443,15 @@ export function BillingDashboard({
           className="flex flex-wrap items-start justify-between gap-4"
         >
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-ink">Billing</h1>
-            <p className="mt-1 text-sm text-muted">
-              Create invoices, track who owes you, and chase payments — revenue detail lives in Accounting.
-            </p>
+            <h1 className="text-2xl font-black tracking-tight text-ink">{t("title")}</h1>
+            <p className="mt-1 text-sm text-muted">{t("subtitle")}</p>
           </div>
           <button
             type="button"
             onClick={() => setShowCreate(true)}
             className="rounded-xl bg-ink px-4 py-2.5 text-sm font-bold text-paper shadow-sm hover:opacity-90"
           >
-            + Create invoice
+            {t("createInvoice")}
           </button>
         </motion.header>
 
@@ -421,28 +460,37 @@ export function BillingDashboard({
           className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
           <StatCard
-            label="Outstanding"
+            label={t("stats.outstanding")}
             value={NZD.format(totalOutstandingCents / 100)}
-            sub={`${unpaidInvoices.length} unpaid · ${overdueCount} overdue`}
+            sub={t("stats.outstandingSub", { unpaid: unpaidInvoices.length, overdue: overdueCount })}
           />
           <StatCard
-            label="Families owing"
+            label={t("stats.familiesOwing")}
             value={String(unpaidAccounts.length)}
-            sub={overdueCount > 0 ? "Prioritise overdue first" : "All current"}
+            sub={
+              overdueCount > 0 ? t("stats.familiesOwingPrioritize") : t("stats.familiesOwingCurrent")
+            }
           />
-          <StatCard label="Collected (YTD)" value={NZD.format(totalPaidCents / 100)} sub="Paid tuition invoices" />
-          <StatCard label="MRR" value={NZD.format(mrrCents / 100)} sub={`${activeSubs} on auto-pay`} />
+          <StatCard
+            label={t("stats.collectedYtd")}
+            value={NZD.format(totalPaidCents / 100)}
+            sub={t("stats.collectedSub")}
+          />
+          <StatCard
+            label={t("stats.mrr")}
+            value={NZD.format(mrrCents / 100)}
+            sub={t("stats.mrrSub", { count: activeSubs })}
+          />
         </motion.div>
 
-        {/* Payment reminders queue */}
         <motion.section
           variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
           className="rounded-2xl border border-[--hair] bg-surface"
         >
           <div className="flex flex-wrap items-center gap-3 border-b border-[--hair] px-6 py-4">
             <div className="mr-auto">
-              <h2 className="text-sm font-bold text-ink">Payment reminders</h2>
-              <p className="text-xs text-muted">Unpaid invoices — send a nudge to pay via the parent portal</p>
+              <h2 className="text-sm font-bold text-ink">{t("reminders.title")}</h2>
+              <p className="text-xs text-muted">{t("reminders.subtitle")}</p>
             </div>
             {overdueIds.length > 0 && (
               <button
@@ -451,7 +499,9 @@ export function BillingDashboard({
                 disabled={bulkPending}
                 className="rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
               >
-                {bulkPending ? "Sending…" : `Remind all overdue (${overdueIds.length})`}
+                {bulkPending
+                  ? tShared("sending")
+                  : t("reminders.remindAllOverdue", { count: overdueIds.length })}
               </button>
             )}
           </div>
@@ -461,13 +511,13 @@ export function BillingDashboard({
           )}
 
           {unpaidInvoices.length === 0 ? (
-            <p className="px-6 py-10 text-center text-sm text-muted">No outstanding invoices — you&apos;re all caught up.</p>
+            <p className="px-6 py-10 text-center text-sm text-muted">{t("reminders.empty")}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="border-b border-[--hair]">
-                    {["Parent", "Student", "Amount", "Due", "Status", ""].map((h) => (
+                    {reminderHeaders.map((h) => (
                       <th
                         key={h || "actions"}
                         className="px-4 py-3 text-left text-[0.62rem] font-semibold uppercase tracking-wider text-muted"
@@ -485,11 +535,11 @@ export function BillingDashboard({
                         inv.status === "overdue" ? "bg-red-50/40" : ""
                       }`}
                     >
-                      <td className="px-4 py-3 font-medium text-ink">{inv.payerName ?? "—"}</td>
-                      <td className="px-4 py-3 text-muted">{inv.studentName ?? "—"}</td>
+                      <td className="px-4 py-3 font-medium text-ink">{inv.payerName ?? tShared("dash")}</td>
+                      <td className="px-4 py-3 text-muted">{inv.studentName ?? tShared("dash")}</td>
                       <td className="px-4 py-3 font-semibold tabular-nums">{formatMoney(inv.amountCents)}</td>
                       <td className="px-4 py-3 text-muted">
-                        {inv.dueDate ? formatShortDate(inv.dueDate) : "—"}
+                        {inv.dueDate ? formatShortDate(inv.dueDate) : tShared("dash")}
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={inv.status} />
@@ -497,7 +547,11 @@ export function BillingDashboard({
                       <td className="px-4 py-3">
                         <RemindButton
                           invoiceId={inv.id}
-                          label={inv.status === "overdue" ? "Chase payment" : "Send reminder"}
+                          label={
+                            inv.status === "overdue"
+                              ? tShared("chasePayment")
+                              : tShared("sendReminder")
+                          }
                           onDone={refresh}
                         />
                       </td>
@@ -509,14 +563,13 @@ export function BillingDashboard({
           )}
         </motion.section>
 
-        {/* Unpaid by account */}
         {unpaidAccounts.length > 0 && (
           <motion.section
             variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
             className="rounded-2xl border border-[--hair] bg-surface p-6"
           >
-            <h2 className="text-sm font-bold text-ink">Accounts to follow up</h2>
-            <p className="mt-1 text-xs text-muted">Grouped by family — largest overdue balances first</p>
+            <h2 className="text-sm font-bold text-ink">{t("accounts.title")}</h2>
+            <p className="mt-1 text-xs text-muted">{t("accounts.subtitle")}</p>
             <ul className="mt-4 grid gap-3 sm:grid-cols-2">
               {unpaidAccounts.slice(0, 8).map((acct) => (
                 <li
@@ -526,15 +579,17 @@ export function BillingDashboard({
                   <div>
                     <p className="font-semibold text-ink">{acct.payerName}</p>
                     <p className="text-xs text-muted">
-                      {acct.invoiceCount} invoice{acct.invoiceCount !== 1 ? "s" : ""}
-                      {acct.oldestDueDate ? ` · oldest due ${formatShortDate(acct.oldestDueDate)}` : ""}
+                      {t("accounts.invoiceMeta", {
+                        count: acct.invoiceCount,
+                        oldest: acct.oldestDueDate ? formatShortDate(acct.oldestDueDate) : "empty",
+                      })}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-bold tabular-nums text-ink">{formatMoney(acct.totalCents)}</p>
                     {acct.overdueCents > 0 && (
                       <p className="text-[0.65rem] font-semibold text-red-600">
-                        {formatMoney(acct.overdueCents)} overdue
+                        {tShared("overdueAmount", { amount: formatMoney(acct.overdueCents) })}
                       </p>
                     )}
                   </div>
@@ -544,7 +599,6 @@ export function BillingDashboard({
           </motion.section>
         )}
 
-        {/* Collapsible revenue insights */}
         <motion.section variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
           <button
             type="button"
@@ -552,8 +606,8 @@ export function BillingDashboard({
             className="flex w-full items-center justify-between rounded-2xl border border-[--hair] bg-surface px-6 py-4 text-left"
           >
             <div>
-              <h2 className="text-sm font-bold text-ink">Revenue insights</h2>
-              <p className="text-xs text-muted">Charts &amp; breakdown — expand when you need the numbers</p>
+              <h2 className="text-sm font-bold text-ink">{t("insights.title")}</h2>
+              <p className="text-xs text-muted">{t("insights.subtitle")}</p>
             </div>
             <span className="text-muted">{showInsights ? "▲" : "▼"}</span>
           </button>
@@ -562,17 +616,19 @@ export function BillingDashboard({
             <div className="mt-4 space-y-4">
               <div className="rounded-2xl border border-[--hair] bg-surface p-6">
                 <div className="mb-4 flex items-baseline justify-between">
-                  <h3 className="text-sm font-bold text-ink">Revenue by source</h3>
-                  <span className="text-xs text-muted">Last 12 months · {NZD.format(sourceTotal / 100)}</span>
+                  <h3 className="text-sm font-bold text-ink">{t("insights.bySource")}</h3>
+                  <span className="text-xs text-muted">
+                    {t("insights.last12Months", { total: NZD.format(sourceTotal / 100) })}
+                  </span>
                 </div>
                 {sourceTotal === 0 ? (
-                  <p className="text-sm text-muted">No paid revenue recorded yet.</p>
+                  <p className="text-sm text-muted">{t("insights.noRevenue")}</p>
                 ) : (
                   <ul className="grid gap-2 sm:grid-cols-3">
                     {[
-                      { label: "Tuition & fees", cents: sources.tuitionCents },
-                      { label: "Merchandise", cents: sources.shopCents },
-                      { label: "Events", cents: sources.eventsCents },
+                      { label: t("insights.tuitionFees"), cents: sources.tuitionCents },
+                      { label: t("insights.merchandise"), cents: sources.shopCents },
+                      { label: t("insights.events"), cents: sources.eventsCents },
                     ].map((s) => (
                       <li key={s.label} className="flex justify-between text-xs">
                         <span className="text-muted">{s.label}</span>
@@ -584,7 +640,7 @@ export function BillingDashboard({
               </div>
 
               <div className="rounded-2xl border border-[--hair] bg-surface p-6">
-                <h3 className="mb-5 text-sm font-bold text-ink">Monthly tuition revenue</h3>
+                <h3 className="mb-5 text-sm font-bold text-ink">{t("insights.monthlyTuition")}</h3>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                     <CartesianGrid vertical={false} stroke="var(--hair)" />
@@ -597,7 +653,7 @@ export function BillingDashboard({
                       width={48}
                     />
                     <Tooltip
-                      formatter={(value: unknown) => [NZD2.format(Number(value)), "Revenue"]}
+                      formatter={(value: unknown) => [NZD2.format(Number(value)), tShared("revenue")]}
                       contentStyle={{
                         background: "var(--base)",
                         border: "1px solid var(--hair)",
@@ -613,19 +669,18 @@ export function BillingDashboard({
           )}
         </motion.section>
 
-        {/* All invoices */}
         <motion.div
           variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }}
           className="rounded-2xl border border-[--hair] bg-surface"
         >
           <div className="flex flex-wrap items-center gap-3 border-b border-[--hair] px-6 py-4">
             <h2 className="mr-auto text-sm font-bold text-ink">
-              All invoices
+              {t("allInvoices.title")}
               <span className="ml-2 font-normal text-muted">({filtered.length})</span>
             </h2>
             <input
               type="text"
-              placeholder="Search…"
+              placeholder={t("allInvoices.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-44 rounded-lg border border-[--hair] bg-base px-3 py-1.5 text-xs text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
@@ -635,12 +690,12 @@ export function BillingDashboard({
               onChange={(e) => setStatusFilter(e.target.value)}
               className="rounded-lg border border-[--hair] bg-base px-3 py-1.5 text-xs text-ink"
             >
-              <option value="all">All statuses</option>
-              <option value="paid">Paid</option>
-              <option value="sent">Sent</option>
-              <option value="overdue">Overdue</option>
-              <option value="draft">Draft</option>
-              <option value="refunded">Refunded</option>
+              <option value="all">{tShared("invoiceStatus.all")}</option>
+              <option value="paid">{tStatus("paid")}</option>
+              <option value="sent">{tStatus("sent")}</option>
+              <option value="overdue">{tStatus("overdue")}</option>
+              <option value="draft">{tStatus("draft")}</option>
+              <option value="refunded">{tStatus("refunded")}</option>
             </select>
           </div>
 
@@ -648,7 +703,7 @@ export function BillingDashboard({
             <table className="w-full min-w-[720px] text-sm">
               <thead>
                 <tr className="border-b border-[--hair]">
-                  {["Dancer", "Parent", "Amount", "Status", "Due", "Paid", ""].map((h, idx) => (
+                  {invoiceHeaders.map((h, idx) => (
                     <th
                       key={h || `col-${idx}`}
                       className="px-4 py-3 text-left text-[0.62rem] font-semibold uppercase tracking-wider text-muted"
@@ -662,7 +717,7 @@ export function BillingDashboard({
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted">
-                      No invoices found.
+                      {t("allInvoices.empty")}
                     </td>
                   </tr>
                 ) : (
@@ -671,17 +726,19 @@ export function BillingDashboard({
                       key={inv.id}
                       className="border-b border-[--hair] last:border-0 hover:bg-[color-mix(in_srgb,var(--brand)_3%,transparent)]"
                     >
-                      <td className="px-4 py-3 text-ink">{inv.studentName ?? <span className="text-muted">—</span>}</td>
-                      <td className="px-4 py-3 text-muted">{inv.payerName ?? "—"}</td>
+                      <td className="px-4 py-3 text-ink">
+                        {inv.studentName ?? <span className="text-muted">{tShared("dash")}</span>}
+                      </td>
+                      <td className="px-4 py-3 text-muted">{inv.payerName ?? tShared("dash")}</td>
                       <td className="px-4 py-3 font-semibold tabular-nums">{formatMoney(inv.amountCents)}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={inv.status} />
                       </td>
                       <td className="px-4 py-3 text-muted">
-                        {inv.dueDate ? formatShortDate(inv.dueDate) : "—"}
+                        {inv.dueDate ? formatShortDate(inv.dueDate) : tShared("dash")}
                       </td>
                       <td className="px-4 py-3 text-muted">
-                        {inv.paidAt ? formatShortDate(inv.paidAt.slice(0, 10)) : "—"}
+                        {inv.paidAt ? formatShortDate(inv.paidAt.slice(0, 10)) : tShared("dash")}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col items-start gap-1">
@@ -696,7 +753,7 @@ export function BillingDashboard({
                               rel="noopener noreferrer"
                               className="text-[0.65rem] font-semibold text-[#13B5EA] hover:underline"
                             >
-                              View in Xero
+                              {tShared("viewInXero")}
                             </a>
                           )}
                         </div>

@@ -1,0 +1,177 @@
+{
+  "marketing": {
+    "hero": {
+      "titleLine1": "Run your whole studio.",
+      "titleLine2": "Lose the chaos.",
+      "subtitle": "Projects, finances, and live client websites in one place — so the admin runs itself and your time comes back.",
+      "seeInAction": "See it in action",
+      "quote": "No more juggling six tools, three spreadsheets, and a website that's always one update behind.",
+      "marquee": {
+        "projects": "Projects",
+        "invoicing": "Invoicing",
+        "liveSites": "Live Sites",
+        "cashFlow": "Cash Flow",
+        "clients": "Clients",
+        "tasks": "Tasks",
+        "quotes": "Quotes",
+        "expenses": "Expenses"
+      }
+    },
+    "studioHero": {
+      "headlineWhere": "Where",
+      "headlineMovement": "movement",
+      "headlineBecomes": "becomes",
+      "headlineArt": "art.",
+      "defaultTagline": "From a first plié to the stage — every class, every dancer, every family, all in one place.",
+      "bookTrial": "Book a free trial",
+      "exploreProgrammes": "Explore programmes",
+      "scroll": "Scroll",
+      "disciplines": {
+        "ballet": "Ballet",
+        "contemporary": "Contemporary",
+        "jazz": "Jazz",
+        "hipHop": "Hip-Hop",
+        "tap": "Tap",
+        "lyrical": "Lyrical",
+        "acro": "Acro",
+        "pointe": "Pointe"
+      }
+    },
+    "problem": {
+      "eyebrow": "The human bit",
+      "title": "You didn't start a studio to do admin.",
+      "body1": "You started it to make great work. But somewhere between the invoices, the project trackers, the client website edits, and the \"quick question\" emails, the work you love got buried under the work you don't.",
+      "body2": "Olune pulls all of it into one place — and quietly does the heavy lifting in the background, so your evenings are yours again."
+    },
+    "features": {
+      "eyebrow": "What Olune does",
+      "title": "Three jobs.",
+      "titleEmphasis": "One home.",
+      "manageStudio": {
+        "title": "Manage the studio",
+        "subtitle": "Every project, deadline, client, and task in one clear view. Know exactly what's due, what's slipping, and what's done — without the morning panic."
+      },
+      "money": {
+        "title": "Stay on top of the money",
+        "subtitle": "Quotes, invoices, expenses, and cash flow built right in. Watch what's coming in and going out in real time, so the financial side stops being a once-a-quarter fright."
+      },
+      "liveSites": {
+        "title": "Build and update sites live",
+        "subtitle": "Spin up and edit client websites in real time, right inside Olune. No bouncing between platforms, no waiting on a developer for a copy change — see it change as you type."
+      }
+    },
+    "whyChoose": {
+      "eyebrow": "Why studios choose Olune",
+      "title": "Faster. Cheaper.",
+      "titleEmphasis": "Better made.",
+      "items": {
+        "faster": {
+          "title": "Faster than the patchwork",
+          "body": "Stop stitching together a PM tool, an accounting app, a website builder, and a dozen tabs. Olune does it in one — which means less switching, fewer dropped balls, and hours back every week."
+        },
+        "value": {
+          "title": "Better value than the stack",
+          "body": "Replace three or four subscriptions with one fair price. You get more, you pay less, and you always know what it costs — no surprise tiers, no nickel-and-diming."
+        },
+        "craft": {
+          "title": "Made with real craft",
+          "body": "Built by people who actually understand studios. Every screen is fast, clean, and thought-through — the kind of tool you're glad to open, not the one you dread."
+        }
+      }
+    },
+    "everyday": {
+      "eyebrow": "The everyday difference",
+      "title": "What changes when everything lives in one place",
+      "items": {
+        "mornings": {
+          "title": "Mornings start calm",
+          "body": "Open Olune and the day lays itself out — no hunting across apps."
+        },
+        "money": {
+          "title": "Money makes sense",
+          "body": "Send an invoice, log an expense, see the impact instantly."
+        },
+        "clients": {
+          "title": "Clients stay happy",
+          "body": "Edit their site live on a call and watch their face light up."
+        },
+        "evenings": {
+          "title": "Evenings come back",
+          "body": "When the admin runs itself, your free time stops being a fantasy."
+        }
+      }
+    },
+    "promise": {
+      "eyebrow": "The promise",
+      "title": "More making.",
+      "titleEmphasis": "Less managing.",
+      "body": "Olune isn't here to add another tab to your day. It's here to quietly take the weight — the projects, the finances, the websites — so you can get back to the work that made you start in the first place.",
+      "cta": "Start your free trial",
+      "footnote": "No card needed. Set up in minutes."
+    },
+    "pricingSection": {
+      "eyebrow": "Pricing",
+      "title": "Fair pricing.",
+      "titleEmphasis": "No surprises.",
+      "subtitle": "One plan replaces your project tool, your accounting app, and your website builder. Pay for one thing, not four.",
+      "mostPopular": "Most popular",
+      "perMonth": "/mo",
+      "plans": {
+        "solo": {
+          "name": "Solo",
+          "tag": "for the one-person studio",
+          "price": "$19",
+          "desc": "Everything you need to run projects, send invoices, and manage one client site. Perfect for freelancers who wear every hat."
+        },
+        "studio": {
+          "name": "Studio",
+          "tag": "most popular",
+          "price": "$49",
+          "desc": "For small teams. Unlimited projects, full financial suite, live website building for up to 10 client sites, and team access."
+        },
+        "scale": {
+          "name": "Scale",
+          "tag": "for growing studios",
+          "price": "$99",
+          "desc": "Unlimited everything — sites, team members, and clients — plus priority support and advanced financial reporting."
+        }
+      },
+      "includes": "Every plan includes:",
+      "includesBody": "real-time website building, integrated invoicing & expenses, project management, and free updates. No setup fees. No card to start. Cancel anytime.",
+      "honestMath": "The honest math:",
+      "honestMathBody": "A PM tool, an accounting app, and a website builder usually run $80–150/month combined. Olune does all three from $19.",
+      "trialNote": "14 days, no card needed."
+    },
+    "about": {
+      "eyebrow": "About us",
+      "title": "Built by studio people,",
+      "titleEmphasis": "for studio people.",
+      "body1": "We've run studios. We know the 11pm invoice scramble, the client website that's always a step behind, the spreadsheet that only one person understands. We got tired of duct-taping five tools together and hoping nothing fell through the cracks.",
+      "body2": "So we built the thing we wished we had — one calm system that holds the projects, the money, and the websites together, and does the busywork quietly in the background.",
+      "body3": "Olune exists for one reason: to give creative people their time back. Less managing. More making. That's the whole idea.",
+      "meetTeam": "Meet the team",
+      "ourStory": "Our story",
+      "quote": "Less managing. More making."
+    },
+    "compare": {
+      "eyebrow": "Compare",
+      "title": "Why studios switch to Olune",
+      "subtitle": "Most studios run on a patchwork — a project tool here, an accounting app there, a separate website builder, and a pile of spreadsheets holding it together. It works, until it doesn't.",
+      "stackHeader": "The usual stack",
+      "rows": {
+        "projects": { "label": "Projects", "stack": "One app", "olune": "Built in" },
+        "invoicing": { "label": "Invoicing & finances", "stack": "A second app", "olune": "Built in" },
+        "websites": { "label": "Live website building", "stack": "A third app", "olune": "Built in, real-time" },
+        "sync": { "label": "Everything in sync", "stack": "Manual, error-prone", "olune": "Automatic" },
+        "cost": { "label": "Monthly cost", "stack": "$80–150+ combined", "olune": "From $19" },
+        "tools": { "label": "Tools to learn", "stack": "3–4", "olune": "1" },
+        "purpose": { "label": "Made for studios", "stack": "Generic", "olune": "Purpose-built" }
+      },
+      "highlights": {
+        "faster": { "k": "Faster", "v": "No switching between apps or re-entering the same data three times." },
+        "cheaper": { "k": "Cheaper", "v": "One fair price instead of four subscriptions." },
+        "better": { "k": "Better made", "v": "Every screen built for how studios actually work, not bolted on after." }
+      }
+    }
+  }
+}

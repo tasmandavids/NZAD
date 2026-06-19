@@ -1,0 +1,163 @@
+{
+  "common": {
+    "loading": "Loading…",
+    "signOut": "Sign out →",
+    "you": "You",
+    "operator": "Operator",
+    "yourStudio": "Your studio",
+    "language": "Language",
+    "selectLanguage": "Select language",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "close": "Close",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions",
+    "status": "Status",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "date": "Date",
+    "time": "Time",
+    "amount": "Amount",
+    "total": "Total",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or",
+    "and": "and",
+    "none": "None",
+    "all": "All",
+    "unknown": "Unknown",
+    "student": "Student",
+    "parent": "Parent",
+    "teacher": "Teacher",
+    "comingSoon": "Coming soon",
+    "poweredByOlune": "Powered by Olune",
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    }
+  },
+  "roles": {
+    "admin": "Studio admin",
+    "teacher": "Teacher",
+    "office": "Office staff",
+    "parent": "Parent",
+    "student": "Student"
+  },
+  "shell": {
+    "keepSidebarOpen": "Keep sidebar open",
+    "hideSidebar": "Hide sidebar",
+    "showSidebar": "Show sidebar",
+    "toggleMenu": "Toggle menu"
+  },
+  "nav": {
+    "sections": {
+      "teamManagement": "Team",
+      "clientManagement": "Client management",
+      "finance": "Finance",
+      "digital": "Digital",
+      "communications": "Communications"
+    },
+    "admin": {
+      "dashboard": "Dashboard",
+      "classes": "Classes",
+      "events": "Events",
+      "staff": "Staff",
+      "parents": "Parents",
+      "students": "Students",
+      "leads": "Leads",
+      "billing": "Billing",
+      "accounting": "Accounting",
+      "subscriptions": "Subscriptions",
+      "website": "Website",
+      "advertising": "Advertising",
+      "shop": "Shop",
+      "email": "Email",
+      "messages": "Messages",
+      "support": "Olune Support",
+      "settings": "Settings"
+    },
+    "teacher": {
+      "schedule": "Schedule & Roll"
+    },
+    "office": {
+      "dashboard": "Front desk"
+    },
+    "parent": {
+      "familyHub": "Family Hub",
+      "studioEmail": "Studio email"
+    },
+    "student": {
+      "timetable": "My Timetable"
+    },
+    "platform": {
+      "overview": "Overview",
+      "studios": "Studios",
+      "owners": "Owners",
+      "supportInbox": "Support inbox",
+      "opsTasks": "Ops tasks",
+      "featureFlags": "Feature flags",
+      "announcements": "Announcements",
+      "settings": "Settings",
+      "auditLog": "Audit log",
+      "consoleTitle": "Olune Platform",
+      "consoleSubtitle": "Operator console"
+    }
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "signInSubtitle": "Sign in to your studio.",
+    "emailPlaceholder": "you@studio.co.nz",
+    "passwordPlaceholder": "Password",
+    "signingIn": "Signing in…",
+    "signInWithEmail": "Sign in with email",
+    "callbackError": "Sign-in was interrupted. Please try again.",
+    "newStudio": "New studio?",
+    "getStarted": "Get started",
+    "platformAdmin": "Olune platform admin?",
+    "signInToPlatform": "Sign in to /platform",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "redirecting": "Redirecting…",
+    "orContinueWithEmail": "or continue with email"
+  },
+  "marketing": {
+    "features": "Возможности",
+    "pricing": "Цены",
+    "about": "О нас",
+    "compare": "Сравнение",
+    "signIn": "Войти",
+    "startFree": "Начать бесплатно",
+    "tagline": "Спокойный способ управлять студией.",
+    "livePreview": "Предпросмотр"
+  },
+  "meta": {
+    "title": "Olune — Управляйте всей студией из одного спокойного места",
+    "description": "Система управления студией: проекты, финансы и живые клиентские сайты — всё в реальном времени."
+  }
+}

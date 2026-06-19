@@ -9,6 +9,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { getTranslations } from "@/lib/i18n/server";
 import { isOptimizableImageUrl } from "@/lib/images/optimizable";
 import { formatMoney } from "@/lib/currency";
 import { str, num, list, bool } from "@/lib/site/props";
@@ -31,7 +32,23 @@ import { ShopBlock } from "./blocks/ShopBlock";
 
 export type { RenderContext } from "@/lib/site/render-context";
 
-export function BlockRenderer({
+export type PublicLabels = {
+  emptyPage: string;
+  addImage: string;
+  addVideo: string;
+  teamComingSoon: string;
+  classesComingSoon: string;
+  allLevels: string;
+  perMonth: string;
+  galleryEmpty: string;
+  contactAddress: string;
+  contactPhone: string;
+  contactEmail: string;
+  contactHours: string;
+  spacerLabel: (height: number) => string;
+};
+
+export async function BlockRenderer({
   blocks,
   context,
   background,
@@ -40,13 +57,29 @@ export function BlockRenderer({
   blocks: Block[];
   context: RenderContext;
   background?: PageBackground;
-  /** When true, skip canvas layout (editor supplies positioning). */
   embedded?: boolean;
 }) {
+  const t = await getTranslations("site.public");
+  const labels: PublicLabels = {
+    emptyPage: t("emptyPage"),
+    addImage: t("addImage"),
+    addVideo: t("addVideo"),
+    teamComingSoon: t("teamComingSoon"),
+    classesComingSoon: t("classesComingSoon"),
+    allLevels: t("allLevels"),
+    perMonth: t("perMonth"),
+    galleryEmpty: t("galleryEmpty"),
+    contactAddress: t("contactLabels.address"),
+    contactPhone: t("contactLabels.phone"),
+    contactEmail: t("contactLabels.email"),
+    contactHours: t("contactLabels.hours"),
+    spacerLabel: (height) => t("spacerLabel", { height }),
+  };
+
   if (!blocks.length) {
     return (
       <div className="grid min-h-[40vh] place-items-center px-6 text-center text-muted">
-        <p>This page has no content yet.</p>
+        <p>{labels.emptyPage}</p>
       </div>
     );
   }
@@ -55,7 +88,7 @@ export function BlockRenderer({
     return (
       <>
         {blocks.map((b) => (
-          <BlockSwitch key={b.id} block={b} context={context} />
+          <BlockSwitch key={b.id} block={b} context={context} labels={labels} />
         ))}
       </>
     );
@@ -67,7 +100,7 @@ export function BlockRenderer({
         {background && <BackgroundShell background={background} />}
         {blocks.map((b) => (
           <div key={b.id} style={{ opacity: blockOpacity(b.props) }}>
-            <BlockSwitch block={b} context={context} />
+            <BlockSwitch block={b} context={context} labels={labels} />
           </div>
         ))}
       </div>
@@ -83,12 +116,12 @@ export function BlockRenderer({
         {blocks.map((b) =>
           isStackLayout(b.props) ? (
             <div key={b.id} style={{ opacity: blockOpacity(b.props) }}>
-              <BlockSwitch block={b} context={context} />
+              <BlockSwitch block={b} context={context} labels={labels} />
             </div>
           ) : (
             <div key={b.id} style={blockFrameStyle(b.props)} className={blockFrameClassName(b.props)}>
               <div className={blockFramePaddingClass(b.props)}>
-                <BlockSwitch block={b} context={context} />
+                <BlockSwitch block={b} context={context} labels={labels} />
               </div>
             </div>
           ),
@@ -98,12 +131,20 @@ export function BlockRenderer({
   );
 }
 
-function BlockSwitch({ block, context }: { block: Block; context: RenderContext }) {
+function BlockSwitch({
+  block,
+  context,
+  labels,
+}: {
+  block: Block;
+  context: RenderContext;
+  labels: PublicLabels;
+}) {
   switch (block.type) {
     case "heading":      return <HeadingBlock p={block.props} />;
     case "paragraph":    return <ParagraphBlock p={block.props} />;
-    case "imageBlock":   return <ImageBlock p={block.props} />;
-    case "videoBlock":   return <VideoBlock p={block.props} />;
+    case "imageBlock":   return <ImageBlock p={block.props} labels={labels} />;
+    case "videoBlock":   return <VideoBlock p={block.props} labels={labels} />;
     case "linkBlock":    return <LinkBlock p={block.props} />;
     case "hero":         return <Hero p={block.props} />;
     case "pageHeader":   return <PageHeader p={block.props} />;
@@ -112,18 +153,18 @@ function BlockSwitch({ block, context }: { block: Block; context: RenderContext 
     case "classTabs":    return <ClassTabsBlock classes={context.classes} eyebrow={str(block.props, "eyebrow")} heading={str(block.props, "heading")} subheading={str(block.props, "subheading")} />;
     case "richText":     return <RichText p={block.props} />;
     case "features":     return <Features p={block.props} />;
-    case "classGrid":    return <ClassGrid p={block.props} classes={context.classes} />;
+    case "classGrid":    return <ClassGrid p={block.props} classes={context.classes} labels={labels} />;
     case "schedule":     return <Schedule p={block.props} classes={context.scheduleClasses} />;
-    case "gallery":      return <Gallery p={block.props} />;
+    case "gallery":      return <Gallery p={block.props} labels={labels} />;
     case "testimonials": return <Testimonials p={block.props} />;
     case "newsFeed":     return <NewsFeed p={block.props} events={context.events} />;
-    case "peopleGrid":   return <PeopleGrid p={block.props} staff={context.staff} />;
+    case "peopleGrid":   return <PeopleGrid p={block.props} staff={context.staff} labels={labels} />;
     case "shopGrid":     return <ShopGrid p={block.props} products={context.products} />;
     case "locations":    return <Locations p={block.props} />;
     case "cta":          return <Cta p={block.props} />;
     case "faq":          return <Faq p={block.props} />;
-    case "contact":      return <Contact p={block.props} />;
-    case "spacer":       return <SpacerBlock p={block.props} />;
+    case "contact":      return <Contact p={block.props} labels={labels} />;
+    case "spacer":       return <SpacerBlock p={block.props} labels={labels} />;
     case "divider":      return <DividerBlock p={block.props} />;
     default:             return null;
   }
@@ -327,7 +368,7 @@ function ParagraphBlock({ p }: { p: BlockProps }) {
   );
 }
 
-function ImageBlock({ p }: { p: BlockProps }) {
+function ImageBlock({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
   const src = str(p, "imageUrl");
   const alt = str(p, "alt", "Image");
   const caption = str(p, "caption");
@@ -339,7 +380,7 @@ function ImageBlock({ p }: { p: BlockProps }) {
     </div>
   ) : (
     <div className={`grid place-items-center border border-dashed border-[--hair] bg-surface text-sm text-muted ${imageFrameClasses(p)}`}>
-      Add an image
+      {labels.addImage}
     </div>
   );
   const content = href ? (
@@ -359,7 +400,7 @@ function ImageBlock({ p }: { p: BlockProps }) {
   );
 }
 
-function VideoBlock({ p }: { p: BlockProps }) {
+function VideoBlock({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
   const src = str(p, "videoUrl");
   const poster = str(p, "posterUrl");
   const autoplay = bool(p, "autoplay");
@@ -383,7 +424,7 @@ function VideoBlock({ p }: { p: BlockProps }) {
           />
         ) : (
           <div className="grid aspect-video place-items-center rounded-2xl border border-dashed border-[--hair] bg-surface text-sm text-muted">
-            Add a video
+            {labels.addVideo}
           </div>
         )}
       </div>
@@ -651,7 +692,7 @@ function NewsFeed({ p, events }: { p: BlockProps; events: SiteEvent[] }) {
   );
 }
 
-function PeopleGrid({ p, staff }: { p: BlockProps; staff: SiteStaff[] }) {
+function PeopleGrid({ p, staff, labels }: { p: BlockProps; staff: SiteStaff[]; labels: PublicLabels }) {
   const source = str(p, "source", "staff");
   const manual = source === "manual" ? list(p, "items") : [];
   const people =
@@ -683,7 +724,7 @@ function PeopleGrid({ p, staff }: { p: BlockProps; staff: SiteStaff[] }) {
         )}
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {people.length === 0 ? (
-            <p className="col-span-full text-center text-muted">Team members coming soon.</p>
+            <p className="col-span-full text-center text-muted">{labels.teamComingSoon}</p>
           ) : (
             people.map((person) => (
               <div key={person.id} className="text-center">
@@ -798,7 +839,7 @@ function Features({ p }: { p: BlockProps }) {
 }
 
 // ─── Class grid (data-driven) ───────────────────────────────────────────────────
-function ClassGrid({ p, classes }: { p: BlockProps; classes: SiteClass[] }) {
+function ClassGrid({ p, classes, labels }: { p: BlockProps; classes: SiteClass[]; labels: PublicLabels }) {
   const limit = num(p, "limit", 6);
   const shown = classes.slice(0, limit);
   return (
@@ -813,17 +854,17 @@ function ClassGrid({ p, classes }: { p: BlockProps; classes: SiteClass[] }) {
           {str(p, "subheading") && <p className="mt-2 text-muted">{str(p, "subheading")}</p>}
         </div>
         {shown.length === 0 ? (
-          <p className="text-center text-muted">Classes coming soon.</p>
+          <p className="text-center text-muted">{labels.classesComingSoon}</p>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {shown.map((c) => (
               <div key={c.id} className="rounded-2xl border border-[--hair] bg-surface p-6">
                 <h3 className="text-lg font-semibold text-ink">{c.name}</h3>
                 <p className="mt-1 text-sm text-muted">
-                  {[c.discipline, c.level].filter(Boolean).join(" · ") || "All levels"}
+                  {[c.discipline, c.level].filter(Boolean).join(" · ") || labels.allLevels}
                 </p>
                 {c.priceCents > 0 && (
-                  <p className="mt-4 text-sm font-semibold text-brand">{formatMoney(c.priceCents)} / month</p>
+                  <p className="mt-4 text-sm font-semibold text-brand">{formatMoney(c.priceCents)}{labels.perMonth}</p>
                 )}
               </div>
             ))}
@@ -835,7 +876,7 @@ function ClassGrid({ p, classes }: { p: BlockProps; classes: SiteClass[] }) {
 }
 
 // ─── Gallery ───────────────────────────────────────────────────────────────────
-function Gallery({ p }: { p: BlockProps }) {
+function Gallery({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
   const items = list(p, "items").filter((it) => it.imageUrl);
   return (
     <BlockShell p={p} type="gallery">
@@ -846,7 +887,7 @@ function Gallery({ p }: { p: BlockProps }) {
           </h2>
         )}
         {items.length === 0 ? (
-          <p className="text-center text-muted">Add image URLs to populate the gallery.</p>
+          <p className="text-center text-muted">{labels.galleryEmpty}</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((it, i) => (
@@ -943,7 +984,7 @@ function Faq({ p }: { p: BlockProps }) {
 
 // ─── Spacer & divider ──────────────────────────────────────────────────────────
 
-function SpacerBlock({ p }: { p: BlockProps }) {
+function SpacerBlock({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
   const h = num(p, "height", 80);
   const show = bool(p, "showLabel", false);
   return (
@@ -954,7 +995,7 @@ function SpacerBlock({ p }: { p: BlockProps }) {
     >
       {show && (
         <div className="flex h-full items-center justify-center rounded border border-dashed border-[--hair] text-xs text-muted">
-          Spacer · {h}px
+          {labels.spacerLabel(h)}
         </div>
       )}
     </div>
@@ -990,12 +1031,12 @@ function DividerBlock({ p }: { p: BlockProps }) {
 }
 
 // ─── Contact ───────────────────────────────────────────────────────────────────
-function Contact({ p }: { p: BlockProps }) {
+function Contact({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
   const rows: Array<[string, string]> = [
-    ["Address", str(p, "address")],
-    ["Phone", str(p, "phone")],
-    ["Email", str(p, "email")],
-    ["Hours", str(p, "hours")],
+    [labels.contactAddress, str(p, "address")],
+    [labels.contactPhone, str(p, "phone")],
+    [labels.contactEmail, str(p, "email")],
+    [labels.contactHours, str(p, "hours")],
   ];
   return (
     <BlockShell p={p} type="contact">

@@ -2,13 +2,15 @@
 //  /portal/admin/accounting — Xero-backed income, expenses & P&L summary.
 // ============================================================================
 
-import dynamic from "next/dynamic";
+export const dynamic = "force-dynamic";
+
+import nextDynamic from "next/dynamic";
 import { requirePortalSession } from "@/lib/portal/session";
 import { fetchAccountingSnapshot } from "@/lib/xero/accounting-data";
 import { xeroRedirectUri } from "@/lib/xero/config";
 import { resolveAppOriginFromHeaders } from "@/lib/xero/app-origin";
 
-const AccountingDashboard = dynamic(
+const AccountingDashboard = nextDynamic(
   () => import("@/components/admin/accounting/AccountingDashboard").then((m) => m.AccountingDashboard),
   {
     loading: () => (

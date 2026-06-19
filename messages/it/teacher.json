@@ -1,0 +1,24 @@
+{
+  "teacher": {
+    "schedule": {
+      "title": "Orario e presenze",
+      "greetingWithName": "{greeting}, {name}.",
+      "greetingOnly": "{greeting}.",
+      "todayRoll": "Appello di oggi · {day}",
+      "noClassesToday": "Nessun corso oggi.",
+      "marked": "segnati",
+      "noStudents": "Nessuno studente iscritto.",
+      "unknownStudent": "Studente sconosciuto",
+      "attendance": {
+        "present": "Presente",
+        "late": "In ritardo",
+        "absent": "Assente",
+        "excused": "Giustificato"
+      },
+      "thisWeek": "Questa settimana · {count, plural, one {# corso in totale} other {# corsi in totale}}",
+      "studentCount": "{count, plural, one {# studente} other {# studenti}}",
+      "noClassesAssigned": "Nessun corso assegnato.",
+      "noClassesAssignedHint": "Chiedi all'amministratore dello studio di assegnarti dei corsi."
+    }
+  }
+}

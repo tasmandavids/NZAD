@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { formatMoney } from "@/lib/currency";
 import { OptimizableImage } from "@/components/ui/OptimizableImage";
 import type { SiteProduct } from "@/lib/site/queries";
@@ -21,20 +22,21 @@ export function ShopBlock({
   showFilters: boolean;
   footnote: string;
 }) {
+  const t = useTranslations("site.shop");
   const categories = useMemo(() => {
-    const cats = new Set(products.map((p) => p.category || "General").filter(Boolean));
-    return ["All", ...[...cats].sort()];
-  }, [products]);
+    const cats = new Set(products.map((p) => p.category || t("categoryGeneral")).filter(Boolean));
+    return [t("categoryAll"), ...[...cats].sort()];
+  }, [products, t]);
 
-  const [filter, setFilter] = useState("All");
+  const [filter, setFilter] = useState(() => t("categoryAll"));
   const [cart, setCart] = useState<Record<string, number>>({});
   const [pending, startTransition] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
 
   const shown =
-    filter === "All"
+    filter === t("categoryAll")
       ? products
-      : products.filter((p) => (p.category || "General") === filter);
+      : products.filter((p) => (p.category || t("categoryGeneral")) === filter);
 
   const cartItems = Object.entries(cart).filter(([, q]) => q > 0);
   const cartTotal = cartItems.reduce((sum, [id, qty]) => {
@@ -59,13 +61,13 @@ export function ShopBlock({
       });
       const data = await res.json();
       if (!res.ok) {
-        setMsg(data.error ?? "Checkout failed. Sign in to purchase.");
+        setMsg(data.error ?? t("checkoutFailed"));
         return;
       }
       if (data.clientSecret) {
-        setMsg("Order created — complete payment in the member portal.");
+        setMsg(t("orderCreated"));
       } else {
-        setMsg("Order placed successfully!");
+        setMsg(t("orderPlaced"));
         setCart({});
       }
     });
@@ -102,7 +104,7 @@ export function ShopBlock({
 
       <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {shown.length === 0 ? (
-          <p className="col-span-full text-center text-muted">No products available yet.</p>
+          <p className="col-span-full text-center text-muted">{t("noProducts")}</p>
         ) : (
           shown.map((p) => (
             <div key={p.id} className="flex flex-col rounded-2xl border border-[--hair] bg-surface p-5">
@@ -126,7 +128,7 @@ export function ShopBlock({
                 disabled={p.stockQty <= 0}
                 className="mt-3 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:opacity-40"
               >
-                {p.stockQty <= 0 ? "Out of stock" : "Add to cart"}
+                {p.stockQty <= 0 ? t("outOfStock") : t("addToCart")}
               </button>
             </div>
           ))
@@ -135,7 +137,7 @@ export function ShopBlock({
 
       {cartItems.length > 0 && (
         <div className="mt-8 rounded-2xl border border-[--hair] bg-base p-6">
-          <h3 className="font-semibold text-ink">Cart ({cartItems.length} items)</h3>
+          <h3 className="font-semibold text-ink">{t("cartItems", { count: cartItems.length })}</h3>
           <p className="mt-1 text-lg font-bold text-brand">{formatMoney(cartTotal)}</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
@@ -144,10 +146,10 @@ export function ShopBlock({
               disabled={pending}
               className="rounded-full bg-brand px-6 py-2 text-sm font-semibold text-white disabled:opacity-50"
             >
-              {pending ? "Processing…" : "Checkout"}
+              {pending ? t("processing") : t("checkout")}
             </button>
             <Link href="/login" className="rounded-full border border-[--hair] px-6 py-2 text-sm text-ink">
-              Sign in to purchase
+              {t("signInToPurchase")}
             </Link>
           </div>
           {msg && <p className="mt-3 text-sm text-muted">{msg}</p>}

@@ -1,12 +1,8 @@
 "use client";
 
-// ============================================================================
-//  ShopManager — admin product catalogue + stock management + recent orders.
-//  Left tab: Products grid. Right tab: Recent orders.
-// ============================================================================
-
 import { useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import {
   createProduct,
   updateProduct,
@@ -70,17 +66,20 @@ const BLANK: ProductFormData = {
 };
 
 function OrderRefundButton({ order, onDone }: { order: Order; onDone: (id: string) => void }) {
+  const t = useTranslations("admin.shop.orders");
+  const tShared = useTranslations("admin.shared");
+
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
 
-  if (order.status !== "paid") return <span className="text-muted">—</span>;
+  if (order.status !== "paid") return <span className="text-muted">{tShared("dash")}</span>;
   if (!order.stripe_payment_intent_id) {
-    return <span className="text-[0.7rem] text-muted">No card payment</span>;
+    return <span className="text-[0.7rem] text-muted">{tShared("noCardPayment")}</span>;
   }
 
   const onClick = () => {
     setErr(null);
-    if (!confirm(`Refund ${formatPrice(order.total_cents)} for this order? This restores stock and cannot be undone.`)) {
+    if (!confirm(t("refundConfirm", { amount: formatPrice(order.total_cents) }))) {
       return;
     }
     startTransition(async () => {
@@ -97,7 +96,7 @@ function OrderRefundButton({ order, onDone }: { order: Order; onDone: (id: strin
         disabled={pending}
         className="rounded-lg border border-[--hair] px-2.5 py-1 text-[0.7rem] font-semibold text-red-500 hover:bg-red-500/10 disabled:opacity-50"
       >
-        {pending ? "Refunding…" : "Refund"}
+        {pending ? tShared("refunding") : tShared("refund")}
       </button>
       {err && <span className="text-[0.65rem] text-red-500">{err}</span>}
     </div>
@@ -105,6 +104,11 @@ function OrderRefundButton({ order, onDone }: { order: Order; onDone: (id: strin
 }
 
 export function ShopManager({ products: initial, recentOrders: initialOrders }: Props) {
+  const t = useTranslations("admin.shop");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
+  const tStatus = useTranslations("admin.shared.status");
+
   const [products,   setProducts]   = useState(initial);
   const [orders,     setOrders]      = useState<Order[]>(initialOrders);
   const [activeTab,  setActiveTab]  = useState<"products" | "orders">("products");
@@ -186,7 +190,7 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
   }
 
   async function handleDelete(p: Product) {
-    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    if (!confirm(t("deleteConfirm", { name: p.name }))) return;
     const res = await deleteProduct(p.id);
     if (res.ok) setProducts((prev) => prev.filter((x) => x.id !== p.id));
   }
@@ -194,24 +198,31 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
   const markOrderRefunded = (id: string) =>
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: "refunded" } : o)));
 
+  const formFields = [
+    { label: t("form.productName"), key: "name" as const, type: "text", placeholder: t("form.productNamePlaceholder") },
+    { label: t("form.category"), key: "category" as const, type: "text", placeholder: t("form.categoryPlaceholder") },
+    { label: t("form.sku"), key: "sku" as const, type: "text", placeholder: t("form.skuPlaceholder") },
+    { label: t("form.imageUrl"), key: "imageUrl" as const, type: "url", placeholder: t("form.imagePlaceholder") },
+  ];
+
   return (
     <div className="h-full overflow-auto">
       <div className="mx-auto max-w-6xl px-6 py-8">
-        {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-ink">Merchandise Shop</h1>
-            <p className="text-sm text-muted">{products.filter((p) => p.active).length} active products</p>
+            <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
+            <p className="text-sm text-muted">
+              {tShared("activeProductsCount", { count: products.filter((p) => p.active).length })}
+            </p>
           </div>
           <button
             onClick={openCreate}
             className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
           >
-            + Add Product
+            {t("addProduct")}
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="mb-6 flex gap-1 rounded-xl border border-[--hair] bg-base p-1 w-fit">
           {(["products", "orders"] as const).map((tab) => (
             <button
@@ -221,18 +232,19 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                 activeTab === tab ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink"
               }`}
             >
-              {tab === "products" ? `Products (${products.length})` : `Recent Orders (${orders.length})`}
+              {tab === "products"
+                ? t("tabs.products", { count: products.length })
+                : t("tabs.orders", { count: orders.length })}
             </button>
           ))}
         </div>
 
         {activeTab === "products" && (
           <>
-            {/* Search + filter */}
             <div className="mb-5 flex flex-wrap gap-3">
               <input
                 type="search" value={search} onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search products…"
+                placeholder={t("searchPlaceholder")}
                 className="w-64 rounded-xl border border-[--hair] bg-surface px-4 py-2 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
               />
               <div className="flex gap-2">
@@ -246,18 +258,17 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                         : "border border-[--hair] text-muted hover:text-ink"
                     }`}
                   >
-                    {c}
+                    {c === "all" ? t("allCategory") : c}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Product grid */}
             {filtered.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[--hair] py-16 text-center">
                 <p className="text-3xl mb-3">🛍️</p>
-                <p className="font-semibold text-ink">No products yet</p>
-                <p className="text-sm text-muted mt-1">Add your first product to get started.</p>
+                <p className="font-semibold text-ink">{t("empty.title")}</p>
+                <p className="text-sm text-muted mt-1">{t("empty.description")}</p>
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -266,7 +277,6 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                     key={p.id}
                     className={`rounded-2xl border border-[--hair] bg-surface p-4 transition-opacity ${!p.active ? "opacity-50" : ""}`}
                   >
-                    {/* Product image */}
                     <div className="relative mb-3 h-32 w-full overflow-hidden rounded-xl bg-base">
                       {p.image_url ? (
                         <OptimizableImage
@@ -287,14 +297,13 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                     )}
                     <p className="mt-1 text-lg font-black text-brand">{formatPrice(p.price_cents)}</p>
 
-                    {/* Stock controls */}
                     <div className="mt-2 flex items-center gap-2">
                       <button
                         onClick={() => handleAdjust(p, -1)}
                         className="h-6 w-6 rounded-md border border-[--hair] text-xs text-muted hover:text-ink"
                       >−</button>
                       <span className={`text-sm font-semibold ${p.stock_qty === 0 ? "text-red-500" : "text-ink"}`}>
-                        {p.stock_qty} in stock
+                        {t("inStock", { count: p.stock_qty })}
                       </span>
                       <button
                         onClick={() => handleAdjust(p, 1)}
@@ -302,13 +311,12 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                       >+</button>
                     </div>
 
-                    {/* Actions */}
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => openEdit(p)}
                         className="flex-1 rounded-lg border border-[--hair] py-1 text-xs text-muted hover:text-ink"
                       >
-                        Edit
+                        {tCommon("edit")}
                       </button>
                       <button
                         onClick={() => handleToggle(p)}
@@ -318,7 +326,7 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                             : "bg-brand/10 text-brand hover:opacity-80"
                         }`}
                       >
-                        {p.active ? "Deactivate" : "Activate"}
+                        {p.active ? t("deactivate") : t("activate")}
                       </button>
                     </div>
                   </div>
@@ -333,31 +341,33 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[--hair] bg-base">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Customer</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Total</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">{t("orders.table.customer")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">{t("orders.table.total")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">{t("orders.table.status")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">{t("orders.table.date")}</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted"></th>
                 </tr>
               </thead>
               <tbody>
                 {orders.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-muted">No orders yet.</td>
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted">{t("orders.empty")}</td>
                   </tr>
                 ) : (
                   orders.map((o) => {
-                    const p = Array.isArray(o.profiles) ? o.profiles[0] : o.profiles;
-                    const name = p
-                      ? [p.first_name, p.last_name].filter(Boolean).join(" ") || "Unknown"
-                      : "Unknown";
+                    const profile = Array.isArray(o.profiles) ? o.profiles[0] : o.profiles;
+                    const name = profile
+                      ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") || tShared("unknown")
+                      : tShared("unknown");
                     return (
                       <tr key={o.id} className="border-b border-[--hair] last:border-0 hover:bg-base/50">
                         <td className="px-4 py-3 font-medium text-ink">{name}</td>
                         <td className="px-4 py-3 font-semibold text-ink">{formatPrice(o.total_cents)}</td>
                         <td className="px-4 py-3">
                           <span className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${STATUS_BADGE[o.status] ?? ""}`}>
-                            {o.status}
+                            {(o.status === "paid" || o.status === "pending" || o.status === "cancelled" || o.status === "refunded")
+                              ? tStatus(o.status)
+                              : o.status}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-muted">
@@ -376,7 +386,6 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
         )}
       </div>
 
-      {/* ── Product slide-over ────────────────────────────────────────────── */}
       <AnimatePresence>
         {slideOpen && (
           <>
@@ -391,17 +400,14 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
               className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-surface shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
-                <h2 className="font-semibold text-ink">{editTarget ? "Edit Product" : "New Product"}</h2>
+                <h2 className="font-semibold text-ink">
+                  {editTarget ? t("form.editProduct") : t("form.newProduct")}
+                </h2>
                 <button onClick={closeSlide} className="text-muted hover:text-ink text-lg">✕</button>
               </div>
 
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                {[
-                  { label: "Product Name *", key: "name" as const, type: "text", placeholder: "Studio Hoodie" },
-                  { label: "Category",       key: "category" as const, type: "text", placeholder: "Apparel" },
-                  { label: "SKU",            key: "sku" as const, type: "text", placeholder: "HOOK-BLK-M" },
-                  { label: "Image URL",      key: "imageUrl" as const, type: "url", placeholder: "https://…" },
-                ].map(({ label, key, type, placeholder }) => (
+                {formFields.map(({ label, key, type, placeholder }) => (
                   <div key={key}>
                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">{label}</label>
                     <input
@@ -413,17 +419,17 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                 ))}
 
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">Description</label>
+                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">{t("form.description")}</label>
                   <textarea
                     rows={3} value={form.description} onChange={(e) => field("description", e.target.value)}
-                    placeholder="Short product description…"
+                    placeholder={t("form.descriptionPlaceholder")}
                     className="w-full resize-none rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">Price (cents)</label>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">{t("form.priceCents")}</label>
                     <input
                       type="number" min="0" step="100" value={form.priceCents}
                       onChange={(e) => field("priceCents", parseInt(e.target.value) || 0)}
@@ -432,7 +438,7 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                     <p className="mt-1 text-[0.65rem] text-muted">{formatPrice(form.priceCents as number)}</p>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">Stock Qty</label>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted">{t("form.stockQty")}</label>
                     <input
                       type="number" min="0" value={form.stockQty}
                       onChange={(e) => field("stockQty", parseInt(e.target.value) || 0)}
@@ -448,7 +454,7 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
                   >
                     <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${form.active ? "translate-x-5" : "translate-x-0.5"}`} />
                   </button>
-                  <span className="text-sm text-ink">Active (visible to customers)</span>
+                  <span className="text-sm text-ink">{t("form.activeLabel")}</span>
                 </div>
 
                 {error && (
@@ -458,13 +464,17 @@ export function ShopManager({ products: initial, recentOrders: initialOrders }: 
 
               <div className="flex gap-3 border-t border-[--hair] px-6 py-4">
                 <button onClick={closeSlide} className="flex-1 rounded-xl border border-[--hair] py-2 text-sm text-muted hover:text-ink">
-                  Cancel
+                  {tCommon("cancel")}
                 </button>
                 <button
                   onClick={save} disabled={saving}
                   className="flex-1 rounded-xl bg-brand py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40"
                 >
-                  {saving ? "Saving…" : (editTarget ? "Update" : "Create Product")}
+                  {saving
+                    ? tShared("saving")
+                    : editTarget
+                      ? t("form.update")
+                      : t("form.createProduct")}
                 </button>
               </div>
             </motion.div>

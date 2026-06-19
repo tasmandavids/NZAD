@@ -1,0 +1,17 @@
+{
+  "student": {
+    "timetable": {
+      "title": "Моё расписание",
+      "greetingWithName": "{greeting}, {name}.",
+      "greetingOnly": "{greeting}.",
+      "today": "Сегодня · {day}",
+      "noClassesToday": "Сегодня занятий нет — отдыхайте.",
+      "until": "до {time}",
+      "weeklySchedule": "Недельное расписание",
+      "myClasses": "Мои занятия · записано: {count}",
+      "noEnrolments": "Активных записей нет.",
+      "noEnrolmentsHint": "Администратор студии назначит вас на занятия.",
+      "withTeacher": "с {name}"
+    }
+  }
+}

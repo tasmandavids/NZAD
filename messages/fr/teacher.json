@@ -1,0 +1,24 @@
+{
+  "teacher": {
+    "schedule": {
+      "title": "Planning et présence",
+      "greetingWithName": "{greeting}, {name}.",
+      "greetingOnly": "{greeting}.",
+      "todayRoll": "Appel du jour · {day}",
+      "noClassesToday": "Aucun cours aujourd'hui.",
+      "marked": "marqués",
+      "noStudents": "Aucun élève inscrit.",
+      "unknownStudent": "Élève inconnu",
+      "attendance": {
+        "present": "Présent",
+        "late": "En retard",
+        "absent": "Absent",
+        "excused": "Excusé"
+      },
+      "thisWeek": "Cette semaine · {count, plural, one {# cours au total} other {# cours au total}}",
+      "studentCount": "{count, plural, one {# élève} other {# élèves}}",
+      "noClassesAssigned": "Aucun cours ne vous est encore assigné.",
+      "noClassesAssignedHint": "Demandez à l'administrateur du studio de vous assigner des cours."
+    }
+  }
+}

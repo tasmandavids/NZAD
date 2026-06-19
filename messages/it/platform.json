@@ -1,0 +1,151 @@
+{
+  "platform": {
+    "dashboard": {
+      "title": "Panoramica piattaforma",
+      "greeting": "{greeting},",
+      "stats": {
+        "totalStudios": "Studi totali",
+        "activeHint": "{count} attivi",
+        "onTrial": "In prova",
+        "suspended": "Sospesi",
+        "studentsPlatformWide": "Studenti sulla piattaforma"
+      },
+      "recentSignups": "Iscrizioni recenti",
+      "allStudios": "Tutti gli studi →",
+      "noStudios": "Nessuno studio ancora.",
+      "openSupport": "Supporto aperto",
+      "inbox": "Posta in arrivo →",
+      "inboxClear": "Casella vuota.",
+      "opsQueue": "Coda ops",
+      "allTasks": "Tutte le attività →",
+      "noOpenTasks": "Nessuna attività aperta.",
+      "dueDate": "scadenza {date}",
+      "unknownStudio": "Sconosciuto"
+    },
+    "studios": {
+      "title": "Studi",
+      "subtitle": "Tutti i tenant sulla piattaforma Olune.",
+      "filters": {
+        "all": "tutti",
+        "trial": "prova",
+        "active": "attivo",
+        "suspended": "sospeso"
+      },
+      "updated": "Aggiornato",
+      "tableStudio": "Studio",
+      "tableOwner": "Proprietario",
+      "tableStudents": "Studenti",
+      "tableStatus": "Stato",
+      "tableJoined": "Iscritto",
+      "tableActions": "Azioni",
+      "noMatch": "Nessuno studio corrisponde a questo filtro."
+    },
+    "owners": {
+      "title": "Proprietari",
+      "subtitle": "Amministratori di studio — la tua linea diretta verso ogni tenant.",
+      "searchPlaceholder": "Cerca per studio, nome o e-mail…",
+      "unnamedOwner": "Proprietario senza nome",
+      "ownerFallback": "Proprietario",
+      "adminSince": "Admin dal {date}",
+      "privateNotes": "Note private",
+      "notesPlaceholder": "Note relazionali, riepiloghi chiamate, preferenze…",
+      "saveNotes": "Salva note",
+      "messageOwner": "Messaggio al proprietario",
+      "subjectDefault": "Re: {studioName}",
+      "messagePlaceholder": "Il tuo messaggio appare nel loro thread di supporto…",
+      "sendViaSupport": "Invia via supporto",
+      "notesSaved": "Note salvate",
+      "messageSent": "Messaggio inviato — vedi Supporto"
+    },
+    "support": {
+      "title": "Posta di supporto",
+      "noThreads": "Nessun thread di supporto.",
+      "selectThread": "Seleziona un thread per vedere la conversazione.",
+      "status": {
+        "open": "aperto",
+        "pending": "in attesa",
+        "resolved": "risolto"
+      },
+      "senderOperator": "Olune",
+      "senderOwner": "Proprietario",
+      "replyPlaceholder": "Rispondi al proprietario dello studio…",
+      "sendReply": "Invia risposta"
+    },
+    "tasks": {
+      "title": "Attività ops",
+      "subtitle": "Coda di lavoro interna — onboarding, fatturazione, domini, rollout e altro.",
+      "newTask": "Nuova attività",
+      "cancel": "Annulla",
+      "type": "Tipo",
+      "priority": "Priorità",
+      "priorities": {
+        "low": "Bassa",
+        "normal": "Normale",
+        "high": "Alta",
+        "urgent": "Urgente"
+      },
+      "titleLabel": "Titolo",
+      "studioOptional": "Studio (opzionale)",
+      "platformWide": "Intera piattaforma",
+      "detailsPlaceholder": "Dettagli, link, contesto…",
+      "createTask": "Crea attività",
+      "columns": {
+        "todo": "Da fare",
+        "in_progress": "In corso",
+        "blocked": "Bloccato",
+        "done": "Fatto"
+      }
+    },
+    "features": {
+      "title": "Funzionalità",
+      "subtitle": "Attiva o disattiva moduli globalmente o per studio — negozio, eventi, SMS, beta IA e altro.",
+      "globalDefaults": "Impostazioni globali",
+      "studioOverrides": "Override per studio",
+      "on": "Attivo",
+      "off": "Disattivo"
+    },
+    "announcements": {
+      "title": "Annunci",
+      "subtitle": "Diffondi aggiornamenti agli admin di studio — manutenzione, nuove funzioni, cambi di policy.",
+      "titlePlaceholder": "Titolo",
+      "bodyPlaceholder": "Corpo del messaggio (mostrato nel portale admin dello studio)…",
+      "severity": {
+        "info": "Info",
+        "warning": "Avviso",
+        "critical": "Critico"
+      },
+      "target": {
+        "all": "Tutti gli studi",
+        "trial": "Solo prova",
+        "active": "Solo attivi",
+        "suspended": "Solo sospesi"
+      },
+      "draft": "Bozza annuncio",
+      "publishedAt": "pubblicato {date}",
+      "draftStatus": "bozza",
+      "publishNow": "Pubblica ora"
+    },
+    "settings": {
+      "title": "Impostazioni piattaforma",
+      "subtitle": "Configurazione globale Olune — registrazione, prove, manutenzione.",
+      "maintenanceMode": "Modalità manutenzione",
+      "signupEnabled": "Registrazione abilitata",
+      "defaultTrialDays": "Giorni di prova predefiniti",
+      "supportEmail": "E-mail di supporto",
+      "welcomeMessage": "Messaggio di benvenuto",
+      "saveSettings": "Salva impostazioni",
+      "saved": "Salvato",
+      "operatorAccessTitle": "Accesso operatore",
+      "operatorAccessBody": "Concedi l'accesso aggiungendo e-mail a <envVar></envVar> nel tuo env, oppure inserisci una riga in <table></table> collegata a un utente auth."
+    },
+    "audit": {
+      "title": "Registro di audit",
+      "subtitle": "Registro immutabile delle azioni degli operatori.",
+      "when": "Quando",
+      "operator": "Operatore",
+      "action": "Azione",
+      "target": "Obiettivo",
+      "noEntries": "Nessuna voce di audit."
+    }
+  }
+}

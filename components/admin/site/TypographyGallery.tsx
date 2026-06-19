@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   TYPOGRAPHY_CATEGORIES,
   TYPOGRAPHY_PAIRS,
@@ -8,6 +9,7 @@ import {
   type TypographyCategory,
   type TypographyPair,
 } from "@/lib/site/typography";
+import { typographyCategoryLabel, typographyPairLabel } from "@/lib/site/i18n-labels";
 import { googleFontsStylesheetUrl } from "@/lib/fonts";
 
 type Props = {
@@ -17,11 +19,12 @@ type Props = {
 };
 
 export function TypographyGallery({ selectedId, onSelect, disabled }: Props) {
+  const t = useTranslations("site");
   const [category, setCategory] = useState<TypographyCategory | "all">("all");
   const filtered = filterTypography(category);
 
-  const selected = TYPOGRAPHY_PAIRS.find((t) => t.id === selectedId) ?? TYPOGRAPHY_PAIRS[0];
-  useGoogleFontsPreview(selected.display, selectedBody(selected));
+  const selected = TYPOGRAPHY_PAIRS.find((pair) => pair.id === selectedId) ?? TYPOGRAPHY_PAIRS[0];
+  useGoogleFontsPreview(selected.display, selected.body);
 
   return (
     <div className="space-y-3">
@@ -37,7 +40,7 @@ export function TypographyGallery({ selectedId, onSelect, disabled }: Props) {
                 : "border border-[--hair] text-muted hover:text-ink"
             }`}
           >
-            {c.label}
+            {typographyCategoryLabel(t, c.id)}
           </button>
         ))}
       </div>
@@ -68,6 +71,8 @@ function TypographyCard({
   disabled?: boolean;
   onClick: () => void;
 }) {
+  const t = useTranslations("site");
+
   return (
     <button
       type="button"
@@ -87,18 +92,14 @@ function TypographyCard({
         className="mt-1 truncate text-sm text-ink"
         style={{ fontFamily: `"${pair.body}", system-ui, sans-serif` }}
       >
-        The quick brown fox
+        {t("typography.sampleText")}
       </p>
-      <p className="mt-2 text-xs font-semibold text-ink">{pair.label}</p>
+      <p className="mt-2 text-xs font-semibold text-ink">{typographyPairLabel(t, pair.id)}</p>
       <p className="text-[0.65rem] text-muted">
         {pair.display} + {pair.body}
       </p>
     </button>
   );
-}
-
-function selectedBody(pair: TypographyPair): string {
-  return pair.body;
 }
 
 /** Inject Google Fonts link for live preview of selected pair. */

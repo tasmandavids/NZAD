@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 
 import { useMemo, useState, useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -61,6 +62,9 @@ export default function SubscriptionsManager({
   classes: ClassOption[];
   products: ProductOption[];
 }) {
+  const t = useTranslations("admin.subscriptions");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [filter, setFilter] = useState<"all" | "active" | "canceled">("all");
   const [showCreate, setShowCreate] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -103,10 +107,8 @@ export default function SubscriptionsManager({
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-ink">Subscriptions</h1>
-          <p className="text-sm text-muted">
-            Auto-pay plans with monthly invoices on the 1st while active
-          </p>
+          <h1 className="text-2xl font-black text-ink">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
         <button
           type="button"
@@ -114,7 +116,7 @@ export default function SubscriptionsManager({
           disabled={parents.length === 0}
           className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-paper disabled:opacity-50"
         >
-          Create subscription
+          {t("create")}
         </button>
       </div>
 

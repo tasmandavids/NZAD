@@ -9,6 +9,7 @@ next-env.d.ts
 
 # env & secrets
 .env*.local
+.env.vercel.*
 
 # vercel
 .vercel

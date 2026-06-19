@@ -7,6 +7,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getStudioOpsStudio } from "@/lib/portal/access";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 export type LeadStatus = "new" | "contacted" | "trial" | "converted" | "lost";
@@ -14,22 +15,12 @@ export type LeadStatus = "new" | "contacted" | "trial" | "converted" | "lost";
 const VALID_STATUSES: LeadStatus[] = ["new", "contacted", "trial", "converted", "lost"];
 
 async function getAdminStudio() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not signed in.", supabase, studioId: null };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("studio_id, role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") return { error: "Admin only.", supabase, studioId: null };
-  if (!profile.studio_id) return { error: "No studio.", supabase, studioId: null };
-
-  return { error: null, supabase, studioId: profile.studio_id as string };
+  const ctx = await getStudioOpsStudio();
+  return {
+    error: ctx.error,
+    supabase: ctx.supabase,
+    studioId: ctx.studioId,
+  };
 }
 
 const LeadSchema = z.object({

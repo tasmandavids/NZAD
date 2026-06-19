@@ -2,20 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type { SiteEvent } from "@/lib/site/queries";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  all: "All",
-  news: "News",
-  events: "Events",
-  term_dates: "Term dates",
-  productions: "Productions",
-  announcements: "Announcements",
-};
 
 function formatDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleDateString("en-NZ", {
+    return new Date(iso).toLocaleDateString(undefined, {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -42,6 +34,16 @@ export function NewsFeedBlock({
   viewAllLabel: string;
   viewAllHref: string;
 }) {
+  const t = useTranslations("site.news");
+  const categoryLabels = {
+    all: t("categories.all"),
+    news: t("categories.news"),
+    events: t("categories.events"),
+    term_dates: t("categories.term_dates"),
+    productions: t("categories.productions"),
+    announcements: t("categories.announcements"),
+  } as Record<string, string>;
+
   const categories = useMemo(() => {
     const cats = new Set(events.map((e) => e.category || "events"));
     return ["all", ...[...cats].sort()];
@@ -75,7 +77,7 @@ export function NewsFeedBlock({
                 filter === cat ? "bg-ink text-base" : "border border-[--hair] text-muted hover:text-ink"
               }`}
             >
-              {CATEGORY_LABELS[cat] ?? cat}
+              {categoryLabels[cat] ?? cat}
             </button>
           ))}
         </div>
@@ -83,7 +85,7 @@ export function NewsFeedBlock({
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {shown.length === 0 ? (
-          <p className="col-span-full text-center text-muted">No items to show yet.</p>
+          <p className="col-span-full text-center text-muted">{t("noItems")}</p>
         ) : (
           shown.map((e) => (
             <article key={e.id} className="rounded-2xl border border-[--hair] bg-surface p-5">
