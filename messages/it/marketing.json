@@ -1,212 +1,212 @@
 {
   "marketing": {
     "hero": {
-      "titleLine1": "Run your whole studio.",
-      "titleLine2": "Lose the chaos.",
-      "subtitle": "Projects, finances, and live client websites in one place — so the admin runs itself and your time comes back.",
-      "seeInAction": "See it in action",
-      "quote": "No more juggling six tools, three spreadsheets, and a website that's always one update behind.",
+      "titleLine1": "Gestisci tutto lo studio.",
+      "titleLine2": "Addio al caos.",
+      "subtitle": "Progetti, finanze e siti client live in un unico posto — l'amministrazione si gestisce da sola e recuperi il tuo tempo.",
+      "seeInAction": "Guardalo in azione",
+      "quote": "Basta destreggiarsi tra sei strumenti, tre fogli di calcolo e un sito sempre indietro di un aggiornamento.",
       "marquee": {
-        "projects": "Projects",
-        "invoicing": "Invoicing",
-        "liveSites": "Live Sites",
-        "cashFlow": "Cash Flow",
-        "clients": "Clients",
-        "tasks": "Tasks",
-        "quotes": "Quotes",
-        "expenses": "Expenses"
+        "projects": "Progetti",
+        "invoicing": "Fatturazione",
+        "liveSites": "Siti live",
+        "cashFlow": "Flusso di cassa",
+        "clients": "Clienti",
+        "tasks": "Attività",
+        "quotes": "Preventivi",
+        "expenses": "Spese"
       }
     },
     "studioHero": {
-      "headlineWhere": "Where",
-      "headlineMovement": "movement",
-      "headlineBecomes": "becomes",
-      "headlineArt": "art.",
-      "defaultTagline": "From a first plié to the stage — every class, every dancer, every family, all in one place.",
-      "bookTrial": "Book a free trial",
-      "exploreProgrammes": "Explore programmes",
-      "scroll": "Scroll",
+      "headlineWhere": "Dove",
+      "headlineMovement": "il movimento",
+      "headlineBecomes": "diventa",
+      "headlineArt": "arte.",
+      "defaultTagline": "Dal primo plié al palcoscenico — ogni lezione, ogni ballerino, ogni famiglia, tutto in un unico posto.",
+      "bookTrial": "Prenota una prova gratuita",
+      "exploreProgrammes": "Esplora i programmi",
+      "scroll": "Scorri",
       "disciplines": {
-        "ballet": "Ballet",
-        "contemporary": "Contemporary",
+        "ballet": "Balletto",
+        "contemporary": "Contemporaneo",
         "jazz": "Jazz",
         "hipHop": "Hip-Hop",
-        "tap": "Tap",
-        "lyrical": "Lyrical",
+        "tap": "Tip tap",
+        "lyrical": "Lirico",
         "acro": "Acro",
-        "pointe": "Pointe"
+        "pointe": "Punte"
       }
     },
     "problem": {
-      "eyebrow": "The human bit",
-      "title": "You didn't start a studio to do admin.",
-      "body1": "You started it to make great work. But somewhere between the invoices, the project trackers, the client website edits, and the \"quick question\" emails, the work you love got buried under the work you don't.",
-      "body2": "Olune pulls all of it into one place — and quietly does the heavy lifting in the background, so your evenings are yours again."
+      "eyebrow": "L'aspetto umano",
+      "title": "Non hai aperto uno studio per fare amministrazione.",
+      "body1": "L'hai aperto per fare un gran lavoro. Ma tra fatture, tracker di progetto, modifiche ai siti client e le e-mail «domanda veloce», il lavoro che ami è finito sepolto sotto quello che non ami.",
+      "body2": "Olune riunisce tutto in un unico posto — e fa il grosso del lavoro in silenzio in background, così le tue serate tornano tue."
     },
     "whyChoose": {
-      "eyebrow": "Why studios choose Olune",
-      "title": "Faster. Cheaper.",
-      "titleEmphasis": "Better made.",
+      "eyebrow": "Perché gli studi scelgono Olune",
+      "title": "Più veloce. Più economico.",
+      "titleEmphasis": "Fatto meglio.",
       "items": {
         "faster": {
-          "title": "Faster than the patchwork",
-          "body": "Stop stitching together a PM tool, an accounting app, a website builder, and a dozen tabs. Olune does it in one — which means less switching, fewer dropped balls, and hours back every week."
+          "title": "Più veloce del patchwork",
+          "body": "Smetti di mettere insieme uno strumento PM, un'app contabile, un website builder e una dozzina di schede. Olune fa tutto in uno — meno passaggi, meno errori, ore restituite ogni settimana."
         },
         "value": {
-          "title": "Better value than the stack",
-          "body": "Replace three or four subscriptions with one fair price. You get more, you pay less, and you always know what it costs — no surprise tiers, no nickel-and-diming."
+          "title": "Miglior valore dello stack",
+          "body": "Sostituisci tre o quattro abbonamenti con un prezzo equo. Ottieni di più, paghi meno, e sai sempre quanto costa — niente livelli a sorpresa, niente micro-addebiti."
         },
         "craft": {
-          "title": "Made with real craft",
-          "body": "Built by people who actually understand studios. Every screen is fast, clean, and thought-through — the kind of tool you're glad to open, not the one you dread."
+          "title": "Fatto con cura",
+          "body": "Creato da persone che capiscono davvero gli studi. Ogni schermata è veloce, pulita e pensata — il tipo di strumento che apri volentieri, non quello che temi."
         }
       }
     },
     "everyday": {
-      "eyebrow": "The everyday difference",
-      "title": "What changes when everything lives in one place",
+      "eyebrow": "La differenza quotidiana",
+      "title": "Cosa cambia quando tutto vive in un unico posto",
       "items": {
         "mornings": {
-          "title": "Mornings start calm",
-          "body": "Open Olune and the day lays itself out — no hunting across apps."
+          "title": "Mattine più serene",
+          "body": "Apri Olune e la giornata si dispone da sola — niente più caccia tra le app."
         },
         "money": {
-          "title": "Money makes sense",
-          "body": "Send an invoice, log an expense, see the impact instantly."
+          "title": "I soldi hanno senso",
+          "body": "Invia una fattura, registra una spesa, vedi l'impatto all'istante."
         },
         "clients": {
-          "title": "Clients stay happy",
-          "body": "Edit their site live on a call and watch their face light up."
+          "title": "Clienti soddisfatti",
+          "body": "Modifica il loro sito live durante una call e guarda il loro viso illuminarsi."
         },
         "evenings": {
-          "title": "Evenings come back",
-          "body": "When the admin runs itself, your free time stops being a fantasy."
+          "title": "Serate restituite",
+          "body": "Quando l'amministrazione si gestisce da sola, il tempo libero smette di essere un miraggio."
         }
       }
     },
     "promise": {
-      "eyebrow": "The promise",
-      "title": "More making.",
-      "titleEmphasis": "Less managing.",
-      "body": "Olune isn't here to add another tab to your day. It's here to quietly take the weight — the projects, the finances, the websites — so you can get back to the work that made you start in the first place.",
-      "cta": "Start your free trial",
-      "footnote": "No card needed. Set up in minutes."
+      "eyebrow": "La promessa",
+      "title": "Più creazione.",
+      "titleEmphasis": "Meno gestione.",
+      "body": "Olune non è qui per aggiungere un'altra scheda alla tua giornata. È qui per togliere silenziosamente il peso — progetti, finanze, siti — così torni al lavoro per cui hai iniziato.",
+      "cta": "Inizia la prova gratuita",
+      "footnote": "Nessuna carta richiesta. Configurazione in pochi minuti."
     },
     "pricingSection": {
-      "eyebrow": "Pricing",
-      "title": "Fair pricing.",
-      "titleEmphasis": "No surprises.",
-      "subtitle": "One plan replaces your project tool, your accounting app, and your website builder. Pay for one thing, not four.",
-      "mostPopular": "Most popular",
-      "perMonth": "/mo",
+      "eyebrow": "Prezzi",
+      "title": "Prezzi equi.",
+      "titleEmphasis": "Nessuna sorpresa.",
+      "subtitle": "Un piano sostituisce lo strumento di progetto, l'app contabile e il website builder. Paghi una cosa, non quattro.",
+      "mostPopular": "Più popolare",
+      "perMonth": "/mese",
       "plans": {
         "solo": {
           "name": "Solo",
-          "tag": "for the one-person studio",
+          "tag": "per lo studio one-person",
           "price": "$19",
-          "desc": "Everything you need to run projects, send invoices, and manage one client site. Perfect for freelancers who wear every hat."
+          "desc": "Tutto ciò che serve per gestire progetti, inviare fatture e un sito client. Perfetto per i freelance che fanno tutto."
         },
         "studio": {
           "name": "Studio",
-          "tag": "most popular",
+          "tag": "più popolare",
           "price": "$49",
-          "desc": "For small teams. Unlimited projects, full financial suite, live website building for up to 10 client sites, and team access."
+          "desc": "Per piccoli team. Progetti illimitati, suite finanziaria completa, siti live fino a 10 client, accesso team."
         },
         "scale": {
           "name": "Scale",
-          "tag": "for growing studios",
+          "tag": "per studi in crescita",
           "price": "$99",
-          "desc": "Unlimited everything — sites, team members, and clients — plus priority support and advanced financial reporting."
+          "desc": "Tutto illimitato — siti, membri del team e clienti — più supporto prioritario e report finanziari avanzati."
         }
       },
-      "includes": "Every plan includes:",
-      "includesBody": "real-time website building, integrated invoicing & expenses, project management, and free updates. No setup fees. No card to start. Cancel anytime.",
-      "honestMath": "The honest math:",
-      "honestMathBody": "A PM tool, an accounting app, and a website builder usually run $80–150/month combined. Olune does all three from $19.",
-      "trialNote": "14 days, no card needed."
+      "includes": "Ogni piano include:",
+      "includesBody": "creazione siti in tempo reale, fatturazione e spese integrate, gestione progetti e aggiornamenti gratuiti. Nessun costo di setup. Nessuna carta per iniziare. Disdici quando vuoi.",
+      "honestMath": "Il calcolo onesto:",
+      "honestMathBody": "Uno strumento PM, un'app contabile e un website builder costano di solito $80–150/mese combinati. Olune fa tutti e tre da $19.",
+      "trialNote": "14 giorni, nessuna carta richiesta."
     },
     "featuresSection": {
-      "eyebrow": "What Olune does",
-      "title": "Three jobs.",
-      "titleEmphasis": "One home.",
+      "eyebrow": "Cosa fa Olune",
+      "title": "Tre compiti.",
+      "titleEmphasis": "Una casa.",
       "manageStudio": {
-        "title": "Manage the studio",
-        "subtitle": "Every project, deadline, client, and task in one clear view. Know exactly what's due, what's slipping, and what's done — without the morning panic."
+        "title": "Gestisci lo studio",
+        "subtitle": "Ogni progetto, scadenza, cliente e attività in una vista chiara. Sai esattamente cosa scade, cosa slitta e cosa è fatto — senza il panico del mattino."
       },
       "money": {
-        "title": "Stay on top of the money",
-        "subtitle": "Quotes, invoices, expenses, and cash flow built right in. Watch what's coming in and going out in real time, so the financial side stops being a once-a-quarter fright."
+        "title": "Tieni sotto controllo le finanze",
+        "subtitle": "Preventivi, fatture, spese e flusso di cassa integrati. Guarda entrate e uscite in tempo reale, così la parte finanziaria smette di spaventare ogni trimestre."
       },
       "liveSites": {
-        "title": "Build and update sites live",
-        "subtitle": "Spin up and edit client websites in real time, right inside Olune. No bouncing between platforms, no waiting on a developer for a copy change — see it change as you type."
+        "title": "Crea e aggiorna siti live",
+        "subtitle": "Avvia e modifica siti client in tempo reale, dentro Olune. Niente salti tra piattaforme, niente attese per un cambio testo — lo vedi cambiare mentre scrivi."
       }
     },
     "aboutSection": {
-      "eyebrow": "About us",
-      "title": "Built by studio people,",
-      "titleEmphasis": "for studio people.",
-      "body1": "We've run studios. We know the 11pm invoice scramble, the client website that's always a step behind, the spreadsheet that only one person understands. We got tired of duct-taping five tools together and hoping nothing fell through the cracks.",
-      "body2": "So we built the thing we wished we had — one calm system that holds the projects, the money, and the websites together, and does the busywork quietly in the background.",
-      "body3": "Olune exists for one reason: to give creative people their time back. Less managing. More making. That's the whole idea.",
-      "meetTeam": "Meet the team",
-      "ourStory": "Our story",
-      "quote": "Less managing. More making."
+      "eyebrow": "Chi siamo",
+      "title": "Creato da persone di studio,",
+      "titleEmphasis": "per persone di studio.",
+      "body1": "Abbiamo gestito studi. Conosciamo la corsa alle fatture alle 23, il sito client sempre indietro, il foglio di calcolo che capisce solo una persona. Ci siamo stancati di tenere insieme cinque strumenti sperando che nulla cadesse nel vuoto.",
+      "body2": "Così abbiamo costruito quello che avremmo voluto avere — un sistema calmo che tiene insieme progetti, soldi e siti, e fa il lavoro ripetitivo in silenzio in background.",
+      "body3": "Olune esiste per un motivo: restituire tempo alle persone creative. Meno gestione. Più creazione. Questa è l'intera idea.",
+      "meetTeam": "Incontra il team",
+      "ourStory": "La nostra storia",
+      "quote": "Meno gestione. Più creazione."
     },
     "compareSection": {
-      "eyebrow": "Compare",
-      "title": "Why studios switch to Olune",
-      "subtitle": "Most studios run on a patchwork — a project tool here, an accounting app there, a separate website builder, and a pile of spreadsheets holding it together. It works, until it doesn't.",
-      "stackHeader": "The usual stack",
+      "eyebrow": "Confronta",
+      "title": "Perché gli studi passano a Olune",
+      "subtitle": "La maggior parte degli studi funziona con un patchwork — uno strumento di progetto qui, un'app contabile là, un website builder a parte e fogli di calcolo che tengono tutto insieme. Funziona, finché non funziona più.",
+      "stackHeader": "Lo stack abituale",
       "rows": {
         "projects": {
-          "label": "Projects",
-          "stack": "One app",
-          "olune": "Built in"
+          "label": "Progetti",
+          "stack": "Un'app",
+          "olune": "Integrato"
         },
         "invoicing": {
-          "label": "Invoicing & finances",
-          "stack": "A second app",
-          "olune": "Built in"
+          "label": "Fatturazione e finanze",
+          "stack": "Una seconda app",
+          "olune": "Integrato"
         },
         "websites": {
-          "label": "Live website building",
-          "stack": "A third app",
-          "olune": "Built in, real-time"
+          "label": "Creazione siti live",
+          "stack": "Una terza app",
+          "olune": "Integrato, tempo reale"
         },
         "sync": {
-          "label": "Everything in sync",
-          "stack": "Manual, error-prone",
-          "olune": "Automatic"
+          "label": "Tutto sincronizzato",
+          "stack": "Manuale, soggetto a errori",
+          "olune": "Automatico"
         },
         "cost": {
-          "label": "Monthly cost",
-          "stack": "$80–150+ combined",
-          "olune": "From $19"
+          "label": "Costo mensile",
+          "stack": "$80–150+ combinati",
+          "olune": "Da $19"
         },
         "tools": {
-          "label": "Tools to learn",
+          "label": "Strumenti da imparare",
           "stack": "3–4",
           "olune": "1"
         },
         "purpose": {
-          "label": "Made for studios",
-          "stack": "Generic",
-          "olune": "Purpose-built"
+          "label": "Fatto per gli studi",
+          "stack": "Generico",
+          "olune": "Su misura"
         }
       },
       "highlights": {
         "faster": {
-          "k": "Faster",
-          "v": "No switching between apps or re-entering the same data three times."
+          "k": "Più veloce",
+          "v": "Niente passaggi tra app o reinserimento degli stessi dati tre volte."
         },
         "cheaper": {
-          "k": "Cheaper",
-          "v": "One fair price instead of four subscriptions."
+          "k": "Più economico",
+          "v": "Un prezzo equo invece di quattro abbonamenti."
         },
         "better": {
-          "k": "Better made",
-          "v": "Every screen built for how studios actually work, not bolted on after."
+          "k": "Fatto meglio",
+          "v": "Ogni schermata pensata per come gli studi lavorano davvero, non aggiunta dopo."
         }
       }
     }
