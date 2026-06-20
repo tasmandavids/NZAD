@@ -3,18 +3,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { useShortDayNames, useTimeGreeting } from "@/lib/i18n/client";
+import { useShortDayNames, useTimeGreeting, useFormatTimeShort } from "@/lib/i18n/client";
 import type { Child, Invoice } from "@/app/portal/parent/page";
 import { EnrollModal } from "./EnrollModal";
 
 const NZD = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 2 });
-
-function fmt(time: string | null) {
-  if (!time) return "";
-  const [h, m] = time.split(":").map(Number);
-  const ampm = h >= 12 ? "pm" : "am";
-  return `${h % 12 || 12}${m ? `:${m.toString().padStart(2, "0")}` : ""}${ampm}`;
-}
 
 const STATUS_COLORS: Record<string, string> = {
   paid: "color-mix(in srgb, #22c55e 70%, transparent)",
@@ -54,6 +47,7 @@ export default function ParentHub({
   const locale = useLocale();
   const dayShort = useShortDayNames();
   const greeting = useTimeGreeting();
+  const fmt = useFormatTimeShort();
   const [showEnroll, setShowEnroll] = useState(false);
 
   const firstName = parentName?.split(" ")[0];

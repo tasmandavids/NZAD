@@ -10,6 +10,7 @@ import { normalizeBlocks } from "@/lib/site/blocks";
 import { normalizePageBackground } from "@/lib/site/background";
 import { mergePageLinks, toPageLink, toStudioPageNavSource } from "@/lib/site/page-links";
 import { publicPageUrl } from "@/lib/site/domain-setup";
+import { getTranslations } from "@/lib/i18n/server";
 
 const PageEditor = dynamic(() => import("@/components/admin/site/PageEditor"), {
   loading: () => (
@@ -54,6 +55,10 @@ export default async function SitePageEditor({
     .order("nav_order", { ascending: true });
 
   const branding = await getBrandingCached(page.studio_id as string);
+  const [tCommon, tSite] = await Promise.all([
+    getTranslations("common"),
+    getTranslations("site.public"),
+  ]);
   const { data: studio } = await supabase
     .from("studios")
     .select("name")
@@ -66,9 +71,9 @@ export default async function SitePageEditor({
   return (
     <PageEditor
       livePreviewUrl={livePreviewUrl}
-      studioName={studio?.name ?? "Your studio"}
+      studioName={studio?.name ?? tCommon("yourStudio")}
       logoUrl={branding.logoUrl}
-      portalLabel={branding.siteSettings.portalLabel ?? "Portal"}
+      portalLabel={branding.siteSettings.portalLabel ?? tSite("defaultPortalLabel")}
       studioPages={navSources}
       sitePages={sitePages}
       page={{

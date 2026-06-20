@@ -904,8 +904,8 @@ function RichTextArea({ value, placeholder, onChange }: { value: string; placeho
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap gap-1.5">
-        <button type="button" onClick={() => wrap("**", t("boldText"))} title="Bold" className={`${btn} font-bold`}>B</button>
-        <button type="button" onClick={insertLink} title="Insert link" className={btn}>{t("linkButton")}</button>
+        <button type="button" onClick={() => wrap("**", t("boldText"))} title={t("boldTitle")} className={`${btn} font-bold`}>B</button>
+        <button type="button" onClick={insertLink} title={t("insertLinkTitle")} className={btn}>{t("linkButton")}</button>
       </div>
       <textarea ref={ref} value={value} rows={6} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className="field-premium font-mono text-xs leading-relaxed" />
     </div>

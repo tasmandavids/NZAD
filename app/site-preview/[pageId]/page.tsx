@@ -21,6 +21,7 @@ import { getNavLinksCached } from "@/lib/site/cached-queries";
 import { EMPTY_RENDER_CONTEXT } from "@/lib/site/render-context";
 import { BlockRenderer } from "@/components/site/BlockRenderer";
 import { SiteChrome } from "@/components/site/SiteChrome";
+import { getTranslations } from "@/lib/i18n/server";
 
 export default async function SitePreviewPage({
   params,
@@ -82,21 +83,25 @@ export default async function SitePreviewPage({
     pageSlug: page.slug as string,
   });
 
+  const t = await getTranslations("site.preview");
+  const previewTitle =
+    page.status === "published" ? t("publishedTitle") : t("draftTitle");
+
   return (
     <div className="flex min-h-[100dvh] flex-col bg-base">
       <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-3 border-b border-brand/30 bg-brand/5 px-4 py-2.5 text-sm backdrop-blur">
         <div>
           <p className="font-semibold text-ink">
-            {page.status === "published" ? "Preview" : "Draft preview"} · {page.title as string}
+            {previewTitle} · {page.title as string}
           </p>
-          <p className="text-xs text-muted">Save in the editor, then refresh to see latest changes.</p>
+          <p className="text-xs text-muted">{t("refreshHint")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/portal/admin/site/${pageId}`}
             className="rounded-full border border-[--hair] bg-surface px-3 py-1.5 text-xs font-medium text-ink hover:bg-base"
           >
-            ← Editor
+            {t("backToEditor")}
           </Link>
           {page.status === "published" && (
             <a
@@ -105,7 +110,7 @@ export default async function SitePreviewPage({
               rel="noreferrer noopener"
               className="rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
             >
-              Open live site
+              {t("openLiveSite")}
             </a>
           )}
         </div>

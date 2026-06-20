@@ -15,7 +15,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { useShortDayNames } from "@/lib/i18n/client";
+import { useShortDayNames, useFormatTimeShort } from "@/lib/i18n/client";
 import type { Child } from "@/app/portal/parent/page";
 import {
   getAvailableClasses,
@@ -31,13 +31,6 @@ import CheckoutForm from "@/components/payments/CheckoutForm";
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 const NZD = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" });
-
-function fmtTime(t: string | null) {
-  if (!t) return "";
-  const [h, m] = t.split(":").map(Number);
-  const p = h >= 12 ? "pm" : "am";
-  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""}${p}`;
-}
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -69,6 +62,7 @@ function ClassCard({
 }) {
   const t = useTranslations("parent.enroll");
   const dayShort = useShortDayNames();
+  const fmtTime = useFormatTimeShort();
   const spotsLeft = cls.capacity - cls.enrolled;
   const isFull = spotsLeft <= 0;
 

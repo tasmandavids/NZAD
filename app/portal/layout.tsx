@@ -13,6 +13,7 @@ import { SetupResumeBanner } from "@/components/setup/SetupResumeBanner";
 import { getBrandingCached } from "@/lib/branding";
 import { fetchStudioSetupState, setupBlocksPortal, setupNeedsBanner } from "@/lib/setup/server";
 import type { Role } from "@/lib/types";
+import { getTranslations } from "@/lib/i18n/server";
 
 export default async function PortalLayout({
   children,
@@ -38,7 +39,7 @@ export default async function PortalLayout({
   const isAdmin = profile.role === "admin";
   const now = new Date().toISOString();
 
-  const [setupResult, announcementsResult, branding] = await Promise.all([
+  const [setupResult, announcementsResult, branding, tCommon] = await Promise.all([
     isAdmin
       ? fetchStudioSetupState(supabase, profile.studio_id)
       : Promise.resolve({ state: null }),
@@ -52,6 +53,7 @@ export default async function PortalLayout({
           .limit(10)
       : Promise.resolve({ data: null }),
     getBrandingCached(profile.studio_id),
+    getTranslations("common"),
   ]);
 
   const setupState = setupResult.state;
@@ -67,7 +69,7 @@ export default async function PortalLayout({
   return (
     <PortalShell
       role={profile.role as Role}
-      studioName={studio?.name ?? "Your studio"}
+      studioName={studio?.name ?? tCommon("yourStudio")}
       logoUrl={branding.logoUrl}
       userName={profile.full_name}
     >

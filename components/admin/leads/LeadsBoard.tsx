@@ -30,14 +30,14 @@ import {
 
 // ─── Column config ───────────────────────────────────────────────────────────
 
-type Column = { id: LeadStatus; label: string; color: string };
+type Column = { id: LeadStatus; color: string };
 
 const COLUMNS: Column[] = [
-  { id: "new",       label: "New",       color: "#6366f1" },
-  { id: "contacted", label: "Contacted", color: "#f59e0b" },
-  { id: "trial",     label: "Trial",     color: "#3b82f6" },
-  { id: "converted", label: "Converted", color: "#22c55e" },
-  { id: "lost",      label: "Lost",      color: "#94a3b8" },
+  { id: "new",       color: "#6366f1" },
+  { id: "contacted", color: "#f59e0b" },
+  { id: "trial",     color: "#3b82f6" },
+  { id: "converted", color: "#22c55e" },
+  { id: "lost",      color: "#94a3b8" },
 ];
 
 // ─── Lead card ───────────────────────────────────────────────────────────────
@@ -53,6 +53,9 @@ function LeadCard({
   onDelete: () => void;
   onNotesUpdate: (notes: string) => void;
 }) {
+  const t = useTranslations("admin.leads");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [expanded, setExpanded] = useState(false);
   const [notes, setNotes] = useState(lead.notes ?? "");
   const [saving, startSave] = useTransition();
@@ -92,7 +95,7 @@ function LeadCard({
             type="button"
             onClick={() => setExpanded((v) => !v)}
             className="grid h-6 w-6 place-items-center rounded-md text-muted transition-colors hover:bg-surface hover:text-ink"
-            title="Notes"
+            title={t("notes")}
           >
             ✎
           </button>
@@ -100,7 +103,7 @@ function LeadCard({
             type="button"
             onClick={onDelete}
             className="grid h-6 w-6 place-items-center rounded-md text-muted transition-colors hover:bg-red-50 hover:text-red-500"
-            title="Delete lead"
+            title={t("deleteTitle")}
           >
             ×
           </button>
@@ -120,7 +123,7 @@ function LeadCard({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              placeholder="Notes…"
+              placeholder={t("notesPlaceholder")}
               className="mt-3 w-full resize-none rounded-lg border border-[--hair] bg-surface px-2.5 py-2 text-xs text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
             />
             <div className="mt-1.5 flex justify-end">
@@ -131,7 +134,7 @@ function LeadCard({
                 className="rounded-lg px-3 py-1 text-[0.65rem] font-bold text-white disabled:opacity-50"
                 style={{ background: "var(--brand)" }}
               >
-                {saving ? "Saving…" : "Save"}
+                {saving ? tShared("saving") : tCommon("save")}
               </button>
             </div>
           </motion.div>
@@ -150,11 +153,21 @@ function NewLeadSlideOver({
   onClose: () => void;
   onCreated: (lead: Lead) => void;
 }) {
+  const t = useTranslations("admin.leads");
+  const tShared = useTranslations("admin.shared");
   const [form, setForm] = useState<LeadFormData>({
     firstName: "", lastName: "", email: "", phone: "", source: "", notes: "",
   });
   const [saving, startSave] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  const formFields = [
+    { field: "firstName" as const, label: t("form.firstName"), required: true },
+    { field: "lastName" as const, label: t("form.lastName") },
+    { field: "email" as const, label: t("form.email"), type: "email" },
+    { field: "phone" as const, label: t("form.phone"), type: "tel" },
+    { field: "source" as const, label: t("form.source") },
+  ];
 
   function handleChange(field: keyof LeadFormData, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -195,7 +208,7 @@ function NewLeadSlideOver({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-base font-bold text-ink">New lead</h2>
+          <h2 className="text-base font-bold text-ink">{t("form.title")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -206,15 +219,7 @@ function NewLeadSlideOver({
         </div>
 
         <div className="space-y-4">
-          {(
-            [
-              { field: "firstName", label: "First name *", required: true },
-              { field: "lastName",  label: "Last name" },
-              { field: "email",     label: "Email", type: "email" },
-              { field: "phone",     label: "Phone", type: "tel" },
-              { field: "source",    label: "Source (website, referral…)" },
-            ] as { field: keyof LeadFormData; label: string; required?: boolean; type?: string }[]
-          ).map(({ field, label, required, type }) => (
+          {formFields.map(({ field, label, required, type }) => (
             <div key={field}>
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
                 {label}
@@ -231,7 +236,7 @@ function NewLeadSlideOver({
 
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
-              Notes
+              {t("notes")}
             </label>
             <textarea
               value={form.notes as string}
@@ -254,7 +259,7 @@ function NewLeadSlideOver({
             className="w-full rounded-xl py-3 text-sm font-bold text-white disabled:opacity-40"
             style={{ background: "var(--brand)" }}
           >
-            {saving ? "Creating…" : "Create lead"}
+            {saving ? tShared("creating") : t("form.createLead")}
           </button>
         </div>
       </motion.div>
@@ -361,7 +366,7 @@ export function LeadsBoard({ initialLeads }: { initialLeads: Lead[] }) {
                       style={{ background: col.color }}
                     />
                     <span className="text-xs font-bold uppercase tracking-wider text-muted">
-                      {col.label}
+                      {t(`columns.${col.id}`)}
                     </span>
                     <span className="ml-auto rounded-full bg-surface px-1.5 py-0.5 text-[0.6rem] font-semibold text-muted">
                       {items.length}
@@ -406,7 +411,7 @@ export function LeadsBoard({ initialLeads }: { initialLeads: Lead[] }) {
                         ))}
                         {provided.placeholder}
                         {items.length === 0 && !snapshot.isDraggingOver && (
-                          <p className="py-4 text-center text-xs text-muted">Drop leads here</p>
+                          <p className="py-4 text-center text-xs text-muted">{t("dropHere")}</p>
                         )}
                       </div>
                     )}

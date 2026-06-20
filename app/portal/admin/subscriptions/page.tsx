@@ -4,6 +4,7 @@
 
 import { requirePortalSession } from "@/lib/portal/session";
 import SubscriptionsManager from "@/components/admin/subscriptions/SubscriptionsManager";
+import { getTranslations } from "@/lib/i18n/server";
 
 export type SubscriptionRow = {
   id: string;
@@ -43,6 +44,7 @@ export type ProductOption = {
 export default async function SubscriptionsPage() {
   const session = await requirePortalSession();
   const { supabase, studioId } = session;
+  const tCommon = await getTranslations("common");
 
   const [subsRes, parentsRes, classesRes, productsRes, guardianshipsRes] = await Promise.all([
     supabase
@@ -109,7 +111,7 @@ export default async function SubscriptionsPage() {
     const student = (Array.isArray(raw) ? raw[0] : raw) as { id: string; full_name: string | null } | null;
     if (!student?.id) continue;
     const list = studentsByParent.get(guardianId) ?? [];
-    list.push({ id: student.id, name: student.full_name ?? "Student" });
+    list.push({ id: student.id, name: student.full_name ?? tCommon("student") });
     studentsByParent.set(guardianId, list);
   }
 
@@ -132,7 +134,7 @@ export default async function SubscriptionsPage() {
 
   const parents: ParentOption[] = (parentsRes.data ?? []).map((p) => ({
     id: p.id as string,
-    name: (p.full_name as string | null) ?? "Parent",
+    name: (p.full_name as string | null) ?? tCommon("parent"),
     students: studentsByParent.get(p.id as string) ?? [],
   }));
 

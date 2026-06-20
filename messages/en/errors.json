@@ -21,7 +21,46 @@
       "signIn": "Sign in",
       "websiteAdmin": "Website admin",
       "studioBody": "This page hasn't been published yet, or the URL is wrong. Check spelling and publish status in the admin Website tab.",
-      "backHome": "Back to home"
+      "backHome": "Back to home",
+      "studio": "Studio not found."
+    },
+    "forbidden": {
+      "adminOnly": "Only studio admins can manage domains."
+    },
+    "actions": {
+      "unknown": "Unknown error",
+      "notFound": "Not found",
+      "unauthorized": "Unauthorized",
+      "validationFailed": "Validation failed",
+      "invalidInput": "Invalid input",
+      "nameRequired": "Name required",
+      "firstNameRequired": "First name required",
+      "invalidEmail": "Invalid email",
+      "studioNotFound": "Studio not found",
+      "invalidStatus": "Invalid status",
+      "notSignedIn": "Not signed in.",
+      "parentAccessRequired": "Parent access required.",
+      "adminOnly": "Admin only.",
+      "noStudioFound": "No studio found.",
+      "notGuardian": "You are not a guardian of this student.",
+      "invalidStudentOrClass": "Invalid student or class.",
+      "alreadyEnrolled": "Already enrolled in this class.",
+      "classNoFee": "Class has no fee.",
+      "couldNotCreateInvoice": "Could not create invoice.",
+      "stripeNoClientSecret": "Stripe did not return a client secret.",
+      "invalidInvoiceDetails": "Invalid invoice details.",
+      "parentNotFound": "Parent account not found.",
+      "studentNotLinked": "Selected student is not linked to this parent.",
+      "invoiceNotFound": "Invoice not found.",
+      "unpaidInvoicesOnly": "Only unpaid invoices can be reminded.",
+      "noInvoicesSelected": "No invoices selected.",
+      "noRemindersSent": "No reminders were sent.",
+      "invalidSubscriptionDetails": "Invalid subscription details.",
+      "monthlyTotalInvalid": "Monthly total must be greater than zero after discounts.",
+      "chargeAmountInvalid": "Charge amount is invalid.",
+      "studentNotLinkedToParent": "Student is not linked to this parent.",
+      "couldNotSaveSubscription": "Could not save subscription.",
+      "subscriptionNotFound": "Subscription not found."
     }
   }
 }

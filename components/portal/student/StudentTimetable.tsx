@@ -2,18 +2,10 @@
 
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { useFullDayNames, useTimeGreeting } from "@/lib/i18n/client";
+import { useFullDayNames, useTimeGreeting, useFormatTimeShort } from "@/lib/i18n/client";
 import type { EnrolledClass } from "@/app/portal/student/page";
 
 const SHOW_DAYS = [1, 2, 3, 4, 5, 6];
-
-function fmt(time: string | null) {
-  if (!time) return "";
-  const [h, m] = time.split(":").map(Number);
-  const ampm = h >= 12 ? "pm" : "am";
-  const h12 = h % 12 || 12;
-  return m === 0 ? `${h12}${ampm}` : `${h12}:${m.toString().padStart(2, "0")}${ampm}`;
-}
 
 const DISC_COLORS: Record<string, string> = {
   Ballet: "#C8102E",
@@ -44,6 +36,7 @@ export default function StudentTimetable({
   const locale = useLocale();
   const dayNames = useFullDayNames();
   const greeting = useTimeGreeting();
+  const fmt = useFormatTimeShort();
   const today = classes.filter((c) => c.dayOfWeek === todayDow);
 
   const firstName = studentName?.split(" ")[0];

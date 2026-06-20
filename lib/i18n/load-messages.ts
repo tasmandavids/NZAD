@@ -15,6 +15,7 @@ const MESSAGE_MODULES = [
   "platform",
   "site",
   "payments",
+  "office",
 ] as const;
 
 function deepMerge(

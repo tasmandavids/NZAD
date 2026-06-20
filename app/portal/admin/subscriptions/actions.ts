@@ -14,15 +14,17 @@ import {
   type SubscriptionLineInput,
 } from "@/lib/subscriptions/pricing";
 import type Stripe from "stripe";
+import { getTranslations } from "@/lib/i18n/server";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 async function getAdminStudio() {
+  const t = await getTranslations("errors.actions");
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Not signed in.", supabase, studioId: null };
+  if (!user) return { error: t("notSignedIn"), supabase, studioId: null };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -30,8 +32,8 @@ async function getAdminStudio() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") return { error: "Admin only.", supabase, studioId: null };
-  if (!profile.studio_id) return { error: "No studio found.", supabase, studioId: null };
+  if (profile?.role !== "admin") return { error: t("adminOnly"), supabase, studioId: null };
+  if (!profile.studio_id) return { error: t("noStudioFound"), supabase, studioId: null };
 
   return { error: null, supabase, studioId: profile.studio_id as string };
 }
@@ -94,20 +96,21 @@ export async function createAdminSubscription(
   | { ok: true; subscriptionId: string; monthlyCents: number; chargeCents: number }
   | { ok: false; error: string }
 > {
+  const t = await getTranslations("errors.actions");
   const parsed = CreateSubscriptionSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Invalid subscription details." };
+  if (!parsed.success) return { ok: false, error: t("invalidSubscriptionDetails") };
 
   const { error, supabase, studioId } = await getAdminStudio();
-  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+  if (error || !studioId) return { ok: false, error: error ?? t("unknown") };
 
   const { payerId, studentId, billingInterval, planLabel, lines, sendToParent } = parsed.data;
   const monthlyCents = monthlyAmountCents(lines as SubscriptionLineInput[]);
   if (monthlyCents <= 0) {
-    return { ok: false, error: "Monthly total must be greater than zero after discounts." };
+    return { ok: false, error: t("monthlyTotalInvalid") };
   }
 
   const chargeCents = chargeAmountCents(monthlyCents, billingInterval as BillingInterval);
-  if (chargeCents <= 0) return { ok: false, error: "Charge amount is invalid." };
+  if (chargeCents <= 0) return { ok: false, error: t("chargeAmountInvalid") };
 
   const { data: payer } = await supabase
     .from("profiles")
@@ -115,7 +118,7 @@ export async function createAdminSubscription(
     .eq("id", payerId)
     .eq("studio_id", studioId)
     .single();
-  if (!payer) return { ok: false, error: "Parent not found." };
+  if (!payer) return { ok: false, error: t("parentNotFound") };
 
   if (studentId) {
     const { data: link } = await supabase
@@ -124,7 +127,7 @@ export async function createAdminSubscription(
       .eq("guardian_id", payerId)
       .eq("student_id", studentId)
       .maybeSingle();
-    if (!link) return { ok: false, error: "Student is not linked to this parent." };
+    if (!link) return { ok: false, error: t("studentNotLinkedToParent") };
   }
 
   const label =
@@ -201,7 +204,7 @@ export async function createAdminSubscription(
     .single();
 
   if (subErr || !subRow) {
-    return { ok: false, error: subErr?.message ?? "Could not save subscription." };
+    return { ok: false, error: subErr?.message ?? t("couldNotSaveSubscription") };
   }
 
   const subscriptionId = subRow.id as string;
@@ -244,8 +247,9 @@ export async function adminCancelSubscription(
   stripeSubscriptionId: string,
   immediate = false,
 ): Promise<ActionResult> {
+  const t = await getTranslations("errors.actions");
   const { error, supabase, studioId } = await getAdminStudio();
-  if (error || !studioId) return { ok: false, error: error ?? "Unknown" };
+  if (error || !studioId) return { ok: false, error: error ?? t("unknown") };
 
   const { data: row } = await supabase
     .from("subscriptions")
@@ -253,7 +257,7 @@ export async function adminCancelSubscription(
     .eq("stripe_subscription_id", stripeSubscriptionId)
     .single();
   if (!row || row.studio_id !== studioId) {
-    return { ok: false, error: "Subscription not found." };
+    return { ok: false, error: t("subscriptionNotFound") };
   }
 
   try {

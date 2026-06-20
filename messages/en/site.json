@@ -437,6 +437,8 @@
       "seoDescription": "SEO description",
       "boldText": "bold text",
       "linkText": "link text",
+      "boldTitle": "Bold",
+      "insertLinkTitle": "Insert link",
       "linkButton": "🔗 Link",
       "emptyPage": "Your page is empty",
       "emptyPageHint": "Right-click to add content. Shift+click to multi-select. Pink guides appear when edges align.",
@@ -615,6 +617,13 @@
       "localhostNote": "Pages on plain localhost are the Olune platform, not your studio site.",
       "connectDomain": "Connect your domain →"
     },
+    "preview": {
+      "draftTitle": "Draft preview",
+      "publishedTitle": "Preview",
+      "refreshHint": "Save in the editor, then refresh to see latest changes.",
+      "backToEditor": "← Editor",
+      "openLiveSite": "Open live site"
+    },
     "blocks": {
       "select": "Vertical spacing",
       "number": "Vertical position (px)",
@@ -644,6 +653,9 @@
       "spacerLabel": "Spacer · {height}px",
       "defaultFooterTagline": "Exceptional dance education. World-class training for all ages and abilities.",
       "defaultPortalLabel": "Portal",
+      "defaultHeading": "Heading",
+      "defaultImageAlt": "Image",
+      "defaultLinkLabel": "Link",
       "navigation": "Navigation",
       "studios": "Studios",
       "contact": "Contact",

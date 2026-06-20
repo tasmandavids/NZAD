@@ -21,7 +21,8 @@ import type {
   StaffWorkLocation,
 } from "@/lib/staff/types";
 import { EMPLOYMENT_TYPES, STAFF_PORTAL_ROLES, WORK_LOCATIONS } from "@/lib/staff/types";
-import { formatTimeShort } from "@/lib/staff/week";
+import { formatTimeShort } from "@/lib/i18n/format";
+import { useLocale } from "next-intl";
 
 type Tab = "profile" | "employment" | "contract" | "shifts";
 
@@ -40,6 +41,7 @@ export default function StaffDetailHub({
   const tStaff = useTranslations("admin.staff");
   const tShared = useTranslations("admin.shared");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("profile");
   const [pending, startTransition] = useTransition();
@@ -526,7 +528,7 @@ export default function StaffDetailHub({
                   <div>
                     <p className="font-medium text-ink">{shift.shiftDate}</p>
                     <p className="text-muted">
-                      {formatTimeShort(shift.startTime)}–{formatTimeShort(shift.endTime)}
+                      {formatTimeShort(shift.startTime, locale)}–{formatTimeShort(shift.endTime, locale)}
                       {shift.locationName ? ` · ${shift.locationName}` : ""}
                     </p>
                   </div>

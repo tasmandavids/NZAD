@@ -19,6 +19,10 @@
       "studentCount": "{count, plural, one {# studente} other {# studenti}}",
       "noClassesAssigned": "Nessun corso assegnato.",
       "noClassesAssignedHint": "Chiedi all'amministratore dello studio di assegnarti dei corsi."
+    },
+    "studentProgress": {
+      "back": "← Torna al planning",
+      "progressLog": "Registro progressi"
     }
   }
 }

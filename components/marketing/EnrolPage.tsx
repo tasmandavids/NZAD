@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { useShortDayNames } from "@/lib/i18n/client";
+import { useShortDayNames, useFormatTimeShort } from "@/lib/i18n/client";
 import { formatMoney } from "@/lib/currency";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 import { submitTrialRequest } from "@/app/enrol/actions";
@@ -31,13 +31,6 @@ export type EnrolClassOption = {
   priceCents: number;
 };
 
-function fmtTime(t: string | null) {
-  if (!t) return "";
-  const [h, m] = t.split(":").map(Number);
-  const p = h >= 12 ? "pm" : "am";
-  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""}${p}`;
-}
-
 function normDiscipline(s: string) {
   return s.toLowerCase().replace(/[\s-_]/g, "");
 }
@@ -57,6 +50,7 @@ export default function EnrolPage({
 }) {
   const t = useTranslations("enrol");
   const dayShort = useShortDayNames();
+  const fmtTime = useFormatTimeShort();
   const [step, setStep] = useState(0);
   const [filter, setFilter] = useState<string>("");
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);

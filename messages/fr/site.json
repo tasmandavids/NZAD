@@ -437,6 +437,8 @@
       "seoDescription": "Description SEO",
       "boldText": "texte gras",
       "linkText": "texte du lien",
+      "boldTitle": "Gras",
+      "insertLinkTitle": "Insérer un lien",
       "linkButton": "🔗 Lien",
       "emptyPage": "Votre page est vide",
       "emptyPageHint": "Clic droit pour ajouter du contenu. Maj+clic pour sélection multiple. Des repères roses apparaissent quand les bords s'alignent.",
@@ -616,6 +618,13 @@
       "openPreviewBefore": "Ouvrez",
       "openPreviewAfter": "pour prévisualiser ce que voient les familles."
     },
+    "preview": {
+      "draftTitle": "Aperçu brouillon",
+      "publishedTitle": "Aperçu",
+      "refreshHint": "Enregistrez dans l'éditeur, puis actualisez pour voir les dernières modifications.",
+      "backToEditor": "← Éditeur",
+      "openLiveSite": "Ouvrir le site en ligne"
+    },
     "blocks": {
       "select": "Vertical spacing",
       "number": "Vertical position (px)",
@@ -645,6 +654,9 @@
       "spacerLabel": "Espacement · {height}px",
       "defaultFooterTagline": "Enseignement de la danse d'exception. Formation de classe mondiale pour tous les âges et niveaux.",
       "defaultPortalLabel": "Portail",
+      "defaultHeading": "Titre",
+      "defaultImageAlt": "Image",
+      "defaultLinkLabel": "Lien",
       "navigation": "Navigation",
       "studios": "Studios",
       "contact": "Contact",

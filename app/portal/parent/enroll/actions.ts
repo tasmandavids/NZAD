@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CURRENCY, gstComponentCents } from "@/lib/currency";
 import { siblingDiscountedCents } from "@/lib/discounts";
 import { xeroSyncOutstandingInvoice } from "@/lib/xero/webhook-sync";
+import { getTranslations } from "@/lib/i18n/server";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -42,11 +43,12 @@ export type Waiver = {
 const uuidField = z.string().uuid();
 
 async function getParentContext() {
+  const t = await getTranslations("errors.actions");
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Not signed in.", supabase, userId: null, studioId: null };
+  if (!user) return { error: t("notSignedIn"), supabase, userId: null, studioId: null };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -55,7 +57,7 @@ async function getParentContext() {
     .single();
 
   if (profile?.role !== "parent") {
-    return { error: "Parent access required.", supabase, userId: null, studioId: null };
+    return { error: t("parentAccessRequired"), supabase, userId: null, studioId: null };
   }
 
   return {
@@ -137,8 +139,9 @@ export async function signWaiver(
   studentId: string,
   waiverVersion: number,
 ): Promise<ActionResult> {
+  const t = await getTranslations("errors.actions");
   const { error, supabase, userId } = await getParentContext();
-  if (error || !userId) return { ok: false, error: error ?? "Unknown" };
+  if (error || !userId) return { ok: false, error: error ?? t("unknown") };
 
   // Verify guardian relationship
   const { data: guardianship } = await supabase
@@ -148,7 +151,7 @@ export async function signWaiver(
     .eq("student_id", studentId)
     .single();
 
-  if (!guardianship) return { ok: false, error: "You are not a guardian of this student." };
+  if (!guardianship) return { ok: false, error: t("notGuardian") };
 
   // Upsert — idempotent if already signed this version
   const { error: dbErr } = await supabase
@@ -173,10 +176,11 @@ export async function enrollChildInClass(
   studentId: string,
   classId: string,
 ): Promise<ActionResult<{ enrollmentId: string; waitlisted: boolean }>> {
+  const t = await getTranslations("errors.actions");
   const { error, supabase, userId, studioId } = await getParentContext();
-  if (error || !userId || !studioId) return { ok: false, error: error ?? "Unknown" };
+  if (error || !userId || !studioId) return { ok: false, error: error ?? t("unknown") };
   if (!uuidField.safeParse(studentId).success || !uuidField.safeParse(classId).success) {
-    return { ok: false, error: "Invalid student or class." };
+    return { ok: false, error: t("invalidStudentOrClass") };
   }
 
   // Verify guardian relationship
@@ -187,7 +191,7 @@ export async function enrollChildInClass(
     .eq("student_id", studentId)
     .single();
 
-  if (!guardianship) return { ok: false, error: "You are not a guardian of this student." };
+  if (!guardianship) return { ok: false, error: t("notGuardian") };
 
   // Check for existing enrollment
   const { data: existing } = await supabase
@@ -198,7 +202,7 @@ export async function enrollChildInClass(
     .single();
 
   if (existing?.status === "active") {
-    return { ok: false, error: "Already enrolled in this class." };
+    return { ok: false, error: t("alreadyEnrolled") };
   }
 
   // Check capacity
@@ -245,12 +249,13 @@ export async function createEnrollmentIntent(
   className: string,
   priceCents: number,
 ): Promise<ActionResult<{ clientSecret: string; invoiceId: string }>> {
+  const t = await getTranslations("errors.actions");
   const { error, supabase, userId, studioId } = await getParentContext();
-  if (error || !userId || !studioId) return { ok: false, error: error ?? "Unknown" };
+  if (error || !userId || !studioId) return { ok: false, error: error ?? t("unknown") };
   if (!uuidField.safeParse(studentId).success || !uuidField.safeParse(classId).success) {
-    return { ok: false, error: "Invalid student or class." };
+    return { ok: false, error: t("invalidStudentOrClass") };
   }
-  if (priceCents <= 0) return { ok: false, error: "Class has no fee." };
+  if (priceCents <= 0) return { ok: false, error: t("classNoFee") };
 
   // Verify guardian relationship.
   const { data: guardianship } = await supabase
@@ -260,7 +265,7 @@ export async function createEnrollmentIntent(
     .eq("student_id", studentId)
     .single();
 
-  if (!guardianship) return { ok: false, error: "You are not a guardian of this student." };
+  if (!guardianship) return { ok: false, error: t("notGuardian") };
 
   // ── Sibling / family discount (Phase 3.3) ──────────────────────────────────
   // If this family already has another ACTIVE student enrolled, apply the
@@ -292,7 +297,7 @@ export async function createEnrollmentIntent(
     .select("id")
     .single();
 
-  if (invErr || !invoice) return { ok: false, error: invErr?.message ?? "Could not create invoice." };
+  if (invErr || !invoice) return { ok: false, error: invErr?.message ?? t("couldNotCreateInvoice") };
 
   // Resolve / create the Stripe customer.
   const { data: profile } = await supabase
@@ -336,7 +341,7 @@ export async function createEnrollmentIntent(
     lineDescription: `Enrollment — ${className}`,
   });
 
-  if (!intent.client_secret) return { ok: false, error: "Stripe did not return a client secret." };
+  if (!intent.client_secret) return { ok: false, error: t("stripeNoClientSecret") };
 
   return { ok: true, data: { clientSecret: intent.client_secret, invoiceId: invoice.id as string } };
 }

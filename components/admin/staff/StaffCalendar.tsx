@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { motion } from "framer-motion";
 import {
   createStaffShift,
@@ -10,7 +10,8 @@ import {
   updateStaffShift,
 } from "@/app/portal/admin/staff/actions";
 import type { StaffOption, StaffShift, TeachingBlock } from "@/lib/staff/types";
-import { addWeeks, formatTimeShort, getWeekRange } from "@/lib/staff/week";
+import { addWeeks, getWeekRange } from "@/lib/staff/week";
+import { formatTimeShort } from "@/lib/i18n/format";
 
 const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
@@ -40,6 +41,7 @@ export default function StaffCalendar({
   const t = useTranslations("admin.staff.calendar");
   const tShared = useTranslations("admin.shared");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const router = useRouter();
   const [weekStart, setWeekStart] = useState(initialWeekStart);
   const [roleFilter, setRoleFilter] = useState<"all" | "teacher" | "office">("all");
@@ -240,7 +242,7 @@ export default function StaffCalendar({
                             }}
                             className="mb-1 rounded-md bg-brand/15 px-1.5 py-0.5 text-[0.65rem] font-medium text-brand"
                           >
-                            {formatTimeShort(s.startTime)}–{formatTimeShort(s.endTime)}
+                            {formatTimeShort(s.startTime, locale)}–{formatTimeShort(s.endTime, locale)}
                             {s.locationName ? ` · ${s.locationName}` : ""}
                           </div>
                         ))}
@@ -250,7 +252,7 @@ export default function StaffCalendar({
                             className="mb-1 rounded-md border border-[--hair] bg-base/80 px-1.5 py-0.5 text-[0.65rem] text-muted"
                             title={t("teachingClass")}
                           >
-                            {tb.className} {formatTimeShort(tb.startTime)}
+                            {tb.className} {formatTimeShort(tb.startTime, locale)}
                           </div>
                         ))}
                         {dayShifts.length === 0 && teaching.length === 0 && (

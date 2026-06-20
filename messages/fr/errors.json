@@ -21,7 +21,46 @@
       "signIn": "Se connecter",
       "websiteAdmin": "Administration du site",
       "studioBody": "Cette page n'a pas encore été publiée, ou l'URL est incorrecte. Vérifiez l'orthographe et le statut de publication dans l'onglet Site web.",
-      "backHome": "Retour à l'accueil"
+      "backHome": "Retour à l'accueil",
+      "studio": "Studio introuvable."
+    },
+    "forbidden": {
+      "adminOnly": "Seuls les administrateurs du studio peuvent gérer les domaines."
+    },
+    "actions": {
+      "unknown": "Erreur inconnue",
+      "notFound": "Introuvable",
+      "unauthorized": "Non autorisé",
+      "validationFailed": "Échec de la validation",
+      "invalidInput": "Entrée invalide",
+      "nameRequired": "Nom requis",
+      "firstNameRequired": "Prénom requis",
+      "invalidEmail": "E-mail invalide",
+      "studioNotFound": "Studio introuvable",
+      "invalidStatus": "Statut invalide",
+      "notSignedIn": "Non connecté.",
+      "parentAccessRequired": "Accès parent requis.",
+      "adminOnly": "Réservé aux administrateurs.",
+      "noStudioFound": "Studio introuvable.",
+      "notGuardian": "Vous n'êtes pas tuteur de cet élève.",
+      "invalidStudentOrClass": "Élève ou cours invalide.",
+      "alreadyEnrolled": "Déjà inscrit à ce cours.",
+      "classNoFee": "Ce cours est gratuit.",
+      "couldNotCreateInvoice": "Impossible de créer la facture.",
+      "stripeNoClientSecret": "Stripe n'a pas renvoyé de secret client.",
+      "invalidInvoiceDetails": "Détails de facture invalides.",
+      "parentNotFound": "Compte parent introuvable.",
+      "studentNotLinked": "L'élève sélectionné n'est pas lié à ce parent.",
+      "invoiceNotFound": "Facture introuvable.",
+      "unpaidInvoicesOnly": "Seules les factures impayées peuvent être relancées.",
+      "noInvoicesSelected": "Aucune facture sélectionnée.",
+      "noRemindersSent": "Aucun rappel n'a été envoyé.",
+      "invalidSubscriptionDetails": "Détails d'abonnement invalides.",
+      "monthlyTotalInvalid": "Le total mensuel doit être supérieur à zéro après remises.",
+      "chargeAmountInvalid": "Montant de prélèvement invalide.",
+      "studentNotLinkedToParent": "L'élève n'est pas lié à ce parent.",
+      "couldNotSaveSubscription": "Impossible d'enregistrer l'abonnement.",
+      "subscriptionNotFound": "Abonnement introuvable."
     }
   }
 }

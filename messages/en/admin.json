@@ -526,6 +526,14 @@
         "nextCharge": "Next charge"
       },
       "defaultPlan": "Subscription",
+      "status": {
+        "active": "Active",
+        "trialing": "Trialing",
+        "past_due": "Past due",
+        "unpaid": "Unpaid",
+        "incomplete": "Incomplete",
+        "canceled": "Canceled"
+      },
       "createModal": {
         "title": "Create subscription",
         "description": "Build a monthly plan from classes and products. Parents pay weekly, fortnightly, or monthly — a full invoice is generated on the 1st while the plan is active.",

@@ -2,17 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useFormatTimeShort } from "@/lib/i18n/format";
 import { formatMoney } from "@/lib/currency";
 import type { SiteClass } from "@/lib/site/queries";
-
-function formatTime(t: string | null): string {
-  if (!t) return "";
-  const [h, m] = t.split(":");
-  const hour = parseInt(h, 10);
-  const ampm = hour >= 12 ? "pm" : "am";
-  const h12 = hour % 12 || 12;
-  return `${h12}:${m}${ampm}`;
-}
 
 export function ScheduleBlock({
   classes,
@@ -28,6 +20,7 @@ export function ScheduleBlock({
   footnote: string;
 }) {
   const t = useTranslations("site.schedule");
+  const formatTime = useFormatTimeShort();
   const dayNames = t.raw("days") as string[];
   const allStudios = t("allStudios");
 

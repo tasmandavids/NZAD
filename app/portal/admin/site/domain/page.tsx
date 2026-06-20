@@ -4,6 +4,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { DomainSetupWizard } from "@/components/admin/site/DomainSetupWizard";
+import { getTranslations } from "@/lib/i18n/server";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
 
@@ -13,6 +14,11 @@ export default async function DomainSetupPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const [tForbidden, tNotFound] = await Promise.all([
+    getTranslations("errors.forbidden"),
+    getTranslations("errors.notFound"),
+  ]);
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("studio_id, role")
@@ -21,7 +27,7 @@ export default async function DomainSetupPage() {
 
   if (!profile?.studio_id || profile.role !== "admin") {
     return (
-      <div className="p-6 text-sm text-muted">Only studio admins can manage domains.</div>
+      <div className="p-6 text-sm text-muted">{tForbidden("adminOnly")}</div>
     );
   }
 
@@ -32,7 +38,7 @@ export default async function DomainSetupPage() {
     .single();
 
   if (!studio) {
-    return <div className="p-6 text-sm text-muted">Studio not found.</div>;
+    return <div className="p-6 text-sm text-muted">{tNotFound("studio")}</div>;
   }
 
   return (

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import type { EmailAccountRow, EmailMessageRow, EmailThreadRow } from "@/lib/email/types";
 import { PROVIDER_META } from "@/lib/email/types";
 import {
@@ -34,23 +34,23 @@ type Account = Pick<
 
 type Thread = EmailThreadRow;
 
-function formatWhen(iso: string | null) {
+function formatWhen(iso: string | null, locale: string) {
   if (!iso) return "";
   const d = new Date(iso);
   const today = new Date();
   if (d.toDateString() === today.toDateString()) {
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   }
-  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+  return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
 }
 
 function providerLabel(provider: Account["provider"]) {
   return PROVIDER_META[provider].label;
 }
 
-function formatFullWhen(iso: string | null) {
+function formatFullWhen(iso: string | null, locale: string) {
   if (!iso) return "";
-  return new Date(iso).toLocaleString([], {
+  return new Date(iso).toLocaleString(locale, {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -260,6 +260,7 @@ export function EmailInbox({
   const t = useTranslations("admin.email");
   const tShared = useTranslations("admin.shared");
   const tAdvertising = useTranslations("admin.advertising");
+  const locale = useLocale();
   const [accounts, setAccounts] = useState(initialAccounts);
   const [threads, setThreads] = useState(initialThreads);
   const [contacts, setContacts] = useState(initialContacts);
@@ -503,7 +504,7 @@ export function EmailInbox({
                       <p className={`truncate text-sm ${thread.is_read ? "font-medium text-ink" : "font-bold text-ink"}`}>
                         {primary}
                       </p>
-                      <span className="shrink-0 text-xs text-muted">{formatWhen(thread.last_message_at)}</span>
+                      <span className="shrink-0 text-xs text-muted">{formatWhen(thread.last_message_at, locale)}</span>
                     </div>
                     <p className="mt-1 truncate text-sm font-medium text-ink/80">
                       {thread.subject ?? tShared("noSubject")}
@@ -535,7 +536,7 @@ export function EmailInbox({
                 </div>
                 {a.sync_error && <p className="mt-1 text-red-500">{a.sync_error}</p>}
                 {a.last_sync_at && !a.sync_error && (
-                  <p className="mt-0.5 text-muted">{t("lastSync", { time: formatWhen(a.last_sync_at) })}</p>
+                  <p className="mt-0.5 text-muted">{t("lastSync", { time: formatWhen(a.last_sync_at, locale) })}</p>
                 )}
               </div>
             ))}
@@ -627,7 +628,7 @@ export function EmailInbox({
                             </div>
                             {msg.from_address && <p className="text-sm text-muted">{msg.from_address}</p>}
                           </div>
-                          <time className="text-sm text-muted">{formatFullWhen(msg.sent_at)}</time>
+                          <time className="text-sm text-muted">{formatFullWhen(msg.sent_at, locale)}</time>
                         </header>
                         <div className="px-4 py-5 sm:px-6">
                           {msg.subject && msg.subject !== activeThread?.subject && (
