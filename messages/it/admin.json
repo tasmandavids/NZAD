@@ -162,26 +162,26 @@
     },
     "dashboard": {
       "stats": {
-        "activeStudents": "Attivo students",
-        "activeStudentsHint": "enrolled this term",
-        "revenueThisMonth": "Revenue this month",
-        "revenueHint": "NZD, paid invoices",
-        "classesToday": "Corsi today",
-        "classesTodayHint": "across your studios"
+        "activeStudents": "Studenti attivi",
+        "activeStudentsHint": "iscritti in questo periodo",
+        "revenueThisMonth": "Entrate del mese",
+        "revenueHint": "NZD, fatture pagate",
+        "classesToday": "Corsi oggi",
+        "classesTodayHint": "in tutti i tuoi studi"
       },
       "capacity": {
-        "title": "Class capacity",
-        "subtitle": "This week, by studio time slot.",
-        "empty": "Empty",
-        "full": "Full",
-        "tooltipRoom": "{room} · {enrolled}/{capacity} enrolled",
-        "tooltipFull": " · FULL"
+        "title": "Capacità dei corsi",
+        "subtitle": "Questa settimana, per fascia oraria.",
+        "empty": "Vuoto",
+        "full": "Pieno",
+        "tooltipRoom": "{room} · {enrolled}/{capacity} iscritti",
+        "tooltipFull": " · PIENO"
       },
       "schedule": {
-        "title": "Schedule builder",
-        "subtitle": "Drag a class into a day + time slot.",
-        "allScheduled": "All classes scheduled 🎉",
-        "durationMin": "{minutes}m",
+        "title": "Costruttore di orario",
+        "subtitle": "Trascina un corso in un giorno e una fascia oraria.",
+        "allScheduled": "Tutti i corsi programmati 🎉",
+        "durationMin": "{minutes} min",
         "slots": {
           "slot1530": "3:30 pm",
           "slot1630": "4:30 pm",
@@ -907,8 +907,15 @@
       "empty": "No staff yet. Add your first team member.",
       "inactive": "Inactive",
       "reportsTo": "Reports to {name}",
-      "tabs": { "roster": "Roster", "calendar": "Calendar" },
-      "roles": { "teacher": "Teacher", "office": "Office", "admin": "Studio admin" },
+      "tabs": {
+        "roster": "Roster",
+        "calendar": "Calendar"
+      },
+      "roles": {
+        "teacher": "Teacher",
+        "office": "Office",
+        "admin": "Studio admin"
+      },
       "employment": {
         "full_time": "Full-time",
         "part_time": "Part-time",
@@ -930,7 +937,10 @@
         "startDate": "Start date",
         "scheduleNotes": "Schedule / availability notes",
         "submit": "Add staff member",
-        "roles": { "teacher": "Teacher", "office": "Office" },
+        "roles": {
+          "teacher": "Teacher",
+          "office": "Office"
+        },
         "employment": {
           "full_time": "Full-time",
           "part_time": "Part-time",

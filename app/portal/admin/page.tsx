@@ -21,7 +21,18 @@ const AdminDashboard = dynamic(
 );
 
 // Full day names indexed by JS getDay() convention: 0=Sun … 6=Sat
-const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+async function dayShortLabels() {
+  const tDays = await getTranslations("common.days");
+  return [
+    tDays("sun"),
+    tDays("mon"),
+    tDays("tue"),
+    tDays("wed"),
+    tDays("thu"),
+    tDays("fri"),
+    tDays("sat"),
+  ];
+}
 
 export default async function AdminDashboardPage() {
   const session = await getPortalSession();
@@ -29,6 +40,7 @@ export default async function AdminDashboardPage() {
 
   const t = await getTranslations("admin.dashboard.stats");
   const tCommon = await getTranslations("common");
+  const DAY_SHORT = await dayShortLabels();
 
   const { supabase, studioId } = session;
 

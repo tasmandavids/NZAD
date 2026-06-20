@@ -10,6 +10,7 @@
 
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { useFormatTimeShort } from "@/lib/i18n/client";
 import { useMemo, useState } from "react";
 import { DAYS, TIMES, type HeatClass } from "./types";
 
@@ -31,6 +32,7 @@ export function CapacityHeatmap({
   times?: string[];
 }) {
   const t = useTranslations("admin.dashboard.capacity");
+  const formatTime = useFormatTimeShort();
   const [hover, setHover] = useState<HeatClass | null>(null);
 
   // index classes by `${day}-${slot}` for O(1) cell lookup
@@ -68,7 +70,7 @@ export function CapacityHeatmap({
 
         {times.map((time, row) => (
           <div key={time} className="contents">
-            <div className="flex items-center justify-end pr-2 text-[0.65rem] tabular-nums text-muted">{time}</div>
+            <div className="flex items-center justify-end pr-2 text-[0.65rem] tabular-nums text-muted">{formatTime(time)}</div>
             {days.map((_, col) => {
               const cls = grid.get(`${col}-${row}`);
               const ratio = cls ? cls.enrolled / cls.capacity : -1;

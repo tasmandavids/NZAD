@@ -1,12 +1,12 @@
 {
   "common": {
     "loading": "Loading…",
-    "signOut": "Sign out →",
-    "you": "You",
+    "signOut": "Se déconnecter →",
+    "you": "Vous",
     "operator": "Operator",
-    "yourStudio": "Your studio",
-    "language": "Language",
-    "selectLanguage": "Select language",
+    "yourStudio": "Votre studio",
+    "language": "Langue",
+    "selectLanguage": "Choisir la langue",
     "back": "Back",
     "save": "Save",
     "cancel": "Cancel",
@@ -39,94 +39,94 @@
     "parent": "Parent",
     "teacher": "Teacher",
     "comingSoon": "Coming soon",
-    "poweredByOlune": "Powered by Olune",
+    "poweredByOlune": "Propulsé par Olune",
     "days": {
-      "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat",
-      "sun": "Sun",
-      "monday": "Monday",
-      "tuesday": "Tuesday",
-      "wednesday": "Wednesday",
-      "thursday": "Thursday",
-      "friday": "Friday",
-      "saturday": "Saturday",
-      "sunday": "Sunday"
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Sam",
+      "sun": "Dim",
+      "monday": "Lundi",
+      "tuesday": "Mardi",
+      "wednesday": "Mercredi",
+      "thursday": "Jeudi",
+      "friday": "Vendredi",
+      "saturday": "Samedi",
+      "sunday": "Dimanche"
     },
     "greeting": {
-      "morning": "Good morning",
-      "afternoon": "Good afternoon",
-      "evening": "Good evening"
+      "morning": "Bonjour",
+      "afternoon": "Bon après-midi",
+      "evening": "Bonsoir"
     }
   },
   "roles": {
-    "admin": "Studio admin",
-    "teacher": "Teacher",
-    "office": "Office staff",
+    "admin": "Admin studio",
+    "teacher": "Professeur",
+    "office": "Accueil",
     "parent": "Parent",
-    "student": "Student"
+    "student": "Élève"
   },
   "shell": {
-    "keepSidebarOpen": "Keep sidebar open",
-    "hideSidebar": "Hide sidebar",
-    "showSidebar": "Show sidebar",
-    "toggleMenu": "Toggle menu"
+    "keepSidebarOpen": "Garder le menu ouvert",
+    "hideSidebar": "Masquer le menu",
+    "showSidebar": "Afficher le menu",
+    "toggleMenu": "Basculer le menu"
   },
   "nav": {
     "sections": {
-      "teamManagement": "Team",
-      "clientManagement": "Client management",
+      "teamManagement": "Équipe",
+      "clientManagement": "Gestion clients",
       "finance": "Finance",
       "digital": "Digital",
       "communications": "Communications"
     },
     "admin": {
-      "dashboard": "Dashboard",
-      "classes": "Classes",
-      "events": "Events",
-      "staff": "Staff",
+      "dashboard": "Tableau de bord",
+      "classes": "Cours",
+      "events": "Événements",
+      "staff": "Personnel",
       "parents": "Parents",
-      "students": "Students",
-      "leads": "Leads",
-      "billing": "Billing",
-      "accounting": "Accounting",
-      "subscriptions": "Subscriptions",
-      "website": "Website",
-      "advertising": "Advertising",
-      "shop": "Shop",
-      "email": "Email",
+      "students": "Élèves",
+      "leads": "Prospects",
+      "billing": "Facturation",
+      "accounting": "Comptabilité",
+      "subscriptions": "Abonnements",
+      "website": "Site web",
+      "advertising": "Publicité",
+      "shop": "Boutique",
+      "email": "E-mail",
       "messages": "Messages",
-      "support": "Olune Support",
-      "settings": "Settings"
+      "support": "Support Olune",
+      "settings": "Paramètres"
     },
     "teacher": {
-      "schedule": "Schedule & Roll"
+      "schedule": "Planning et présence"
     },
     "office": {
-      "dashboard": "Front desk"
+      "dashboard": "Accueil"
     },
     "parent": {
-      "familyHub": "Family Hub",
-      "studioEmail": "Studio email"
+      "familyHub": "Espace famille",
+      "studioEmail": "E-mail du studio"
     },
     "student": {
-      "timetable": "My Timetable"
+      "timetable": "Mon emploi du temps"
     },
     "platform": {
-      "overview": "Overview",
+      "overview": "Vue d'ensemble",
       "studios": "Studios",
-      "owners": "Owners",
-      "supportInbox": "Support inbox",
-      "opsTasks": "Ops tasks",
+      "owners": "Propriétaires",
+      "supportInbox": "Boîte support",
+      "opsTasks": "Tâches ops",
       "featureFlags": "Feature flags",
-      "announcements": "Announcements",
-      "settings": "Settings",
-      "auditLog": "Audit log",
-      "consoleTitle": "Olune Platform",
-      "consoleSubtitle": "Operator console"
+      "announcements": "Annonces",
+      "settings": "Paramètres",
+      "auditLog": "Journal d'audit",
+      "consoleTitle": "Plateforme Olune",
+      "consoleSubtitle": "Console opérateur"
     }
   },
   "auth": {
