@@ -10,12 +10,9 @@
 // ============================================================================
 
 import { motion, useMotionValue, animate } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocale } from "next-intl";
 import type { Stat } from "./types";
-
-const nzd = new Intl.NumberFormat("en-NZ", {
-  style: "currency", currency: "NZD", maximumFractionDigits: 0,
-});
 
 function Sparkline({ data }: { data: number[] }) {
   const w = 96, h = 32, pad = 2;
@@ -49,6 +46,16 @@ function Sparkline({ data }: { data: number[] }) {
 export function StatCard({ stat, index = 0 }: { stat: Stat; index?: number }) {
   const mv = useMotionValue(0);
   const [display, setDisplay] = useState(0);
+  const locale = useLocale();
+  const currency = useMemo(
+    () =>
+      new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: "NZD",
+        maximumFractionDigits: 0,
+      }),
+    [locale],
+  );
 
   useEffect(() => {
     const controls = animate(mv, stat.value, { duration: 1.1, ease: [0.16, 1, 0.3, 1] });
@@ -57,7 +64,9 @@ export function StatCard({ stat, index = 0 }: { stat: Stat; index?: number }) {
   }, [stat.value, mv]);
 
   const formatted =
-    stat.format === "currency" ? nzd.format(display) : Math.round(display).toLocaleString();
+    stat.format === "currency"
+      ? currency.format(display)
+      : Math.round(display).toLocaleString(locale);
 
   return (
     <motion.div

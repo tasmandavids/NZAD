@@ -11,25 +11,47 @@ import { useTranslations, useLocale } from "next-intl";
 import { StatCard } from "./StatCard";
 import { CapacityHeatmap } from "./CapacityHeatmap";
 import { ScheduleBuilder } from "./ScheduleBuilder";
-import type { Stat, HeatClass, ClassBlock } from "./types";
+import type { Stat, StatData, HeatClass, ClassBlock, StatId } from "./types";
+
+const STAT_LABEL_KEYS: Record<StatId, string> = {
+  students: "activeStudents",
+  revenue: "revenueThisMonth",
+  today: "classesToday",
+};
+
+const STAT_HINT_KEYS: Record<StatId, string> = {
+  students: "activeStudentsHint",
+  revenue: "revenueHint",
+  today: "classesTodayHint",
+};
+
+function toStats(data: StatData[], t: (key: string) => string): Stat[] {
+  return data.map((s) => ({
+    ...s,
+    label: t(STAT_LABEL_KEYS[s.id]),
+    hint: t(STAT_HINT_KEYS[s.id]),
+  }));
+}
 
 export function AdminDashboard({
   studioName,
-  stats,
+  stats: statsData,
   heat,
-  heatDays,
+  heatDayDows,
   heatTimes,
   scheduleClasses,
 }: {
   studioName: string;
-  stats: Stat[];
+  stats: StatData[];
   heat: HeatClass[];
-  heatDays?: string[];
+  heatDayDows?: number[];
   heatTimes?: string[];
   scheduleClasses: ClassBlock[];
 }) {
   const tGreeting = useTranslations("common.greeting");
+  const tStats = useTranslations("admin.dashboard.stats");
   const locale = useLocale();
+  const stats = toStats(statsData, tStats);
   const greeting = (() => {
     const h = new Date().getHours();
     return h < 12 ? tGreeting("morning") : h < 18 ? tGreeting("afternoon") : tGreeting("evening");
@@ -62,7 +84,7 @@ export function AdminDashboard({
 
       {/* 2 — capacity heatmap */}
       <motion.div variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }}>
-        <CapacityHeatmap classes={heat} days={heatDays} times={heatTimes} />
+        <CapacityHeatmap classes={heat} dayDows={heatDayDows} times={heatTimes} />
       </motion.div>
 
       {/* 3 — drag-and-drop schedule builder */}

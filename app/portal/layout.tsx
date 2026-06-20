@@ -15,6 +15,8 @@ import { fetchStudioSetupState, setupBlocksPortal, setupNeedsBanner } from "@/li
 import type { Role } from "@/lib/types";
 import { getTranslations } from "@/lib/i18n/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function PortalLayout({
   children,
 }: {
