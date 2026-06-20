@@ -124,15 +124,15 @@ type EnrollData = {
 };
 
 function Step1SelectClass({
-  children,
+  familyChildren,
   onNext,
 }: {
-  children: Child[];
+  familyChildren: Child[];
   onNext: (data: { childId: string; childName: string | null; cls: AvailableClass }) => void;
 }) {
   const t = useTranslations("parent.enroll");
   const dayShort = useShortDayNames();
-  const [childId, setChildId] = useState(children[0]?.studentId ?? "");
+  const [childId, setChildId] = useState(familyChildren[0]?.studentId ?? "");
   const [classes, setClasses] = useState<AvailableClass[]>([]);
   const [filter, setFilter] = useState("");
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
@@ -159,14 +159,14 @@ function Step1SelectClass({
   });
 
   const selectedCls = classes.find((c) => c.id === selectedClassId);
-  const selectedChild = children.find((c) => c.studentId === childId);
+  const selectedChild = familyChildren.find((c) => c.studentId === childId);
 
   return (
     <div className="flex flex-col gap-4">
       <h3 className="text-base font-bold text-ink">{t("chooseClass")}</h3>
 
       {/* Child selector */}
-      {children.length > 1 && (
+      {familyChildren.length > 1 && (
         <div>
           <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
             {t("enrollingFor")}
@@ -176,7 +176,7 @@ function Step1SelectClass({
             onChange={(e) => setChildId(e.target.value)}
             className="w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-[--brand]"
           >
-            {children.map((c) => (
+            {familyChildren.map((c) => (
               <option key={c.studentId} value={c.studentId}>
                 {c.name ?? t("unnamedDancer")}
               </option>
@@ -523,10 +523,10 @@ function Step4Confirmation({
 // ─── Main modal ──────────────────────────────────────────────────────────────
 
 export function EnrollModal({
-  children,
+  familyChildren,
   onClose,
 }: {
-  children: Child[];
+  familyChildren: Child[];
   onClose: () => void;
 }) {
   const t = useTranslations("parent.enroll");
@@ -591,7 +591,7 @@ export function EnrollModal({
             >
               {step === 0 && (
                 <Step1SelectClass
-                  children={children}
+                  familyChildren={familyChildren}
                   onNext={({ childId, childName, cls }) => {
                     setEnrollData({ childId, childName, classId: cls.id, className: cls.name, priceCents: cls.priceCents });
                     setStep(1);

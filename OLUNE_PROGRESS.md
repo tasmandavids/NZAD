@@ -519,22 +519,132 @@ Advanced NEXT-SESSION Priority 1 by doing its DB-free half: **extracted the Stri
 
 ---
 
+## ✅ SESSION 18 — COMPLETE (2026-06-18 – 2026-06-19)
+
+Platform operator console, studio onboarding extensions, and production hardening.
+
+### Platform admin console (migration 0026) ✅
+- `/platform` — cross-tenant overview, studios directory, owners directory, support inbox, ops tasks board, feature flags, announcements, platform settings, audit log.
+- `scripts/seed-platform-admin.mjs` — seeds platform test admin; wired into GitHub Actions DB workflow.
+
+### Studio setup (migrations 0031–0032) ✅
+- Post-onboarding `/setup` wizard — guided studio setup with progress tracking (`setup_progress`).
+- OAuth profile names (0030), site page background (0029), light theme default (0028), studio member registration (0027).
+
+### Security & build hardening ✅
+- RLS migrations (0039, 0047–0048) — initplan fixes, policy consolidation, security linter remediation.
+- Production build fixes — lazy Stripe init, ParticleBackground client wrapper, `outputFileTracingRoot`.
+- Canonical `APP_URL` normalization for OAuth (email, Xero, Meta/TikTok callbacks); `www` prefix for `.co.nz` apex domains.
+
+### Migrations to apply: 0026–0032, 0039
+### Tests: expanded to ~125 unit tests across site builder, Xero, email, app-url, parent archive, etc.
+
+---
+
+## ✅ SESSION 19 — COMPLETE (2026-06-19)
+
+Email inbox, Xero accounting, billing hub depth, and parent CRM.
+
+### Connected email inbox (migrations 0033–0035) ✅
+- Admin + parent email views; Gmail/Microsoft/iCloud via IMAP/OAuth; sync cron (`/api/cron/sync-email`).
+- Parent email archive — known-parent emails copied to independent parent portal copies (0035).
+
+### Xero integration (migration 0036) ✅
+- `/portal/admin/accounting` — OAuth connect, invoice sync, reports; `docs/XERO_SETUP.md`.
+
+### Billing & subscriptions ✅
+- Admin billing hub refinements; subscription plans (0038); invoice overdue notify fix (0037).
+- Admin parent profiles — family management, billing, messaging (0040–0042 guardian relationships).
+
+### Advertising hub (migration 0041) ✅
+- Meta/TikTok OAuth, AI ad generation, SEO audits at `/portal/admin/advertising`.
+
+### Migrations to apply: 0033–0038, 0040–0042, 0041
+
+---
+
+## ✅ SESSION 20 — COMPLETE (2026-06-19)
+
+Site-wide i18n, office role, staff management, and observability.
+
+### Site-wide i18n (migration 0043) ✅
+- `next-intl` — English, French, Italian, Russian across public site + portal (`messages/{en,fr,it,ru}/`).
+- `preferred_locale` on profiles; `LanguageSwitcher` component.
+
+### Office role + staff (migrations 0045–0049) ✅
+- New `office` role — front-desk dashboard at `/portal/office`; scoped admin access to parents/students/leads/classes/messages.
+- Staff management — HR records, shift calendar at `/portal/admin/staff` (0046).
+- Office client-ops RLS via `is_studio_admin()` (0049); waiver signatures policy consolidation (0044).
+
+### Observability & UX ✅
+- Vercel Speed Insights on root layout.
+- Public site hover prefetch + loading states.
+
+### Migrations to apply: 0043–0049
+
+---
+
+## ✅ SESSION 21 — COMPLETE (2026-06-21)
+
+Engineering hygiene — CI, lint cleanup, docs sync.
+
+### CI workflow ✅
+- `.github/workflows/ci.yml` — runs `npm test`, `npm run typecheck`, `npm run lint` on PRs + pushes to `main`.
+- `package.json` — added `"typecheck": "tsc --noEmit --incremental false"`.
+
+### ESLint cleanup ✅
+- Fixed `react/no-children-prop` — renamed parent-portal `children` data prop to `familyChildren` (`ParentHub`, `EnrollModal`, parent page).
+- Batch `<a>` → `<Link>` in marketing, onboarding, login, programmes, admin settings.
+- Triage `react-hooks/exhaustive-deps` in site builder (`PageEditor`, `WebsiteSetupWizard`).
+- Removed `eslint.ignoreDuringBuilds` from `next.config.ts` — lint now gates production builds.
+
+### Documentation ✅
+- `README.md` — migrations 0001–0049, features list, CI section.
+- `OLUNE_PROGRESS.md` — Sessions 18–21 captured (this entry).
+
+### Migrations to apply: none this session.
+### TypeScript: Clean. Tests: `npm test` → 125 passing. Lint: zero warnings/errors.
+
+---
+
+## ✅ SESSION 22 — COMPLETE (2026-06-21)
+
+Public `/enrol` trial funnel — class picker + CRM lead capture.
+
+### Public enrol flow ✅
+- Rebuilt `/enrol` — two-step UI: discipline filter + class picker, then parent/child contact form.
+- `app/enrol/actions.ts` — `submitTrialRequest` creates a `trial` lead with `source=enrol-page`.
+- `lib/enrol/trial-request.ts` — pure name-split + notes builder (6 unit tests).
+- `supabase/migrations/0050_public_enrol_leads.sql` — anon insert RLS for public trial requests.
+- i18n updated for en/fr/it/ru; `EnrolNoStudio` fallback on marketing root.
+
+### Migrations to apply: 0050
+### Tests: `npm test` → 131 passing.
+
+---
+
 ## 🔄 NEXT SESSION — Start here
 
-### Priority 1: Integration tests for the money flows (carried, now narrowed further)
-- ✅ **Session 17** landed the DB-free half: the webhook's branch-selection + Stripe-object normalisation is now in pure `lib/webhooks/stripe-events.ts` with 22 unit tests. Still open: end-to-end / integration tests that need a **live DB or a Supabase test harness** — webhook idempotency (`stripe_events` 23505 replay short-circuit), refund netting + restock/seat-release triggers, and waitlist auto-promotion (the 0012 trigger). First step: a disposable Supabase (local `supabase start` or a test project) + a seed script, then drive the webhook route + SQL triggers against it. The pure helpers can now be composed into a thin route-level test that mocks only the Supabase client.
+### Priority 1: Staging / production readiness
+- **Verify migration state** on staging Supabase (`npm run db:status`) — ensure 0004–0049 are applied (see `STAGING_AUDIT.md`; gap may already be resolved).
+- **Set Vercel env vars:** `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, Stripe keys, `NEXT_PUBLIC_APP_URL`, email/Xero/advertising encryption keys.
+- **Seed test data** (`TEST_ACCOUNTS.md`) and re-run smoke matrix from `STAGING_AUDIT.md`.
 
-### Priority 2: Wire delivery end-to-end + verify
-- The delivery layer is built but unproven against real providers. Set `RESEND_*` + `TWILIO_*` in a staging env, apply migration 0024, trigger a `class_reminder`/`enrollment_confirmed`, and confirm `email_sent_at`/`sms_sent_at` get stamped. Add a per-studio + per-user **delivery preference** (opt-out / channel choice) — currently routing is global per type. Also consider per-studio `RESEND_FROM` (branded sender) instead of one app-wide from address.
+### Priority 2: Integration tests for money flows (carried from Session 17)
+- Webhook idempotency replay (`stripe_events` 23505), refund netting + restock triggers, waitlist auto-promotion (0012 trigger).
+- Needs disposable Supabase + seed script; pure helpers in `lib/webhooks/stripe-events.ts` are ready to compose.
 
-### Priority 3: Partial-refund UI (quick follow-up to Session 15)
-- `refundSale(kind, id, amountCents?)` already supports partial refunds, but `OrderRefundButton`/`TicketRefundButton`/`RefundButton` all issue full refunds. Add an optional amount input. NB: per the Session 14 note, a partial refund still flips the row to `refunded`, which removes it entirely from source-revenue netting — switch to subtracting `refund_amount_cents` if partials become common.
+### Priority 3: Public `/enrol` paid enrollment (optional upgrade)
+- ✅ Trial lead capture + class picker shipped (Session 22). Optional next: Stripe checkout for paid trial classes on the public page.
 
-### Priority 4: richText WYSIWYG (optional polish on Session 13 P2)
-- The toolbar inserts markdown-lite syntax into a (now monospace) textarea. If clients find raw syntax intimidating, consider a true contentEditable/WYSIWYG surface. `BlockRenderer.renderRichBody` is the serialization target.
+### Priority 4: Wire notification delivery end-to-end
+- Set `RESEND_*` + `TWILIO_*` on staging; confirm `email_sent_at`/`sms_sent_at` stamping. Add per-user/per-studio delivery preferences.
 
-### Priority 5: Template niceties
-- Small live thumbnail/preview per template card (reuse `BlockRenderer` scaled down). Let admins save their own page as a reusable template.
+### Priority 5: Partial-refund revenue netting + UI
+- Fix billing revenue netting to subtract `refund_amount_cents` before exposing partial-refund UI in dashboard buttons.
+
+### Priority 6: Optional polish
+- richText WYSIWYG (Session 13 carry-over); template live thumbnails; `next build` in CI with stub env vars.
 
 ---
 

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit --incremental false",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "INTEGRATION_TEST=1 node --env-file=.env.local ./node_modules/vitest/vitest.mjs run --config vitest.integration.config.ts",
@@ -21,6 +22,7 @@
     "db:pull": "npx supabase db pull",
     "db:reset": "npx supabase db reset",
     "seed:platform-admin": "node --env-file=.env.local scripts/seed-platform-admin.mjs",
+    "staging:verify": "node --env-file=.env.local scripts/staging-verify.mjs",
     "setup:oauth": "node --env-file=.env.local scripts/setup-oauth.mjs"
   },
   "dependencies": {

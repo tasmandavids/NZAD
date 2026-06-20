@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { headers } from "next/headers";
+import Link from "next/link";
 import { getTranslations } from "@/lib/i18n/server";
 import { resolveStudio } from "@/lib/tenant";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
@@ -25,12 +26,12 @@ export default async function ProgrammesPage() {
           {t("body")}
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <a href="/enrol" className="btn-glow btn-glow--solid px-6 py-3 text-sm">
+          <Link href="/enrol" className="btn-glow btn-glow--solid px-6 py-3 text-sm">
             {t("bookTrial")}
-          </a>
-          <a href="/" className="btn-glow px-6 py-3 text-sm">
+          </Link>
+          <Link href="/" className="btn-glow px-6 py-3 text-sm">
             {t("backHome")}
-          </a>
+          </Link>
         </div>
         <div className="mt-12 flex justify-center">
           <PoweredByOlune />

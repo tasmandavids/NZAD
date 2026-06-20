@@ -3,6 +3,7 @@
 // Minimal starter sign-in. Middleware routes you to the right /portal/<role>.
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
@@ -92,15 +93,15 @@ function LoginForm() {
 
         <p className="mt-4 text-center text-sm text-muted">
           {t("newStudio")}{" "}
-          <a href="/onboarding" className="text-ink underline">
+          <Link href="/onboarding" className="text-ink underline">
             {t("getStarted")}
-          </a>
+          </Link>
         </p>
         <p className="mt-3 text-center text-xs text-muted">
           {t("platformAdmin")}{" "}
-          <a href="/login?next=/platform" className="text-ink underline">
+          <Link href="/login?next=/platform" className="text-ink underline">
             {t("signInToPlatform")}
-          </a>
+          </Link>
         </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 import { LandingHero } from "./landing/LandingHero";
@@ -242,7 +243,7 @@ export default function OluneLanding() {
                   <p className="mt-4 flex-1 text-sm leading-relaxed text-slate">
                     {t(`pricingSection.plans.${key}.desc`)}
                   </p>
-                  <a
+                  <Link
                     href="/onboarding"
                     className={`mt-8 inline-flex justify-center rounded-full px-6 py-3 text-xs font-bold uppercase tracking-wide transition-colors ${
                       popular
@@ -251,7 +252,7 @@ export default function OluneLanding() {
                     }`}
                   >
                     {t("startFree")}
-                  </a>
+                  </Link>
                 </motion.div>
               );
             })}

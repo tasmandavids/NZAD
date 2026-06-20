@@ -157,12 +157,14 @@ export default function PageEditor({
     touch();
   };
 
+  const selectedIdsKey = selectedIds.join(",");
+
   useEffect(() => {
     if (selectedIds.length) {
       setBackgroundSelected(false);
       setPanel((p) => (p === "settings" || p === "background" ? p : "edit"));
     }
-  }, [selectedIds.join(",")]);
+  }, [selectedIdsKey, selectedIds.length]);
 
   const handleSelect = (id: string | null, opts?: { shift?: boolean }) => {
     if (!id) {
@@ -179,6 +181,7 @@ export default function PageEditor({
     }
   };
 
+  // Keyboard shortcuts bind to editor helpers defined below in this component.
   useEffect(() => {
     const isEditable = (el: EventTarget | null) => {
       if (!(el instanceof HTMLElement)) return false;
@@ -228,6 +231,7 @@ export default function PageEditor({
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- editor helpers below close over latest blocks/background
   }, [selectedIds, blocks, background]);
 
   const nudgeBlocks = (ids: string[], { dx, dy }: { dx?: number; dy?: number }) => {

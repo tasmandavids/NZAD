@@ -1,12 +1,23 @@
 {
   "enrol": {
     "title": "Réserver un essai gratuit",
-    "subtitle": "Sans engagement. Nous vous contacterons pour trouver le cours idéal pour votre danseur.",
+    "subtitle": "Choisissez un cours et nous vous contacterons pour confirmer la place de votre danseur.",
+    "steps": {
+      "pickClass": "Choisir un cours"
+    },
+    "continue": "Continuer →",
+    "backToClasses": "Changer de cours",
+    "selectedClass": "Cours",
+    "noClassesForStyle": "Aucun cours pour ce style — essayez un autre filtre ou « Pas encore sûr ».",
     "fields": {
-      "name": "Votre nom",
+      "name": "Nom du parent / tuteur",
       "namePlaceholder": "Jane Smith",
+      "childName": "Nom du danseur",
+      "childNamePlaceholder": "Emma Smith",
       "email": "Adresse e-mail",
       "emailPlaceholder": "vous@exemple.com",
+      "phone": "Téléphone (facultatif)",
+      "phonePlaceholder": "+33 6 12 34 56 78",
       "interest": "Style de danse souhaité"
     },
     "disciplines": {
@@ -28,6 +39,11 @@
       "title": "Vous êtes inscrit !",
       "body": "Nous vous contacterons bientôt, {name}. Surveillez {email}.",
       "backHome": "Retour à l'accueil"
+    },
+    "noStudio": {
+      "title": "Visitez le site de votre studio",
+      "body": "La réservation d'essai est disponible sur le sous-domaine de chaque studio — ex. votrestudio.olune.app/enrol",
+      "back": "Retour à Olune"
     }
   }
 }

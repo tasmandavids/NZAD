@@ -1,5 +1,8 @@
 # Staging Test Audit — 2026-06-18
 
+> **Note (2026-06-21):** The migration gap described below may already be resolved.
+> Re-verify with `npm run db:status` before treating P0 migration items as still open.
+
 Full audit per the staging test plan: automated baseline, Supabase/Vercel prerequisites, smoke-test matrix, and follow-up fixes.
 
 ---
@@ -177,8 +180,86 @@ Currently skips locally (no service role key). With key but without migrations, 
 
 ---
 
-## Summary
+## Re-verification — 2026-06-21
 
-The audit **was worth doing**: it found that staging database schema is ~3 migrations behind the codebase (~21 migrations missing), local/production env is incomplete for money flows and crons, and the production build had **latent P0 failures** (now fixed in this branch).
+Staging project `wnoxcwihrzbxvogvmhqv` was re-checked. The **P0 migration gap from 2026-06-18 is resolved.**
 
-Automated unit tests are healthy (**58/58**). End-to-end staging verification remains **blocked on migration apply + env configuration** — the highest-impact next action is applying `0004`–`0024` to the Supabase project, then re-running this checklist.
+### Phase 0 — Automated baseline
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| `npm test` | **PASS** (131/131) | incl. trial-request helpers |
+| `npm run typecheck` | **PASS** | |
+| `npm run lint` | **PASS** | ESLint re-enabled in builds |
+| `npm run build` | **PASS** | verified in Session 21 |
+
+### Phase 1 — Staging prerequisites
+
+#### 1a. Migrations — **RESOLVED** (one pending)
+
+| Status | Detail |
+|--------|--------|
+| **Applied on remote** | **0001–0049** (confirmed via `npm run db:status` + `schema_migrations`) |
+| **Pending** | **0050** (`public_enrol_leads`) — local only; run `npm run db:push` before public `/enrol` lead capture works |
+| **History** | Tracked in `supabase_migrations.schema_migrations` (latest: `0049`) |
+
+Critical tables verified present: `leads`, `notifications`, `orders`, `events`, `site_pages`, `stripe_events`, `staff_members`.
+
+#### 1b. Local `.env.local`
+
+| Variable | Status |
+|----------|--------|
+| `NEXT_PUBLIC_SUPABASE_URL` | SET |
+| `NEXT_PUBLIC_ROOT_DOMAIN` | SET |
+| `NEXT_PUBLIC_APP_URL` | SET |
+| `CRON_SECRET` | SET |
+| `RESEND_*` / `TWILIO_*` | SET |
+| `PLATFORM_OPERATOR_EMAILS` | SET |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **PLACEHOLDER** — replace with real anon key from Supabase dashboard |
+| `SUPABASE_SERVICE_ROLE_KEY` | **PLACEHOLDER** — blocks crons, webhooks admin path, integration tests, seed script |
+| Stripe keys | **PLACEHOLDER** — blocks all payment flows locally |
+
+#### 1c. Staging data snapshot
+
+| Metric | Count |
+|--------|-------|
+| Studios | 4 (`demo`, `ding-dong`, `disney`, `fancy-feet`) |
+| Classes | 2 |
+| Leads | 1 |
+| Enrollments | 1 |
+| Profiles — admin | 4 |
+| Profiles — parent | 6 |
+| Profiles — student | 210 |
+| Platform operators | 2 |
+| Test admin `platform-admin@olune.test` | **exists** |
+
+#### 1d. HTTP smoke (production)
+
+| URL | HTTP |
+|-----|------|
+| `https://www.olune.co.nz/login` | 200 |
+| `https://demo.olune.co.nz/enrol` | 200 |
+
+#### 1e. Integration tests
+
+`npm run test:integration` **skipped** locally — service role key is still a placeholder. With a real key + `INTEGRATION_TEST=1`, run against migrated DB (0001–0049 applied).
+
+### Still open (P1)
+
+| ID | Item |
+|----|------|
+| P1-1 | Apply migration **0050** to remote |
+| P1-2 | Replace placeholder Supabase anon + service role keys in `.env.local` |
+| P1-3 | Replace Stripe test keys + configure webhook on staging/production URL |
+| P1-4 | Confirm Vercel env mirrors production keys (`CRON_SECRET`, service role, Stripe) |
+| P1-5 | Stripe webhook event list not verified (needs dashboard access) |
+
+### Repeat this audit
+
+```bash
+npm run staging:verify
+```
+
+---
+
+## Summary (original 2026-06-18 audit below)
