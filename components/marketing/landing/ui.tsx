@@ -190,10 +190,10 @@ export function LandingNav() {
   const t = useTranslations("marketing");
 
   const links = [
-    { href: "#features", label: t("nav.features") },
-    { href: "#pricing", label: t("nav.pricing") },
-    { href: "#about", label: t("nav.about") },
-    { href: "#compare", label: t("nav.compare") },
+    { href: "#features", label: t("features") },
+    { href: "#pricing", label: t("pricing") },
+    { href: "#about", label: t("about") },
+    { href: "#compare", label: t("compare") },
   ];
 
   return (
@@ -245,8 +245,8 @@ export function LandingFooter() {
         </div>
         <div className="flex flex-wrap items-center gap-6 text-[0.68rem] font-medium uppercase tracking-[0.2em] text-white/50">
           <LanguageSwitcher compact className="text-white/70" />
-          <a href="#features" className="transition-colors hover:text-white">{t("nav.features")}</a>
-          <a href="#pricing" className="transition-colors hover:text-white">{t("nav.pricing")}</a>
+          <a href="#features" className="transition-colors hover:text-white">{t("features")}</a>
+          <a href="#pricing" className="transition-colors hover:text-white">{t("pricing")}</a>
           <Link href="/login" className="transition-colors hover:text-white">{t("signIn")}</Link>
           <Link href="/onboarding" className="transition-colors hover:text-white">{t("startFree")}</Link>
         </div>
