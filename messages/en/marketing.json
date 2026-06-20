@@ -43,6 +43,12 @@
       "body1": "You started it to make great work. But somewhere between the invoices, the project trackers, the client website edits, and the \"quick question\" emails, the work you love got buried under the work you don't.",
       "body2": "Olune pulls all of it into one place — and quietly does the heavy lifting in the background, so your evenings are yours again."
     },
+    "nav": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "about": "About",
+      "compare": "Compare"
+    },
     "features": {
       "eyebrow": "What Olune does",
       "title": "Three jobs.",

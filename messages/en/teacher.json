@@ -19,6 +19,10 @@
       "studentCount": "{count, plural, one {# student} other {# students}}",
       "noClassesAssigned": "No classes assigned to you yet.",
       "noClassesAssignedHint": "Ask your studio admin to assign classes to your teacher account."
+    },
+    "studentProgress": {
+      "back": "← Back to schedule",
+      "progressLog": "Progress log"
     }
   }
 }

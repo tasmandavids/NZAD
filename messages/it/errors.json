@@ -21,7 +21,46 @@
       "signIn": "Accedi",
       "websiteAdmin": "Admin sito web",
       "studioBody": "Questa pagina non è ancora stata pubblicata, o l'URL non è corretto. Controlla l'ortografia e lo stato di pubblicazione nella scheda Sito web.",
-      "backHome": "Torna alla home"
+      "backHome": "Torna alla home",
+      "studio": "Studio non trovato."
+    },
+    "forbidden": {
+      "adminOnly": "Solo gli amministratori dello studio possono gestire i domini."
+    },
+    "actions": {
+      "unknown": "Errore sconosciuto",
+      "notFound": "Non trovato",
+      "unauthorized": "Non autorizzato",
+      "validationFailed": "Validazione non riuscita",
+      "invalidInput": "Input non valido",
+      "nameRequired": "Nome obbligatorio",
+      "firstNameRequired": "Nome obbligatorio",
+      "invalidEmail": "E-mail non valida",
+      "studioNotFound": "Studio non trovato",
+      "invalidStatus": "Stato non valido",
+      "notSignedIn": "Accesso non effettuato.",
+      "parentAccessRequired": "Accesso genitore richiesto.",
+      "adminOnly": "Solo amministratori.",
+      "noStudioFound": "Studio non trovato.",
+      "notGuardian": "Non sei tutore di questo allievo.",
+      "invalidStudentOrClass": "Allievo o corso non valido.",
+      "alreadyEnrolled": "Già iscritto a questo corso.",
+      "classNoFee": "Il corso è gratuito.",
+      "couldNotCreateInvoice": "Impossibile creare la fattura.",
+      "stripeNoClientSecret": "Stripe non ha restituito un client secret.",
+      "invalidInvoiceDetails": "Dettagli fattura non validi.",
+      "parentNotFound": "Account genitore non trovato.",
+      "studentNotLinked": "L'allievo selezionato non è collegato a questo genitore.",
+      "invoiceNotFound": "Fattura non trovata.",
+      "unpaidInvoicesOnly": "Solo le fatture non pagate possono essere sollecitate.",
+      "noInvoicesSelected": "Nessuna fattura selezionata.",
+      "noRemindersSent": "Nessun sollecito inviato.",
+      "invalidSubscriptionDetails": "Dettagli abbonamento non validi.",
+      "monthlyTotalInvalid": "Il totale mensile deve essere maggiore di zero dopo gli sconti.",
+      "chargeAmountInvalid": "Importo addebito non valido.",
+      "studentNotLinkedToParent": "L'allievo non è collegato a questo genitore.",
+      "couldNotSaveSubscription": "Impossibile salvare l'abbonamento.",
+      "subscriptionNotFound": "Abbonamento non trovato."
     }
   }
 }

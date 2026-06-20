@@ -4,6 +4,7 @@
 
 import dynamic from "next/dynamic";
 import { requirePortalSession } from "@/lib/portal/session";
+import { getTranslations } from "@/lib/i18n/server";
 
 const BillingDashboard = dynamic(
   () => import("@/components/admin/billing/BillingDashboard").then((m) => m.BillingDashboard),
@@ -77,6 +78,7 @@ function mapInvoice(inv: Record<string, unknown>): InvoiceRow {
 
 export default async function BillingPage() {
   const { supabase, studioId } = await requirePortalSession();
+  const tCommon = await getTranslations("common");
 
   const invoiceSelect = `
     id, payer_id, amount_cents, status, due_date, issued_at, paid_at,
@@ -171,13 +173,13 @@ export default async function BillingPage() {
     const student = (Array.isArray(raw) ? raw[0] : raw) as { id: string; full_name: string | null } | null;
     if (!student?.id) continue;
     const list = studentsByParent.get(guardianId) ?? [];
-    list.push({ id: student.id, name: student.full_name ?? "Student" });
+    list.push({ id: student.id, name: student.full_name ?? tCommon("student") });
     studentsByParent.set(guardianId, list);
   }
 
   const parents: ParentOption[] = (parentsRes.data ?? []).map((p) => ({
     id: p.id as string,
-    name: (p.full_name as string | null) ?? "Parent",
+    name: (p.full_name as string | null) ?? tCommon("parent"),
     email: (p.email as string | null) ?? null,
     students: studentsByParent.get(p.id as string) ?? [],
   }));
@@ -186,7 +188,7 @@ export default async function BillingPage() {
   for (const inv of unpaidInvoices) {
     const existing = accountMap.get(inv.payerId) ?? {
       payerId: inv.payerId,
-      payerName: inv.payerName ?? "Unknown",
+      payerName: inv.payerName ?? tCommon("unknown"),
       totalCents: 0,
       overdueCents: 0,
       invoiceCount: 0,

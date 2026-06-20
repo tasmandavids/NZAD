@@ -45,6 +45,9 @@ export type PublicLabels = {
   contactPhone: string;
   contactEmail: string;
   contactHours: string;
+  defaultHeading: string;
+  defaultImageAlt: string;
+  defaultLinkLabel: string;
   spacerLabel: (height: number) => string;
 };
 
@@ -73,6 +76,9 @@ export async function BlockRenderer({
     contactPhone: t("contactLabels.phone"),
     contactEmail: t("contactLabels.email"),
     contactHours: t("contactLabels.hours"),
+    defaultHeading: t("defaultHeading"),
+    defaultImageAlt: t("defaultImageAlt"),
+    defaultLinkLabel: t("defaultLinkLabel"),
     spacerLabel: (height) => t("spacerLabel", { height }),
   };
 
@@ -141,11 +147,11 @@ function BlockSwitch({
   labels: PublicLabels;
 }) {
   switch (block.type) {
-    case "heading":      return <HeadingBlock p={block.props} />;
+    case "heading":      return <HeadingBlock p={block.props} labels={labels} />;
     case "paragraph":    return <ParagraphBlock p={block.props} />;
     case "imageBlock":   return <ImageBlock p={block.props} labels={labels} />;
     case "videoBlock":   return <VideoBlock p={block.props} labels={labels} />;
-    case "linkBlock":    return <LinkBlock p={block.props} />;
+    case "linkBlock":    return <LinkBlock p={block.props} labels={labels} />;
     case "hero":         return <Hero p={block.props} />;
     case "pageHeader":   return <PageHeader p={block.props} />;
     case "statsRow":     return <StatsRow p={block.props} />;
@@ -316,12 +322,12 @@ function FillImage({
 
 // ─── Simple Wix-style elements ────────────────────────────────────────────────
 
-function HeadingBlock({ p }: { p: BlockProps }) {
+function HeadingBlock({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
   const level = str(p, "level", "h2");
   const alignRaw = str(p, "align", "left");
   const align =
     alignRaw === "center" ? "text-center" : alignRaw === "right" ? "text-right" : "text-left";
-  const text = str(p, "text", "Heading");
+  const text = str(p, "text", labels.defaultHeading);
   const typo = typographyClasses(p);
   const levelSize =
     level === "h1"
@@ -370,7 +376,7 @@ function ParagraphBlock({ p }: { p: BlockProps }) {
 
 function ImageBlock({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
   const src = str(p, "imageUrl");
-  const alt = str(p, "alt", "Image");
+  const alt = str(p, "alt", labels.defaultImageAlt);
   const caption = str(p, "caption");
   const href = str(p, "linkHref");
   const fit = imageFitClass(p);
@@ -432,12 +438,12 @@ function VideoBlock({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
   );
 }
 
-function LinkBlock({ p }: { p: BlockProps }) {
+function LinkBlock({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
   const alignRaw = str(p, "align", "left");
   const align =
     alignRaw === "center" ? "justify-center" : alignRaw === "right" ? "justify-end" : "justify-start";
   const variant = str(p, "variant", "button");
-  const label = str(p, "label", "Link");
+  const label = str(p, "label", labels.defaultLinkLabel);
   const href = str(p, "href", "#");
   const style = str(p, "buttonStyle", "solid");
   const size = str(p, "buttonSize", "md") as "sm" | "md" | "lg";

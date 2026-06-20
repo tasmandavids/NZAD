@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { MessageThread, type ThreadMessage } from "@/components/admin/messages/MessageThread";
 
 interface Contact {
@@ -35,13 +35,13 @@ function initials(c: Contact) {
   return [c.first_name?.[0], c.last_name?.[0]].filter(Boolean).join("").toUpperCase() || "?";
 }
 
-function displayName(c: Contact) {
-  return [c.first_name, c.last_name].filter(Boolean).join(" ") || "Unknown";
+function displayName(c: Contact, unknownLabel: string) {
+  return [c.first_name, c.last_name].filter(Boolean).join(" ") || unknownLabel;
 }
 
-function formatTime(iso: string) {
+function formatTime(iso: string, locale: string) {
   const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
 export function MessagesPanel({
@@ -52,6 +52,7 @@ export function MessagesPanel({
 }: Props) {
   const t = useTranslations("admin.messages");
   const tShared = useTranslations("admin.shared");
+  const locale = useLocale();
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     initialContactId && contacts.some((c) => c.id === initialContactId)
       ? initialContactId
@@ -137,7 +138,7 @@ export function MessagesPanel({
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
     if (d.toDateString() === yesterday.toDateString()) return tShared("yesterday");
-    return d.toLocaleDateString([], { month: "short", day: "numeric" });
+    return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
   }
 
   return (
@@ -153,7 +154,7 @@ export function MessagesPanel({
             const unread = unreadCounts[c.id] ?? 0;
             const last = lastMessages[c.id];
             const isSelected = selectedContactId === c.id;
-            const name = displayName(c) === "Unknown" ? tShared("unknown") : displayName(c);
+            const name = displayName(c, tShared("unknown"));
 
             return (
               <button
@@ -181,7 +182,7 @@ export function MessagesPanel({
                     {last && (
                       <span className="shrink-0 text-[0.65rem] text-muted">
                         {formatDate(last.sent_at) === tShared("today")
-                          ? formatTime(last.sent_at)
+                          ? formatTime(last.sent_at, locale)
                           : formatDate(last.sent_at)}
                       </span>
                     )}
@@ -214,7 +215,7 @@ export function MessagesPanel({
             peerId={selectedContactId}
             contact={{
               id: selectedContact.id,
-              name: displayName(selectedContact) === "Unknown" ? tShared("unknown") : displayName(selectedContact),
+              name: displayName(selectedContact, tShared("unknown")),
               role: selectedContact.role,
             }}
             onNewMessage={handleThreadMessage}

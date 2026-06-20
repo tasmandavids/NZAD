@@ -6,13 +6,15 @@ import { createClient } from "@/lib/supabase/server";
 import { CURRENCY, gstComponentCents } from "@/lib/currency";
 import { stripe } from "@/lib/stripe";
 import { xeroSyncOutstandingInvoice } from "@/lib/xero/webhook-sync";
+import { getTranslations } from "@/lib/i18n/server";
 
 async function getAdminStudio() {
+  const t = await getTranslations("errors.actions");
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Not signed in.", supabase, studioId: null };
+  if (!user) return { error: t("notSignedIn"), supabase, studioId: null };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -20,8 +22,8 @@ async function getAdminStudio() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") return { error: "Admin only.", supabase, studioId: null };
-  if (!profile.studio_id) return { error: "No studio found.", supabase, studioId: null };
+  if (profile?.role !== "admin") return { error: t("adminOnly"), supabase, studioId: null };
+  if (!profile.studio_id) return { error: t("noStudioFound"), supabase, studioId: null };
 
   return { error: null, supabase, studioId: profile.studio_id as string };
 }
@@ -92,11 +94,12 @@ export async function createInvoice(
 ): Promise<
   { ok: true; invoiceId: string; xeroInvoiceId?: string; xeroError?: string } | { ok: false; error: string }
 > {
+  const t = await getTranslations("errors.actions");
   const parsed = CreateInvoiceSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Invalid invoice details." };
+  if (!parsed.success) return { ok: false, error: t("invalidInvoiceDetails") };
 
   const { error, supabase, studioId } = await getAdminStudio();
-  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+  if (error || !studioId) return { ok: false, error: error ?? t("unknown") };
 
   const { payerId, studentId, amountDollars, dueDate, description, sendNow } = parsed.data;
   const amountCents = Math.round(amountDollars * 100);
@@ -108,7 +111,7 @@ export async function createInvoice(
     .eq("studio_id", studioId)
     .single();
 
-  if (!payer) return { ok: false, error: "Parent account not found." };
+  if (!payer) return { ok: false, error: t("parentNotFound") };
 
   if (studentId) {
     const { data: link } = await supabase
@@ -117,7 +120,7 @@ export async function createInvoice(
       .eq("guardian_id", payerId)
       .eq("student_id", studentId)
       .maybeSingle();
-    if (!link) return { ok: false, error: "Selected student is not linked to this parent." };
+    if (!link) return { ok: false, error: t("studentNotLinked") };
   }
 
   const status = sendNow ? "sent" : "draft";
@@ -138,7 +141,7 @@ export async function createInvoice(
     .select("id, amount_cents, studio_id")
     .single();
 
-  if (invErr || !invoice) return { ok: false, error: invErr?.message ?? "Could not create invoice." };
+  if (invErr || !invoice) return { ok: false, error: invErr?.message ?? t("couldNotCreateInvoice") };
 
   const label = description?.trim() || "Studio invoice";
   if (sendNow) {
@@ -180,8 +183,9 @@ export async function createInvoice(
 export async function sendPaymentReminder(
   invoiceId: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  const t = await getTranslations("errors.actions");
   const { error, supabase, studioId } = await getAdminStudio();
-  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+  if (error || !studioId) return { ok: false, error: error ?? t("unknown") };
 
   const { data: invoice } = await supabase
     .from("invoices")
@@ -190,9 +194,9 @@ export async function sendPaymentReminder(
     .eq("studio_id", studioId)
     .single();
 
-  if (!invoice) return { ok: false, error: "Invoice not found." };
+  if (!invoice) return { ok: false, error: t("invoiceNotFound") };
   if (!["sent", "overdue"].includes(invoice.status as string)) {
-    return { ok: false, error: "Only unpaid invoices can be reminded." };
+    return { ok: false, error: t("unpaidInvoicesOnly") };
   }
 
   const payerId = invoice.payer_id as string;
@@ -235,7 +239,8 @@ export async function sendPaymentReminder(
 export async function sendBulkPaymentReminders(
   invoiceIds: string[],
 ): Promise<{ ok: true; sent: number } | { ok: false; error: string }> {
-  if (!invoiceIds.length) return { ok: false, error: "No invoices selected." };
+  const t = await getTranslations("errors.actions");
+  if (!invoiceIds.length) return { ok: false, error: t("noInvoicesSelected") };
 
   let sent = 0;
   for (const id of invoiceIds) {
@@ -243,6 +248,6 @@ export async function sendBulkPaymentReminders(
     if (res.ok) sent += 1;
   }
 
-  if (sent === 0) return { ok: false, error: "No reminders were sent." };
+  if (sent === 0) return { ok: false, error: t("noRemindersSent") };
   return { ok: true, sent };
 }

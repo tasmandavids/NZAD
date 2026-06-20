@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import ProgressTracker, {
   type ProgressEntry,
 } from "@/components/admin/students/ProgressTracker";
+import { getTranslations } from "@/lib/i18n/server";
 
 export default async function TeacherStudentProgressPage({
   params,
@@ -19,6 +20,11 @@ export default async function TeacherStudentProgressPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+
+  const [t, tCommon] = await Promise.all([
+    getTranslations("teacher.studentProgress"),
+    getTranslations("common"),
+  ]);
 
   const [studentRes, progressRes] = await Promise.all([
     supabase
@@ -58,12 +64,12 @@ export default async function TeacherStudentProgressPage({
     <div className="mx-auto max-w-3xl space-y-8 p-6">
       <div>
         <Link href="/portal/teacher" className="text-xs text-muted hover:text-ink">
-          ← Back to schedule
+          {t("back")}
         </Link>
         <h1 className="mt-3 text-2xl font-black tracking-tight text-ink">
-          {p.full_name ?? "Student"}
+          {p.full_name ?? tCommon("student")}
         </h1>
-        <p className="text-sm text-muted">{p.email ?? "Progress log"}</p>
+        <p className="text-sm text-muted">{p.email ?? t("progressLog")}</p>
       </div>
 
       <ProgressTracker studentId={p.id} entries={entries} readOnlyDelete />

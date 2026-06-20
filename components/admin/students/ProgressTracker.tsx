@@ -14,6 +14,7 @@ import {
   logProgress,
   deleteProgress,
 } from "@/app/portal/admin/students/[id]/actions";
+import { useFormatDateMedium } from "@/lib/i18n/client";
 
 export type ProgressEntry = {
   id: string;
@@ -31,21 +32,21 @@ interface Props {
   readOnlyDelete?: boolean;
 }
 
-const LEVELS = [
-  "Beginner",
-  "Improver",
-  "Intermediate",
-  "Advanced",
-  "Pre-Professional",
-];
+const LEVEL_KEYS = [
+  "beginner",
+  "improver",
+  "intermediate",
+  "advanced",
+  "preProfessional",
+] as const;
 
-function formatWhen(iso: string) {
-  return new Date(iso).toLocaleDateString("en-NZ", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+const LEVEL_VALUES: Record<(typeof LEVEL_KEYS)[number], string> = {
+  beginner: "Beginner",
+  improver: "Improver",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+  preProfessional: "Pre-Professional",
+};
 
 export default function ProgressTracker({
   studentId,
@@ -55,6 +56,7 @@ export default function ProgressTracker({
   const t = useTranslations("admin.students.progress");
   const tShared = useTranslations("admin.shared");
   const tCommon = useTranslations("common");
+  const formatWhen = useFormatDateMedium();
   const [notes, setNotes] = useState("");
   const [level, setLevel] = useState("");
   const [certInput, setCertInput] = useState("");
@@ -114,17 +116,17 @@ export default function ProgressTracker({
         <div className="mb-4 grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-              Level
+              {t("level")}
             </label>
             <select
               value={level}
               onChange={(e) => setLevel(e.target.value)}
               className="w-full rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm text-ink focus:border-[--brand] focus:outline-none"
             >
-              <option value="">— unchanged —</option>
-              {LEVELS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
+              <option value="">{tShared("unchanged")}</option>
+              {LEVEL_KEYS.map((key) => (
+                <option key={key} value={LEVEL_VALUES[key]}>
+                  {tShared(`progressLevels.${key}`)}
                 </option>
               ))}
             </select>
@@ -132,7 +134,7 @@ export default function ProgressTracker({
 
           <div>
             <label className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-              Award certification
+              {t("awardCertification")}
             </label>
             <div className="flex gap-2">
               <input
@@ -144,7 +146,7 @@ export default function ProgressTracker({
                     addCert();
                   }
                 }}
-                placeholder="e.g. Grade 3 Ballet"
+                placeholder={t("certPlaceholder")}
                 className="flex-1 rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm text-ink placeholder:text-muted focus:border-[--brand] focus:outline-none"
               />
               <button
@@ -152,7 +154,7 @@ export default function ProgressTracker({
                 onClick={addCert}
                 className="shrink-0 rounded-xl border border-[--hair] px-3 py-2 text-sm text-muted hover:text-ink"
               >
-                Add
+                {tCommon("add")}
               </button>
             </div>
           </div>
@@ -190,19 +192,19 @@ export default function ProgressTracker({
           className="rounded-xl px-5 py-2.5 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
           style={{ background: "var(--brand)" }}
         >
-          {pending ? "Saving…" : "Save entry"}
+          {pending ? tShared("saving") : t("saveEntry")}
         </button>
       </section>
 
       {/* ── Timeline ────────────────────────────────────────────────────── */}
       <section>
         <h2 className="mb-4 text-xs uppercase tracking-widest text-muted">
-          Progress history · {entries.length}
+          {t("history", { count: entries.length })}
         </h2>
 
         {entries.length === 0 ? (
           <p className="rounded-2xl border border-[--hair] bg-surface px-6 py-10 text-center text-sm text-muted">
-            No progress logged yet. Add the first entry above.
+            {t("empty")}
           </p>
         ) : (
           <ol className="relative space-y-5 border-l border-[--hair] pl-6">
@@ -238,7 +240,7 @@ export default function ProgressTracker({
                           disabled={pending}
                           className="shrink-0 text-xs text-muted transition-colors hover:text-red-400"
                         >
-                          Delete
+                          {tCommon("delete")}
                         </button>
                       )}
                     </div>

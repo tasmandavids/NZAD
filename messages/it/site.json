@@ -437,6 +437,8 @@
       "seoDescription": "SEO description",
       "boldText": "bold text",
       "linkText": "link text",
+      "boldTitle": "Grassetto",
+      "insertLinkTitle": "Inserisci link",
       "linkButton": "🔗 Link",
       "emptyPage": "La tua pagina è vuota",
       "emptyPageHint": "Right-click to add content. Shift+click to multi-select. Pink guides appear when edges align.",
@@ -616,6 +618,13 @@
       "openPreviewBefore": "Apri",
       "openPreviewAfter": "per vedere cosa vedono le famiglie."
     },
+    "preview": {
+      "draftTitle": "Anteprima bozza",
+      "publishedTitle": "Anteprima",
+      "refreshHint": "Salva nell'editor, poi aggiorna per vedere le ultime modifiche.",
+      "backToEditor": "← Editor",
+      "openLiveSite": "Apri sito live"
+    },
     "blocks": {
       "select": "Vertical spacing",
       "number": "Vertical position (px)",
@@ -645,6 +654,9 @@
       "spacerLabel": "Spacer · {height}px",
       "defaultFooterTagline": "Exceptional dance education. World-class training for all ages and abilities.",
       "defaultPortalLabel": "Portale",
+      "defaultHeading": "Titolo",
+      "defaultImageAlt": "Immagine",
+      "defaultLinkLabel": "Link",
       "navigation": "Navigazione",
       "studios": "Studi",
       "contact": "Contatti",

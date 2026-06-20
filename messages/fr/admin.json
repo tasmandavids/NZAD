@@ -284,19 +284,25 @@
     "parents": {
       "title": "Parents",
       "subtitle": "{count, plural, one {# parent} other {# parents}} · tuteurs liés aux élèves",
+      "addFamilyButton": "Ajouter une famille",
       "addFamily": {
-        "title": "Ajouter family",
-        "parentsTogether": "Parents together (add a co-parent)",
+        "title": "Ajouter une famille",
+        "parentsTogether": "Parents ensemble (ajouter un co-parent)",
         "guardian1": "Tuteur 1",
         "guardian2": "Tuteur 2",
-        "primaryContact": "Principal contact",
-        "primaryContactBilling": "Principal contact for billing",
-        "linkChildren": "Link children (optional)",
-        "authHint": "Parents can sign in with their email once you send them an invite or magic link from Supabase Auth.",
-        "namePlaceholder": "e.g. Sarah Johnson",
+        "guardian1Fallback": "Tuteur 1",
+        "guardian2Fallback": "Tuteur 2",
+        "primaryContact": "Contact principal",
+        "primaryContactBilling": "Contact principal pour la facturation",
+        "linkChildren": "Lier des enfants (optionnel)",
+        "authHint": "Les parents peuvent se connecter avec leur e-mail une fois que vous leur avez envoyé une invitation ou un lien magique via Supabase Auth.",
+        "fullName": "Nom complet *",
+        "relationship": "Lien de parenté",
+        "namePlaceholder": "ex. Sarah Johnson",
         "emailPlaceholder": "sarah@example.com",
-        "phonePlaceholder": "+64 21 234 567",
-        "adding": "Ajoutering…"
+        "phonePlaceholder": "+33 6 12 34 56 78",
+        "adding": "Ajout…",
+        "submitButton": "Ajouter la famille"
       },
       "searchPlaceholder": "Rechercher by name, email, child, or co-parent…",
       "emptySearch": "No parents match your search.",
@@ -519,7 +525,15 @@
         "status": "Status",
         "nextCharge": "Next charge"
       },
-      "defaultPlan": "Subscription",
+      "defaultPlan": "Abonnement",
+      "status": {
+        "active": "Actif",
+        "trialing": "Essai",
+        "past_due": "En retard",
+        "unpaid": "Impayé",
+        "incomplete": "Incomplet",
+        "canceled": "Annulé"
+      },
       "createModal": {
         "title": "Créer subscription",
         "description": "Build a monthly plan from classes and products. Parents pay weekly, fortnightly, or monthly — a full invoice is generated on the 1st while the plan is active.",

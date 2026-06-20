@@ -4,21 +4,15 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
-import { useFullDayNames, useTimeGreeting } from "@/lib/i18n/client";
+import { useFullDayNames, useTimeGreeting, useFormatTimeShort } from "@/lib/i18n/client";
 import { markAttendance } from "@/app/portal/teacher/actions";
 import type { TeacherClass } from "@/app/portal/teacher/page";
 
 type AttStatus = "present" | "absent" | "late" | "excused" | null;
 
-function fmt(time: string | null) {
-  if (!time) return "";
-  const [h, m] = time.split(":").map(Number);
-  const ampm = h >= 12 ? "pm" : "am";
-  return `${h % 12 || 12}${m ? `:${m.toString().padStart(2, "0")}` : ""}${ampm}`;
-}
-
 function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string }) {
   const t = useTranslations("teacher.schedule");
+  const fmt = useFormatTimeShort();
   const [statuses, setStatuses] = useState<Record<string, AttStatus>>(() =>
     Object.fromEntries(cls.students.map((s) => [s.studentId, s.attendanceStatus])),
   );
@@ -148,6 +142,7 @@ function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string
 
 function ScheduleRow({ cls, dayName }: { cls: TeacherClass; dayName: string }) {
   const t = useTranslations("teacher.schedule");
+  const fmt = useFormatTimeShort();
 
   return (
     <div className="flex items-center gap-4 rounded-xl border border-[--hair] px-4 py-3 bg-surface">

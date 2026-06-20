@@ -1,0 +1,13 @@
+{
+  "office": {
+    "welcome": "Добро пожаловать, {name}",
+    "welcomeFallback": "коллега",
+    "weekOf": "{date} · Неделя с {weekStart}",
+    "upcomingShifts": "Ваши предстоящие смены",
+    "noShiftsThisWeek": "На этой неделе смен не запланировано.",
+    "workingToday": "Кто работает сегодня",
+    "noShiftsToday": "На сегодня смен в расписании нет.",
+    "quickLinks": "Быстрые ссылки",
+    "staffFallback": "Сотрудник"
+  }
+}

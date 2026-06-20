@@ -21,7 +21,46 @@
       "signIn": "Войти",
       "websiteAdmin": "Админка сайта",
       "studioBody": "Эта страница ещё не опубликована или URL неверный. Проверьте написание и статус публикации во вкладке «Сайт».",
-      "backHome": "На главную"
+      "backHome": "На главную",
+      "studio": "Студия не найдена."
+    },
+    "forbidden": {
+      "adminOnly": "Управлять доменами могут только администраторы студии."
+    },
+    "actions": {
+      "unknown": "Неизвестная ошибка",
+      "notFound": "Не найдено",
+      "unauthorized": "Нет доступа",
+      "validationFailed": "Ошибка проверки данных",
+      "invalidInput": "Некорректные данные",
+      "nameRequired": "Укажите имя",
+      "firstNameRequired": "Укажите имя",
+      "invalidEmail": "Некорректный e-mail",
+      "studioNotFound": "Студия не найдена",
+      "invalidStatus": "Некорректный статус",
+      "notSignedIn": "Вы не вошли в систему.",
+      "parentAccessRequired": "Требуется доступ родителя.",
+      "adminOnly": "Только для администраторов.",
+      "noStudioFound": "Студия не найдена.",
+      "notGuardian": "Вы не являетесь опекуном этого ученика.",
+      "invalidStudentOrClass": "Некорректный ученик или занятие.",
+      "alreadyEnrolled": "Уже записан на это занятие.",
+      "classNoFee": "Занятие бесплатное.",
+      "couldNotCreateInvoice": "Не удалось создать счёт.",
+      "stripeNoClientSecret": "Stripe не вернул client secret.",
+      "invalidInvoiceDetails": "Некорректные данные счёта.",
+      "parentNotFound": "Аккаунт родителя не найден.",
+      "studentNotLinked": "Выбранный ученик не привязан к этому родителю.",
+      "invoiceNotFound": "Счёт не найден.",
+      "unpaidInvoicesOnly": "Напоминание можно отправить только по неоплаченным счетам.",
+      "noInvoicesSelected": "Счета не выбраны.",
+      "noRemindersSent": "Напоминания не отправлены.",
+      "invalidSubscriptionDetails": "Некорректные данные подписки.",
+      "monthlyTotalInvalid": "Месячная сумма после скидок должна быть больше нуля.",
+      "chargeAmountInvalid": "Некорректная сумма списания.",
+      "studentNotLinkedToParent": "Ученик не привязан к этому родителю.",
+      "couldNotSaveSubscription": "Не удалось сохранить подписку.",
+      "subscriptionNotFound": "Подписка не найдена."
     }
   }
 }

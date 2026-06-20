@@ -13,6 +13,17 @@ import type {
 import { CreateSubscriptionModal } from "@/components/admin/subscriptions/CreateSubscriptionModal";
 import { formatMoney } from "@/lib/currency";
 import { intervalLabel, type BillingInterval } from "@/lib/subscriptions/pricing";
+import { useLocale } from "next-intl";
+import { formatDateMedium } from "@/lib/i18n/format";
+
+const SUBSCRIPTION_STATUS_KEYS = [
+  "active",
+  "trialing",
+  "past_due",
+  "unpaid",
+  "incomplete",
+  "canceled",
+] as const;
 
 const STATUS_STYLES: Record<string, string> = {
   active: "bg-green-500/15 text-green-500",
@@ -23,24 +34,20 @@ const STATUS_STYLES: Record<string, string> = {
   canceled: "bg-red-500/15 text-red-400",
 };
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, label }: { status: string; label: string }) {
   const style = STATUS_STYLES[status] ?? "bg-muted/15 text-muted";
   return (
     <span
       className={`rounded-full px-2.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-wider ${style}`}
     >
-      {status.replace("_", " ")}
+      {label}
     </span>
   );
 }
 
-function fmtDate(iso: string | null) {
+function fmtDate(iso: string | null, locale: string) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-NZ", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  return formatDateMedium(iso, locale);
 }
 
 function billingLabel(interval: string) {
@@ -65,6 +72,7 @@ export default function SubscriptionsManager({
   const t = useTranslations("admin.subscriptions");
   const tShared = useTranslations("admin.shared");
   const tCommon = useTranslations("common");
+  const locale = useLocale();
   const [filter, setFilter] = useState<"all" | "active" | "canceled">("all");
   const [showCreate, setShowCreate] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -123,20 +131,20 @@ export default function SubscriptionsManager({
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-[--hair] bg-surface p-4">
           <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">
-            Active plans
+            {t("stats.activePlans")}
           </p>
           <p className="mt-1 text-2xl font-black tabular-nums text-ink">{activeCount}</p>
         </div>
         <div className="rounded-2xl border border-[--hair] bg-surface p-4">
           <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">
-            Monthly recurring
+            {t("stats.monthlyRecurring")}
           </p>
           <p className="mt-1 text-2xl font-black tabular-nums text-ink">
             {formatMoney(activeMrrCents)}
           </p>
         </div>
         <div className="rounded-2xl border border-[--hair] bg-surface p-4">
-          <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">Total</p>
+          <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">{t("stats.total")}</p>
           <p className="mt-1 text-2xl font-black tabular-nums text-ink">{subscriptions.length}</p>
         </div>
       </div>
@@ -151,7 +159,7 @@ export default function SubscriptionsManager({
             }`}
             style={filter === f ? { background: "var(--brand)" } : undefined}
           >
-            {f}
+            {t(`filters.${f}`)}
           </button>
         ))}
       </div>
@@ -165,14 +173,14 @@ export default function SubscriptionsManager({
       <div className="overflow-hidden rounded-2xl border border-[--hair] bg-surface">
         {filtered.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-sm text-muted">No subscriptions to show.</p>
+            <p className="text-sm text-muted">{t("empty")}</p>
             {parents.length > 0 && (
               <button
                 type="button"
                 onClick={() => setShowCreate(true)}
                 className="mt-3 text-sm font-semibold text-ink underline"
               >
-                Create your first subscription
+                {t("createFirst")}
               </button>
             )}
           </div>
@@ -181,10 +189,21 @@ export default function SubscriptionsManager({
             <table className="w-full min-w-[720px] text-left">
               <thead>
                 <tr className="border-b border-[--hair]">
-                  {["Plan", "Payer", "Student", "Monthly", "Charge", "Status", "Next charge", ""].map(
+                  {(
+                    [
+                      t("table.plan"),
+                      t("table.payer"),
+                      t("table.student"),
+                      t("table.monthly"),
+                      t("table.charge"),
+                      t("table.status"),
+                      t("table.nextCharge"),
+                      "",
+                    ] as const
+                  ).map(
                     (h) => (
                       <th
-                        key={h}
+                        key={h || "actions"}
                         className={`px-4 py-3 text-[0.62rem] font-semibold uppercase tracking-wider text-muted ${
                           !h ? "text-right" : ""
                         }`}
@@ -209,11 +228,11 @@ export default function SubscriptionsManager({
                       >
                         <td className="px-4 py-3">
                           <p className="text-sm font-semibold text-ink">
-                            {s.planLabel ?? s.className ?? "Subscription"}
+                            {s.planLabel ?? s.className ?? t("defaultPlan")}
                           </p>
                           {s.adminCreated && (
                             <p className="text-[0.65rem] font-medium uppercase tracking-wider text-muted">
-                              Admin plan
+                              {tShared("adminPlan")}
                             </p>
                           )}
                         </td>
@@ -229,13 +248,22 @@ export default function SubscriptionsManager({
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <StatusBadge status={s.status} />
+                          <StatusBadge
+                            status={s.status}
+                            label={
+                              SUBSCRIPTION_STATUS_KEYS.includes(
+                                s.status as (typeof SUBSCRIPTION_STATUS_KEYS)[number],
+                              )
+                                ? t(`status.${s.status}` as "status.active")
+                                : s.status.replace("_", " ")
+                            }
+                          />
                           {s.cancelAtPeriodEnd && s.status !== "canceled" && (
-                            <span className="ml-1.5 text-[0.6rem] text-amber-500">ending</span>
+                            <span className="ml-1.5 text-[0.6rem] text-amber-500">{tShared("ending")}</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-sm tabular-nums text-muted">
-                          {s.cancelAtPeriodEnd ? "—" : fmtDate(s.currentPeriodEnd)}
+                          {s.cancelAtPeriodEnd ? "—" : fmtDate(s.currentPeriodEnd, locale)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           {canCancel ? (
@@ -244,17 +272,17 @@ export default function SubscriptionsManager({
                                 onClick={() => cancel(s, false)}
                                 disabled={pendingId === s.id}
                                 className="text-xs text-muted transition-colors hover:text-amber-500 disabled:opacity-50"
-                                title="Stop at the end of the current period"
+                                title={tShared("cancelAtPeriodEndTitle")}
                               >
-                                {pendingId === s.id ? "…" : "Cancel at period end"}
+                                {pendingId === s.id ? "…" : tShared("cancelAtPeriodEnd")}
                               </button>
                               <button
                                 onClick={() => cancel(s, true)}
                                 disabled={pendingId === s.id}
                                 className="text-xs text-muted transition-colors hover:text-red-400 disabled:opacity-50"
-                                title="Cancel immediately"
+                                title={tShared("cancelImmediatelyTitle")}
                               >
-                                Now
+                                {tShared("cancelNow")}
                               </button>
                             </div>
                           ) : (

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { createClass, updateClass, deleteClass, createRecurringClasses, deleteRecurringGroup } from "@/app/portal/admin/classes/actions";
 import type { ClassRow, TeacherOption } from "@/app/portal/admin/classes/page";
 import { formatMoney } from "@/lib/currency";
+import { useFormatTimeShort } from "@/lib/i18n/client";
 
 const DISCIPLINE_KEYS = [
   "ballet", "jazz", "hipHop", "contemporary", "tap", "lyrical",
@@ -30,13 +31,6 @@ const DISCIPLINE_VALUES: Record<(typeof DISCIPLINE_KEYS)[number], string> = {
 
 const DAY_KEYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
 const DAY_SHORT_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
-
-function fmt(time: string | null) {
-  if (!time) return "";
-  const [h, m] = time.split(":").map(Number);
-  const ampm = h >= 12 ? "pm" : "am";
-  return `${h % 12 || 12}:${m.toString().padStart(2, "0")}${ampm}`;
-}
 
 type FormState = {
   name: string;
@@ -463,6 +457,7 @@ function ClassRowItem({
   const t = useTranslations("admin.classes");
   const tShared = useTranslations("admin.shared");
   const tCommon = useTranslations("common");
+  const fmt = useFormatTimeShort();
   const fill = cls.capacity > 0 ? cls.enrolled / cls.capacity : 0;
   const isFull = fill >= 1;
 

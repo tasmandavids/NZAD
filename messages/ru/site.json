@@ -436,8 +436,10 @@
       "seoTitle": "SEO title",
       "seoDescription": "SEO description",
       "boldText": "bold text",
-      "linkText": "link text",
-      "linkButton": "🔗 Link",
+      "linkText": "текст ссылки",
+      "boldTitle": "Жирный",
+      "insertLinkTitle": "Вставить ссылку",
+      "linkButton": "🔗 Ссылка",
       "emptyPage": "Страница пуста",
       "emptyPageHint": "Right-click to add content. Shift+click to multi-select. Pink guides appear when edges align.",
       "canvasHint": "Right-click to add · Shift+click multi-select · ⌘Z undo",
@@ -616,6 +618,13 @@
       "openPreviewBefore": "Откройте",
       "openPreviewAfter": "чтобы увидеть, что видят семьи."
     },
+    "preview": {
+      "draftTitle": "Черновой предпросмотр",
+      "publishedTitle": "Предпросмотр",
+      "refreshHint": "Сохраните в редакторе, затем обновите страницу, чтобы увидеть последние изменения.",
+      "backToEditor": "← Редактор",
+      "openLiveSite": "Открыть опубликованный сайт"
+    },
     "blocks": {
       "select": "Vertical spacing",
       "number": "Vertical position (px)",
@@ -645,6 +654,9 @@
       "spacerLabel": "Spacer · {height}px",
       "defaultFooterTagline": "Exceptional dance education. World-class training for all ages and abilities.",
       "defaultPortalLabel": "Портал",
+      "defaultHeading": "Заголовок",
+      "defaultImageAlt": "Изображение",
+      "defaultLinkLabel": "Ссылка",
       "navigation": "Навигация",
       "studios": "Студии",
       "contact": "Контакты",

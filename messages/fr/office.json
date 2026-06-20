@@ -1,0 +1,13 @@
+{
+  "office": {
+    "welcome": "Bienvenue, {name}",
+    "welcomeFallback": "à vous",
+    "weekOf": "{date} · Semaine du {weekStart}",
+    "upcomingShifts": "Vos prochains créneaux",
+    "noShiftsThisWeek": "Aucun créneau prévu cette semaine.",
+    "workingToday": "Qui travaille aujourd'hui",
+    "noShiftsToday": "Personne n'est au planning aujourd'hui.",
+    "quickLinks": "Liens rapides",
+    "staffFallback": "Personnel"
+  }
+}

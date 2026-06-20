@@ -12,16 +12,9 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { enrollStudent, unenrollStudent, dropEnrollment, addStudent } from "@/app/portal/admin/students/actions";
 import type { StudentRow, ClassOption } from "@/app/portal/admin/students/page";
+import { useShortDayNames, useFormatTimeShort } from "@/lib/i18n/client";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-
-const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-function fmt(time: string | null) {
-  if (!time) return "";
-  const [h, m] = time.split(":").map(Number);
-  return `${h % 12 || 12}:${m.toString().padStart(2, "0")}${h >= 12 ? "pm" : "am"}`;
-}
 
 function initials(name: string | null) {
   if (!name) return "?";
@@ -34,6 +27,9 @@ function initials(name: string | null) {
 // ─── add student slide-over ──────────────────────────────────────────────────
 
 function AddStudentPanel({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("admin.students.addPanel");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
   const [form, setForm] = useState({ fullName: "", email: "", phone: "" });
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -63,43 +59,43 @@ function AddStudentPanel({ onClose }: { onClose: () => void }) {
         transition={{ type: "spring", stiffness: 380, damping: 38 }}
       >
         <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
-          <h2 className="font-black text-ink">Add student</h2>
+          <h2 className="font-black text-ink">{t("title")}</h2>
           <button onClick={onClose} className="text-muted hover:text-ink">✕</button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <div>
             <label className="block text-[0.68rem] font-semibold uppercase tracking-wider text-muted mb-1">
-              Full name *
+              {t("fullName")}
             </label>
             <input
               value={form.fullName}
               onChange={(e) => set("fullName")(e.target.value)}
-              placeholder="e.g. Emma Johnson"
+              placeholder={t("fullNamePlaceholder")}
               className="w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink
                          placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
             />
           </div>
           <div>
             <label className="block text-[0.68rem] font-semibold uppercase tracking-wider text-muted mb-1">
-              Email
+              {tCommon("email")}
             </label>
             <input
               type="email"
               value={form.email}
               onChange={(e) => set("email")(e.target.value)}
-              placeholder="emma@example.com"
+              placeholder={t("emailPlaceholder")}
               className="w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink
                          placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
             />
           </div>
           <div>
             <label className="block text-[0.68rem] font-semibold uppercase tracking-wider text-muted mb-1">
-              Phone
+              {tCommon("phone")}
             </label>
             <input
               value={form.phone}
               onChange={(e) => set("phone")(e.target.value)}
-              placeholder="+64 21 234 567"
+              placeholder={t("phonePlaceholder")}
               className="w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink
                          placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-[--brand]"
             />
@@ -112,7 +108,7 @@ function AddStudentPanel({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex gap-3 border-t border-[--hair] px-6 py-4">
           <button onClick={onClose} className="flex-1 rounded-xl border border-[--hair] py-2.5 text-sm text-muted hover:text-ink">
-            Cancel
+            {tCommon("cancel")}
           </button>
           <button
             onClick={submit}
@@ -120,7 +116,7 @@ function AddStudentPanel({ onClose }: { onClose: () => void }) {
             className="flex-1 rounded-xl py-2.5 text-sm font-bold text-white disabled:opacity-50"
             style={{ background: "var(--brand)" }}
           >
-            {pending ? "Adding…" : "Add student"}
+            {pending ? tShared("adding") : t("addStudent")}
           </button>
         </div>
       </motion.aside>
@@ -139,6 +135,11 @@ function StudentPanel({
   allClasses: ClassOption[];
   onClose: () => void;
 }) {
+  const t = useTranslations("admin.students.panel");
+  const tShared = useTranslations("admin.shared");
+  const tCommon = useTranslations("common");
+  const dayShort = useShortDayNames();
+  const fmt = useFormatTimeShort();
   const [selectedClassId, setSelectedClassId] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -154,7 +155,7 @@ function StudentPanel({
       const result = await enrollStudent({ studentId: student.id, classId: selectedClassId });
       if (!result.ok) { setError(result.error); return; }
       setSelectedClassId("");
-      setSuccess("Enrolled successfully.");
+      setSuccess(t("enrolledSuccess"));
       setTimeout(() => setSuccess(null), 2500);
     });
   };
@@ -172,7 +173,7 @@ function StudentPanel({
     startTransition(async () => {
       const result = await dropEnrollment(student.id, classId);
       if (!result.ok) { setError(result.error); return; }
-      setSuccess("Enrollment dropped.");
+      setSuccess(t("droppedSuccess"));
       setTimeout(() => setSuccess(null), 2500);
     });
   };
@@ -198,8 +199,8 @@ function StudentPanel({
             {initials(student.name)}
           </span>
           <div className="flex-1 min-w-0">
-            <h2 className="font-black text-ink truncate">{student.name ?? "Unknown"}</h2>
-            <p className="text-xs text-muted truncate">{student.email ?? student.phone ?? "No contact"}</p>
+            <h2 className="font-black text-ink truncate">{student.name ?? tShared("unknown")}</h2>
+            <p className="text-xs text-muted truncate">{student.email ?? student.phone ?? t("noContact")}</p>
           </div>
           <button onClick={onClose} className="shrink-0 text-muted hover:text-ink">✕</button>
         </div>
@@ -210,17 +211,17 @@ function StudentPanel({
             href={`/portal/admin/students/${student.id}`}
             className="flex items-center justify-between rounded-xl border border-[--hair] bg-base px-4 py-3 text-sm font-semibold text-ink transition-colors hover:border-[--brand]"
           >
-            View progress &amp; profile
+            {t("viewProgress")}
             <span className="text-[--brand]">→</span>
           </Link>
 
           {/* Current enrollments */}
           <section>
             <h3 className="mb-2 text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-              Enrolled classes · {student.enrollments.length}
+              {t("enrolledClasses", { count: student.enrollments.length })}
             </h3>
             {student.enrollments.length === 0 ? (
-              <p className="text-sm text-muted">Not enrolled in any classes yet.</p>
+              <p className="text-sm text-muted">{t("notEnrolled")}</p>
             ) : (
               <ul className="space-y-2">
                 {student.enrollments.map((e) => (
@@ -228,7 +229,7 @@ function StudentPanel({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-ink truncate">{e.className}</p>
                       <p className="text-xs text-muted">
-                        {DAY_SHORT[e.dayOfWeek]}
+                        {dayShort[e.dayOfWeek]}
                         {e.startTime ? ` · ${fmt(e.startTime)}` : ""}
                       </p>
                     </div>
@@ -236,19 +237,19 @@ function StudentPanel({
                       <button
                         onClick={() => drop(e.classId)}
                         disabled={pending}
-                        title="Soft-cancel: keeps history and frees a spot for the waitlist"
+                        title={t("dropTitle")}
                         className="text-xs text-muted transition-colors hover:text-amber-400"
                       >
-                        Drop
+                        {t("drop")}
                       </button>
                       <span className="text-[--hair]">·</span>
                       <button
                         onClick={() => unenroll(e.classId)}
                         disabled={pending}
-                        title="Permanently delete this enrollment record"
+                        title={t("removeTitle")}
                         className="text-xs text-muted transition-colors hover:text-red-400"
                       >
-                        Remove
+                        {t("remove")}
                       </button>
                     </div>
                   </li>
@@ -261,7 +262,7 @@ function StudentPanel({
           {available.length > 0 && (
             <section>
               <h3 className="mb-2 text-[0.68rem] font-semibold uppercase tracking-wider text-muted">
-                Enroll in a class
+                {t("enrollInClass")}
               </h3>
               <div className="flex gap-2">
                 <select
@@ -270,13 +271,13 @@ function StudentPanel({
                   className="flex-1 rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink
                              focus:outline-none focus:ring-1 focus:ring-[--brand]"
                 >
-                  <option value="">— choose class —</option>
+                  <option value="">{tShared("chooseClass")}</option>
                   {available.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
                       {c.discipline ? ` (${c.discipline})` : ""}
                       {" — "}
-                      {DAY_SHORT[c.dayOfWeek]}
+                      {dayShort[c.dayOfWeek]}
                       {c.startTime ? ` ${fmt(c.startTime)}` : ""}
                     </option>
                   ))}
@@ -287,7 +288,7 @@ function StudentPanel({
                   className="shrink-0 rounded-lg px-4 py-2 text-sm font-bold text-white disabled:opacity-50 transition-opacity hover:opacity-90"
                   style={{ background: "var(--brand)" }}
                 >
-                  Enroll
+                  {t("enroll")}
                 </button>
               </div>
             </section>
@@ -312,6 +313,8 @@ function StudentPanel({
 // ─── student card ────────────────────────────────────────────────────────────
 
 function StudentCard({ student, onClick }: { student: StudentRow; onClick: () => void }) {
+  const t = useTranslations("admin.students");
+  const tShared = useTranslations("admin.shared");
   return (
     <motion.button
       onClick={onClick}
@@ -326,13 +329,13 @@ function StudentCard({ student, onClick }: { student: StudentRow; onClick: () =>
           {initials(student.name)}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="font-bold text-ink truncate">{student.name ?? "Unnamed"}</p>
+          <p className="font-bold text-ink truncate">{student.name ?? tShared("unnamed")}</p>
           <p className="text-xs text-muted truncate">{student.email ?? student.phone ?? "—"}</p>
         </div>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {student.enrollments.length === 0 ? (
-          <span className="text-xs text-muted italic">No classes</span>
+          <span className="text-xs text-muted italic">{t("noClasses")}</span>
         ) : (
           student.enrollments.slice(0, 3).map((e) => (
             <span
@@ -345,7 +348,7 @@ function StudentCard({ student, onClick }: { student: StudentRow; onClick: () =>
         )}
         {student.enrollments.length > 3 && (
           <span className="rounded-full border border-[--hair] px-2 py-0.5 text-[0.62rem] text-muted">
-            +{student.enrollments.length - 3} more
+            {tShared("moreCount", { count: student.enrollments.length - 3 })}
           </span>
         )}
       </div>

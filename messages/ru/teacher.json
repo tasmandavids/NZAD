@@ -19,6 +19,10 @@
       "studentCount": "{count, plural, one {# ученик} few {# ученика} many {# учеников} other {# ученика}}",
       "noClassesAssigned": "Вам пока не назначены занятия.",
       "noClassesAssignedHint": "Попросите администратора студии назначить вам занятия."
+    },
+    "studentProgress": {
+      "back": "← Назад к расписанию",
+      "progressLog": "Журнал прогресса"
     }
   }
 }

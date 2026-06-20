@@ -25,8 +25,9 @@ export function addWeeks(isoDate: string, weeks: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export function formatTimeShort(time: string): string {
-  const [h, m] = time.split(":").map(Number);
-  const ampm = h >= 12 ? "pm" : "am";
-  return `${h % 12 || 12}:${String(m).padStart(2, "0")}${ampm}`;
+import { formatTimeShort as formatTimeShortI18n } from "@/lib/i18n/format";
+
+/** @deprecated Prefer formatTimeShort from @/lib/i18n/format with an explicit locale. */
+export function formatTimeShort(time: string, locale = "en"): string {
+  return formatTimeShortI18n(time, locale);
 }
