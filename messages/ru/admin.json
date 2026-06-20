@@ -162,26 +162,26 @@
     },
     "dashboard": {
       "stats": {
-        "activeStudents": "Активно students",
-        "activeStudentsHint": "enrolled this term",
-        "revenueThisMonth": "Revenue this month",
-        "revenueHint": "NZD, paid invoices",
-        "classesToday": "Занятия today",
-        "classesTodayHint": "across your studios"
+        "activeStudents": "Активных учеников",
+        "activeStudentsHint": "зачислены в этом семестре",
+        "revenueThisMonth": "Выручка за месяц",
+        "revenueHint": "NZD, оплаченные счета",
+        "classesToday": "Занятия сегодня",
+        "classesTodayHint": "во всех ваших студиях"
       },
       "capacity": {
-        "title": "Class capacity",
-        "subtitle": "This week, by studio time slot.",
-        "empty": "Empty",
-        "full": "Full",
-        "tooltipRoom": "{room} · {enrolled}/{capacity} enrolled",
-        "tooltipFull": " · FULL"
+        "title": "Заполненность классов",
+        "subtitle": "На этой неделе, по временным слотам.",
+        "empty": "Пусто",
+        "full": "Полностью",
+        "tooltipRoom": "{room} · {enrolled}/{capacity} записано",
+        "tooltipFull": " · ПОЛНОСТЬЮ"
       },
       "schedule": {
-        "title": "Schedule builder",
-        "subtitle": "Drag a class into a day + time slot.",
-        "allScheduled": "All classes scheduled 🎉",
-        "durationMin": "{minutes}m",
+        "title": "Конструктор расписания",
+        "subtitle": "Перетащите занятие в день и временной слот.",
+        "allScheduled": "Все занятия запланированы 🎉",
+        "durationMin": "{minutes} мин",
         "slots": {
           "slot1530": "3:30 pm",
           "slot1630": "4:30 pm",
@@ -907,8 +907,15 @@
       "empty": "No staff yet. Add your first team member.",
       "inactive": "Inactive",
       "reportsTo": "Reports to {name}",
-      "tabs": { "roster": "Roster", "calendar": "Calendar" },
-      "roles": { "teacher": "Teacher", "office": "Office", "admin": "Studio admin" },
+      "tabs": {
+        "roster": "Roster",
+        "calendar": "Calendar"
+      },
+      "roles": {
+        "teacher": "Teacher",
+        "office": "Office",
+        "admin": "Studio admin"
+      },
       "employment": {
         "full_time": "Full-time",
         "part_time": "Part-time",
@@ -930,7 +937,10 @@
         "startDate": "Start date",
         "scheduleNotes": "Schedule / availability notes",
         "submit": "Add staff member",
-        "roles": { "teacher": "Teacher", "office": "Office" },
+        "roles": {
+          "teacher": "Teacher",
+          "office": "Office"
+        },
         "employment": {
           "full_time": "Full-time",
           "part_time": "Part-time",

@@ -1,12 +1,12 @@
 {
   "common": {
     "loading": "Loading…",
-    "signOut": "Sign out →",
-    "you": "You",
+    "signOut": "Выйти →",
+    "you": "Вы",
     "operator": "Operator",
-    "yourStudio": "Your studio",
-    "language": "Language",
-    "selectLanguage": "Select language",
+    "yourStudio": "Ваша студия",
+    "language": "Язык",
+    "selectLanguage": "Выберите язык",
     "back": "Back",
     "save": "Save",
     "cancel": "Cancel",
@@ -39,94 +39,94 @@
     "parent": "Parent",
     "teacher": "Teacher",
     "comingSoon": "Coming soon",
-    "poweredByOlune": "Powered by Olune",
+    "poweredByOlune": "Работает на Olune",
     "days": {
-      "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat",
-      "sun": "Sun",
-      "monday": "Monday",
-      "tuesday": "Tuesday",
-      "wednesday": "Wednesday",
-      "thursday": "Thursday",
-      "friday": "Friday",
-      "saturday": "Saturday",
-      "sunday": "Sunday"
+      "mon": "Пн",
+      "tue": "Вт",
+      "wed": "Ср",
+      "thu": "Чт",
+      "fri": "Пт",
+      "sat": "Сб",
+      "sun": "Вс",
+      "monday": "Понедельник",
+      "tuesday": "Вторник",
+      "wednesday": "Среда",
+      "thursday": "Четверг",
+      "friday": "Пятница",
+      "saturday": "Суббота",
+      "sunday": "Воскресенье"
     },
     "greeting": {
-      "morning": "Good morning",
-      "afternoon": "Good afternoon",
-      "evening": "Good evening"
+      "morning": "Доброе утро",
+      "afternoon": "Добрый день",
+      "evening": "Добрый вечер"
     }
   },
   "roles": {
-    "admin": "Studio admin",
-    "teacher": "Teacher",
-    "office": "Office staff",
-    "parent": "Parent",
-    "student": "Student"
+    "admin": "Админ студии",
+    "teacher": "Преподаватель",
+    "office": "Офис",
+    "parent": "Родитель",
+    "student": "Ученик"
   },
   "shell": {
-    "keepSidebarOpen": "Keep sidebar open",
-    "hideSidebar": "Hide sidebar",
-    "showSidebar": "Show sidebar",
-    "toggleMenu": "Toggle menu"
+    "keepSidebarOpen": "Оставить меню открытым",
+    "hideSidebar": "Скрыть меню",
+    "showSidebar": "Показать меню",
+    "toggleMenu": "Переключить меню"
   },
   "nav": {
     "sections": {
-      "teamManagement": "Team",
-      "clientManagement": "Client management",
-      "finance": "Finance",
-      "digital": "Digital",
-      "communications": "Communications"
+      "teamManagement": "Команда",
+      "clientManagement": "Клиенты",
+      "finance": "Финансы",
+      "digital": "Цифровое",
+      "communications": "Коммуникации"
     },
     "admin": {
-      "dashboard": "Dashboard",
-      "classes": "Classes",
-      "events": "Events",
-      "staff": "Staff",
-      "parents": "Parents",
-      "students": "Students",
-      "leads": "Leads",
-      "billing": "Billing",
-      "accounting": "Accounting",
-      "subscriptions": "Subscriptions",
-      "website": "Website",
-      "advertising": "Advertising",
-      "shop": "Shop",
-      "email": "Email",
-      "messages": "Messages",
-      "support": "Olune Support",
-      "settings": "Settings"
+      "dashboard": "Панель",
+      "classes": "Занятия",
+      "events": "События",
+      "staff": "Персонал",
+      "parents": "Родители",
+      "students": "Ученики",
+      "leads": "Заявки",
+      "billing": "Счета",
+      "accounting": "Учёт",
+      "subscriptions": "Подписки",
+      "website": "Сайт",
+      "advertising": "Реклама",
+      "shop": "Магазин",
+      "email": "Почта",
+      "messages": "Сообщения",
+      "support": "Поддержка Olune",
+      "settings": "Настройки"
     },
     "teacher": {
-      "schedule": "Schedule & Roll"
+      "schedule": "Расписание и журнал"
     },
     "office": {
-      "dashboard": "Front desk"
+      "dashboard": "Ресепшн"
     },
     "parent": {
-      "familyHub": "Family Hub",
-      "studioEmail": "Studio email"
+      "familyHub": "Семейный кабинет",
+      "studioEmail": "Почта студии"
     },
     "student": {
-      "timetable": "My Timetable"
+      "timetable": "Моё расписание"
     },
     "platform": {
-      "overview": "Overview",
-      "studios": "Studios",
-      "owners": "Owners",
-      "supportInbox": "Support inbox",
-      "opsTasks": "Ops tasks",
+      "overview": "Обзор",
+      "studios": "Студии",
+      "owners": "Владельцы",
+      "supportInbox": "Входящие поддержки",
+      "opsTasks": "Операционные задачи",
       "featureFlags": "Feature flags",
-      "announcements": "Announcements",
-      "settings": "Settings",
-      "auditLog": "Audit log",
-      "consoleTitle": "Olune Platform",
-      "consoleSubtitle": "Operator console"
+      "announcements": "Объявления",
+      "settings": "Настройки",
+      "auditLog": "Журнал аудита",
+      "consoleTitle": "Платформа Olune",
+      "consoleSubtitle": "Консоль оператора"
     }
   },
   "auth": {

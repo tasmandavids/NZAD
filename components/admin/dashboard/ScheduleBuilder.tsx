@@ -18,6 +18,7 @@ import {
 } from "@hello-pangea/dnd";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { useFormatTimeShort } from "@/lib/i18n/client";
 import { useCallback, useState, useTransition } from "react";
 import { rescheduleClass } from "@/app/portal/admin/classes/schedule-actions";
 import { slotKey, SCHEDULE_DAYS, SCHEDULE_SLOTS, type ClassBlock } from "./types";
@@ -86,6 +87,7 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
   const t = useTranslations("admin.dashboard.schedule");
   const tShared = useTranslations("admin.shared");
   const tDays = useTranslations("common.days");
+  const formatTime = useFormatTimeShort();
   const dayKey: Record<string, "mon" | "tue" | "wed" | "thu" | "fri" | "sat"> = {
     Mon: "mon", Tue: "tue", Wed: "wed", Thu: "thu", Fri: "fri", Sat: "sat",
   };
@@ -247,7 +249,7 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
               key={s.id}
               className="pb-1 text-center text-xs font-semibold uppercase tracking-wider text-muted"
             >
-              {t(`slots.slot${s.id.replace(":", "")}` as "slots.slot1530")}
+              {formatTime(s.id)}
             </div>
           ))}
 

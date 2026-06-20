@@ -1,12 +1,12 @@
 {
   "common": {
     "loading": "Loading…",
-    "signOut": "Sign out →",
-    "you": "You",
+    "signOut": "Esci →",
+    "you": "Tu",
     "operator": "Operator",
-    "yourStudio": "Your studio",
-    "language": "Language",
-    "selectLanguage": "Select language",
+    "yourStudio": "Il tuo studio",
+    "language": "Lingua",
+    "selectLanguage": "Seleziona lingua",
     "back": "Back",
     "save": "Save",
     "cancel": "Cancel",
@@ -41,92 +41,92 @@
     "comingSoon": "Coming soon",
     "poweredByOlune": "Powered by Olune",
     "days": {
-      "mon": "Mon",
-      "tue": "Tue",
-      "wed": "Wed",
-      "thu": "Thu",
-      "fri": "Fri",
-      "sat": "Sat",
-      "sun": "Sun",
-      "monday": "Monday",
-      "tuesday": "Tuesday",
-      "wednesday": "Wednesday",
-      "thursday": "Thursday",
-      "friday": "Friday",
-      "saturday": "Saturday",
-      "sunday": "Sunday"
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Gio",
+      "fri": "Ven",
+      "sat": "Sab",
+      "sun": "Dom",
+      "monday": "Lunedì",
+      "tuesday": "Martedì",
+      "wednesday": "Mercoledì",
+      "thursday": "Giovedì",
+      "friday": "Venerdì",
+      "saturday": "Sabato",
+      "sunday": "Domenica"
     },
     "greeting": {
-      "morning": "Good morning",
-      "afternoon": "Good afternoon",
-      "evening": "Good evening"
+      "morning": "Buongiorno",
+      "afternoon": "Buon pomeriggio",
+      "evening": "Buonasera"
     }
   },
   "roles": {
-    "admin": "Studio admin",
-    "teacher": "Teacher",
-    "office": "Office staff",
-    "parent": "Parent",
-    "student": "Student"
+    "admin": "Admin studio",
+    "teacher": "Insegnante",
+    "office": "Reception",
+    "parent": "Genitore",
+    "student": "Studente"
   },
   "shell": {
-    "keepSidebarOpen": "Keep sidebar open",
-    "hideSidebar": "Hide sidebar",
-    "showSidebar": "Show sidebar",
-    "toggleMenu": "Toggle menu"
+    "keepSidebarOpen": "Mantieni menu aperto",
+    "hideSidebar": "Nascondi menu",
+    "showSidebar": "Mostra menu",
+    "toggleMenu": "Apri/chiudi menu"
   },
   "nav": {
     "sections": {
       "teamManagement": "Team",
-      "clientManagement": "Client management",
-      "finance": "Finance",
-      "digital": "Digital",
-      "communications": "Communications"
+      "clientManagement": "Gestione clienti",
+      "finance": "Finanza",
+      "digital": "Digitale",
+      "communications": "Comunicazioni"
     },
     "admin": {
       "dashboard": "Dashboard",
-      "classes": "Classes",
-      "events": "Events",
+      "classes": "Corsi",
+      "events": "Eventi",
       "staff": "Staff",
-      "parents": "Parents",
-      "students": "Students",
-      "leads": "Leads",
-      "billing": "Billing",
-      "accounting": "Accounting",
-      "subscriptions": "Subscriptions",
-      "website": "Website",
-      "advertising": "Advertising",
-      "shop": "Shop",
+      "parents": "Genitori",
+      "students": "Studenti",
+      "leads": "Lead",
+      "billing": "Fatturazione",
+      "accounting": "Contabilità",
+      "subscriptions": "Abbonamenti",
+      "website": "Sito web",
+      "advertising": "Pubblicità",
+      "shop": "Negozio",
       "email": "Email",
-      "messages": "Messages",
-      "support": "Olune Support",
-      "settings": "Settings"
+      "messages": "Messaggi",
+      "support": "Supporto Olune",
+      "settings": "Impostazioni"
     },
     "teacher": {
-      "schedule": "Schedule & Roll"
+      "schedule": "Orario e presenze"
     },
     "office": {
-      "dashboard": "Front desk"
+      "dashboard": "Reception"
     },
     "parent": {
-      "familyHub": "Family Hub",
-      "studioEmail": "Studio email"
+      "familyHub": "Hub famiglia",
+      "studioEmail": "Email dello studio"
     },
     "student": {
-      "timetable": "My Timetable"
+      "timetable": "Il mio orario"
     },
     "platform": {
-      "overview": "Overview",
-      "studios": "Studios",
-      "owners": "Owners",
-      "supportInbox": "Support inbox",
-      "opsTasks": "Ops tasks",
-      "featureFlags": "Feature flags",
-      "announcements": "Announcements",
-      "settings": "Settings",
-      "auditLog": "Audit log",
-      "consoleTitle": "Olune Platform",
-      "consoleSubtitle": "Operator console"
+      "overview": "Panoramica",
+      "studios": "Studi",
+      "owners": "Proprietari",
+      "supportInbox": "Inbox supporto",
+      "opsTasks": "Attività ops",
+      "featureFlags": "Feature flag",
+      "announcements": "Annunci",
+      "settings": "Impostazioni",
+      "auditLog": "Registro audit",
+      "consoleTitle": "Piattaforma Olune",
+      "consoleSubtitle": "Console operatore"
     }
   },
   "auth": {
