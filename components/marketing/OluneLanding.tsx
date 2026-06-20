@@ -53,28 +53,28 @@ export default function OluneLanding() {
           viewport={{ once: true, margin: "-60px" }}
           className="mb-[clamp(3rem,8vw,5rem)]"
         >
-          <Eyebrow>{t("features.eyebrow")}</Eyebrow>
+          <Eyebrow>{t("featuresSection.eyebrow")}</Eyebrow>
           <motion.h2 variants={rise} className="font-display text-[clamp(2rem,5vw,3.5rem)] font-light tracking-tight">
-            {t("features.title")}{" "}
-            <span className="font-serif italic text-iris">{t("features.titleEmphasis")}</span>
+            {t("featuresSection.title")}{" "}
+            <span className="font-serif italic text-iris">{t("featuresSection.titleEmphasis")}</span>
           </motion.h2>
         </motion.div>
 
         <div className="space-y-[clamp(4rem,10vw,7rem)]">
           <ProductDemo
-            title={t("features.manageStudio.title")}
-            subtitle={t("features.manageStudio.subtitle")}
+            title={t("featuresSection.manageStudio.title")}
+            subtitle={t("featuresSection.manageStudio.subtitle")}
             accent="iris"
           />
           <ProductDemo
-            title={t("features.money.title")}
-            subtitle={t("features.money.subtitle")}
+            title={t("featuresSection.money.title")}
+            subtitle={t("featuresSection.money.subtitle")}
             reversed
             accent="apricot"
           />
           <ProductDemo
-            title={t("features.liveSites.title")}
-            subtitle={t("features.liveSites.subtitle")}
+            title={t("featuresSection.liveSites.title")}
+            subtitle={t("featuresSection.liveSites.subtitle")}
             accent="lumen"
           />
         </div>
@@ -283,23 +283,23 @@ export default function OluneLanding() {
           className="grid items-center gap-12 lg:grid-cols-2"
         >
           <div>
-            <Eyebrow>{t("about.eyebrow")}</Eyebrow>
+            <Eyebrow>{t("aboutSection.eyebrow")}</Eyebrow>
             <motion.h2 variants={rise} className="font-display text-[clamp(2rem,5vw,3rem)] font-light leading-tight tracking-tight">
-              {t("about.title")}{" "}
-              <span className="font-serif italic text-iris">{t("about.titleEmphasis")}</span>
+              {t("aboutSection.title")}{" "}
+              <span className="font-serif italic text-iris">{t("aboutSection.titleEmphasis")}</span>
             </motion.h2>
             <motion.p variants={rise} className="mt-6 text-lg leading-relaxed text-slate">
-              {t("about.body1")}
+              {t("aboutSection.body1")}
             </motion.p>
             <motion.p variants={rise} className="mt-4 text-lg leading-relaxed text-slate">
-              {t("about.body2")}
+              {t("aboutSection.body2")}
             </motion.p>
             <motion.p variants={rise} className="mt-4 font-medium text-ink-black">
-              {t("about.body3")}
+              {t("aboutSection.body3")}
             </motion.p>
             <motion.div variants={rise} className="mt-8 flex flex-wrap gap-4">
-              <SecondaryButton href="#about">{t("about.meetTeam")}</SecondaryButton>
-              <SecondaryButton href="#about">{t("about.ourStory")}</SecondaryButton>
+              <SecondaryButton href="#about">{t("aboutSection.meetTeam")}</SecondaryButton>
+              <SecondaryButton href="#about">{t("aboutSection.ourStory")}</SecondaryButton>
             </motion.div>
           </div>
 
@@ -316,7 +316,7 @@ export default function OluneLanding() {
             />
             <div className="absolute inset-0 flex items-center justify-center p-10">
               <p className="max-w-[28ch] text-center font-display text-[clamp(1.5rem,3vw,2rem)] font-light leading-snug tracking-tight text-ink-black/90">
-                &ldquo;{t("about.quote")}&rdquo;
+                &ldquo;{t("aboutSection.quote")}&rdquo;
               </p>
             </div>
           </motion.div>
@@ -330,12 +330,12 @@ export default function OluneLanding() {
           whileInView="show"
           viewport={{ once: true, margin: "-60px" }}
         >
-          <Eyebrow>{t("compare.eyebrow")}</Eyebrow>
+          <Eyebrow>{t("compareSection.eyebrow")}</Eyebrow>
           <motion.h2 variants={rise} className="font-display text-[clamp(2rem,5vw,3.25rem)] font-light tracking-tight">
-            {t("compare.title")}
+            {t("compareSection.title")}
           </motion.h2>
           <motion.p variants={rise} className="mt-4 max-w-[58ch] text-lg text-slate">
-            {t("compare.subtitle")}
+            {t("compareSection.subtitle")}
           </motion.p>
 
           <motion.div
@@ -348,7 +348,7 @@ export default function OluneLanding() {
                   <tr className="border-b border-ink-black/[0.08] bg-ivory/80">
                     <th className="px-6 py-4 font-medium text-slate" scope="col" />
                     <th className="px-6 py-4 font-bold uppercase tracking-wide text-slate" scope="col">
-                      {t("compare.stackHeader")}
+                      {t("compareSection.stackHeader")}
                     </th>
                     <th className="px-6 py-4 font-bold uppercase tracking-wide text-iris" scope="col">
                       <OluneLogo size="xs" className="inline-flex" />
@@ -362,11 +362,11 @@ export default function OluneLanding() {
                       className={i % 2 === 0 ? "bg-paper" : "bg-ivory/40"}
                     >
                       <th className="px-6 py-4 font-semibold text-ink-black" scope="row">
-                        {t(`compare.rows.${key}.label`)}
+                        {t(`compareSection.rows.${key}.label`)}
                       </th>
-                      <td className="px-6 py-4 text-slate">{t(`compare.rows.${key}.stack`)}</td>
+                      <td className="px-6 py-4 text-slate">{t(`compareSection.rows.${key}.stack`)}</td>
                       <td className="px-6 py-4 font-medium text-ink-black">
-                        <span className="text-iris">✓</span> {t(`compare.rows.${key}.olune`)}
+                        <span className="text-iris">✓</span> {t(`compareSection.rows.${key}.olune`)}
                       </td>
                     </tr>
                   ))}
@@ -378,8 +378,8 @@ export default function OluneLanding() {
           <motion.div variants={rise} className="mt-8 grid gap-4 sm:grid-cols-3">
             {COMPARE_HIGHLIGHT_KEYS.map((key) => (
               <div key={key} className="rounded-xl border border-ink-black/[0.06] bg-ivory/50 p-5">
-                <p className="text-sm font-bold text-iris">{t(`compare.highlights.${key}.k`)}</p>
-                <p className="mt-1 text-sm text-slate">{t(`compare.highlights.${key}.v`)}</p>
+                <p className="text-sm font-bold text-iris">{t(`compareSection.highlights.${key}.k`)}</p>
+                <p className="mt-1 text-sm text-slate">{t(`compareSection.highlights.${key}.v`)}</p>
               </div>
             ))}
           </motion.div>
