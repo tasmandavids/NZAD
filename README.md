@@ -17,10 +17,27 @@ olune/
 ├─ lib/                              branding, tenant, stripe, site blocks
 ├─ supabase/
 │  ├─ config.toml                    CLI + GitHub integration config
-│  ├─ migrations/0001–0025.sql       schema (applied via GitHub or db push)
+│  ├─ migrations/0001–0049.sql       schema (applied via GitHub or db push)
 │  └─ seed.sql                       optional sample data (local reset only)
 └─ tests/                            vitest unit + integration tests
 ```
+
+## Features
+
+**Studio portal** (`/portal/admin`, `/portal/teacher`, `/portal/parent`,
+`/portal/student`, `/portal/office`) — classes, enrollments, waitlist, billing,
+Stripe payments, subscriptions, events, shop, leads CRM, messaging, email
+inbox, support, staff HR + shifts, parent profiles, student progress, site
+builder, advertising hub (Meta/TikTok OAuth, AI campaigns, SEO audits), Xero
+accounting, and studio settings.
+
+**Platform console** (`/platform`) — cross-tenant studio directory, owners,
+support inbox, ops tasks, feature flags, announcements, audit log.
+
+**Public sites** — per-studio subdomains with custom branding, block-based site
+builder, and site-wide i18n (English, French, Italian, Russian).
+
+**Onboarding** — studio signup wizard plus post-onboarding `/setup` guide.
 
 ## Setup (~15 min)
 
@@ -83,7 +100,7 @@ After connecting GitHub in the Supabase dashboard:
 
 1. Set **production branch** to `main` (or your deploy branch).
 2. Enable **Deploy to production** so new migration files apply automatically.
-3. Add new schema changes as `supabase/migrations/0026_description.sql`.
+3. Add new schema changes as `supabase/migrations/0050_description.sql`.
 4. Commit and push — Supabase runs pending migrations on merge.
 
 Do **not** edit production schema in the SQL editor without adding a matching
@@ -111,9 +128,19 @@ Push to GitHub → import to Vercel → set the same env vars with
 Vercel crons (see `vercel.json`) require `CRON_SECRET` and
 `SUPABASE_SERVICE_ROLE_KEY` in production.
 
-## Test
+## Test & CI
+
+GitHub Actions runs on every PR and push to `main` (see
+`.github/workflows/ci.yml`):
 
 ```bash
-npm test                  # unit tests
-npm run test:integration  # needs local Supabase + seed (see STAGING_AUDIT.md)
+npm test        # unit tests (131+)
+npm run typecheck
+npm run lint
+```
+
+Local integration tests need a live Supabase project:
+
+```bash
+npm run test:integration  # needs INTEGRATION_TEST=1 + seed (see STAGING_AUDIT.md)
 ```

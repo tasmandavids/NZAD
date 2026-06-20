@@ -43,11 +43,11 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function ParentHub({
   parentName,
-  children,
+  familyChildren,
   invoices,
 }: {
   parentName: string | null;
-  children: Child[];
+  familyChildren: Child[];
   invoices: Invoice[];
 }) {
   const t = useTranslations("parent.hub");
@@ -91,7 +91,7 @@ export default function ParentHub({
               </p>
             </div>
           )}
-          {children.length > 0 && (
+          {familyChildren.length > 0 && (
             <button
               type="button"
               onClick={() => setShowEnroll(true)}
@@ -106,16 +106,16 @@ export default function ParentHub({
 
       <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
         <h2 className="mb-3 text-xs uppercase tracking-widest text-muted">
-          {t("yourDancers", { count: children.length })}
+          {t("yourDancers", { count: familyChildren.length })}
         </h2>
-        {children.length === 0 ? (
+        {familyChildren.length === 0 ? (
           <div className="rounded-2xl border border-[--hair] bg-surface px-6 py-10 text-center">
             <p className="text-sm text-muted">{t("noChildren")}</p>
             <p className="mt-1 text-xs text-muted">{t("noChildrenHint")}</p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {children.map((child) => (
+            {familyChildren.map((child) => (
               <motion.div
                 key={child.studentId}
                 whileHover={{ y: -2 }}
@@ -214,7 +214,7 @@ export default function ParentHub({
 
       <AnimatePresence>
         {showEnroll && (
-          <EnrollModal children={children} onClose={() => setShowEnroll(false)} />
+          <EnrollModal familyChildren={familyChildren} onClose={() => setShowEnroll(false)} />
         )}
       </AnimatePresence>
     </motion.div>

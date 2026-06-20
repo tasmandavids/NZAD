@@ -255,7 +255,7 @@ export default async function ParentPortal() {
     <>
       <ParentHub
         parentName={profileRes.data?.full_name ?? null}
-        children={children}
+        familyChildren={children}
         invoices={invoices}
       />
 

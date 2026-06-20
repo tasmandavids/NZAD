@@ -98,7 +98,7 @@ export function WebsiteSetupWizard({
         fontBody,
         siteSettings: { showPoweredBy: true, portalLabel: t("portalLabel") },
       }) as CSSProperties,
-    [branding, fontDisplay, fontBody],
+    [branding, fontDisplay, fontBody, t],
   );
 
   const fontsUrl = googleFontsStylesheetUrl(fontDisplay, fontBody);

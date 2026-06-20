@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, type ReactNode } from "react";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { OluneLogo } from "@/components/brand/OluneLogo";
@@ -214,18 +215,18 @@ export function LandingNav() {
         </div>
         <div className="flex items-center gap-4">
           <LanguageSwitcher compact className="hidden sm:inline-flex" />
-          <a
+          <Link
             href="/login"
             className="hidden text-[0.68rem] font-medium uppercase tracking-[0.22em] text-slate transition-colors hover:text-ink-black sm:inline"
           >
             {t("signIn")}
-          </a>
-          <a
+          </Link>
+          <Link
             href="/onboarding"
             className="rounded-full border border-ink-black/15 bg-paper px-5 py-2 text-[0.68rem] font-bold uppercase tracking-wide text-ink-black shadow-sm transition-colors hover:border-iris/40 hover:bg-ivory"
           >
             {t("startFree")}
-          </a>
+          </Link>
         </div>
       </div>
     </nav>
@@ -246,8 +247,8 @@ export function LandingFooter() {
           <LanguageSwitcher compact className="text-white/70" />
           <a href="#features" className="transition-colors hover:text-white">{t("features")}</a>
           <a href="#pricing" className="transition-colors hover:text-white">{t("pricing")}</a>
-          <a href="/login" className="transition-colors hover:text-white">{t("signIn")}</a>
-          <a href="/onboarding" className="transition-colors hover:text-white">{t("startFree")}</a>
+          <Link href="/login" className="transition-colors hover:text-white">{t("signIn")}</Link>
+          <Link href="/onboarding" className="transition-colors hover:text-white">{t("startFree")}</Link>
         </div>
       </div>
     </footer>

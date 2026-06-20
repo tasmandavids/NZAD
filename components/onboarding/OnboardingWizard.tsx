@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
@@ -156,7 +157,7 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
                       </button>
                       <p className="mt-4 text-center text-sm text-muted">
                         {t("account.hasAccount")}{" "}
-                        <a href="/login" className="text-ink underline">{t("account.logIn")}</a>
+                        <Link href="/login" className="text-ink underline">{t("account.logIn")}</Link>
                       </p>
                     </form>
                   </div>
@@ -229,7 +230,7 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
                       className="mx-auto grid h-14 w-14 place-items-center rounded-full text-2xl text-white" style={{ background: brand }}>✓</motion.div>
                     <h1 className="mt-4 text-2xl font-black">{t("done.title", { studioName })}</h1>
                     <p className="mt-1 text-sm text-muted">{t("done.subtitle")}</p>
-                    <a href="/setup" className="btn-glow btn-glow--solid mt-6 inline-flex justify-center">{t("done.continue")}</a>
+                    <Link href="/setup" className="btn-glow btn-glow--solid mt-6 inline-flex justify-center">{t("done.continue")}</Link>
                   </div>
                 )}
 

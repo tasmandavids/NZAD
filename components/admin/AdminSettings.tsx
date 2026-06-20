@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import {
@@ -319,12 +320,12 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
           {t("customDomainSection")}
         </h2>
         <p className="text-sm text-muted leading-relaxed">{t("customDomainDescription")}</p>
-        <a
+        <Link
           href="/portal/admin/site/domain"
           className="mt-3 inline-flex rounded-full border border-brand/40 px-4 py-2 text-sm font-medium text-brand transition hover:bg-brand/10"
         >
           {t("openDomainWizard")}
-        </a>
+        </Link>
       </section>
     </motion.div>
   );

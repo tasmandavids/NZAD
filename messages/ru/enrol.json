@@ -1,12 +1,23 @@
 {
   "enrol": {
-    "title": "Записаться на пробное занятие",
-    "subtitle": "Без обязательств. Мы свяжемся с вами, чтобы подобрать подходящий класс.",
+    "title": "Забронировать пробный урок",
+    "subtitle": "Выберите класс, и мы свяжемся с вами для подтверждения места.",
+    "steps": {
+      "pickClass": "Выберите класс"
+    },
+    "continue": "Продолжить →",
+    "backToClasses": "Изменить класс",
+    "selectedClass": "Класс",
+    "noClassesForStyle": "Нет классов для этого стиля — попробуйте другой фильтр или « Не уверен ».",
     "fields": {
-      "name": "Ваше имя",
+      "name": "Имя родителя / опекуна",
       "namePlaceholder": "Jane Smith",
-      "email": "E-mail",
+      "childName": "Имя танцора",
+      "childNamePlaceholder": "Emma Smith",
+      "email": "Email",
       "emailPlaceholder": "you@example.com",
+      "phone": "Телефон (необязательно)",
+      "phonePlaceholder": "+7 912 123 45 67",
       "interest": "Интересующий стиль"
     },
     "disciplines": {
@@ -14,20 +25,25 @@
       "contemporary": "Современный",
       "jazz": "Джаз",
       "hipHop": "Хип-хоп",
-      "tap": "Step",
+      "tap": "Тэп",
       "lyrical": "Лирический",
       "acro": "Акро",
       "pointe": "Пуанты",
-      "notSure": "Пока не знаю"
+      "notSure": "Не уверен"
     },
     "submitting": "Отправка…",
-    "submit": "Запросить пробное →",
+    "submit": "Запросить пробный урок →",
     "hasAccount": "Уже есть аккаунт?",
     "signIn": "Войти",
     "success": {
       "title": "Вы в списке!",
-      "body": "Мы скоро свяжемся с вами, {name}. Следите за {email}.",
+      "body": "Мы скоро свяжемся с вами, {name}. Проверьте {email}.",
       "backHome": "На главную"
+    },
+    "noStudio": {
+      "title": "Откройте сайт вашей студии",
+      "body": "Бронирование пробного урока доступно на поддомене студии — например yourstudio.olune.app/enrol",
+      "back": "Назад к Olune"
     }
   }
 }
