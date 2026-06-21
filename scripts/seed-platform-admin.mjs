@@ -29,6 +29,7 @@ if (!url || !serviceKey) {
 
 const admin = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
+  realtime: { enabled: false },
 });
 
 async function findUserByEmail(email) {
