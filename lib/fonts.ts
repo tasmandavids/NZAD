@@ -14,3 +14,10 @@ export function googleFontsStylesheetUrl(display: string, body: string): string 
   if (!families.length) return "";
   return `https://fonts.googleapis.com/css2?${families.map(familyParam).join("&")}&display=swap`;
 }
+
+/** Resolve tenant typography without bundling every Google Font via next/font. */
+export function fontsForBranding(display: string, body: string) {
+  return {
+    stylesheetUrl: googleFontsStylesheetUrl(display, body),
+  };
+}

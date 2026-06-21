@@ -9,7 +9,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { getTranslations } from "@/lib/i18n/server";
 import { resolveStudio } from "@/lib/tenant";
-import { fontsForBranding } from "@/lib/fonts/google-registry";
+import { fontsForBranding } from "@/lib/fonts";
 import { getBrandingCached, brandingToCssVars, DEFAULT_BRANDING } from "@/lib/branding";
 import { OluneMoonDefs } from "@/components/brand/OluneMoonDefs";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -40,14 +40,19 @@ export default async function RootLayout({
     : { ...DEFAULT_BRANDING };
 
   const fonts = fontsForBranding(branding.fontDisplay, branding.fontBody);
-  const vars = {
-    ...brandingToCssVars(branding),
-    "--font-display": fonts.fontDisplay,
-    "--font-body": fonts.fontBody,
-  } as CSSProperties;
+  const vars = brandingToCssVars(branding) as CSSProperties;
 
   return (
-    <html lang={locale} data-base={branding.base} className={fonts.className} style={vars}>
+    <html lang={locale} data-base={branding.base} style={vars}>
+      <head>
+        {fonts.stylesheetUrl ? (
+          <>
+            <link rel="preconnect" href="https://fonts.googleapis.com" />
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+            <link rel="stylesheet" href={fonts.stylesheetUrl} />
+          </>
+        ) : null}
+      </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <OluneMoonDefs />
