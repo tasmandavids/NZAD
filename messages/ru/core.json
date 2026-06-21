@@ -103,7 +103,8 @@
       "settings": "Настройки"
     },
     "teacher": {
-      "schedule": "Расписание и журнал"
+      "schedule": "Расписание и журнал",
+      "affiliations": "Аффилированные студии"
     },
     "office": {
       "dashboard": "Ресепшн"

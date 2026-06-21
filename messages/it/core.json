@@ -103,7 +103,8 @@
       "settings": "Impostazioni"
     },
     "teacher": {
-      "schedule": "Orario e presenze"
+      "schedule": "Orario e presenze",
+      "affiliations": "Studi affiliati"
     },
     "office": {
       "dashboard": "Reception"

@@ -623,6 +623,37 @@ Public `/enrol` trial funnel — class picker + CRM lead capture.
 
 ---
 
+## ✅ SESSION 23 — COMPLETE (2026-06-21) · Build 1.5 Sole Traders
+
+Independent instructor accounts for contractors who teach across multiple studios.
+
+### Database (migration 0052) ✅
+- `studios.kind` — `studio` | `instructor`
+- `profiles.account_kind`, `profiles.active_studio_id`
+- `studio_memberships` — multi-studio relationships with backfill from existing profiles
+- `create_instructor_workspace_for_user` RPC
+- Updated `create_studio_for_user`, `accept_studio_invite`, `register_studio_member` for instructor multi-membership
+- Cross-studio teacher RLS on classes, enrollments, attendance, profiles, student_progress
+- JWT hook derives role from active membership
+
+### Onboarding system picker ✅
+- New first step: Studio owner vs Independent instructor
+- Branched copy + `create_instructor_workspace_for_user` → `/portal/teacher`
+- `lib/account/kinds.ts`, `lib/account/memberships.ts`
+
+### Teacher portal ✅
+- Cross-studio schedule with studio badges on every class
+- `/portal/teacher/affiliations` — list memberships + accept invite tokens
+- Attendance uses class studio_id (not home workspace)
+
+### Future sole-trader tools (roadmap)
+- Private client roster, contractor invoicing, income dashboard, availability calendar, compliance vault, expense log, personal profile page, substitute board
+
+### Migrations to apply: 0052
+### Tests: membership helpers unit tests added
+
+---
+
 ## 🔄 NEXT SESSION — Start here
 
 ### Priority 1: Staging / production readiness

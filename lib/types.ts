@@ -1,7 +1,11 @@
 // Shared domain types for the tenant + branding backbone.
 
+import type { AccountKind, StudioKind } from "@/lib/account/kinds";
+
 export type Role = "admin" | "teacher" | "office" | "parent" | "student";
 export type ThemeBase = "dark" | "light";
+
+export type { AccountKind, StudioKind };
 
 export interface Studio {
   id: string;
@@ -9,6 +13,18 @@ export interface Studio {
   slug: string;
   customDomain: string | null;
   status: string;
+  kind?: StudioKind;
+}
+
+export interface StudioMembershipSummary {
+  id: string;
+  studioId: string;
+  studioName: string;
+  studioSlug: string;
+  studioKind: StudioKind;
+  role: Role;
+  status: string;
+  isPrimary: boolean;
 }
 
 export type SiteLocation = {

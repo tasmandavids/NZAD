@@ -7,6 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { derivePalette } from "@/lib/branding";
+import type { AccountKind } from "@/lib/account/kinds";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 import { AuthDivider, OAuthButtons } from "@/components/auth/OAuthButtons";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
@@ -14,21 +15,40 @@ import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
 const EASE = [0.16, 1, 0.3, 1] as const;
 const PRESETS = ["#C8102E", "#5B5BFF", "#C9A227", "#E84A8A", "#13B6A4"];
+const ACCOUNT_KIND_KEY = "olune_onboarding_account_kind";
 
-type Step = "account" | "studio" | "brand" | "done";
+type Step = "system" | "account" | "studio" | "brand" | "done";
 type SlugStatus = "idle" | "invalid" | "checking" | "available" | "taken";
-
-const PROGRESS_KEYS = ["account", "studio", "brand"] as const;
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+function readStoredAccountKind(): AccountKind | null {
+  if (typeof window === "undefined") return null;
+  const v = sessionStorage.getItem(ACCOUNT_KIND_KEY);
+  return v === "studio_owner" || v === "instructor" ? v : null;
+}
+
+function storeAccountKind(kind: AccountKind) {
+  try {
+    sessionStorage.setItem(ACCOUNT_KIND_KEY, kind);
+  } catch {
+    /* ignore */
+  }
+}
 
 export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signedIn: boolean; email?: string }) {
   const t = useTranslations("onboarding");
   const router = useRouter();
   const reduce = useReducedMotion();
 
-  const [step, setStep] = useState<Step>(signedIn ? "studio" : "account");
+  const [accountKind, setAccountKind] = useState<AccountKind | null>(() => readStoredAccountKind());
+  const isInstructor = accountKind === "instructor";
+
+  const [step, setStep] = useState<Step>(() => {
+    if (signedIn) return readStoredAccountKind() ? "studio" : "system";
+    return "system";
+  });
   const [dir, setDir] = useState(1);
   const go = (next: Step, d = 1) => { setDir(d); setStep(next); };
 
@@ -58,6 +78,12 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
     return () => clearTimeout(timer);
   }, [slug, step]);
 
+  function pickSystem(kind: AccountKind) {
+    setAccountKind(kind);
+    storeAccountKind(kind);
+    go(signedIn ? "studio" : "account");
+  }
+
   async function createAccount(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError(null);
@@ -68,10 +94,11 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
     else setAwaitingConfirm(true);
   }
 
-  async function createStudio() {
+  async function createWorkspace() {
     setBusy(true); setError(null);
     const supabase = createClient();
-    const { data: studioId, error: rpcError } = await supabase.rpc("create_studio_for_user", {
+    const rpcName = isInstructor ? "create_instructor_workspace_for_user" : "create_studio_for_user";
+    const { data: studioId, error: rpcError } = await supabase.rpc(rpcName, {
       p_name: studioName,
       p_slug: slug,
     });
@@ -83,12 +110,27 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
         .update({ brand_color: brand, brand_hot: p.brandHot, brand_deep: p.brandDeep })
         .eq("studio_id", studioId);
     }
+
+    try { sessionStorage.removeItem(ACCOUNT_KIND_KEY); } catch { /* ignore */ }
+
     go("done");
-    setTimeout(() => { router.push("/setup"); router.refresh(); }, 1300);
+    const dest = isInstructor ? "/portal/teacher" : "/setup";
+    setTimeout(() => { router.push(dest); router.refresh(); }, 1300);
   }
 
-  const stepIndex = { account: 0, studio: 1, brand: 2, done: 3 }[step];
+  const progressKeys = isInstructor
+    ? (["account", "profile", "brand"] as const)
+    : (["account", "studio", "brand"] as const);
+
+  const stepIndex =
+    step === "system" ? -1
+    : step === "account" ? 0
+    : step === "studio" ? 1
+    : step === "brand" ? 2
+    : 3;
+
   const initial = (studioName.trim()[0] ?? "S").toUpperCase();
+  const doneDest = isInstructor ? "/portal/teacher" : "/setup";
 
   const variants = {
     enter: (d: number) => ({ x: reduce ? 0 : d > 0 ? 36 : -36, opacity: 0 }),
@@ -107,14 +149,16 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
           </div>
         </div>
 
-        {step !== "done" && (
+        {step !== "done" && step !== "system" && (
           <div className="mb-8 flex items-center justify-center gap-2">
-            {PROGRESS_KEYS.map((key, i) => (
+            {progressKeys.map((key, i) => (
               <div key={key} className="flex items-center gap-2">
                 <span className="text-xs" style={{ color: i <= stepIndex ? "var(--brand-hot)" : "var(--muted)" }}>
                   {t(`progress.${key}`)}
                 </span>
-                {i < 2 && <span className="h-px w-6" style={{ background: i < stepIndex ? "var(--brand)" : "var(--hair)" }} />}
+                {i < progressKeys.length - 1 && (
+                  <span className="h-px w-6" style={{ background: i < stepIndex ? "var(--brand)" : "var(--hair)" }} />
+                )}
               </div>
             ))}
           </div>
@@ -134,10 +178,39 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
             <AnimatePresence mode="wait" custom={dir}>
               <motion.div key={step} custom={dir} variants={variants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.35, ease: EASE }}>
 
+                {step === "system" && (
+                  <div>
+                    <h1 className="text-2xl font-black tracking-tight">{t("system.title")}</h1>
+                    <p className="mt-1 text-sm text-muted">{t("system.subtitle")}</p>
+                    <div className="mt-6 space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => pickSystem("studio_owner")}
+                        className="w-full rounded-2xl border border-[--hair] bg-base/40 p-5 text-left transition hover:border-[--brand]"
+                      >
+                        <p className="font-black text-ink">{t("system.studioOwner.title")}</p>
+                        <p className="mt-1 text-sm text-muted">{t("system.studioOwner.desc")}</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => pickSystem("instructor")}
+                        className="w-full rounded-2xl border border-[--hair] bg-base/40 p-5 text-left transition hover:border-[--brand]"
+                      >
+                        <p className="font-black text-ink">{t("system.instructor.title")}</p>
+                        <p className="mt-1 text-sm text-muted">{t("system.instructor.desc")}</p>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {step === "account" && (
                   <div>
-                    <h1 className="text-2xl font-black tracking-tight">{t("account.title")}</h1>
-                    <p className="mt-1 text-sm text-muted">{t("account.subtitle")}</p>
+                    <h1 className="text-2xl font-black tracking-tight">
+                      {isInstructor ? t("account.instructorTitle") : t("account.title")}
+                    </h1>
+                    <p className="mt-1 text-sm text-muted">
+                      {isInstructor ? t("account.instructorSubtitle") : t("account.subtitle")}
+                    </p>
 
                     <div className="mt-6">
                       <OAuthButtons next="/onboarding" disabled={busy} />
@@ -160,20 +233,34 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
                         <Link href="/login" className="text-ink underline">{t("account.logIn")}</Link>
                       </p>
                     </form>
+                    <button type="button" onClick={() => go("system", -1)} className="btn-glow mt-4 w-full justify-center">
+                      {t("system.back")}
+                    </button>
                   </div>
                 )}
 
                 {step === "studio" && (
                   <div>
-                    <h1 className="text-2xl font-black tracking-tight">{t("studio.title")}</h1>
-                    <p className="mt-1 text-sm text-muted">{t("studio.subtitle")}</p>
+                    <h1 className="text-2xl font-black tracking-tight">
+                      {isInstructor ? t("profile.title") : t("studio.title")}
+                    </h1>
+                    <p className="mt-1 text-sm text-muted">
+                      {isInstructor ? t("profile.subtitle") : t("studio.subtitle")}
+                    </p>
                     <div className="mt-6 space-y-4">
-                      <input className="field-premium" type="text" placeholder={t("studio.namePlaceholder")}
-                        value={studioName} onChange={(e) => setStudioName(e.target.value)} autoFocus />
+                      <input
+                        className="field-premium"
+                        type="text"
+                        placeholder={isInstructor ? t("profile.namePlaceholder") : t("studio.namePlaceholder")}
+                        value={studioName}
+                        onChange={(e) => setStudioName(e.target.value)}
+                        autoFocus
+                      />
                       <div>
                         <div className="flex items-center overflow-hidden rounded-xl border border-[--hair] bg-base/40 focus-within:border-[--brand]">
                           <input className="flex-1 bg-transparent px-3 py-2.5 text-sm outline-none" value={slug}
-                            onChange={(e) => { setSlugEdited(true); setSlug(slugify(e.target.value)); }} placeholder={t("studio.slugPlaceholder")} />
+                            onChange={(e) => { setSlugEdited(true); setSlug(slugify(e.target.value)); }}
+                            placeholder={isInstructor ? t("profile.slugPlaceholder") : t("studio.slugPlaceholder")} />
                           <span className="px-3 text-sm text-muted">.{ROOT}</span>
                         </div>
                         <p className="mt-1.5 h-4 text-xs">
@@ -185,7 +272,11 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
                       </div>
                     </div>
                     <div className="mt-6 flex gap-2">
-                      {!signedIn && <button onClick={() => go("account", -1)} className="btn-glow flex-none">{t("studio.back")}</button>}
+                      {!signedIn ? (
+                        <button onClick={() => go("account", -1)} className="btn-glow flex-none">{t("studio.back")}</button>
+                      ) : (
+                        <button onClick={() => go("system", -1)} className="btn-glow flex-none">{t("system.back")}</button>
+                      )}
                       <button onClick={() => go("brand")} disabled={slugStatus !== "available"}
                         className="btn-glow btn-glow--solid w-full justify-center disabled:opacity-50">{t("studio.continue")}</button>
                     </div>
@@ -217,8 +308,10 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
 
                     <div className="mt-6 flex gap-2">
                       <button onClick={() => go("studio", -1)} className="btn-glow flex-none">{t("brand.back")}</button>
-                      <button onClick={createStudio} disabled={busy} className="btn-glow btn-glow--solid w-full justify-center disabled:opacity-60">
-                        {busy ? t("brand.submitting") : t("brand.submit")}
+                      <button onClick={createWorkspace} disabled={busy} className="btn-glow btn-glow--solid w-full justify-center disabled:opacity-60">
+                        {busy
+                          ? (isInstructor ? t("brand.submittingInstructor") : t("brand.submitting"))
+                          : (isInstructor ? t("brand.submitInstructor") : t("brand.submit"))}
                       </button>
                     </div>
                   </div>
@@ -229,8 +322,12 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 18 }}
                       className="mx-auto grid h-14 w-14 place-items-center rounded-full text-2xl text-white" style={{ background: brand }}>✓</motion.div>
                     <h1 className="mt-4 text-2xl font-black">{t("done.title", { studioName })}</h1>
-                    <p className="mt-1 text-sm text-muted">{t("done.subtitle")}</p>
-                    <Link href="/setup" className="btn-glow btn-glow--solid mt-6 inline-flex justify-center">{t("done.continue")}</Link>
+                    <p className="mt-1 text-sm text-muted">
+                      {isInstructor ? t("done.instructorSubtitle") : t("done.subtitle")}
+                    </p>
+                    <Link href={doneDest} className="btn-glow btn-glow--solid mt-6 inline-flex justify-center">
+                      {isInstructor ? t("done.instructorContinue") : t("done.continue")}
+                    </Link>
                   </div>
                 )}
 

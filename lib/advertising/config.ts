@@ -1,4 +1,5 @@
 import { canonicalAppUrl } from "@/lib/app-url";
+import type { SocialPlatform } from "./types";
 
 export const META_SCOPES = [
   "pages_show_list",
@@ -74,4 +75,13 @@ export const PLATFORM_META = {
     description: "Auto-publish video ads and organic posts to TikTok",
     connectPath: "/api/advertising/oauth/tiktok/connect",
   },
+  telegram: {
+    label: "Telegram",
+    color: "#26A5E4",
+    description: "Broadcast announcements to your studio Telegram channel",
+    connectPath: "",
+  },
 } as const;
+
+/** Primary platforms featured in the connect hub. */
+export const PRIMARY_PLATFORMS = ["facebook", "instagram", "telegram"] as const satisfies readonly SocialPlatform[];

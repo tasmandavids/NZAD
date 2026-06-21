@@ -38,6 +38,7 @@ type EditorCanvasProps = {
   background: PageBackground;
   backgroundSelected: boolean;
   selectedIds: string[];
+  previewMode?: boolean;
   studioName: string;
   logoUrl: string | null;
   nav: NavLink[];
@@ -99,6 +100,7 @@ function AlignmentGuides({ guides }: { guides: GuideLine[] }) {
 function StackSectionBlock({
   block,
   selected,
+  previewMode,
   onSelect,
   onDuplicate,
   onDelete,
@@ -106,6 +108,7 @@ function StackSectionBlock({
 }: {
   block: Block;
   selected: boolean;
+  previewMode?: boolean;
   onSelect: (shift: boolean) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -116,13 +119,17 @@ function StackSectionBlock({
   return (
     <div
       data-block-shell
-      className={`group relative w-full ${selected ? "ring-2 ring-inset ring-brand" : "hover:ring-1 hover:ring-inset hover:ring-brand/30"}`}
+      className={`group relative w-full ${
+        previewMode ? "" : selected ? "ring-2 ring-inset ring-brand" : "hover:ring-1 hover:ring-inset hover:ring-brand/30"
+      }`}
       onClick={(e) => {
+        if (previewMode) return;
         e.stopPropagation();
         onSelect(e.shiftKey);
       }}
-      onContextMenu={onContextMenu}
+      onContextMenu={previewMode ? undefined : onContextMenu}
     >
+      {!previewMode && (
       <div
         className={`absolute right-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-[--hair] bg-surface/95 px-1 py-0.5 shadow-sm backdrop-blur transition ${
           selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
@@ -136,6 +143,7 @@ function StackSectionBlock({
           ✕
         </button>
       </div>
+      )}
       <EditorBlockPreview blocks={[block]} context={EDITOR_PREVIEW_CONTEXT} />
     </div>
   );
@@ -145,6 +153,7 @@ function CanvasBlock({
   block,
   blocks,
   selected,
+  previewMode,
   canvasRef,
   onSelect,
   onUpdateLayout,
@@ -158,6 +167,7 @@ function CanvasBlock({
   block: Block;
   blocks: Block[];
   selected: boolean;
+  previewMode?: boolean;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   onSelect: (shift: boolean) => void;
   onUpdateLayout: EditorCanvasProps["onUpdateLayout"];
@@ -272,17 +282,21 @@ function CanvasBlock({
   return (
     <div
       data-block-shell
-      className={`group absolute ${selected ? "ring-2 ring-brand" : "hover:ring-1 hover:ring-brand/40"} ${locked ? "opacity-95" : ""} ${blockFrameClassName(block.props)}`}
+      className={`group absolute ${
+        previewMode ? "" : selected ? "ring-2 ring-brand" : "hover:ring-1 hover:ring-brand/40"
+      } ${locked ? "opacity-95" : ""} ${blockFrameClassName(block.props)}`}
       style={blockFrameStyle(block.props)}
       onClick={(e) => {
+        if (previewMode) return;
         e.stopPropagation();
         onSelect(e.shiftKey);
       }}
-      onContextMenu={onContextMenu}
-      onPointerDown={beginDrag}
-      onPointerMove={onPointerMove}
-      onPointerUp={endPointer}
+      onContextMenu={previewMode ? undefined : onContextMenu}
+      onPointerDown={previewMode ? undefined : beginDrag}
+      onPointerMove={previewMode ? undefined : onPointerMove}
+      onPointerUp={previewMode ? undefined : endPointer}
     >
+      {!previewMode && (
       <div
         className={`absolute right-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-[--hair] bg-surface/95 px-1 py-0.5 shadow-sm backdrop-blur transition ${
           selected || dragging.current ? "opacity-100" : "opacity-0 group-hover:opacity-100"
@@ -310,8 +324,9 @@ function CanvasBlock({
           ✕
         </button>
       </div>
+      )}
 
-      {selected && !locked && (
+      {selected && !locked && !previewMode && (
         <>
           <div
             data-resize-handle
@@ -357,6 +372,7 @@ export function EditorCanvas({
   background,
   backgroundSelected,
   selectedIds,
+  previewMode = false,
   studioName,
   logoUrl,
   nav,
@@ -401,12 +417,18 @@ export function EditorCanvas({
   const homePageId = navPages.find((p) => p.isHome)?.id ?? currentPageId;
 
   const handleCanvasContext = (e: React.MouseEvent) => {
+    if (previewMode) return;
     if ((e.target as HTMLElement).closest("[data-block-shell]")) return;
     openMenu(e, blocks.length);
   };
 
   return (
-    <div className="relative min-h-full bg-base" onClick={() => onSelect(null)}>
+    <div className="relative min-h-full bg-base" onClick={() => !previewMode && onSelect(null)}>
+      {previewMode && (
+        <div className="sticky top-0 z-50 border-b border-brand/30 bg-brand/5 px-4 py-2 text-center text-xs text-muted backdrop-blur">
+          {t("previewModeBanner")}
+        </div>
+      )}
       <SiteHeader
         studioName={studioName}
         logoUrl={logoUrl}
@@ -428,12 +450,13 @@ export function EditorCanvas({
           className={`absolute inset-0 text-left ${backgroundSelected ? "ring-2 ring-inset ring-brand" : ""}`}
           style={{ zIndex: 0 }}
           onClick={(e) => {
+            if (previewMode) return;
             e.stopPropagation();
             onSelectBackground();
           }}
         >
           <BackgroundShell background={background} />
-          <GridOverlay />
+          {!previewMode && <GridOverlay />}
           {backgroundSelected && (
             <span className="absolute left-3 top-3 rounded-md bg-surface/90 px-2 py-1 text-[0.65rem] font-semibold uppercase tracking-widest text-brand shadow-sm">
               {t("backgroundLabel")}
@@ -459,6 +482,7 @@ export function EditorCanvas({
                   block={block}
                   blocks={blocks}
                   selected={selectedIds.includes(block.id)}
+                  previewMode={previewMode}
                   canvasRef={canvasRef}
                   onSelect={(shift) => onSelect(block.id, { shift })}
                   onUpdateLayout={onUpdateLayout}
@@ -474,6 +498,7 @@ export function EditorCanvas({
                   key={block.id}
                   block={block}
                   selected={selectedIds.includes(block.id)}
+                  previewMode={previewMode}
                   onSelect={(shift) => onSelect(block.id, { shift })}
                   onDuplicate={() => onDuplicate(block.id)}
                   onDelete={() => onDelete(block.id)}
@@ -483,7 +508,7 @@ export function EditorCanvas({
             )
           )}
 
-          {blocks.length > 0 && (
+          {blocks.length > 0 && !previewMode && (
             <div
               className="pointer-events-none absolute inset-x-0 grid h-24 place-items-center border-t border-dashed border-[--hair]/60 text-xs text-muted"
               style={{ top: minH - 96 }}
@@ -494,7 +519,7 @@ export function EditorCanvas({
         </div>
       </div>
 
-      {menu && (
+      {menu && !previewMode && (
         <EditorContextMenu
           x={menu.x}
           y={menu.y}

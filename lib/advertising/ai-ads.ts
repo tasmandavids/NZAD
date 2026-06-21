@@ -40,6 +40,11 @@ function buildHeuristicAdCopy(input: AdGenerationInput): GeneratedAdCopy {
         headline: headline.slice(0, 60),
         bodyText: `${bodyText.slice(0, 2000)}\n\n${hashtags.join(" ")}`,
       };
+    } else if (p === "telegram") {
+      platformVariants.telegram = {
+        headline: headline.slice(0, 80),
+        bodyText: `${bodyText.slice(0, 3500)}${targetUrl ? `\n\n→ ${targetUrl}` : ""}`,
+      };
     } else {
       platformVariants.facebook = {
         headline: headline.slice(0, 40),
@@ -88,7 +93,7 @@ export async function generateAdCopy(input: AdGenerationInput): Promise<Generate
   const platformList = input.platforms.join(", ");
 
   const raw = await callOpenAI(
-    `You are an expert digital advertising copywriter for dance studios. Return JSON with keys: headline (string), bodyText (string), callToAction (string), hashtags (string array, 3-5 tags), platformVariants (object keyed by platform with headline and bodyText). Keep copy authentic, warm, and conversion-focused. Respect platform character limits: Facebook headline ~40 chars, Instagram caption ~2200 chars, TikTok caption ~150 chars.`,
+    `You are an expert digital advertising copywriter for dance studios. Return JSON with keys: headline (string), bodyText (string), callToAction (string), hashtags (string array, 3-5 tags), platformVariants (object keyed by platform with headline and bodyText). Keep copy authentic, warm, and conversion-focused. Respect platform character limits: Facebook headline ~40 chars, Instagram caption ~2200 chars, TikTok caption ~150 chars, Telegram message ~4096 chars.`,
     `Studio: ${input.studioName}
 Objective: ${input.objective}
 Platforms: ${platformList}

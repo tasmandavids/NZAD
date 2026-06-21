@@ -103,7 +103,8 @@
       "settings": "Settings"
     },
     "teacher": {
-      "schedule": "Schedule & Roll"
+      "schedule": "Schedule & Roll",
+      "affiliations": "Studio affiliations"
     },
     "office": {
       "dashboard": "Front desk"

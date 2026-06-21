@@ -12,6 +12,8 @@ import { PlatformAnnouncementsBanner } from "@/components/admin/PlatformAnnounce
 import { SetupResumeBanner } from "@/components/setup/SetupResumeBanner";
 import { getBrandingCached } from "@/lib/branding";
 import { fetchStudioSetupState, setupBlocksPortal, setupNeedsBanner } from "@/lib/setup/server";
+import { showAffiliationsNav } from "@/lib/account/memberships";
+import type { AccountKind } from "@/lib/account/kinds";
 import type { Role } from "@/lib/types";
 import { getTranslations } from "@/lib/i18n/server";
 
@@ -31,17 +33,24 @@ export default async function PortalLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, studio_id, studios(name)")
+    .select("role, full_name, studio_id, account_kind, studios(name, kind)")
     .eq("id", user.id)
     .single();
 
   if (!profile?.studio_id) redirect("/onboarding");
 
-  const studio = profile.studios as unknown as { name: string } | null;
-  const isAdmin = profile.role === "admin";
+  const studio = profile.studios as unknown as { name: string; kind: string } | null;
+  const accountKind = (profile.account_kind as AccountKind | null) ?? null;
+  const isStudioOwner = accountKind === "studio_owner" || (accountKind === null && studio?.kind !== "instructor");
+  const isAdmin = profile.role === "admin" && isStudioOwner;
   const now = new Date().toISOString();
 
-  const [setupResult, announcementsResult, branding, tCommon] = await Promise.all([
+  const [{ count: membershipCount }, setupResult, announcementsResult, branding, tCommon] = await Promise.all([
+    supabase
+      .from("studio_memberships")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("status", "active"),
     isAdmin
       ? fetchStudioSetupState(supabase, profile.studio_id)
       : Promise.resolve({ state: null }),
@@ -68,12 +77,18 @@ export default async function PortalLayout({
     .slice(0, 3)
     .map(({ id, title, body, severity }) => ({ id, title, body, severity }));
 
+  const displayName =
+    accountKind === "instructor" && studio?.kind === "instructor"
+      ? (profile.full_name ?? studio?.name ?? tCommon("yourStudio"))
+      : (studio?.name ?? tCommon("yourStudio"));
+
   return (
     <PortalShell
       role={profile.role as Role}
-      studioName={studio?.name ?? tCommon("yourStudio")}
+      studioName={displayName}
       logoUrl={branding.logoUrl}
       userName={profile.full_name}
+      showAffiliations={showAffiliationsNav(accountKind, membershipCount ?? 0)}
     >
       {isAdmin && setupState && setupNeedsBanner(setupState) && (
         <SetupResumeBanner

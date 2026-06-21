@@ -103,7 +103,8 @@
       "settings": "Paramètres"
     },
     "teacher": {
-      "schedule": "Planning et présence"
+      "schedule": "Planning et présence",
+      "affiliations": "Studios affiliés"
     },
     "office": {
       "dashboard": "Accueil"

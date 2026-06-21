@@ -41,6 +41,16 @@ export const SETUP_STEP_IDS = [
 
 export type SetupStepId = (typeof SETUP_STEP_IDS)[number];
 
+/** Future instructor onboarding steps (Build 1.5b+) — reuses studios.setup_step column. */
+export const INSTRUCTOR_SETUP_STEP_IDS = [
+  "profile",
+  "affiliations",
+  "availability",
+  "tour",
+] as const;
+
+export type InstructorSetupStepId = (typeof INSTRUCTOR_SETUP_STEP_IDS)[number];
+
 export const SETUP_STEPS = SETUP_STEP_IDS.map((id) => ({ id }));
 
 export const TOUR_FEATURE_KEYS = [

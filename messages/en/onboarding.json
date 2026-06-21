@@ -3,11 +3,27 @@
     "progress": {
       "account": "Account",
       "studio": "Studio",
+      "profile": "Profile",
       "brand": "Brand"
+    },
+    "system": {
+      "title": "How will you use Olune?",
+      "subtitle": "Pick the setup that fits you — you can always adjust later.",
+      "back": "Back",
+      "studioOwner": {
+        "title": "I run a dance studio",
+        "desc": "Manage classes, families, billing, and your studio website."
+      },
+      "instructor": {
+        "title": "I'm an independent teacher",
+        "desc": "Work across studios, track your schedule, and manage your teaching profile."
+      }
     },
     "account": {
       "title": "Start your studio",
       "subtitle": "Create your owner account to begin.",
+      "instructorTitle": "Create your instructor account",
+      "instructorSubtitle": "Your personal workspace for teaching across studios.",
       "divider": "or sign up with email",
       "emailPlaceholder": "you@studio.co.nz",
       "passwordPlaceholder": "Create a password",
@@ -32,20 +48,30 @@
       "back": "Back",
       "continue": "Continue"
     },
+    "profile": {
+      "title": "Your public name",
+      "subtitle": "How studios and students will know you.",
+      "namePlaceholder": "Jane Smith",
+      "slugPlaceholder": "jane-smith"
+    },
     "brand": {
       "title": "Make it yours",
       "subtitle": "Pick a brand colour — you can refine everything later.",
-      "fallbackName": "Your studio",
+      "fallbackName": "Your profile",
       "previewCta": "Book a trial",
       "customColour": "Custom colour",
       "back": "Back",
       "submitting": "Creating your studio…",
-      "submit": "Create studio"
+      "submit": "Create studio",
+      "submittingInstructor": "Creating your workspace…",
+      "submitInstructor": "Create workspace"
     },
     "done": {
-      "title": "Welcome to {studioName}",
+      "title": "Welcome, {studioName}",
       "subtitle": "Your studio is live. Let's get you set up…",
-      "continue": "Continue setup →"
+      "instructorSubtitle": "Your instructor workspace is ready.",
+      "continue": "Continue setup →",
+      "instructorContinue": "Go to your schedule →"
     }
   }
 }

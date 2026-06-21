@@ -1,4 +1,4 @@
-export type SocialPlatform = "facebook" | "instagram" | "tiktok";
+export type SocialPlatform = "facebook" | "instagram" | "tiktok" | "telegram";
 
 export type AdCampaignStatus = "draft" | "scheduled" | "active" | "paused" | "completed" | "failed";
 

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { decryptSocialCredentials } from "./crypto";
+import { publishToTelegram } from "./telegram";
 import type { AdCampaign, SocialPlatform } from "./types";
 
 type PublishResult = {
@@ -146,6 +147,10 @@ export async function publishCampaignToPlatforms(
         platformIds.instagram = await publishToInstagram(creds.accessToken, igUserId, campaign);
       } else if (platform === "tiktok") {
         platformIds.tiktok = await publishToTiktok(creds.accessToken, campaign);
+      } else if (platform === "telegram") {
+        const chatId = settings.chatId ?? conn.account_id;
+        if (!chatId) throw new Error("No Telegram channel configured");
+        platformIds.telegram = await publishToTelegram(creds.accessToken, chatId, campaign);
       }
     } catch (err) {
       errors[platform] = err instanceof Error ? err.message : "Publish failed";

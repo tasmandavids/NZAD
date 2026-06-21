@@ -31,18 +31,28 @@ export async function markAttendance(input: unknown): Promise<AttendanceResult> 
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("studio_id, role")
+    .select("role")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.studio_id) return { ok: false, error: "No studio found." };
-  if (profile.role !== "teacher" && profile.role !== "admin") {
+  if (profile?.role !== "teacher" && profile?.role !== "admin") {
     return { ok: false, error: "Only teachers and admins can mark attendance." };
+  }
+
+  const { data: cls } = await supabase
+    .from("classes")
+    .select("studio_id, teacher_id")
+    .eq("id", classId)
+    .single();
+
+  if (!cls) return { ok: false, error: "Class not found." };
+  if (cls.teacher_id !== user.id) {
+    return { ok: false, error: "You are not assigned to this class." };
   }
 
   const { error } = await supabase.from("attendance").upsert(
     {
-      studio_id:  profile.studio_id,
+      studio_id:  cls.studio_id,
       class_id:   classId,
       student_id: studentId,
       date,

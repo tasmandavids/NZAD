@@ -6,6 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 import { generateAdCopy } from "@/lib/advertising/ai-ads";
 import { modernizeSeoFields, runSeoAudit } from "@/lib/advertising/ai-seo";
 import { publishCampaignToPlatforms } from "@/lib/advertising/publish";
+import {
+  resolveTelegramChannel,
+  sendTelegramTestMessage,
+  verifyTelegramBotToken,
+} from "@/lib/advertising/telegram";
+import { encryptSocialCredentials } from "@/lib/advertising/crypto";
 import type {
   AdCampaignStatus,
   AdObjective,
@@ -16,7 +22,7 @@ import type {
 export type ActionResult = { ok: true } | { ok: false; error: string };
 export type ActionResultWith<T> = ({ ok: true } & T) | { ok: false; error: string };
 
-const PLATFORMS: SocialPlatform[] = ["facebook", "instagram", "tiktok"];
+const PLATFORMS: SocialPlatform[] = ["facebook", "instagram", "tiktok", "telegram"];
 const OBJECTIVES: AdObjective[] = ["awareness", "traffic", "engagement", "conversions", "leads"];
 const STATUSES: AdCampaignStatus[] = ["draft", "scheduled", "active", "paused", "completed", "failed"];
 
@@ -42,7 +48,7 @@ async function getAdminStudio() {
 const GenerateAdSchema = z.object({
   prompt: z.string().min(3, "Describe what you want to promote").max(2000),
   objective: z.enum(["awareness", "traffic", "engagement", "conversions", "leads"]),
-  platforms: z.array(z.enum(["facebook", "instagram", "tiktok"])).min(1, "Select at least one platform"),
+  platforms: z.array(z.enum(["facebook", "instagram", "tiktok", "telegram"])).min(1, "Select at least one platform"),
   targetUrl: z.string().url().optional().or(z.literal("")),
 });
 
@@ -70,7 +76,7 @@ export async function generateAdWithAi(input: unknown): Promise<ActionResultWith
 const CampaignSchema = z.object({
   name: z.string().min(1, "Campaign name required").max(120),
   objective: z.enum(["awareness", "traffic", "engagement", "conversions", "leads"]),
-  platforms: z.array(z.enum(["facebook", "instagram", "tiktok"])).min(1),
+  platforms: z.array(z.enum(["facebook", "instagram", "tiktok", "telegram"])).min(1),
   headline: z.string().max(200).optional().or(z.literal("")),
   bodyText: z.string().max(5000).optional().or(z.literal("")),
   callToAction: z.string().max(60).optional().or(z.literal("")),
@@ -206,6 +212,81 @@ export async function disconnectSocialPlatform(platform: SocialPlatform): Promis
   if (dbErr) return { ok: false, error: dbErr.message };
   revalidatePath("/portal/admin/advertising");
   return { ok: true };
+}
+
+const TelegramConnectSchema = z.object({
+  botToken: z.string().min(20, "Paste the token from @BotFather"),
+  channelInput: z.string().min(2, "Enter your channel @username or chat ID"),
+  sendTest: z.boolean().optional(),
+});
+
+export async function connectTelegramBot(
+  input: unknown,
+): Promise<ActionResultWith<{ botUsername: string; channelTitle: string }>> {
+  const parsed = TelegramConnectSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  const { error, supabase, studioId, userId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown" };
+
+  try {
+    const bot = await verifyTelegramBotToken(parsed.data.botToken);
+    const channel = await resolveTelegramChannel(parsed.data.botToken, parsed.data.channelInput);
+
+    if (parsed.data.sendTest) {
+      await sendTelegramTestMessage(parsed.data.botToken, channel.chatId);
+    }
+
+    const credentials = encryptSocialCredentials({
+      accessToken: parsed.data.botToken,
+      meta: { botUsername: bot.username, botId: String(bot.id) },
+    });
+
+    const now = new Date().toISOString();
+    const { error: dbErr } = await supabase.from("social_connections").upsert(
+      {
+        studio_id: studioId,
+        platform: "telegram",
+        account_id: channel.chatId,
+        account_name: channel.title,
+        credentials_encrypted: credentials,
+        settings: {
+          chatId: channel.chatId,
+          channelUsername: channel.username ?? "",
+          channelType: channel.type,
+          botUsername: bot.username,
+        },
+        connected_by: userId,
+        sync_error: null,
+        last_sync_at: now,
+        updated_at: now,
+      },
+      { onConflict: "studio_id,platform" },
+    );
+
+    if (dbErr) return { ok: false, error: dbErr.message };
+    revalidatePath("/portal/admin/advertising");
+    return { ok: true, botUsername: bot.username, channelTitle: channel.title };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Telegram connection failed" };
+  }
+}
+
+export async function verifyTelegramBot(
+  botToken: string,
+): Promise<ActionResultWith<{ username: string; firstName: string }>> {
+  if (!botToken || botToken.length < 20) {
+    return { ok: false, error: "Token looks too short — copy the full token from @BotFather" };
+  }
+  const { error } = await getAdminStudio();
+  if (error) return { ok: false, error };
+
+  try {
+    const bot = await verifyTelegramBotToken(botToken);
+    return { ok: true, username: bot.username, firstName: bot.firstName };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Invalid token" };
+  }
 }
 
 export async function runSeoAuditAction(

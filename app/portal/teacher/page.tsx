@@ -1,7 +1,6 @@
 // ============================================================================
 //  /portal/teacher — Schedule overview + today's interactive roll call.
-//  Server component: fetches the teacher's classes, today's enrolled students,
-//  and any attendance already logged for today.
+//  Cross-studio: shows all classes where teacher_id = current user.
 // ============================================================================
 
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +15,9 @@ export type TeacherClass = {
   startTime: string | null;
   endTime: string | null;
   capacity: number;
+  studioId: string;
+  studioName: string;
+  studioSlug: string;
   students: {
     studentId: string;
     name: string | null;
@@ -29,17 +31,18 @@ export default async function TeacherPortal() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  const today = new Date().toISOString().slice(0, 10);
   const todayDow = new Date().getDay();
 
   const [profileRes, classesRes] = await Promise.all([
-    supabase.from("profiles").select("full_name").eq("id", user!.id).single(),
+    supabase.from("profiles").select("full_name, account_kind").eq("id", user!.id).single(),
 
     supabase
       .from("classes")
       .select(`
-        id, name, discipline, level,
+        id, name, discipline, level, studio_id,
         day_of_week, start_time, end_time, capacity,
+        studios!inner ( name, slug ),
         enrollments (
           student_id, status,
           profiles!student_id ( full_name )
@@ -50,7 +53,6 @@ export default async function TeacherPortal() {
       .order("start_time"),
   ]);
 
-  // Fetch today's attendance records for all the teacher's classes
   const classIds = (classesRes.data ?? []).map((c) => c.id);
   const { data: attendanceRows } = classIds.length
     ? await supabase
@@ -60,12 +62,12 @@ export default async function TeacherPortal() {
         .eq("date", today)
     : { data: [] };
 
-  // Build a lookup: `${classId}:${studentId}` → status
   const attLookup = new Map<string, string>(
     (attendanceRows ?? []).map((a) => [`${a.class_id}:${a.student_id}`, a.status]),
   );
 
   const classes: TeacherClass[] = (classesRes.data ?? []).map((cls) => {
+    const studio = cls.studios as unknown as { name: string; slug: string };
     const students = (cls.enrollments as unknown as {
       student_id: string; status: string;
       profiles: { full_name: string | null } | null;
@@ -89,9 +91,14 @@ export default async function TeacherPortal() {
       startTime: cls.start_time,
       endTime: cls.end_time,
       capacity: cls.capacity,
+      studioId: cls.studio_id,
+      studioName: studio?.name ?? "Studio",
+      studioSlug: studio?.slug ?? "",
       students,
     };
   });
+
+  const isInstructor = profileRes.data?.account_kind === "instructor";
 
   return (
     <TeacherSchedule
@@ -99,6 +106,7 @@ export default async function TeacherPortal() {
       classes={classes}
       todayDow={todayDow}
       todayDate={today}
+      isInstructor={isInstructor}
     />
   );
 }

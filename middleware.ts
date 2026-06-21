@@ -8,6 +8,8 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { portalHomeForAccount } from "@/lib/account/memberships";
+import type { AccountKind } from "@/lib/account/kinds";
 import { checkPlatformOperator } from "@/lib/platform/operator-edge";
 import { canAccessPortalPath } from "@/lib/portal/office-access";
 import { mergeSessionCookies, redirectWithSession, refreshSession } from "@/lib/supabase/middleware";
@@ -45,7 +47,9 @@ export async function middleware(request: NextRequest) {
     if (!isOperator) {
       const profile = await getProfile(supabase, user.id);
       const dest =
-        profile?.studioId && profile.role ? ROLE_HOME[profile.role] : "/onboarding";
+        profile?.studioId && profile.role
+          ? resolveHome(profile)
+          : "/onboarding";
       return mergeSessionCookies(NextResponse.redirect(new URL(dest, request.url)), response);
     }
     return response;
@@ -70,7 +74,7 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    const home = ROLE_HOME[profile.role!];
+    const home = resolveHome(profile);
 
     // On /login or bare /portal → send to the intended destination.
     if (pathname === "/login" || pathname === "/portal" || pathname === "/portal/") {
@@ -80,6 +84,7 @@ export async function middleware(request: NextRequest) {
         user.id,
         user.email,
         home,
+        profile,
       );
       return mergeSessionCookies(NextResponse.redirect(new URL(dest, request.url)), response);
     }
@@ -93,6 +98,10 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+function resolveHome(profile: ProfileAccess): string {
+  return portalHomeForAccount(profile.accountKind, profile.role!);
+}
+
 function isSafeRelativePath(path: string): boolean {
   return path.startsWith("/") && !path.startsWith("//");
 }
@@ -103,6 +112,7 @@ async function resolveSignedInDestination(
   userId: string,
   email: string | undefined,
   home: string,
+  profile: ProfileAccess,
 ): Promise<string> {
   const next = request.nextUrl.searchParams.get("next");
   if (!next || !isSafeRelativePath(next)) return home;
@@ -113,12 +123,7 @@ async function resolveSignedInDestination(
   }
 
   if (next.startsWith("/portal")) {
-    return canAccessPortalPath(
-      (await getProfile(supabase, userId))?.role ?? "parent",
-      next,
-    )
-      ? next
-      : home;
+    return canAccessPortalPath(profile.role ?? "parent", next) ? next : home;
   }
 
   return home;
@@ -136,7 +141,11 @@ async function resolveSignedInDestination(
  *
  * Then you can delete getRole() and skip the round-trip.
  */
-type ProfileAccess = { role: Role; studioId: string | null };
+type ProfileAccess = {
+  role: Role;
+  studioId: string | null;
+  accountKind: AccountKind | null;
+};
 
 async function getProfile(
   supabase: SupabaseClient,
@@ -144,13 +153,14 @@ async function getProfile(
 ): Promise<ProfileAccess | null> {
   const { data } = await supabase
     .from("profiles")
-    .select("role, studio_id")
+    .select("role, studio_id, account_kind")
     .eq("id", userId)
     .single();
   if (!data?.role) return null;
   return {
     role: data.role as Role,
     studioId: (data.studio_id as string | null) ?? null,
+    accountKind: (data.account_kind as AccountKind | null) ?? null,
   };
 }
 

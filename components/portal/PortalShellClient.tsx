@@ -59,6 +59,7 @@ function SidebarContent({
   onNavClick,
   collapsed,
   onToggleCollapse,
+  showAffiliations = false,
 }: {
   role: Role;
   studioName: string;
@@ -68,6 +69,7 @@ function SidebarContent({
   onNavClick?: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  showAffiliations?: boolean;
 }) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -145,7 +147,14 @@ function SidebarContent({
             </div>
           ))
         ) : (
-          <div className="space-y-0.5">{PORTAL_NAV[role].map(renderNavItem)}</div>
+          <div className="space-y-0.5">
+            {(role === "teacher"
+              ? PORTAL_NAV.teacher.filter(
+                  (item) => showAffiliations || item.href !== "/portal/teacher/affiliations",
+                )
+              : PORTAL_NAV[role]
+            ).map(renderNavItem)}
+          </div>
         )}
       </nav>
 
@@ -168,12 +177,14 @@ export function PortalShellClient({
   studioName,
   logoUrl = null,
   userName,
+  showAffiliations = false,
   children,
 }: {
   role: Role;
   studioName: string;
   logoUrl?: string | null;
   userName: string | null;
+  showAffiliations?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -262,6 +273,7 @@ export function PortalShellClient({
             pathname={pathname ?? ""}
             collapsed={collapsed}
             onToggleCollapse={toggleCollapse}
+            showAffiliations={showAffiliations}
           />
         </aside>
       </div>
@@ -293,6 +305,7 @@ export function PortalShellClient({
             userName={userName}
             pathname={pathname ?? ""}
             onNavClick={() => setMobileOpen(false)}
+            showAffiliations={showAffiliations}
           />
         </div>
       </div>

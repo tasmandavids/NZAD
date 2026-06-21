@@ -6,12 +6,14 @@ export function PortalShell({
   studioName,
   logoUrl = null,
   userName,
+  showAffiliations = false,
   children,
 }: {
   role: Role;
   studioName: string;
   logoUrl?: string | null;
   userName: string | null;
+  showAffiliations?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -20,6 +22,7 @@ export function PortalShell({
       studioName={studioName}
       logoUrl={logoUrl}
       userName={userName}
+      showAffiliations={showAffiliations}
     >
       {children}
     </PortalShellClient>

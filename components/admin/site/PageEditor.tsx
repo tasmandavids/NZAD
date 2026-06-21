@@ -36,6 +36,8 @@ import { useEditorHistory } from "@/lib/site/editor-history";
 import { savePageBlocks, updatePageMeta, publishPage } from "@/app/portal/admin/site/actions";
 import { buildStudioNavLinks, type SitePageLink, type StudioPageNavSource } from "@/lib/site/page-links";
 import { blockLabel } from "@/lib/site/i18n-labels";
+import { applySmartAppearance } from "@/lib/site/smart-appearance";
+import { APPEARANCE_SWATCHES, blockThumbnail } from "@/lib/site/block-thumbnails";
 
 type EditablePage = {
   id: string;
@@ -106,6 +108,7 @@ export default function PageEditor({
   );
   const [backgroundSelected, setBackgroundSelected] = useState(false);
   const [panel, setPanel] = useState<"none" | "edit" | "settings" | "elements" | "background">("edit");
+  const [previewMode, setPreviewMode] = useState(false);
   const [status, setStatus] = useState<"draft" | "published">(page.status);
   const [dirty, setDirty] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -278,7 +281,7 @@ export default function PageEditor({
   };
 
   const addBlockAt = (type: BlockType, index: number, at?: { x: number; y: number }) => {
-    const b = makeBlock(type);
+    let b = applySmartAppearance(makeBlock(type), blocks);
 
     if (isCanvasWidget(type)) {
       let width = snapGridWidth(70);
@@ -523,6 +526,25 @@ export default function PageEditor({
           >
             {t("settings")}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPreviewMode((on) => {
+                const next = !on;
+                if (next) {
+                  setPanel("none");
+                  setSelectedIds([]);
+                  setBackgroundSelected(false);
+                }
+                return next;
+              });
+            }}
+            className={`rounded-full border px-4 py-1.5 text-sm transition ${
+              previewMode ? "border-brand bg-brand/10 text-brand" : "border-[--hair] text-ink hover:bg-base"
+            }`}
+          >
+            {previewMode ? t("exitPreview") : t("previewMode")}
+          </button>
           <a
             href={previewHref}
             target="_blank"
@@ -548,6 +570,7 @@ export default function PageEditor({
             background={background}
             backgroundSelected={backgroundSelected}
             selectedIds={selectedIds}
+            previewMode={previewMode}
             studioName={studioName}
             logoUrl={logoUrl}
             nav={navLinks}
@@ -571,7 +594,7 @@ export default function PageEditor({
           />
         </main>
 
-        {showPanel && (
+        {showPanel && !previewMode && (
           <aside className="flex w-[340px] shrink-0 flex-col overflow-y-auto border-l border-[--hair] bg-base">
             {panel === "settings" ? (
               <PageSettings meta={meta} isHome={page.isHome} onChange={(m) => { setMeta(m); touch(); }} />
@@ -625,6 +648,23 @@ export default function PageEditor({
   );
 }
 
+function BlockElementThumb({ type }: { type: BlockType }) {
+  const spec = blockThumbnail(type);
+  return (
+    <div className="relative h-14 overflow-hidden border-b border-[--hair]/60" style={{ background: spec.headerBg }}>
+      <div className="absolute inset-0 flex flex-col justify-center gap-1 px-2.5">
+        {spec.bars.map((bar, i) => (
+          <div
+            key={i}
+            className="h-1.5 rounded-sm"
+            style={{ width: `${bar.w}%`, background: spec.accent, opacity: bar.o }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ElementsPanel({ onAdd }: { onAdd: (type: BlockType) => void }) {
   const t = useTranslations("site.editor");
   const tSite = useTranslations("site");
@@ -642,9 +682,10 @@ function ElementsPanel({ onAdd }: { onAdd: (type: BlockType) => void }) {
             type="button"
             onClick={() => onAdd(def.type)}
             title={def.description}
-            className="rounded-lg border border-[--hair] bg-surface px-2 py-2.5 text-left text-xs text-ink transition hover:border-brand"
+            className="group overflow-hidden rounded-xl border border-[--hair] bg-surface text-left transition hover:border-brand hover:shadow-sm"
           >
-            {blockLabel(tSite, def.type)}
+            <BlockElementThumb type={def.type} />
+            <span className="block px-2.5 py-2 text-xs font-medium text-ink">{blockLabel(tSite, def.type)}</span>
           </button>
         ))}
       </div>
@@ -797,6 +838,41 @@ function Inspector({
   );
 }
 
+function AppearanceSwatchSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {options.map((opt) => {
+        const swatch = APPEARANCE_SWATCHES[opt.value];
+        const selected = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={`flex flex-col items-center gap-1.5 rounded-lg border p-2 transition ${
+              selected ? "border-brand ring-2 ring-brand/25" : "border-[--hair] hover:border-brand/50"
+            }`}
+          >
+            <span
+              className="h-8 w-full rounded-md border border-[--hair]/60 shadow-inner"
+              style={swatch?.style ?? { background: "var(--base)" }}
+            />
+            <span className="text-[0.65rem] font-medium leading-tight text-ink">{opt.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function ScalarField({
   field,
   value,
@@ -818,6 +894,12 @@ function ScalarField({
         <VideoInput value={strVal} onChange={(url) => onSet(field.key, url)} />
       ) : isLinkField(field.key) ? (
         <LinkPicker value={strVal} pages={sitePages} onChange={(href) => onSet(field.key, href)} />
+      ) : field.type === "select" && (field.key === "_bg" || field.key === "_fill") ? (
+        <AppearanceSwatchSelect
+          value={strVal}
+          options={field.options ?? []}
+          onChange={(v) => onSet(field.key, v)}
+        />
       ) : field.type === "select" ? (
         <select value={strVal} onChange={(e) => onSet(field.key, e.target.value)} className="field-premium">
           {(field.options ?? []).map((opt) => (

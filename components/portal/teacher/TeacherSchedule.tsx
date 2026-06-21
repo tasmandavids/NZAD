@@ -10,6 +10,14 @@ import type { TeacherClass } from "@/app/portal/teacher/page";
 
 type AttStatus = "present" | "absent" | "late" | "excused" | null;
 
+function StudioBadge({ name }: { name: string }) {
+  return (
+    <span className="inline-flex rounded-full border border-[--hair] bg-base/60 px-2 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wide text-muted">
+      {name}
+    </span>
+  );
+}
+
 function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string }) {
   const t = useTranslations("teacher.schedule");
   const fmt = useFormatTimeShort();
@@ -57,7 +65,10 @@ function RollCallCard({ cls, todayDate }: { cls: TeacherClass; todayDate: string
         style={{ background: "color-mix(in srgb, var(--brand) 8%, var(--surface))" }}
       >
         <div>
-          <h3 className="font-black text-ink">{cls.name}</h3>
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <h3 className="font-black text-ink">{cls.name}</h3>
+            <StudioBadge name={cls.studioName} />
+          </div>
           <p className="text-xs text-muted">
             {cls.discipline && <>{cls.discipline} · </>}
             {cls.level && <>{cls.level} · </>}
@@ -153,7 +164,10 @@ function ScheduleRow({ cls, dayName }: { cls: TeacherClass; dayName: string }) {
         <p className="text-xs font-bold tabular-nums text-ink">{fmt(cls.startTime)}</p>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm text-ink truncate">{cls.name}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-semibold text-sm text-ink truncate">{cls.name}</p>
+          <StudioBadge name={cls.studioName} />
+        </div>
         <p className="text-xs text-muted">
           {cls.discipline && <>{cls.discipline} · </>}
           {cls.level && <>{cls.level} · </>}
@@ -169,12 +183,14 @@ export default function TeacherSchedule({
   classes,
   todayDow,
   todayDate,
+  isInstructor = false,
 }: {
   teacherName: string | null;
   classes: TeacherClass[];
   todayDow: number;
   todayDate: string;
   dayNames?: string[];
+  isInstructor?: boolean;
 }) {
   const t = useTranslations("teacher.schedule");
   const locale = useLocale();
@@ -246,7 +262,17 @@ export default function TeacherSchedule({
       {classes.length === 0 && (
         <div className="rounded-2xl border border-[--hair] bg-surface px-6 py-12 text-center">
           <p className="text-sm text-muted">{t("noClassesAssigned")}</p>
-          <p className="mt-1 text-xs text-muted">{t("noClassesAssignedHint")}</p>
+          <p className="mt-1 text-xs text-muted">
+            {isInstructor ? t("noClassesAssignedInstructorHint") : t("noClassesAssignedHint")}
+          </p>
+          {isInstructor && (
+            <Link
+              href="/portal/teacher/affiliations"
+              className="btn-glow btn-glow--solid mt-4 inline-flex justify-center text-sm"
+            >
+              {t("viewAffiliations")}
+            </Link>
+          )}
         </div>
       )}
     </motion.div>
