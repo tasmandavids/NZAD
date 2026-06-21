@@ -111,10 +111,13 @@
     },
     "parent": {
       "familyHub": "Family Hub",
+      "studioChat": "Studio chat",
       "studioEmail": "Studio email"
     },
     "student": {
-      "timetable": "My Timetable"
+      "timetable": "My Timetable",
+      "hub": "My Account",
+      "messages": "Studio chat"
     },
     "platform": {
       "overview": "Overview",
@@ -142,6 +145,8 @@
     "getStarted": "Get started",
     "platformAdmin": "Olune platform admin?",
     "signInToPlatform": "Sign in to /platform",
+    "joinStudio": "Join a studio?",
+    "joinLink": "Register here",
     "continueWithGoogle": "Continue with Google",
     "continueWithApple": "Continue with Apple",
     "redirecting": "Redirecting…",

@@ -42,36 +42,65 @@ export type Waiver = {
 
 const uuidField = z.string().uuid();
 
-async function getParentContext() {
+async function getEnrollmentContext() {
   const t = await getTranslations("errors.actions");
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: t("notSignedIn"), supabase, userId: null, studioId: null };
+  if (!user) return { error: t("notSignedIn"), supabase, userId: null, studioId: null, mode: null as null };
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("studio_id, role")
+    .select("studio_id, role, self_managed")
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "parent") {
-    return { error: t("parentAccessRequired"), supabase, userId: null, studioId: null };
+  if (profile?.role === "parent") {
+    return {
+      error: null,
+      supabase,
+      userId: user.id,
+      studioId: profile.studio_id as string,
+      mode: "parent" as const,
+    };
   }
 
-  return {
-    error: null,
-    supabase,
-    userId: user.id,
-    studioId: profile.studio_id as string,
-  };
+  if (profile?.role === "student" && profile.self_managed) {
+    return {
+      error: null,
+      supabase,
+      userId: user.id,
+      studioId: profile.studio_id as string,
+      mode: "self" as const,
+    };
+  }
+
+  return { error: t("parentAccessRequired"), supabase, userId: null, studioId: null, mode: null };
+}
+
+async function assertStudentAccess(
+  ctx: { mode: "parent" | "self" | null; userId: string | null; supabase: Awaited<ReturnType<typeof createClient>> },
+  studentId: string,
+  t: Awaited<ReturnType<typeof getTranslations>>,
+) {
+  if (!ctx.userId) return t("unknown");
+  if (ctx.mode === "self") {
+    return ctx.userId === studentId ? null : t("notGuardian");
+  }
+  const { data: guardianship } = await ctx.supabase
+    .from("guardianships")
+    .select("guardian_id")
+    .eq("guardian_id", ctx.userId)
+    .eq("student_id", studentId)
+    .single();
+  return guardianship ? null : t("notGuardian");
 }
 
 // ─── Get available classes ───────────────────────────────────────────────────
 
 export async function getAvailableClasses(): Promise<ActionResult<AvailableClass[]>> {
-  const { error, supabase } = await getParentContext();
+  const { error, supabase } = await getEnrollmentContext();
   if (error) return { ok: false, error };
 
   const { data, error: dbErr } = await supabase
@@ -109,7 +138,7 @@ export async function getAvailableClasses(): Promise<ActionResult<AvailableClass
 // ─── Get studio waivers ──────────────────────────────────────────────────────
 
 export async function getActiveWaivers(): Promise<ActionResult<Waiver[]>> {
-  const { error, supabase } = await getParentContext();
+  const { error, supabase } = await getEnrollmentContext();
   if (error) return { ok: false, error };
 
   const { data, error: dbErr } = await supabase
@@ -140,18 +169,12 @@ export async function signWaiver(
   waiverVersion: number,
 ): Promise<ActionResult> {
   const t = await getTranslations("errors.actions");
-  const { error, supabase, userId } = await getParentContext();
-  if (error || !userId) return { ok: false, error: error ?? t("unknown") };
+  const ctx = await getEnrollmentContext();
+  const { error, supabase, userId, studioId } = ctx;
+  if (error || !userId || !studioId) return { ok: false, error: error ?? t("unknown") };
 
-  // Verify guardian relationship
-  const { data: guardianship } = await supabase
-    .from("guardianships")
-    .select("guardian_id")
-    .eq("guardian_id", userId)
-    .eq("student_id", studentId)
-    .single();
-
-  if (!guardianship) return { ok: false, error: t("notGuardian") };
+  const accessErr = await assertStudentAccess(ctx, studentId, t);
+  if (accessErr) return { ok: false, error: accessErr };
 
   // Upsert — idempotent if already signed this version
   const { error: dbErr } = await supabase
@@ -177,21 +200,15 @@ export async function enrollChildInClass(
   classId: string,
 ): Promise<ActionResult<{ enrollmentId: string; waitlisted: boolean }>> {
   const t = await getTranslations("errors.actions");
-  const { error, supabase, userId, studioId } = await getParentContext();
+  const ctx = await getEnrollmentContext();
+  const { error, supabase, userId, studioId } = ctx;
   if (error || !userId || !studioId) return { ok: false, error: error ?? t("unknown") };
   if (!uuidField.safeParse(studentId).success || !uuidField.safeParse(classId).success) {
     return { ok: false, error: t("invalidStudentOrClass") };
   }
 
-  // Verify guardian relationship
-  const { data: guardianship } = await supabase
-    .from("guardianships")
-    .select("guardian_id")
-    .eq("guardian_id", userId)
-    .eq("student_id", studentId)
-    .single();
-
-  if (!guardianship) return { ok: false, error: t("notGuardian") };
+  const accessErr = await assertStudentAccess(ctx, studentId, t);
+  if (accessErr) return { ok: false, error: accessErr };
 
   // Check for existing enrollment
   const { data: existing } = await supabase
@@ -229,6 +246,7 @@ export async function enrollChildInClass(
   if (dbErr) return { ok: false, error: dbErr.message };
 
   revalidatePath("/portal/parent");
+  revalidatePath("/portal/student");
   return {
     ok: true,
     data: {
@@ -250,33 +268,21 @@ export async function createEnrollmentIntent(
   priceCents: number,
 ): Promise<ActionResult<{ clientSecret: string; invoiceId: string }>> {
   const t = await getTranslations("errors.actions");
-  const { error, supabase, userId, studioId } = await getParentContext();
+  const ctx = await getEnrollmentContext();
+  const { error, supabase, userId, studioId, mode } = ctx;
   if (error || !userId || !studioId) return { ok: false, error: error ?? t("unknown") };
   if (!uuidField.safeParse(studentId).success || !uuidField.safeParse(classId).success) {
     return { ok: false, error: t("invalidStudentOrClass") };
   }
   if (priceCents <= 0) return { ok: false, error: t("classNoFee") };
 
-  // Verify guardian relationship.
-  const { data: guardianship } = await supabase
-    .from("guardianships")
-    .select("guardian_id")
-    .eq("guardian_id", userId)
-    .eq("student_id", studentId)
-    .single();
+  const accessErr = await assertStudentAccess(ctx, studentId, t);
+  if (accessErr) return { ok: false, error: accessErr };
 
-  if (!guardianship) return { ok: false, error: t("notGuardian") };
-
-  // ── Sibling / family discount (Phase 3.3) ──────────────────────────────────
-  // If this family already has another ACTIVE student enrolled, apply the
-  // studio's configured percentage discount to this enrollment.
-  const chargeCents = await siblingDiscountedCents(
-    supabase,
-    studioId,
-    userId,
-    studentId,
-    priceCents,
-  );
+  const chargeCents =
+    mode === "self"
+      ? priceCents
+      : await siblingDiscountedCents(supabase, studioId, userId, studentId, priceCents);
 
   // Create the invoice (status 'sent' — owed until the webhook marks it paid).
   const dueDate = new Date();

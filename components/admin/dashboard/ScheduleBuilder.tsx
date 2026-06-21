@@ -19,11 +19,24 @@ import {
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useFormatTimeShort } from "@/lib/i18n/client";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { rescheduleClass } from "@/app/portal/admin/classes/schedule-actions";
 import { slotKey, SCHEDULE_DAYS, SCHEDULE_SLOTS, type ClassBlock } from "./types";
 
 type Lists = Record<string, ClassBlock[]>;
+
+function classesFingerprint(classes: ClassBlock[]): string {
+  return classes
+    .map((c) => `${c.id}:${c.dayOfWeek ?? "x"}:${c.startTime ?? "x"}`)
+    .sort()
+    .join("|");
+}
+
+function slotTime(startTime: string | null): string | null {
+  if (!startTime) return null;
+  const hhmm = startTime.slice(0, 5);
+  return SCHEDULE_SLOTS.some((s) => s.id === hhmm) ? hhmm : null;
+}
 
 // Build the initial lists from server-provided classes.
 // Scheduled classes are placed in their day:time cell; the rest go to the tray.
@@ -38,8 +51,9 @@ function buildLists(classes: ClassBlock[]): Lists {
   );
 
   for (const cls of classes) {
-    if (cls.dayOfWeek !== null && cls.startTime !== null) {
-      const key = slotKey(String(cls.dayOfWeek), cls.startTime);
+    const time = slotTime(cls.startTime);
+    if (cls.dayOfWeek !== null && time !== null) {
+      const key = slotKey(String(cls.dayOfWeek), time);
       if (lists[key] !== undefined) {
         lists[key].push(cls);
       } else {
@@ -83,7 +97,13 @@ function ClassCard({
   );
 }
 
-export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
+export function ScheduleBuilder({
+  studioId,
+  classes,
+}: {
+  studioId: string;
+  classes: ClassBlock[];
+}) {
   const t = useTranslations("admin.dashboard.schedule");
   const tShared = useTranslations("admin.shared");
   const tDays = useTranslations("common.days");
@@ -91,9 +111,17 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
   const dayKey: Record<string, "mon" | "tue" | "wed" | "thu" | "fri" | "sat"> = {
     Mon: "mon", Tue: "tue", Wed: "wed", Thu: "thu", Fri: "fri", Sat: "sat",
   };
+  const serverFingerprint = useMemo(() => classesFingerprint(classes), [classes]);
   const [lists, setLists] = useState<Lists>(() => buildLists(classes));
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Keep the board in sync when the server sends fresh studio-scoped data.
+  useEffect(() => {
+    if (isPending) return;
+    setLists(buildLists(classes));
+    setErrorMsg(null);
+  }, [studioId, serverFingerprint, isPending, classes]);
 
   // Parse a droppableId back to {dayOfWeek, startTime} or null if tray
   function parseDropId(id: string): { dayOfWeek: number; startTime: string } | null {
@@ -114,8 +142,10 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
         return;
 
       let movedBlock!: ClassBlock;
+      let previousLists!: Lists;
 
       setLists((prev) => {
+        previousLists = prev;
         const next: Lists = { ...prev };
         const src = Array.from(next[source.droppableId]);
         const [moved] = src.splice(source.index, 1);
@@ -152,6 +182,7 @@ export function ScheduleBuilder({ classes }: { classes: ClassBlock[] }) {
           target?.startTime ?? null,
         );
         if (!result.ok) {
+          setLists(previousLists);
           setErrorMsg(result.error);
         } else {
           setErrorMsg(null);

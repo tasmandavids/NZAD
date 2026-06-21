@@ -6,6 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useShortDayNames, useTimeGreeting, useFormatTimeShort } from "@/lib/i18n/client";
 import type { Child, Invoice } from "@/app/portal/parent/page";
 import { EnrollModal } from "./EnrollModal";
+import { AddChildModal } from "./AddChildModal";
+import { PayInvoiceModal } from "./PayInvoiceModal";
 
 const NZD = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 2 });
 
@@ -38,10 +40,12 @@ export default function ParentHub({
   parentName,
   familyChildren,
   invoices,
+  selfManaged = false,
 }: {
   parentName: string | null;
   familyChildren: Child[];
   invoices: Invoice[];
+  selfManaged?: boolean;
 }) {
   const t = useTranslations("parent.hub");
   const locale = useLocale();
@@ -49,6 +53,8 @@ export default function ParentHub({
   const greeting = useTimeGreeting();
   const fmt = useFormatTimeShort();
   const [showEnroll, setShowEnroll] = useState(false);
+  const [showAddChild, setShowAddChild] = useState(false);
+  const [payInvoice, setPayInvoice] = useState<Invoice | null>(null);
 
   const firstName = parentName?.split(" ")[0];
   const greetingLine = firstName
@@ -74,7 +80,9 @@ export default function ParentHub({
       >
         <div>
           <p className="text-sm text-muted">{greetingLine}</p>
-          <h1 className="text-2xl font-black tracking-tight text-ink">{t("title")}</h1>
+          <h1 className="text-2xl font-black tracking-tight text-ink">
+            {selfManaged ? t("adultTitle") : t("title")}
+          </h1>
         </div>
         <div className="flex items-center gap-3">
           {outstanding > 0 && (
@@ -85,7 +93,7 @@ export default function ParentHub({
               </p>
             </div>
           )}
-          {familyChildren.length > 0 && (
+          {(familyChildren.length > 0 || selfManaged) && (
             <button
               type="button"
               onClick={() => setShowEnroll(true)}
@@ -93,6 +101,15 @@ export default function ParentHub({
               style={{ background: "var(--brand)" }}
             >
               {t("enroll")}
+            </button>
+          )}
+          {!selfManaged && (
+            <button
+              type="button"
+              onClick={() => setShowAddChild(true)}
+              className="rounded-xl border border-[--hair] px-5 py-2.5 text-sm font-semibold text-ink hover:bg-surface"
+            >
+              {t("addChild")}
             </button>
           )}
         </div>
@@ -106,6 +123,15 @@ export default function ParentHub({
           <div className="rounded-2xl border border-[--hair] bg-surface px-6 py-10 text-center">
             <p className="text-sm text-muted">{t("noChildren")}</p>
             <p className="mt-1 text-xs text-muted">{t("noChildrenHint")}</p>
+            {!selfManaged && (
+              <button
+                type="button"
+                onClick={() => setShowAddChild(true)}
+                className="mt-4 rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white"
+              >
+                {t("addChild")}
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -173,6 +199,9 @@ export default function ParentHub({
                       {h}
                     </th>
                   ))}
+                  <th className="px-4 py-3 text-left text-[0.62rem] font-semibold uppercase tracking-wider text-muted">
+                    {t("tableActions")}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -197,6 +226,17 @@ export default function ParentHub({
                         ? new Date(inv.dueDate).toLocaleDateString(locale, { day: "numeric", month: "short" })
                         : "—"}
                     </td>
+                    <td className="px-4 py-3">
+                      {(inv.status === "sent" || inv.status === "overdue") && (
+                        <button
+                          type="button"
+                          onClick={() => setPayInvoice(inv)}
+                          className="rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white"
+                        >
+                          {t("payNow")}
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -207,8 +247,20 @@ export default function ParentHub({
       </motion.section>
 
       <AnimatePresence>
-        {showEnroll && (
+        {showEnroll && familyChildren.length > 0 && (
           <EnrollModal familyChildren={familyChildren} onClose={() => setShowEnroll(false)} />
+        )}
+        {showAddChild && (
+          <AddChildModal onClose={() => setShowAddChild(false)} onAdded={() => window.location.reload()} />
+        )}
+        {payInvoice && (
+          <PayInvoiceModal
+            invoiceId={payInvoice.id}
+            amountCents={payInvoice.amountCents}
+            label={payInvoice.studentName ?? t("invoicePayment")}
+            onClose={() => setPayInvoice(null)}
+            onPaid={() => window.location.reload()}
+          />
         )}
       </AnimatePresence>
     </motion.div>

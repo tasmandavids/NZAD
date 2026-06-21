@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { resolveEffectiveStudioId } from "@/lib/portal/access";
 import { getBrandingCached } from "@/lib/branding";
 import { normalizeBlocks } from "@/lib/site/blocks";
 import { normalizePageBackground } from "@/lib/site/background";
@@ -38,17 +39,16 @@ export default async function SitePreviewPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("studio_id, role")
+    .select("studio_id, active_studio_id, role")
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin" || !profile.studio_id) notFound();
+  if (profile?.role !== "admin" || !resolveEffectiveStudioId(profile)) notFound();
 
   const { data: page } = await supabase
     .from("site_pages")
     .select("id, studio_id, title, slug, blocks, background, status, is_home, studios!inner(name, slug)")
     .eq("id", pageId)
-    .eq("studio_id", profile.studio_id)
     .single();
 
   if (!page) notFound();

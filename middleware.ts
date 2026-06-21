@@ -30,9 +30,10 @@ export async function middleware(request: NextRequest) {
   const inPortal = pathname === "/portal" || pathname.startsWith("/portal/");
   const inPlatform = pathname === "/platform" || pathname.startsWith("/platform/");
   const inLogin = pathname === "/login";
+  const inJoin = pathname === "/join";
 
-  // Session refresh only — no routing rules on public pages.
-  if (!inPortal && !inPlatform && !inLogin) {
+  // Session refresh only — no routing rules on public pages (except join handled below).
+  if (!inPortal && !inPlatform && !inLogin && !inJoin) {
     return response;
   }
 
@@ -65,6 +66,7 @@ export async function middleware(request: NextRequest) {
 
     // Signed up but hasn't created/joined a studio yet (role defaults to parent).
     if (!profile?.studioId) {
+      if (inJoin) return response;
       if (inPortal || inLogin || pathname === "/portal" || pathname === "/portal/") {
         return mergeSessionCookies(
           NextResponse.redirect(new URL("/onboarding", request.url)),

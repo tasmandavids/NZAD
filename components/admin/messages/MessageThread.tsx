@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { useMessageStream } from "@/components/admin/messages/MessageStreamProvider";
 
 export interface ThreadMessage {
   id: string;
@@ -43,8 +44,11 @@ export function MessageThread({
 }: MessageThreadProps) {
   const t = useTranslations("admin.messages");
   const tShared = useTranslations("admin.shared");
+  const stream = useMessageStream();
   const [thread, setThread] = useState<ThreadMessage[]>([]);
   const [loadingThread, setLoadingThread] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [draftText, setDraftText] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -52,39 +56,41 @@ export function MessageThread({
 
   const loadThread = useCallback(async (id: string) => {
     setLoadingThread(true);
+    setLoadError(null);
     setThread([]);
     try {
       const res = await fetch(`/api/messages?with=${id}`);
       const data = await res.json();
+      if (!res.ok) {
+        setLoadError(data.error ?? t("loadFailed"));
+        return;
+      }
       setThread(data.messages ?? []);
+    } catch {
+      setLoadError(t("loadFailed"));
     } finally {
       setLoadingThread(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadThread(peerId);
   }, [peerId, loadThread]);
 
   useEffect(() => {
-    const es = new EventSource("/api/messages/stream");
-
-    es.addEventListener("message", (e) => {
-      const newMsg: ThreadMessage = JSON.parse(e.data);
+    if (!stream) return;
+    return stream.subscribe((newMsg) => {
       const msgPeer =
         newMsg.from_user_id === currentUserId ? newMsg.to_user_id : newMsg.from_user_id;
-
       if (msgPeer !== peerId) return;
 
-      setThread((t) => {
-        if (t.some((m) => m.id === newMsg.id)) return t;
-        return [...t, newMsg];
+      setThread((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
       });
       onNewMessage?.(newMsg);
     });
-
-    return () => es.close();
-  }, [currentUserId, peerId, onNewMessage]);
+  }, [stream, currentUserId, peerId, onNewMessage]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -94,6 +100,7 @@ export function MessageThread({
     if (!draftText.trim() || sending) return;
     const body = draftText.trim();
     setSending(true);
+    setSendError(null);
     setDraftText("");
 
     const optimistic: ThreadMessage = {
@@ -105,7 +112,7 @@ export function MessageThread({
       sent_at: new Date().toISOString(),
       read_at: null,
     };
-    setThread((t) => [...t, optimistic]);
+    setThread((prev) => [...prev, optimistic]);
 
     try {
       const res = await fetch("/api/messages", {
@@ -115,13 +122,21 @@ export function MessageThread({
       });
       const data = await res.json();
 
+      if (!res.ok) {
+        setThread((prev) => prev.filter((m) => m.id !== optimistic.id));
+        setDraftText(body);
+        setSendError(data.error ?? t("sendFailed"));
+        return;
+      }
+
       if (data.message) {
-        setThread((t) => t.map((m) => (m.id === optimistic.id ? data.message : m)));
+        setThread((prev) => prev.map((m) => (m.id === optimistic.id ? data.message : m)));
         onNewMessage?.(data.message);
       }
     } catch {
-      setThread((t) => t.filter((m) => m.id !== optimistic.id));
+      setThread((prev) => prev.filter((m) => m.id !== optimistic.id));
       setDraftText(body);
+      setSendError(t("sendFailed"));
     } finally {
       setSending(false);
       inputRef.current?.focus();
@@ -164,6 +179,17 @@ export function MessageThread({
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6">
         {loadingThread ? (
           <div className="flex h-full items-center justify-center text-sm text-muted">{tShared("loading")}</div>
+        ) : loadError ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-sm">
+            <p className="text-red-400">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => loadThread(peerId)}
+              className="rounded-lg border border-[--hair] px-3 py-1.5 text-xs text-ink hover:bg-surface"
+            >
+              {tShared("retry")}
+            </button>
+          </div>
         ) : thread.length === 0 ? (
           <div className="flex h-full items-center justify-center text-center text-sm text-muted">
             <div>
@@ -206,6 +232,11 @@ export function MessageThread({
       </div>
 
       <div className="border-t border-[--hair] bg-surface px-4 py-4 sm:px-6">
+        {sendError && (
+          <p className="mb-2 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs text-red-400">
+            {sendError}
+          </p>
+        )}
         <div className="flex items-end gap-3">
           <textarea
             ref={inputRef}

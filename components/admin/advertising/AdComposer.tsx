@@ -36,6 +36,10 @@ export function AdComposer({
   const [campaignName, setCampaignName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [bodyText, setBodyText] = useState("");
+  const [callToAction, setCallToAction] = useState("");
+  const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(true);
   const [generating, startGenerate] = useTransition();
@@ -56,25 +60,32 @@ export function AdComposer({
         return;
       }
       setGenerated(res.copy);
+      setHeadline(res.copy.headline);
+      setBodyText(res.copy.bodyText);
+      setCallToAction(res.copy.callToAction);
       if (!campaignName) setCampaignName(prompt.slice(0, 60) || t("adCreator.untitledCampaign"));
     });
   }
 
   function handleSave(publish: boolean) {
-    if (!generated) return;
+    if (!headline.trim() && !bodyText.trim() && !generated) {
+      setError(t("adCreator.copyRequired"));
+      return;
+    }
     setError(null);
+    setSuccess(null);
     startSave(async () => {
       const res = await createCampaign({
         name: campaignName || t("adCreator.untitledCampaign"),
         objective,
         platforms,
-        headline: generated.headline,
-        bodyText: generated.bodyText,
-        callToAction: generated.callToAction,
+        headline: headline || generated?.headline || "",
+        bodyText: bodyText || generated?.bodyText || "",
+        callToAction: callToAction || generated?.callToAction || "",
         imageUrl,
         videoUrl,
         targetUrl,
-        aiGenerated: true,
+        aiGenerated: !!generated,
       });
       if (!res.ok) {
         setError(res.error);
@@ -82,18 +93,27 @@ export function AdComposer({
       }
       if (publish) {
         const pub = await publishCampaign(res.id);
-        if (!pub.ok) setError(pub.error);
+        if (!pub.ok) {
+          setError(pub.error);
+          return;
+        }
+        setSuccess(t("adCreator.published"));
+      } else {
+        setSuccess(t("adCreator.saved"));
       }
       setGenerated(null);
       setPrompt("");
       setCampaignName("");
+      setHeadline("");
+      setBodyText("");
+      setCallToAction("");
       onCreated();
     });
   }
 
-  const previewHeadline = generated?.headline ?? "";
-  const previewBody = generated?.bodyText ?? prompt;
-  const previewCta = generated?.callToAction ?? "";
+  const previewHeadline = headline || generated?.headline || "";
+  const previewBody = bodyText || generated?.bodyText || prompt;
+  const previewCta = callToAction || generated?.callToAction || "";
 
   return (
     <div className="space-y-6">
@@ -180,82 +200,90 @@ export function AdComposer({
             {generating ? tShared("generating") : t("adCreator.generate")}
           </button>
 
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input
+              type="text"
+              value={campaignName}
+              onChange={(e) => setCampaignName(e.target.value)}
+              placeholder={t("adCreator.campaignName")}
+              className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm sm:col-span-2"
+            />
+            <input
+              type="text"
+              value={headline}
+              onChange={(e) => setHeadline(e.target.value)}
+              placeholder={t("adCreator.headlinePlaceholder")}
+              className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
+            />
+            <input
+              type="text"
+              value={callToAction}
+              onChange={(e) => setCallToAction(e.target.value)}
+              placeholder={t("adCreator.ctaPlaceholder")}
+              className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
+            />
+            <textarea
+              value={bodyText}
+              onChange={(e) => setBodyText(e.target.value)}
+              rows={2}
+              placeholder={t("adCreator.bodyPlaceholder")}
+              className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm sm:col-span-2"
+            />
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder={t("adCreator.imageUrl")}
+              className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
+            />
+            <input
+              type="url"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder={t("adCreator.videoUrl")}
+              className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => handleSave(false)}
+              disabled={saving || platforms.length === 0}
+              className="rounded-xl border border-[--hair] bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-base disabled:opacity-50"
+            >
+              {t("adCreator.saveDraft")}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSave(true)}
+              disabled={saving || platforms.length === 0}
+              className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:brightness-105 disabled:opacity-50"
+            >
+              {saving ? tShared("publishing") : t("adCreator.saveAndPublish")}
+            </button>
+          </div>
+
           <AnimatePresence>
             {generated && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="space-y-4 rounded-xl border border-brand/20 bg-brand/5 p-4"
+                className="space-y-2 rounded-xl border border-brand/20 bg-brand/5 p-4"
               >
-                <div>
-                  <p className="text-[0.62rem] font-semibold uppercase tracking-wide text-brand">{t("adCreator.generatedCopy")}</p>
-                  <p className="mt-2 text-sm font-bold text-ink">{generated.headline}</p>
-                  <p className="mt-1 text-sm text-muted">{generated.bodyText}</p>
-                  <p className="mt-2 text-xs font-semibold text-ink">{t("adCreator.cta", { cta: generated.callToAction })}</p>
-                  {generated.hashtags.length > 0 && (
-                    <p className="mt-1 text-xs text-muted">{generated.hashtags.join(" ")}</p>
-                  )}
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <input
-                    type="text"
-                    value={campaignName}
-                    onChange={(e) => setCampaignName(e.target.value)}
-                    placeholder={t("adCreator.campaignName")}
-                    className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
-                  />
-                  <input
-                    type="url"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder={t("adCreator.imageUrl")}
-                    className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm"
-                  />
-                  <input
-                    type="url"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    placeholder={t("adCreator.videoUrl")}
-                    className="rounded-xl border border-[--hair] bg-base px-3 py-2 text-sm sm:col-span-2"
-                  />
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleSave(false)}
-                    disabled={saving}
-                    className="rounded-xl border border-[--hair] bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-base disabled:opacity-50"
-                  >
-                    {t("adCreator.saveDraft")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSave(true)}
-                    disabled={saving}
-                    className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white hover:brightness-105 disabled:opacity-50"
-                  >
-                    {saving ? tShared("publishing") : t("adCreator.saveAndPublish")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowPreview((v) => !v)}
-                    className="rounded-xl border border-[--hair] px-4 py-2 text-sm font-semibold text-muted hover:text-ink"
-                  >
-                    {showPreview ? t("adCreator.hidePreview") : t("adCreator.showPreview")}
-                  </button>
-                </div>
+                <p className="text-[0.62rem] font-semibold uppercase tracking-wide text-brand">{t("adCreator.generatedCopy")}</p>
+                <p className="text-xs text-muted">{t("adCreator.generatedHint")}</p>
               </motion.div>
             )}
           </AnimatePresence>
 
+          {success && <p className="text-sm text-green-600">{success}</p>}
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
       </div>
 
-      {showPreview && platforms.length > 0 && (generated || prompt.trim()) && (
+      {showPreview && platforms.length > 0 && (previewHeadline || previewBody) && (
         <div className="rounded-2xl border border-[--hair] bg-surface p-6">
           <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted">{t("adCreator.livePreview")}</h3>
           <PlatformPreviewGrid

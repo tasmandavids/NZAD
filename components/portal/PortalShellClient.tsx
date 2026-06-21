@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { signOut } from "@/app/portal/actions";
 import type { Role } from "@/lib/types";
-import { ADMIN_NAV, OFFICE_NAV, PORTAL_NAV, ROLE_BADGE_KEYS, type NavItem } from "@/lib/portal/nav-config";
+import { ADMIN_NAV, OFFICE_NAV, PORTAL_NAV, ROLE_BADGE_KEYS, SELF_MANAGED_STUDENT_NAV, type NavItem } from "@/lib/portal/nav-config";
 import { OptimizableImage } from "@/components/ui/OptimizableImage";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
@@ -60,6 +60,7 @@ function SidebarContent({
   collapsed,
   onToggleCollapse,
   showAffiliations = false,
+  selfManagedStudent = false,
 }: {
   role: Role;
   studioName: string;
@@ -70,6 +71,7 @@ function SidebarContent({
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   showAffiliations?: boolean;
+  selfManagedStudent?: boolean;
 }) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -152,7 +154,9 @@ function SidebarContent({
               ? PORTAL_NAV.teacher.filter(
                   (item) => showAffiliations || item.href !== "/portal/teacher/affiliations",
                 )
-              : PORTAL_NAV[role]
+              : role === "student" && selfManagedStudent
+                ? SELF_MANAGED_STUDENT_NAV
+                : PORTAL_NAV[role]
             ).map(renderNavItem)}
           </div>
         )}
@@ -178,6 +182,7 @@ export function PortalShellClient({
   logoUrl = null,
   userName,
   showAffiliations = false,
+  selfManagedStudent = false,
   children,
 }: {
   role: Role;
@@ -185,6 +190,7 @@ export function PortalShellClient({
   logoUrl?: string | null;
   userName: string | null;
   showAffiliations?: boolean;
+  selfManagedStudent?: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -193,7 +199,7 @@ export function PortalShellClient({
   const [collapsed, setCollapsed] = useState(false);
   const [hoverPeek, setHoverPeek] = useState(false);
   const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showBell = role === "admin";
+  const showBell = role === "admin" || role === "office" || role === "parent" || (role === "student" && selfManagedStudent);
 
   useEffect(() => {
     try {
@@ -274,6 +280,7 @@ export function PortalShellClient({
             collapsed={collapsed}
             onToggleCollapse={toggleCollapse}
             showAffiliations={showAffiliations}
+            selfManagedStudent={selfManagedStudent}
           />
         </aside>
       </div>
@@ -306,6 +313,7 @@ export function PortalShellClient({
             pathname={pathname ?? ""}
             onNavClick={() => setMobileOpen(false)}
             showAffiliations={showAffiliations}
+            selfManagedStudent={selfManagedStudent}
           />
         </div>
       </div>

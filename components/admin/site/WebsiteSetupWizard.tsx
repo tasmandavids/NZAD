@@ -16,7 +16,7 @@ import { TemplateGallery } from "@/components/admin/site/TemplateGallery";
 import { TypographyGallery } from "@/components/admin/site/TypographyGallery";
 import { BrandingQuickApply, type BrandingDraft } from "@/components/admin/site/BrandingQuickApply";
 import { HOME_TEMPLATES } from "@/lib/site/templates";
-import { EDITOR_PREVIEW_CONTEXT } from "@/lib/site/preview-context";
+import { EMPTY_RENDER_CONTEXT } from "@/lib/site/render-context";
 import {
   SETUP_PAGE_OPTIONS,
   buildSetupPages,
@@ -240,7 +240,7 @@ export function WebsiteSetupWizard({
               portalLabel={t("portalLabel")}
               preview
             />
-            <EditorBlockPreview blocks={homeBlocks} context={EDITOR_PREVIEW_CONTEXT} />
+            <EditorBlockPreview blocks={homeBlocks} context={EMPTY_RENDER_CONTEXT} />
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[--hair] bg-surface px-4 py-3">
             <p className="text-xs text-muted">
@@ -342,7 +342,7 @@ export function WebsiteSetupWizard({
                   preview
                 />
                 <div className="max-h-48 overflow-hidden">
-                  <EditorBlockPreview blocks={homeBlocks.slice(0, 2)} context={EDITOR_PREVIEW_CONTEXT} />
+                  <EditorBlockPreview blocks={homeBlocks.slice(0, 2)} context={EMPTY_RENDER_CONTEXT} />
                 </div>
               </div>
               <div className="flex flex-col gap-2 pt-2">

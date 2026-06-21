@@ -264,11 +264,19 @@
         "enrollInClass": "Iscriviti a un corso",
         "enroll": "Iscriviti",
         "enrolledSuccess": "Iscrizione avvenuta con successo.",
-        "droppedSuccess": "Le iscrizioni sono diminuite."
+        "droppedSuccess": "Le iscrizioni sono diminuite.",
+        "dangerZone": "Zona pericolosa",
+        "deleteDescription": "Rimuove definitivamente questo studente, le iscrizioni e la cronologia dei progressi. Questa azione non può essere annullata.",
+        "deleteStudent": "Elimina studente",
+        "deleteConfirm": "Eliminare \"{name}\"? Rimuove definitivamente il profilo e non può essere annullato."
       },
       "detail": {
         "back": "← Torniamo agli studenti",
-        "noContactOnFile": "Nessun contatto in archivio"
+        "noContactOnFile": "Nessun contatto in archivio",
+        "dangerZone": "Zona pericolosa",
+        "deleteDescription": "Rimuove definitivamente questo studente, le iscrizioni e la cronologia dei progressi. Questa azione non può essere annullata.",
+        "deleteStudent": "Elimina studente",
+        "deleteConfirm": "Eliminare \"{name}\"? Rimuove definitivamente il profilo e non può essere annullato."
       },
       "progress": {
         "logProgress": "Registra i progressi",
@@ -1025,6 +1033,10 @@
         "endDate": "Data di fine",
         "deactivate": "Disattiva",
         "reactivate": "Riattivare",
+        "dangerZone": "Zona pericolosa",
+        "deleteDescription": "Rimuove definitivamente questo membro dello staff e i suoi turni. Le lezioni che insegna verranno disassegnate. Questa azione non può essere annullata.",
+        "deleteStaff": "Elimina membro dello staff",
+        "deleteConfirm": "Eliminare \"{name}\"? Rimuove definitivamente il profilo e non può essere annullato.",
         "contractNotes": "Note contrattuali",
         "payNotes": "Pagare le note",
         "addShift": "Aggiungi turno",

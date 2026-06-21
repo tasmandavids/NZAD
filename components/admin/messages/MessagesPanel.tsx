@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { MessageThread, type ThreadMessage } from "@/components/admin/messages/MessageThread";
+import {
+  MessageStreamProvider,
+  useMessageStream,
+} from "@/components/admin/messages/MessageStreamProvider";
 
 interface Contact {
   id: string;
@@ -44,7 +48,15 @@ function formatTime(iso: string, locale: string) {
   return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
-export function MessagesPanel({
+export function MessagesPanel(props: Props) {
+  return (
+    <MessageStreamProvider currentUserId={props.currentUserId}>
+      <MessagesPanelContent {...props} />
+    </MessageStreamProvider>
+  );
+}
+
+function MessagesPanelContent({
   currentUserId,
   contacts,
   recentMessages,
@@ -53,6 +65,7 @@ export function MessagesPanel({
   const t = useTranslations("admin.messages");
   const tShared = useTranslations("admin.shared");
   const locale = useLocale();
+  const stream = useMessageStream();
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     initialContactId && contacts.some((c) => c.id === initialContactId)
       ? initialContactId
@@ -88,10 +101,8 @@ export function MessagesPanel({
   }, [recentMessages, currentUserId]);
 
   useEffect(() => {
-    const es = new EventSource("/api/messages/stream");
-
-    es.addEventListener("message", (e) => {
-      const newMsg: Message = JSON.parse(e.data);
+    if (!stream) return;
+    return stream.subscribe((newMsg) => {
       const peerId =
         newMsg.from_user_id === currentUserId ? newMsg.to_user_id : newMsg.from_user_id;
 
@@ -106,9 +117,7 @@ export function MessagesPanel({
         return current;
       });
     });
-
-    return () => es.close();
-  }, [currentUserId]);
+  }, [stream, currentUserId]);
 
   const handleThreadMessage = (msg: ThreadMessage) => {
     if (!selectedContactId) return;

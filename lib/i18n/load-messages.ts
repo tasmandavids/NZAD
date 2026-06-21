@@ -7,6 +7,7 @@ const MESSAGE_MODULES = [
   "setup",
   "marketing",
   "enrol",
+  "join",
   "programmes",
   "admin",
   "parent",

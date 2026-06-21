@@ -264,11 +264,19 @@
         "enrollInClass": "S'inscrire à un cours",
         "enroll": "Inscrire",
         "enrolledSuccess": "Inscrit avec succès.",
-        "droppedSuccess": "Les inscriptions ont été abandonnées."
+        "droppedSuccess": "Les inscriptions ont été abandonnées.",
+        "dangerZone": "Zone dangereuse",
+        "deleteDescription": "Supprime définitivement cet étudiant, ses inscriptions et son historique de progression. Cette action est irréversible.",
+        "deleteStudent": "Supprimer l'étudiant",
+        "deleteConfirm": "Supprimer « {name} » ? Cela supprime définitivement son profil et ne peut pas être annulé."
       },
       "detail": {
         "back": "← Retour aux étudiants",
-        "noContactOnFile": "Aucun contact au dossier"
+        "noContactOnFile": "Aucun contact au dossier",
+        "dangerZone": "Zone dangereuse",
+        "deleteDescription": "Supprime définitivement cet étudiant, ses inscriptions et son historique de progression. Cette action est irréversible.",
+        "deleteStudent": "Supprimer l'étudiant",
+        "deleteConfirm": "Supprimer « {name} » ? Cela supprime définitivement son profil et ne peut pas être annulé."
       },
       "progress": {
         "logProgress": "Enregistrer la progression",
@@ -1025,6 +1033,10 @@
         "endDate": "Date de fin",
         "deactivate": "Désactiver",
         "reactivate": "Réactiver",
+        "dangerZone": "Zone dangereuse",
+        "deleteDescription": "Supprime définitivement ce membre du personnel et ses quarts de travail. Les cours qu'il enseigne seront désassignés. Cette action est irréversible.",
+        "deleteStaff": "Supprimer le membre du personnel",
+        "deleteConfirm": "Supprimer « {name} » ? Cela supprime définitivement son profil et ne peut pas être annulé.",
         "contractNotes": "Notes contractuelles",
         "payNotes": "Notes de paie",
         "addShift": "Ajouter un quart de travail",
