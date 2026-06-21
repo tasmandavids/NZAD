@@ -5,13 +5,24 @@
 // ============================================================================
 
 export interface Stat {
-  id: string;
+  id: StatId;
   label: string;
   value: number;
   format?: "number" | "currency";
-  trend?: number;        // percent vs previous period (e.g. 12.4 or -3.1)
-  spark?: number[];      // tiny sparkline series
+  trend?: number;
+  spark?: number[];
   hint?: string;
+}
+
+export type StatId = "students" | "revenue" | "today";
+
+/** Server-fetched metric — labels resolved on the client from i18n keys. */
+export interface StatData {
+  id: StatId;
+  value: number;
+  format?: "number" | "currency";
+  trend?: number;
+  spark?: number[];
 }
 
 /** A scheduled class, used by the capacity heatmap. */

@@ -9,10 +9,13 @@
 // ============================================================================
 
 import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useFormatTimeShort } from "@/lib/i18n/client";
 import { useMemo, useState } from "react";
-import { DAYS, TIMES, type HeatClass } from "./types";
+import { TIMES, type HeatClass } from "./types";
+
+const DEFAULT_DAY_DOWS = [1, 2, 3, 4, 5, 6] as const;
+const DOW_TO_KEY = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 function fillColor(ratio: number) {
   if (ratio >= 1) return "var(--brand-deep)"; // full → deepest red
@@ -22,18 +25,24 @@ function fillColor(ratio: number) {
 
 export function CapacityHeatmap({
   classes,
-  days = DAYS,
+  dayDows,
   times = TIMES,
 }: {
   classes: HeatClass[];
-  /** Day column headers — defaults to Mon–Sat. Pass real day names from live data. */
-  days?: string[];
-  /** Time row labels — defaults to the 5 fixed after-school slots. Pass real times from live data. */
+  /** JS day-of-week for column headers (0=Sun … 6=Sat). Defaults to Mon–Sat. */
+  dayDows?: number[];
+  /** Time row labels — 24h "HH:MM" from the database. */
   times?: string[];
 }) {
   const t = useTranslations("admin.dashboard.capacity");
+  const tDays = useTranslations("common.days");
   const formatTime = useFormatTimeShort();
   const [hover, setHover] = useState<HeatClass | null>(null);
+
+  const days = useMemo(() => {
+    const dows = dayDows ?? [...DEFAULT_DAY_DOWS];
+    return dows.map((d) => tDays(DOW_TO_KEY[d] ?? "mon"));
+  }, [dayDows, tDays]);
 
   // index classes by `${day}-${slot}` for O(1) cell lookup
   const grid = useMemo(() => {
@@ -80,7 +89,7 @@ export function CapacityHeatmap({
                   key={`${col}-${row}`}
                   initial={{ opacity: 0, scale: 0.85 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: (row * DAYS.length + col) * 0.012, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  transition={{ delay: (row * days.length + col) * 0.012, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                   whileHover={cls ? { scale: 1.06, zIndex: 5 } : undefined}
                   onHoverStart={() => cls && setHover(cls)}
                   onHoverEnd={() => setHover(null)}

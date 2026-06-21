@@ -34,4 +34,5 @@ export async function setLocale(locale: Locale) {
   }
 
   revalidatePath("/", "layout");
+  revalidatePath("/portal", "layout");
 }

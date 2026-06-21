@@ -4,12 +4,14 @@
 //  Falls back to MOCK_HEAT if no classes have been created yet.
 // ============================================================================
 
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { getTranslations } from "@/lib/i18n/server";
 import { getPortalSession } from "@/lib/portal/session";
-import { MOCK_HEAT, UNSCHEDULED, type Stat, type HeatClass, type ClassBlock } from "@/components/admin/dashboard/types";
+import { MOCK_HEAT, UNSCHEDULED, type StatData, type HeatClass, type ClassBlock } from "@/components/admin/dashboard/types";
 
-const AdminDashboard = dynamic(
+export const dynamic = "force-dynamic";
+
+const AdminDashboard = nextDynamic(
   () => import("@/components/admin/dashboard/AdminDashboard").then((m) => m.AdminDashboard),
   {
     loading: () => (
@@ -20,27 +22,11 @@ const AdminDashboard = dynamic(
   },
 );
 
-// Full day names indexed by JS getDay() convention: 0=Sun … 6=Sat
-async function dayShortLabels() {
-  const tDays = await getTranslations("common.days");
-  return [
-    tDays("sun"),
-    tDays("mon"),
-    tDays("tue"),
-    tDays("wed"),
-    tDays("thu"),
-    tDays("fri"),
-    tDays("sat"),
-  ];
-}
-
 export default async function AdminDashboardPage() {
   const session = await getPortalSession();
   if (!session) throw new Error("Not signed in");
 
-  const t = await getTranslations("admin.dashboard.stats");
   const tCommon = await getTranslations("common");
-  const DAY_SHORT = await dayShortLabels();
 
   const { supabase, studioId } = session;
 
@@ -86,27 +72,25 @@ export default async function AdminDashboardPage() {
   const revenue =
     (paidRes.data ?? []).reduce((sum, r) => sum + (r.amount_cents ?? 0), 0) / 100;
 
-  const stats: Stat[] = [
-    { id: "students", label: t("activeStudents"), value: studentsRes.count ?? 0, format: "number", hint: t("activeStudentsHint") },
-    { id: "revenue",  label: t("revenueThisMonth"), value: revenue, format: "currency", hint: t("revenueHint") },
-    { id: "today",    label: t("classesToday"), value: todayRes.count ?? 0, format: "number", hint: t("classesTodayHint") },
+  const stats: StatData[] = [
+    { id: "students", value: studentsRes.count ?? 0, format: "number" },
+    { id: "revenue", value: revenue, format: "currency" },
+    { id: "today", value: todayRes.count ?? 0, format: "number" },
   ];
 
   // ── Build heatmap from real data (or fall back to mock) ──────────────────
   const rows = capacityRes.data ?? [];
   let heat: HeatClass[];
-  let heatDays: string[] | undefined;
+  let heatDayDows: number[] | undefined;
   let heatTimes: string[] | undefined;
 
   if (rows.length > 0) {
-    // Compute unique days and times from actual class data
     const uniqueDayNums = [...new Set(rows.map((r) => r.day_of_week as number))].sort();
     const uniqueTimesRaw = [
       ...new Set(rows.map((r) => (r.start_time as string | null) ?? "00:00")),
     ].sort();
 
-    heatDays = uniqueDayNums.map((d) => DAY_SHORT[d]);
-    // Strip seconds: "15:30:00" → "15:30"
+    heatDayDows = uniqueDayNums;
     heatTimes = uniqueTimesRaw.map((t) => t.slice(0, 5));
 
     const dayIdx = new Map(uniqueDayNums.map((d, i) => [d, i]));
@@ -115,15 +99,13 @@ export default async function AdminDashboardPage() {
     heat = rows.map((r) => ({
       id: r.id as string,
       name: r.name as string,
-      // No room column yet — use discipline as a readable label
       room: (r.discipline as string | null) ?? tCommon("yourStudio"),
-      day:  dayIdx.get(r.day_of_week as number) ?? 0,
+      day: dayIdx.get(r.day_of_week as number) ?? 0,
       slot: timeIdx.get((r.start_time as string | null) ?? "00:00") ?? 0,
       enrolled: Number(r.enrolled ?? 0),
       capacity: Number(r.capacity ?? 0),
     }));
   } else {
-    // No classes in DB yet — show the designed mock so the UI isn't empty
     heat = MOCK_HEAT;
   }
 
@@ -132,14 +114,12 @@ export default async function AdminDashboardPage() {
   let scheduleClasses: ClassBlock[];
   if (allClassRows.length > 0) {
     scheduleClasses = allClassRows.map((r) => {
-      // Compute durationMin from start_time / end_time if both present
       let durationMin = 60;
       if (r.start_time && r.end_time) {
         const [sh, sm] = (r.start_time as string).split(":").map(Number);
         const [eh, em] = (r.end_time as string).split(":").map(Number);
         durationMin = (eh * 60 + em) - (sh * 60 + sm);
       }
-      // Normalise time "15:30:00" → "15:30"
       const startTime = r.start_time ? (r.start_time as string).slice(0, 5) : null;
       return {
         id: r.id as string,
@@ -160,10 +140,9 @@ export default async function AdminDashboardPage() {
       studioName={studioRes.data?.name ?? tCommon("yourStudio")}
       stats={stats}
       heat={heat}
-      heatDays={heatDays}
+      heatDayDows={heatDayDows}
       heatTimes={heatTimes}
       scheduleClasses={scheduleClasses}
     />
   );
 }
-
