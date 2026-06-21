@@ -22,12 +22,12 @@ $$;
 drop policy if exists "enroll_student_self_insert" on public.enrollments;
 create policy "enroll_student_self_insert" on public.enrollments
   for insert with check (
-    studio_id = public.current_studio()
+    studio_id = private.current_studio()
     and public.is_self_managed_student()
     and student_id = auth.uid()
     and exists (
       select 1 from public.classes c
-      where c.id = class_id and c.studio_id = public.current_studio()
+      where c.id = class_id and c.studio_id = private.current_studio()
     )
   );
 
@@ -35,7 +35,7 @@ create policy "enroll_student_self_insert" on public.enrollments
 drop policy if exists "inv_student_insert_own" on public.invoices;
 create policy "inv_student_insert_own" on public.invoices
   for insert with check (
-    studio_id = public.current_studio()
+    studio_id = private.current_studio()
     and public.is_self_managed_student()
     and payer_id = auth.uid()
     and student_id = auth.uid()
@@ -60,7 +60,7 @@ create policy "waiver_sigs_student_self_insert" on public.waiver_signatures
     and public.is_self_managed_student()
     and exists (
       select 1 from public.waivers w
-      where w.id = waiver_id and w.studio_id = public.current_studio()
+      where w.id = waiver_id and w.studio_id = private.current_studio()
     )
   );
 
@@ -68,8 +68,8 @@ create policy "waiver_sigs_student_self_insert" on public.waiver_signatures
 drop policy if exists "profiles_parent_insert_child" on public.profiles;
 create policy "profiles_parent_insert_child" on public.profiles
   for insert with check (
-    studio_id = public.current_studio()
-    and public.current_user_role() = 'parent'
+    studio_id = private.current_studio()
+    and private.current_user_role() = 'parent'
     and role = 'student'
     and self_managed = false
   );
@@ -77,13 +77,13 @@ create policy "profiles_parent_insert_child" on public.profiles
 drop policy if exists "guardianships_parent_insert" on public.guardianships;
 create policy "guardianships_parent_insert" on public.guardianships
   for insert with check (
-    studio_id = public.current_studio()
+    studio_id = private.current_studio()
     and guardian_id = auth.uid()
-    and public.current_user_role() = 'parent'
+    and private.current_user_role() = 'parent'
     and exists (
       select 1 from public.profiles p
       where p.id = student_id
-        and p.studio_id = public.current_studio()
+        and p.studio_id = private.current_studio()
         and p.role = 'student'
     )
   );
