@@ -195,13 +195,13 @@ Staging project `wnoxcwihrzbxvogvmhqv` was re-checked. The **P0 migration gap fr
 
 ### Phase 1 — Staging prerequisites
 
-#### 1a. Migrations — **RESOLVED** (one pending)
+#### 1a. Migrations — **RESOLVED**
 
 | Status | Detail |
 |--------|--------|
-| **Applied on remote** | **0001–0049** (confirmed via `npm run db:status` + `schema_migrations`) |
-| **Pending** | **0050** (`public_enrol_leads`) — local only; run `npm run db:push` before public `/enrol` lead capture works |
-| **History** | Tracked in `supabase_migrations.schema_migrations` (latest: `0049`) |
+| **Applied on remote** | **0001–0050** (confirmed via `npm run db:status` + `schema_migrations`; latest: `0050`) |
+| **Pending on remote** | **0051–0052** (local WIP only — Telegram platform + instructor sole trader; not required for public `/enrol`) |
+| **History** | Tracked in `supabase_migrations.schema_migrations` |
 
 Critical tables verified present: `leads`, `notifications`, `orders`, `events`, `site_pages`, `stripe_events`, `staff_members`.
 
@@ -215,21 +215,21 @@ Critical tables verified present: `leads`, `notifications`, `orders`, `events`, 
 | `CRON_SECRET` | SET |
 | `RESEND_*` / `TWILIO_*` | SET |
 | `PLATFORM_OPERATOR_EMAILS` | SET |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **PLACEHOLDER** — replace with real anon key from Supabase dashboard |
-| `SUPABASE_SERVICE_ROLE_KEY` | **PLACEHOLDER** — blocks crons, webhooks admin path, integration tests, seed script |
-| Stripe keys | **PLACEHOLDER** — blocks all payment flows locally |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | **SET** |
+| `SUPABASE_SERVICE_ROLE_KEY` | **SET** |
+| Stripe keys | **PLACEHOLDER** — blocks all payment flows locally; add test keys from Stripe dashboard |
 
 #### 1c. Staging data snapshot
 
 | Metric | Count |
 |--------|-------|
-| Studios | 4 (`demo`, `ding-dong`, `disney`, `fancy-feet`) |
-| Classes | 2 |
-| Leads | 1 |
+| Studios | 5 |
+| Classes | 4 |
+| Leads | 2 |
 | Enrollments | 1 |
-| Profiles — admin | 4 |
+| Profiles — admin | 5 |
 | Profiles — parent | 6 |
-| Profiles — student | 210 |
+| Profiles — student | 426 |
 | Platform operators | 2 |
 | Test admin `platform-admin@olune.test` | **exists** |
 
@@ -248,11 +248,13 @@ Critical tables verified present: `leads`, `notifications`, `orders`, `events`, 
 
 | ID | Item |
 |----|------|
-| P1-1 | Apply migration **0050** to remote |
-| P1-2 | Replace placeholder Supabase anon + service role keys in `.env.local` |
+| P1-1 | ~~Apply migration **0050** to remote~~ **DONE** (2026-06-21) |
+| P1-2 | ~~Replace placeholder Supabase anon + service role keys in `.env.local`~~ **DONE** |
 | P1-3 | Replace Stripe test keys + configure webhook on staging/production URL |
 | P1-4 | Confirm Vercel env mirrors production keys (`CRON_SECRET`, service role, Stripe) |
 | P1-5 | Stripe webhook event list not verified (needs dashboard access) |
+
+`npm run staging:verify` re-run 2026-06-21: Phase 0 pass (135 tests), migrations 0001–0050 aligned, Supabase keys OK, Stripe placeholders remain.
 
 ### Repeat this audit
 
