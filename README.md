@@ -106,6 +106,16 @@ After connecting GitHub in the Supabase dashboard:
 Do **not** edit production schema in the SQL editor without adding a matching
 migration file, or GitHub deploys will drift.
 
+**Every push to `main`** also runs the CI `migrate-and-seed` job (tests →
+migrations → seed). Add the four GitHub secrets in
+[`docs/SETUP_DATABASE.md`](docs/SETUP_DATABASE.md) so that job succeeds.
+
+Merge feature branches with an explicit merge commit (not fast-forward):
+
+```bash
+./scripts/merge-to-main.sh cursor/your-branch
+```
+
 CLI helpers (optional):
 
 ```bash

@@ -1,13 +1,10 @@
+# Manual re-run of the production database sync (same steps as CI → migrate-and-seed).
+# On every push to main, CI already runs migrate-and-seed after tests pass.
+
 name: Supabase Database Sync
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "supabase/migrations/**"
-      - "scripts/seed-platform-admin.mjs"
-      - ".github/workflows/supabase-database.yml"
 
 jobs:
   migrate-and-seed:

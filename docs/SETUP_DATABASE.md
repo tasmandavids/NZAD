@@ -17,7 +17,9 @@ The cloud agent **cannot** push to your Supabase project without credentials. Ev
 
 3. Re-run the workflow: **Actions → Supabase Database Sync → Run workflow**
 
-That applies migrations **0026–0027** and creates the test admin.
+Or push/merge to `main` — CI runs **migrate-and-seed** automatically after tests pass (every push, not only when migration files change).
+
+That applies pending migrations and creates/refreshes the test admin.
 
 ## Option B — Your Mac (if `.env.local` is already filled in)
 
