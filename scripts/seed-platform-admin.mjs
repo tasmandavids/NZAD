@@ -29,7 +29,6 @@ if (!url || !serviceKey) {
 
 const admin = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
-  realtime: { enabled: false },
 });
 
 async function findUserByEmail(email) {
@@ -158,7 +157,9 @@ async function main() {
   console.log(`  PLATFORM_OPERATOR_EMAILS=${EMAIL}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
