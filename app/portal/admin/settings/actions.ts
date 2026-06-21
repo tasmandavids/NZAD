@@ -171,3 +171,44 @@ export async function updateStudioTimezone(input: unknown): Promise<SettingsResu
   revalidatePath("/portal/admin/settings");
   return { ok: true };
 }
+
+const RegistrationSchema = z.object({
+  enabled: z.coerce.boolean(),
+  roles: z.array(z.enum(["parent", "student"])).min(1, "Select at least one role"),
+});
+
+export async function updateStudioRegistration(input: unknown): Promise<SettingsResult> {
+  const parsed = RegistrationSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not signed in." };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("studio_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.studio_id) return { ok: false, error: "No studio found." };
+  if (profile.role !== "admin") return { ok: false, error: "Only admins can change studio settings." };
+
+  const { error } = await supabase
+    .from("studios")
+    .update({
+      registration_enabled: parsed.data.enabled,
+      registration_roles: parsed.data.roles,
+    })
+    .eq("id", profile.studio_id);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/portal/admin/settings");
+  revalidatePath("/join");
+  return { ok: true };
+}

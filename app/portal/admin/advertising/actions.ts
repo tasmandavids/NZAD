@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { generateAdCopy } from "@/lib/advertising/ai-ads";
 import { modernizeSeoFields, runSeoAudit } from "@/lib/advertising/ai-seo";
-import { publishCampaignToPlatforms } from "@/lib/advertising/publish";
+import { fetchMetaPageAccessToken, publishCampaignToPlatforms, validateCampaignForPlatforms } from "@/lib/advertising/publish";
 import {
   resolveTelegramChannel,
   sendTelegramTestMessage,
@@ -137,6 +137,13 @@ export async function publishCampaign(campaignId: string): Promise<ActionResult>
 
   if (fetchErr || !row) return { ok: false, error: "Campaign not found" };
 
+  const connectedPlatforms = (
+    await supabase
+      .from("social_connections")
+      .select("platform")
+      .eq("studio_id", studioId)
+  ).data?.map((c) => c.platform as SocialPlatform) ?? [];
+
   const campaign = {
     id: row.id as string,
     name: row.name as string,
@@ -159,10 +166,17 @@ export async function publishCampaign(campaignId: string): Promise<ActionResult>
     updatedAt: row.updated_at as string,
   };
 
+  const validationErrors = validateCampaignForPlatforms(campaign, connectedPlatforms);
+  const blocking = Object.entries(validationErrors);
+  if (blocking.length === campaign.platforms.length) {
+    return { ok: false, error: blocking.map(([p, e]) => `${p}: ${e}`).join("; ") };
+  }
+
   const { platformIds, errors } = await publishCampaignToPlatforms(supabase, studioId, campaign);
-  const errorMessages = Object.entries(errors).map(([p, e]) => `${p}: ${e}`);
+  const mergedErrors = { ...validationErrors, ...errors };
+  const errorMessages = Object.entries(mergedErrors).map(([p, e]) => `${p}: ${e}`);
   const hasSuccess = Object.keys(platformIds).length > 0;
-  const allFailed = campaign.platforms.every((p) => errors[p]);
+  const allFailed = campaign.platforms.every((p) => mergedErrors[p]);
 
   const { error: updateErr } = await supabase
     .from("ad_campaigns")

@@ -18,6 +18,7 @@
       "runningAudit": "Running audit…",
       "modernizing": "Modernizing…",
       "loading": "Loading…",
+      "retry": "Retry",
       "loadingConversation": "Loading conversation…",
       "loadingTickets": "Loading tickets…",
       "saved": "Saved.",
@@ -264,11 +265,19 @@
         "enrollInClass": "Enroll in a class",
         "enroll": "Enroll",
         "enrolledSuccess": "Enrolled successfully.",
-        "droppedSuccess": "Enrollment dropped."
+        "droppedSuccess": "Enrollment dropped.",
+        "dangerZone": "Danger zone",
+        "deleteDescription": "Permanently removes this student, their enrollments, and progress history. This cannot be undone.",
+        "deleteStudent": "Delete student",
+        "deleteConfirm": "Delete \"{name}\"? This permanently removes their profile and cannot be undone."
       },
       "detail": {
         "back": "← Back to students",
-        "noContactOnFile": "No contact on file"
+        "noContactOnFile": "No contact on file",
+        "dangerZone": "Danger zone",
+        "deleteDescription": "Permanently removes this student, their enrollments, and progress history. This cannot be undone.",
+        "deleteStudent": "Delete student",
+        "deleteConfirm": "Delete \"{name}\"? This permanently removes their profile and cannot be undone."
       },
       "progress": {
         "logProgress": "Log progress",
@@ -785,7 +794,14 @@
         "untitledCampaign": "Untitled campaign",
         "livePreview": "Live preview",
         "showPreview": "Show preview",
-        "hidePreview": "Hide preview"
+        "hidePreview": "Hide preview",
+        "copyRequired": "Add a headline or body, or generate with AI first.",
+        "headlinePlaceholder": "Headline",
+        "bodyPlaceholder": "Body text",
+        "ctaPlaceholder": "Call to action",
+        "generatedHint": "Edit the fields above, then save or publish.",
+        "saved": "Campaign saved.",
+        "published": "Campaign published."
       },
       "campaigns": {
         "emptyTitle": "No campaigns yet",
@@ -854,7 +870,9 @@
       "placeholder": "Message… (Enter to send)",
       "send": "Send",
       "internalChannel": "Internal channel — visible to admins and this parent in their notifications",
-      "parentRole": "parent"
+      "parentRole": "parent",
+      "loadFailed": "Could not load messages.",
+      "sendFailed": "Message could not be sent."
     },
     "support": {
       "title": "Olune support",
@@ -891,6 +909,15 @@
       "timezone": "Timezone",
       "saveTimezone": "Save timezone",
       "timezoneUpdated": "Timezone updated.",
+      "registration": "Public registration",
+      "registrationDescription": "Allow families to join your studio online at your subdomain /join page.",
+      "registrationEnabled": "Allow public registration",
+      "registrationRole": {
+        "parent": "Parents / guardians",
+        "student": "Adult students (18+)"
+      },
+      "registrationJoinUrl": "Join page:",
+      "saveRegistration": "Save registration settings",
       "urlsStatus": "URLs & status",
       "subdomainUrl": "Subdomain URL",
       "customDomain": "Custom domain",
@@ -1025,6 +1052,10 @@
         "endDate": "End date",
         "deactivate": "Deactivate",
         "reactivate": "Reactivate",
+        "dangerZone": "Danger zone",
+        "deleteDescription": "Permanently removes this staff member and their shifts. Classes they teach will be unassigned. This cannot be undone.",
+        "deleteStaff": "Delete staff member",
+        "deleteConfirm": "Delete \"{name}\"? This permanently removes their profile and cannot be undone.",
         "contractNotes": "Contract notes",
         "payNotes": "Pay notes",
         "addShift": "Add shift",

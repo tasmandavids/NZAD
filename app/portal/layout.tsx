@@ -13,6 +13,7 @@ import { SetupResumeBanner } from "@/components/setup/SetupResumeBanner";
 import { getBrandingCached } from "@/lib/branding";
 import { fetchStudioSetupState, setupBlocksPortal, setupNeedsBanner } from "@/lib/setup/server";
 import { showAffiliationsNav } from "@/lib/account/memberships";
+import { resolveEffectiveStudioId } from "@/lib/portal/access";
 import type { AccountKind } from "@/lib/account/kinds";
 import type { Role } from "@/lib/types";
 import { getTranslations } from "@/lib/i18n/server";
@@ -33,28 +34,30 @@ export default async function PortalLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, studio_id, account_kind, studios!profiles_studio_id_fkey(name, kind)")
+    .select("role, full_name, studio_id, active_studio_id, account_kind, self_managed")
     .eq("id", user.id)
     .single();
 
   if (!profile?.studio_id) redirect("/onboarding");
 
-  const studio = profile.studios as unknown as { name: string; kind: string } | null;
+  const studioId = resolveEffectiveStudioId(profile);
+  if (!studioId) redirect("/onboarding");
+
   const accountKind = (profile.account_kind as AccountKind | null) ?? null;
-  const isStudioOwner = accountKind === "studio_owner" || (accountKind === null && studio?.kind !== "instructor");
-  const isAdmin = profile.role === "admin" && isStudioOwner;
   const now = new Date().toISOString();
 
-  const [{ count: membershipCount }, setupResult, announcementsResult, branding, tCommon] = await Promise.all([
+  const [{ count: membershipCount }, activeStudioRes, setupResult, announcementsResult, branding, tCommon] =
+    await Promise.all([
     supabase
       .from("studio_memberships")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("status", "active"),
-    isAdmin
-      ? fetchStudioSetupState(supabase, profile.studio_id)
+    supabase.from("studios").select("name, kind").eq("id", studioId).single(),
+    profile.role === "admin"
+      ? fetchStudioSetupState(supabase, studioId)
       : Promise.resolve({ state: null }),
-    isAdmin
+    profile.role === "admin"
       ? supabase
           .from("platform_announcements")
           .select("id, title, body, severity, expires_at")
@@ -63,9 +66,14 @@ export default async function PortalLayout({
           .order("published_at", { ascending: false })
           .limit(10)
       : Promise.resolve({ data: null }),
-    getBrandingCached(profile.studio_id),
+    getBrandingCached(studioId),
     getTranslations("common"),
   ]);
+
+  const studio = activeStudioRes.data as { name: string; kind: string } | null;
+  const isStudioOwner =
+    accountKind === "studio_owner" || (accountKind === null && studio?.kind !== "instructor");
+  const isAdmin = profile.role === "admin" && isStudioOwner;
 
   const setupState = setupResult.state;
   if (isAdmin && setupState && setupBlocksPortal(setupState)) {
@@ -89,6 +97,7 @@ export default async function PortalLayout({
       logoUrl={branding.logoUrl}
       userName={profile.full_name}
       showAffiliations={showAffiliationsNav(accountKind, membershipCount ?? 0)}
+      selfManagedStudent={profile.role === "student" && !!profile.self_managed}
     >
       {isAdmin && setupState && setupNeedsBanner(setupState) && (
         <SetupResumeBanner

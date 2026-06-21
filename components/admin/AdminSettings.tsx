@@ -9,6 +9,7 @@ import {
   updateSiblingDiscount,
   updateFamilyRetailDiscount,
   updateStudioTimezone,
+  updateStudioRegistration,
 } from "@/app/portal/admin/settings/actions";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
@@ -39,6 +40,8 @@ type StudioInfo = {
   siblingDiscountPct: number;
   familyDiscountOnRetail: boolean;
   timezone: string;
+  registrationEnabled: boolean;
+  registrationRoles: string[];
 };
 
 export default function AdminSettings({ studio }: { studio: StudioInfo | null }) {
@@ -61,6 +64,11 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
   const [timezone, setTimezone] = useState(studio?.timezone ?? "Pacific/Auckland");
   const [tzPending, startTzTransition] = useTransition();
   const [tzStatus, setTzStatus] = useState<string | null>(null);
+
+  const [registrationEnabled, setRegistrationEnabled] = useState(studio?.registrationEnabled ?? false);
+  const [regRoles, setRegRoles] = useState<string[]>(studio?.registrationRoles ?? ["parent", "student"]);
+  const [regPending, startRegTransition] = useTransition();
+  const [regStatus, setRegStatus] = useState<string | null>(null);
 
   const onSave = () =>
     startTransition(async () => {
@@ -96,6 +104,22 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
       setTzStatus(res.ok ? "saved" : res.error);
       setTimeout(() => setTzStatus(null), 2500);
     });
+
+  const onSaveRegistration = () =>
+    startRegTransition(async () => {
+      const res = await updateStudioRegistration({
+        enabled: registrationEnabled,
+        roles: regRoles.filter((r): r is "parent" | "student" => r === "parent" || r === "student"),
+      });
+      setRegStatus(res.ok ? "saved" : res.error);
+      setTimeout(() => setRegStatus(null), 2500);
+    });
+
+  const toggleRegRole = (role: "parent" | "student") => {
+    setRegRoles((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role],
+    );
+  };
 
   if (!studio) {
     return (
@@ -264,6 +288,52 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
               </p>
             )}
           </div>
+        </div>
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-[--hair] bg-surface p-6">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("registration")}</h2>
+        <p className="text-sm text-muted">{t("registrationDescription")}</p>
+        <label className="flex items-center gap-3 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={registrationEnabled}
+            onChange={(e) => setRegistrationEnabled(e.target.checked)}
+            className="h-4 w-4 rounded border-[--hair]"
+          />
+          {t("registrationEnabled")}
+        </label>
+        <div className="flex flex-wrap gap-4">
+          {(["parent", "student"] as const).map((role) => (
+            <label key={role} className="flex items-center gap-2 text-sm text-ink">
+              <input
+                type="checkbox"
+                checked={regRoles.includes(role)}
+                onChange={() => toggleRegRole(role)}
+                className="h-4 w-4 rounded border-[--hair]"
+              />
+              {t(`registrationRole.${role}`)}
+            </label>
+          ))}
+        </div>
+        <p className="text-xs text-muted">
+          {t("registrationJoinUrl")}{" "}
+          <code className="rounded bg-base px-1.5 py-0.5">{studio.slug}.{ROOT}/join</code>
+        </p>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onSaveRegistration}
+            disabled={regPending}
+            className="btn-glow btn-glow--solid px-5 py-2 text-sm disabled:opacity-50"
+          >
+            {regPending ? tShared("saving") : t("saveRegistration")}
+          </button>
+          {regStatus && (
+            <p className="text-sm" style={{ color: regStatus === "saved" ? "var(--brand-hot)" : "#ef4444" }}>
+              {regStatus === "saved" ? tShared("saved") : regStatus}
+            </p>
+          )}
         </div>
       </section>
 

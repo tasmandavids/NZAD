@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { encryptSocialCredentials } from "@/lib/advertising/crypto";
 import { metaRedirectUri } from "@/lib/advertising/config";
 import { verifyAdvertisingOAuthState } from "@/lib/advertising/oauth-state";
-import { exchangeMetaCode, fetchMetaPages } from "@/lib/advertising/publish";
+import { exchangeMetaCode, fetchMetaPages, fetchMetaPageAccessToken } from "@/lib/advertising/publish";
 import { verifyAdminOAuthCallback } from "@/lib/oauth/verify-admin-callback";
 import { resolveAppOrigin } from "@/lib/email/app-origin";
 
@@ -47,10 +47,15 @@ export async function GET(req: NextRequest) {
     const tokens = await exchangeMetaCode(code, redirectUri);
     const pages = await fetchMetaPages(tokens.accessToken);
     const primaryPage = pages[0];
+    const pageAccessToken =
+      primaryPage?.accessToken ??
+      (primaryPage ? await fetchMetaPageAccessToken(tokens.accessToken, primaryPage.id) : tokens.accessToken);
 
     const credentials = encryptSocialCredentials({
-      accessToken: tokens.accessToken,
+      accessToken: pageAccessToken,
+      refreshToken: tokens.accessToken,
       expiresAt: Date.now() + tokens.expiresIn * 1000,
+      meta: { userAccessToken: tokens.accessToken, pageId: primaryPage?.id ?? "" },
     });
 
     const now = new Date().toISOString();

@@ -21,7 +21,7 @@ export default async function SettingsPage() {
   const { data: studio } = profile?.studio_id
     ? await supabase
         .from("studios")
-        .select("id, name, slug, custom_domain, status, created_at, sibling_discount_pct, family_discount_on_retail, timezone")
+        .select("id, name, slug, custom_domain, status, created_at, sibling_discount_pct, family_discount_on_retail, timezone, registration_enabled, registration_roles")
         .eq("id", profile.studio_id)
         .single()
     : { data: null };
@@ -40,6 +40,8 @@ export default async function SettingsPage() {
               siblingDiscountPct: studio.sibling_discount_pct ?? 0,
               familyDiscountOnRetail: studio.family_discount_on_retail ?? false,
               timezone: studio.timezone ?? "Pacific/Auckland",
+              registrationEnabled: studio.registration_enabled ?? false,
+              registrationRoles: (studio.registration_roles as string[]) ?? ["parent", "student"],
             }
           : null
       }

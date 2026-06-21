@@ -151,16 +151,26 @@ export async function addStudent(input: unknown): Promise<ActionResult> {
   }
 
   const d = parsed.data;
-  const authEmail = d.email || `${crypto.randomUUID()}@students.olune.local`;
+  let userId: string;
 
-  const { data: authData, error: authErr } = await admin.auth.admin.createUser({
-    email: authEmail,
-    email_confirm: true,
-    user_metadata: { full_name: d.fullName },
-  });
-  if (authErr) return { ok: false, error: authErr.message };
+  if (d.email) {
+    const { data: inviteData, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(d.email, {
+      data: { full_name: d.fullName },
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/login`,
+    });
+    if (inviteErr) return { ok: false, error: inviteErr.message };
+    userId = inviteData.user.id;
+  } else {
+    const authEmail = `${crypto.randomUUID()}@students.olune.local`;
+    const { data: authData, error: authErr } = await admin.auth.admin.createUser({
+      email: authEmail,
+      email_confirm: true,
+      user_metadata: { full_name: d.fullName },
+    });
+    if (authErr) return { ok: false, error: authErr.message };
+    userId = authData.user.id;
+  }
 
-  const userId = authData.user.id;
   const { error: dbError } = await admin.from("profiles").upsert({
     id:        userId,
     studio_id: studioId,

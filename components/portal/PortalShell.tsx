@@ -7,6 +7,7 @@ export function PortalShell({
   logoUrl = null,
   userName,
   showAffiliations = false,
+  selfManagedStudent = false,
   children,
 }: {
   role: Role;
@@ -14,6 +15,7 @@ export function PortalShell({
   logoUrl?: string | null;
   userName: string | null;
   showAffiliations?: boolean;
+  selfManagedStudent?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -23,6 +25,7 @@ export function PortalShell({
       logoUrl={logoUrl}
       userName={userName}
       showAffiliations={showAffiliations}
+      selfManagedStudent={selfManagedStudent}
     >
       {children}
     </PortalShellClient>

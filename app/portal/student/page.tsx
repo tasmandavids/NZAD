@@ -1,12 +1,14 @@
 // ============================================================================
-//  /portal/student — Enrolled-class timetable.
-//  Server component: fetches the student's active enrollments + class details.
-//  Renders:  ① today's classes (prominent)  ② weekly timetable grid
-//            ③ all class cards with teacher + level
+//  /portal/student — Timetable (minors) or full self-service hub (adult students).
 // ============================================================================
 
 import { createClient } from "@/lib/supabase/server";
 import StudentTimetable from "@/components/portal/student/StudentTimetable";
+import ParentHub from "@/components/portal/parent/ParentHub";
+import { ParentShop } from "@/components/portal/parent/ParentShop";
+import EventsTickets, { type ParentEvent } from "@/components/portal/parent/EventsTickets";
+import AutoPaySetup, { type AutoPayItem } from "@/components/portal/parent/AutoPaySetup";
+import type { Child, Invoice, ShopProduct } from "@/app/portal/parent/page";
 
 export type EnrolledClass = {
   enrollmentId: string;
@@ -14,11 +16,12 @@ export type EnrolledClass = {
   name: string;
   discipline: string | null;
   level: string | null;
-  dayOfWeek: number;        // 0 = Sunday … 6 = Saturday
-  startTime: string | null; // "HH:MM:SS"
+  dayOfWeek: number;
+  startTime: string | null;
   endTime: string | null;
   capacity: number;
   teacherName: string | null;
+  priceCents: number;
 };
 
 export default async function StudentPortal() {
@@ -27,13 +30,19 @@ export default async function StudentPortal() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, studio_id, self_managed")
+    .eq("id", user!.id)
+    .single();
+
   const { data: rows } = await supabase
     .from("enrollments")
     .select(`
       id,
       classes (
         id, name, discipline, level,
-        day_of_week, start_time, end_time, capacity,
+        day_of_week, start_time, end_time, capacity, price_cents,
         profiles!teacher_id ( full_name )
       )
     `)
@@ -45,12 +54,12 @@ export default async function StudentPortal() {
       const c = r.classes as unknown as {
         id: string; name: string; discipline: string | null; level: string | null;
         day_of_week: number; start_time: string | null; end_time: string | null;
-        capacity: number;
+        capacity: number; price_cents: number;
         profiles: { full_name: string | null } | null;
       } | null;
       if (!c) return null;
       return {
-        enrollmentId: r.id,
+        enrollmentId: r.id as string,
         classId: c.id,
         name: c.name,
         discipline: c.discipline,
@@ -60,6 +69,7 @@ export default async function StudentPortal() {
         endTime: c.end_time,
         capacity: c.capacity,
         teacherName: c.profiles?.full_name ?? null,
+        priceCents: c.price_cents ?? 0,
       };
     })
     .filter((c): c is EnrolledClass => c !== null)
@@ -68,19 +78,134 @@ export default async function StudentPortal() {
       return (a.startTime ?? "").localeCompare(b.startTime ?? "");
     });
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user!.id)
-    .single();
-
   const todayDow = new Date().getDay();
 
+  if (!profile?.self_managed) {
+    return (
+      <StudentTimetable
+        classes={classes}
+        studentName={profile?.full_name ?? null}
+        todayDow={todayDow}
+      />
+    );
+  }
+
+  const studioId = profile.studio_id as string;
+  const selfChild: Child = {
+    studentId: user!.id,
+    name: profile.full_name,
+    classes: classes.map((c) => ({
+      id: c.classId,
+      name: c.name,
+      discipline: c.discipline,
+      level: c.level,
+      dayOfWeek: c.dayOfWeek,
+      startTime: c.startTime,
+      priceCents: c.priceCents ?? 0,
+    })),
+  };
+
+  const [invoicesRes, productsRes, eventsRes, ticketsRes, subscriptionsRes] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select("id, amount_cents, gst_cents, status, due_date, issued_at, profiles!student_id ( full_name )")
+      .eq("payer_id", user!.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("products")
+      .select("id, name, description, price_cents, stock_qty, category, image_url")
+      .eq("studio_id", studioId)
+      .eq("active", true)
+      .order("name"),
+    supabase
+      .from("events")
+      .select("id, name, description, event_date, venue_name, venue_address, ticket_price, total_tickets, sold_tickets, image_url")
+      .eq("studio_id", studioId)
+      .eq("status", "published")
+      .order("event_date", { ascending: true }),
+    supabase.from("event_tickets").select("event_id, quantity, status, qr_code").eq("user_id", user!.id),
+    supabase
+      .from("subscriptions")
+      .select("class_id, student_id, status, stripe_subscription_id, cancel_at_period_end")
+      .eq("payer_id", user!.id),
+  ]);
+
+  const invoices: Invoice[] = (invoicesRes.data ?? []).map((inv) => ({
+    id: inv.id as string,
+    amountCents: inv.amount_cents as number,
+    gstCents: inv.gst_cents as number,
+    status: inv.status as string,
+    dueDate: inv.due_date as string | null,
+    issuedAt: inv.issued_at as string | null,
+    studentName: profile.full_name,
+  }));
+
+  const products = (productsRes.data ?? []) as ShopProduct[];
+  const ticketsByEvent = new Map(
+    (ticketsRes.data ?? []).map((t) => [
+      t.event_id as string,
+      { quantity: t.quantity as number, status: t.status as string, qrCode: (t.qr_code as string | null) ?? null },
+    ]),
+  );
+
+  const events: ParentEvent[] = (eventsRes.data ?? []).map((e) => {
+    const held = ticketsByEvent.get(e.id as string) ?? null;
+    return {
+      id: e.id as string,
+      name: e.name as string,
+      description: (e.description as string | null) ?? null,
+      eventDate: e.event_date as string,
+      venueName: (e.venue_name as string | null) ?? null,
+      venueAddress: (e.venue_address as string | null) ?? null,
+      ticketPrice: e.ticket_price as number,
+      ticketsRemaining: (e.total_tickets as number) - (e.sold_tickets as number),
+      imageUrl: (e.image_url as string | null) ?? null,
+      myTicket: held,
+    };
+  });
+
+  const subByKey = new Map(
+    (subscriptionsRes.data ?? []).map((s) => [`${s.student_id}:${s.class_id}`, s]),
+  );
+
+  const autoPayItems: AutoPayItem[] = [];
+  for (const cls of selfChild.classes) {
+    if (cls.priceCents <= 0) continue;
+    const sub = subByKey.get(`${user!.id}:${cls.id}`);
+    const active = sub && ["active", "trialing", "past_due", "incomplete"].includes(sub.status as string);
+    autoPayItems.push({
+      studentId: user!.id,
+      studentName: profile.full_name,
+      classId: cls.id,
+      className: cls.name,
+      priceCents: cls.priceCents,
+      subscriptionId: active ? ((sub!.stripe_subscription_id as string | null) ?? null) : null,
+      status: active ? (sub!.status as string) : null,
+      cancelAtPeriodEnd: active ? ((sub!.cancel_at_period_end as boolean | null) ?? false) : false,
+    });
+  }
+
   return (
-    <StudentTimetable
-      classes={classes}
-      studentName={profile?.full_name ?? null}
-      todayDow={todayDow}
-    />
+    <>
+      <StudentTimetable
+        classes={classes}
+        studentName={profile.full_name}
+        todayDow={todayDow}
+      />
+      <ParentHub
+        parentName={profile.full_name}
+        familyChildren={[selfChild]}
+        invoices={invoices}
+        selfManaged
+      />
+      {(events.length > 0 || products.length > 0 || autoPayItems.length > 0) && (
+        <div className="mx-auto max-w-5xl space-y-12 px-6 pb-16">
+          {autoPayItems.length > 0 && <AutoPaySetup items={autoPayItems} />}
+          {events.length > 0 && <EventsTickets events={events} />}
+          {products.length > 0 && <ParentShop products={products} />}
+        </div>
+      )}
+    </>
   );
 }
