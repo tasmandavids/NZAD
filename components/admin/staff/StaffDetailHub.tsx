@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import {
   createStaffShift,
+  deleteStaffMember,
   deleteStaffShift,
   setStaffActive,
   updateStaffMember,
@@ -175,6 +176,20 @@ export default function StaffDetailHub({
 
   const toggleActive = () =>
     run(() => setStaffActive(staff.id, !employmentForm.active));
+
+  const removeStaff = () => {
+    if (!window.confirm(t("deleteConfirm", { name: staff.name ?? tShared("unknown") }))) return;
+    setError(null);
+    setSuccess(null);
+    startTransition(async () => {
+      const result = await deleteStaffMember(staff.id);
+      if (!result.ok) {
+        setError(result.error ?? tShared("somethingWentWrong"));
+        return;
+      }
+      router.push("/portal/admin/staff");
+    });
+  };
 
   return (
     <motion.div
@@ -548,6 +563,19 @@ export default function StaffDetailHub({
           </ul>
         </div>
       )}
+
+      <section className="rounded-2xl border border-red-400/30 bg-red-400/5 p-5">
+        <h3 className="mb-1 text-sm font-semibold text-red-600">{t("dangerZone")}</h3>
+        <p className="mb-3 text-sm text-muted">{t("deleteDescription")}</p>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={removeStaff}
+          className="rounded-xl border border-red-400/40 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-400/10 disabled:opacity-60"
+        >
+          {pending ? tShared("deleting") : t("deleteStaff")}
+        </button>
+      </section>
     </motion.div>
   );
 }

@@ -185,3 +185,56 @@ export async function addStudent(input: unknown): Promise<ActionResult> {
   revalidatePath("/portal/admin/students");
   return { ok: true };
 }
+
+// ─── DELETE STUDENT ───────────────────────────────────────────────────────────
+// Permanently removes the student profile and auth account (cascades enrollments,
+// progress, guardianships, etc.). Clears event creator refs that would block delete.
+
+export async function deleteStudent(studentId: string): Promise<ActionResult> {
+  if (!studentId) return { ok: false, error: "Missing student ID" };
+
+  const { error, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return {
+      ok: false,
+      error: "Deleting students requires SUPABASE_SERVICE_ROLE_KEY in .env.local (Supabase → Settings → API).",
+    };
+  }
+
+  const { data: profile, error: profileErr } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("id", studentId)
+    .eq("studio_id", studioId)
+    .eq("role", "student")
+    .maybeSingle();
+
+  if (profileErr) return { ok: false, error: profileErr.message };
+  if (!profile) return { ok: false, error: "Student not found." };
+
+  const { count: invoiceCount } = await admin
+    .from("invoices")
+    .select("id", { count: "exact", head: true })
+    .eq("payer_id", studentId);
+
+  if (invoiceCount && invoiceCount > 0) {
+    return {
+      ok: false,
+      error: "This student has billing records as a payer and cannot be deleted.",
+    };
+  }
+
+  await admin.from("events").update({ created_by: null }).eq("created_by", studentId);
+
+  const { error: deleteErr } = await admin.auth.admin.deleteUser(studentId);
+  if (deleteErr) return { ok: false, error: deleteErr.message };
+
+  revalidatePath("/portal/admin/students");
+  revalidatePath("/portal/admin/classes");
+  return { ok: true };
+}

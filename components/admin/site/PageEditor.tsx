@@ -38,6 +38,7 @@ import { buildStudioNavLinks, type SitePageLink, type StudioPageNavSource } from
 import { blockLabel } from "@/lib/site/i18n-labels";
 import { applySmartAppearance } from "@/lib/site/smart-appearance";
 import { APPEARANCE_SWATCHES, blockThumbnail } from "@/lib/site/block-thumbnails";
+import type { RenderContext } from "@/lib/site/render-context";
 
 type EditablePage = {
   id: string;
@@ -77,6 +78,7 @@ export default function PageEditor({
   logoUrl,
   portalLabel = "Portal",
   livePreviewUrl,
+  previewContext,
 }: {
   page: EditablePage;
   sitePages?: SitePageLink[];
@@ -85,6 +87,7 @@ export default function PageEditor({
   logoUrl: string | null;
   portalLabel?: string;
   livePreviewUrl: string;
+  previewContext: RenderContext;
 }) {
   const t = useTranslations("site.editor");
   const tSite = useTranslations("site");
@@ -441,11 +444,7 @@ export default function PageEditor({
     });
 
   const draftPreviewHref = `/site-preview/${page.id}`;
-  const previewHref = status === "published" ? livePreviewUrl : draftPreviewHref;
-  const previewTitle =
-    status === "published"
-      ? t("previewLiveTitle", { url: livePreviewUrl.replace(/^https?:\/\//, "") })
-      : t("previewDraftTitle");
+  const previewTitle = t("previewDraftTitle");
   const showPanel = panel !== "none";
 
   return (
@@ -546,7 +545,7 @@ export default function PageEditor({
             {previewMode ? t("exitPreview") : t("previewMode")}
           </button>
           <a
-            href={previewHref}
+            href={draftPreviewHref}
             target="_blank"
             rel="noreferrer noopener"
             title={previewTitle}
@@ -554,6 +553,17 @@ export default function PageEditor({
           >
             {t("preview")}
           </a>
+          {status === "published" && (
+            <a
+              href={livePreviewUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              title={t("previewLiveTitle", { url: livePreviewUrl.replace(/^https?:\/\//, "") })}
+              className="rounded-full border border-[--hair] px-4 py-1.5 text-sm text-ink transition hover:bg-base"
+            >
+              {t("openLiveSite")}
+            </a>
+          )}
           <button onClick={save} disabled={pending} className="rounded-full border border-[--hair] px-4 py-1.5 text-sm font-medium text-ink transition hover:bg-base disabled:opacity-50">
             {pending ? t("saving") : t("saveDraft")}
           </button>
@@ -575,6 +585,7 @@ export default function PageEditor({
             logoUrl={logoUrl}
             nav={navLinks}
             portalLabel={portalLabel}
+            previewContext={previewContext}
             currentPageId={page.id}
             navPages={navPages}
             onSelect={(id, opts) => {

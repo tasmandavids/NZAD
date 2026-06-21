@@ -11,6 +11,7 @@ import { normalizePageBackground } from "@/lib/site/background";
 import { mergePageLinks, toPageLink, toStudioPageNavSource } from "@/lib/site/page-links";
 import { publicPageUrl } from "@/lib/site/domain-setup";
 import { getTranslations } from "@/lib/i18n/server";
+import { loadEditorRenderContext } from "@/lib/site/render-context";
 
 const PageEditor = dynamic(() => import("@/components/admin/site/PageEditor"), {
   loading: () => (
@@ -54,16 +55,15 @@ export default async function SitePageEditor({
     .eq("studio_id", page.studio_id as string)
     .order("nav_order", { ascending: true });
 
-  const branding = await getBrandingCached(page.studio_id as string);
-  const [tCommon, tSite] = await Promise.all([
+  const studioId = page.studio_id as string;
+  const [branding, previewContext, tCommon, tSite, studioRes] = await Promise.all([
+    getBrandingCached(studioId),
+    loadEditorRenderContext(studioId),
     getTranslations("common"),
     getTranslations("site.public"),
+    supabase.from("studios").select("name").eq("id", studioId).single(),
   ]);
-  const { data: studio } = await supabase
-    .from("studios")
-    .select("name")
-    .eq("id", page.studio_id as string)
-    .single();
+  const studio = studioRes.data;
 
   const sitePages = mergePageLinks((studioPages ?? []).map(toPageLink));
   const navSources = (studioPages ?? []).map(toStudioPageNavSource);
@@ -74,6 +74,7 @@ export default async function SitePageEditor({
       studioName={studio?.name ?? tCommon("yourStudio")}
       logoUrl={branding.logoUrl}
       portalLabel={branding.siteSettings.portalLabel ?? tSite("defaultPortalLabel")}
+      previewContext={previewContext}
       studioPages={navSources}
       sitePages={sitePages}
       page={{

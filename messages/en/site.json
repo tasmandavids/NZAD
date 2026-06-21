@@ -394,6 +394,7 @@
       "background": "Background",
       "settings": "Settings",
       "preview": "Preview",
+      "openLiveSite": "Open live site",
       "previewMode": "Live preview",
       "exitPreview": "Exit preview",
       "previewModeBanner": "Live preview — blocks render as visitors will see them. Click Exit preview to edit.",

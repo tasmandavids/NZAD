@@ -27,7 +27,7 @@ import {
   type LayoutPatch,
 } from "@/lib/site/layout";
 import { bool, num } from "@/lib/site/props";
-import { EDITOR_PREVIEW_CONTEXT } from "@/lib/site/preview-context";
+import type { RenderContext } from "@/lib/site/render-context";
 import type { NavLink } from "@/lib/site/queries";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { EditorContextMenu } from "./EditorContextMenu";
@@ -43,6 +43,7 @@ type EditorCanvasProps = {
   logoUrl: string | null;
   nav: NavLink[];
   portalLabel: string;
+  previewContext: RenderContext;
   currentPageId: string;
   navPages: Array<{ id: string; slug: string; isHome: boolean }>;
   onSelect: (id: string | null, opts?: { shift?: boolean }) => void;
@@ -101,6 +102,7 @@ function StackSectionBlock({
   block,
   selected,
   previewMode,
+  previewContext,
   onSelect,
   onDuplicate,
   onDelete,
@@ -109,6 +111,7 @@ function StackSectionBlock({
   block: Block;
   selected: boolean;
   previewMode?: boolean;
+  previewContext: RenderContext;
   onSelect: (shift: boolean) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -131,7 +134,8 @@ function StackSectionBlock({
     >
       {!previewMode && (
       <div
-        className={`absolute right-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-[--hair] bg-surface/95 px-1 py-0.5 shadow-sm backdrop-blur transition ${
+        data-block-toolbar
+        className={`absolute right-3 top-3 z-30 flex items-center gap-1 rounded-lg border border-[--hair] bg-surface/95 px-1 py-0.5 shadow-sm backdrop-blur transition ${
           selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
       >
@@ -144,7 +148,9 @@ function StackSectionBlock({
         </button>
       </div>
       )}
-      <EditorBlockPreview blocks={[block]} context={EDITOR_PREVIEW_CONTEXT} />
+      <div className={previewMode ? "" : "pointer-events-none"}>
+        <EditorBlockPreview blocks={[block]} context={previewContext} />
+      </div>
     </div>
   );
 }
@@ -154,6 +160,7 @@ function CanvasBlock({
   blocks,
   selected,
   previewMode,
+  previewContext,
   canvasRef,
   onSelect,
   onUpdateLayout,
@@ -168,6 +175,7 @@ function CanvasBlock({
   blocks: Block[];
   selected: boolean;
   previewMode?: boolean;
+  previewContext: RenderContext;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   onSelect: (shift: boolean) => void;
   onUpdateLayout: EditorCanvasProps["onUpdateLayout"];
@@ -189,8 +197,10 @@ function CanvasBlock({
     num(block.props, "_height", 0) || el?.offsetHeight || CANVAS_GRID.rowHeight * 4;
 
   const beginDrag = (e: React.PointerEvent) => {
-    if (locked) return;
-    if (!(e.target as HTMLElement).closest("[data-drag-handle]")) return;
+    if (locked || previewMode) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-resize-handle]")) return;
+    if (target.closest("[data-block-toolbar] button:not([data-drag-handle])")) return;
     e.preventDefault();
     e.stopPropagation();
     onLayoutGestureStart();
@@ -284,7 +294,7 @@ function CanvasBlock({
       data-block-shell
       className={`group absolute ${
         previewMode ? "" : selected ? "ring-2 ring-brand" : "hover:ring-1 hover:ring-brand/40"
-      } ${locked ? "opacity-95" : ""} ${blockFrameClassName(block.props)}`}
+      } ${locked ? "opacity-95" : previewMode ? "" : "cursor-grab active:cursor-grabbing"} ${blockFrameClassName(block.props)}`}
       style={blockFrameStyle(block.props)}
       onClick={(e) => {
         if (previewMode) return;
@@ -298,7 +308,8 @@ function CanvasBlock({
     >
       {!previewMode && (
       <div
-        className={`absolute right-3 top-3 z-10 flex items-center gap-1 rounded-lg border border-[--hair] bg-surface/95 px-1 py-0.5 shadow-sm backdrop-blur transition ${
+        data-block-toolbar
+        className={`absolute right-3 top-3 z-30 flex items-center gap-1 rounded-lg border border-[--hair] bg-surface/95 px-1 py-0.5 shadow-sm backdrop-blur transition ${
           selected || dragging.current ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
       >
@@ -360,8 +371,8 @@ function CanvasBlock({
         </>
       )}
 
-      <div className={`${hasHeight ? "h-full overflow-auto" : ""} ${blockFramePaddingClass(block.props)}`}>
-        <EditorBlockPreview blocks={[block]} context={EDITOR_PREVIEW_CONTEXT} />
+      <div className={`${hasHeight ? "h-full overflow-auto" : ""} ${blockFramePaddingClass(block.props)} ${previewMode ? "" : "pointer-events-none"}`}>
+        <EditorBlockPreview blocks={[block]} context={previewContext} />
       </div>
     </div>
   );
@@ -377,6 +388,7 @@ export function EditorCanvas({
   logoUrl,
   nav,
   portalLabel,
+  previewContext,
   currentPageId,
   navPages,
   onSelect,
@@ -483,6 +495,7 @@ export function EditorCanvas({
                   blocks={blocks}
                   selected={selectedIds.includes(block.id)}
                   previewMode={previewMode}
+                  previewContext={previewContext}
                   canvasRef={canvasRef}
                   onSelect={(shift) => onSelect(block.id, { shift })}
                   onUpdateLayout={onUpdateLayout}
@@ -499,6 +512,7 @@ export function EditorCanvas({
                   block={block}
                   selected={selectedIds.includes(block.id)}
                   previewMode={previewMode}
+                  previewContext={previewContext}
                   onSelect={(shift) => onSelect(block.id, { shift })}
                   onDuplicate={() => onDuplicate(block.id)}
                   onDelete={() => onDelete(block.id)}

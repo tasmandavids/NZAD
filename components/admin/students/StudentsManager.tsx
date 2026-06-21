@@ -9,8 +9,9 @@ import { useTranslations } from "next-intl";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { enrollStudent, unenrollStudent, dropEnrollment, addStudent } from "@/app/portal/admin/students/actions";
+import { enrollStudent, unenrollStudent, dropEnrollment, addStudent, deleteStudent } from "@/app/portal/admin/students/actions";
 import type { StudentRow, ClassOption } from "@/app/portal/admin/students/page";
 import { useShortDayNames, useFormatTimeShort } from "@/lib/i18n/client";
 
@@ -140,6 +141,7 @@ function StudentPanel({
   const tCommon = useTranslations("common");
   const dayShort = useShortDayNames();
   const fmt = useFormatTimeShort();
+  const router = useRouter();
   const [selectedClassId, setSelectedClassId] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +177,17 @@ function StudentPanel({
       if (!result.ok) { setError(result.error); return; }
       setSuccess(t("droppedSuccess"));
       setTimeout(() => setSuccess(null), 2500);
+    });
+  };
+
+  const removeStudent = () => {
+    if (!window.confirm(t("deleteConfirm", { name: student.name ?? tShared("unknown") }))) return;
+    setError(null); setSuccess(null);
+    startTransition(async () => {
+      const result = await deleteStudent(student.id);
+      if (!result.ok) { setError(result.error); return; }
+      onClose();
+      router.refresh();
     });
   };
 
@@ -304,6 +317,21 @@ function StudentPanel({
               {success}
             </p>
           )}
+
+          <section className="rounded-xl border border-red-400/30 bg-red-400/5 p-4">
+            <h3 className="mb-1 text-[0.68rem] font-semibold uppercase tracking-wider text-red-400">
+              {t("dangerZone")}
+            </h3>
+            <p className="mb-3 text-xs text-muted">{t("deleteDescription")}</p>
+            <button
+              type="button"
+              onClick={removeStudent}
+              disabled={pending}
+              className="rounded-lg border border-red-400/40 px-3 py-2 text-xs font-semibold text-red-400 transition-colors hover:bg-red-400/10 disabled:opacity-50"
+            >
+              {pending ? tShared("deleting") : t("deleteStudent")}
+            </button>
+          </section>
         </div>
       </motion.aside>
     </>

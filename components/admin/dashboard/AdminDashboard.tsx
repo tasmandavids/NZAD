@@ -34,6 +34,7 @@ function toStats(data: StatData[], t: (key: string) => string): Stat[] {
 }
 
 export function AdminDashboard({
+  studioId,
   studioName,
   stats: statsData,
   heat,
@@ -41,6 +42,7 @@ export function AdminDashboard({
   heatTimes,
   scheduleClasses,
 }: {
+  studioId: string;
   studioName: string;
   stats: StatData[];
   heat: HeatClass[];
@@ -88,7 +90,7 @@ export function AdminDashboard({
       </motion.div>
 
       {/* 3 — drag-and-drop schedule builder */}
-      <ScheduleBuilder classes={scheduleClasses} />
+      <ScheduleBuilder key={studioId} studioId={studioId} classes={scheduleClasses} />
     </motion.div>
   );
 }

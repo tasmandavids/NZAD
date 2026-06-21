@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import ProgressTracker, {
   type ProgressEntry,
 } from "@/components/admin/students/ProgressTracker";
+import DeleteStudentButton from "@/components/admin/students/DeleteStudentButton";
 
 export type StudentDetail = {
   id: string;
@@ -131,6 +132,8 @@ export default async function StudentDetailPage({
       </div>
 
       <ProgressTracker studentId={student.id} entries={entries} />
+
+      <DeleteStudentButton studentId={student.id} studentName={student.name} />
     </div>
   );
 }

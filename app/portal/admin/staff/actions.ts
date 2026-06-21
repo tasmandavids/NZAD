@@ -292,3 +292,44 @@ export async function deleteStaffShift(id: string): Promise<ActionResult> {
   revalidateStaffPaths();
   return { ok: true };
 }
+
+export async function deleteStaffMember(id: string): Promise<ActionResult> {
+  if (!id) return { ok: false, error: "Missing staff ID." };
+
+  const { error, studioId, userId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "No studio." };
+  if (userId === id) return { ok: false, error: "You cannot delete your own account." };
+
+  const admin = createAdminClient();
+
+  const { data: profile, error: profileErr } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("id", id)
+    .eq("studio_id", studioId)
+    .in("role", ["teacher", "office"])
+    .maybeSingle();
+
+  if (profileErr) return { ok: false, error: profileErr.message };
+  if (!profile) return { ok: false, error: "Staff member not found." };
+
+  const { count: invoiceCount } = await admin
+    .from("invoices")
+    .select("id", { count: "exact", head: true })
+    .eq("payer_id", id);
+
+  if (invoiceCount && invoiceCount > 0) {
+    return {
+      ok: false,
+      error: "This staff member has billing records and cannot be deleted.",
+    };
+  }
+
+  await admin.from("events").update({ created_by: null }).eq("created_by", id);
+
+  const { error: deleteErr } = await admin.auth.admin.deleteUser(id);
+  if (deleteErr) return { ok: false, error: deleteErr.message };
+
+  revalidateStaffPaths();
+  return { ok: true };
+}

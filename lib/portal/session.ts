@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { mapMembershipRow, type MembershipRow } from "@/lib/account/memberships";
+import { resolveEffectiveStudioId } from "@/lib/portal/access";
 import type { AccountKind } from "@/lib/account/kinds";
 import type { Role, StudioMembershipSummary } from "@/lib/types";
 
@@ -53,15 +54,16 @@ export const getPortalSession = cache(async (): Promise<PortalSession | null> =>
     };
   });
 
-  const activeStudioId = (profile.active_studio_id as string | null) ?? profile.studio_id;
+  const studioId = resolveEffectiveStudioId(profile);
+  if (!studioId) return null;
 
   return {
     supabase,
     userId: user.id,
-    studioId: profile.studio_id as string,
+    studioId,
     role: profile.role as Role,
     accountKind: (profile.account_kind as AccountKind | null) ?? null,
-    activeStudioId,
+    activeStudioId: studioId,
     memberships,
   };
 });

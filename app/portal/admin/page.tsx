@@ -1,13 +1,13 @@
 // ============================================================================
 //  /portal/admin  —  server component.
 //  Fetches live stats + real class capacity data (migration 0003).
-//  Falls back to MOCK_HEAT if no classes have been created yet.
+//  Schedule + heatmap are scoped to the signed-in studio only.
 // ============================================================================
 
 import nextDynamic from "next/dynamic";
 import { getTranslations } from "@/lib/i18n/server";
 import { getPortalSession } from "@/lib/portal/session";
-import { MOCK_HEAT, UNSCHEDULED, type StatData, type HeatClass, type ClassBlock } from "@/components/admin/dashboard/types";
+import { type StatData, type HeatClass, type ClassBlock } from "@/components/admin/dashboard/types";
 
 export const dynamic = "force-dynamic";
 
@@ -46,18 +46,21 @@ export default async function AdminDashboardPage() {
     supabase
       .from("invoices")
       .select("amount_cents")
+      .eq("studio_id", studioId)
       .eq("status", "paid")
       .gte("created_at", startOfMonth),
 
     supabase
       .from("classes")
       .select("id", { count: "exact", head: true })
+      .eq("studio_id", studioId)
       .eq("day_of_week", todayDow),
 
     // Real capacity data from migration 0003 view. Skip Sunday (0) — heatmap shows Mon–Sat.
     supabase
       .from("class_capacity")
       .select("id, name, discipline, day_of_week, start_time, enrolled, capacity")
+      .eq("studio_id", studioId)
       .neq("day_of_week", 0)
       .order("day_of_week")
       .order("start_time"),
@@ -66,6 +69,7 @@ export default async function AdminDashboardPage() {
     supabase
       .from("classes")
       .select("id, name, discipline, level, day_of_week, start_time, end_time")
+      .eq("studio_id", studioId)
       .order("name"),
   ]);
 
@@ -106,37 +110,33 @@ export default async function AdminDashboardPage() {
       capacity: Number(r.capacity ?? 0),
     }));
   } else {
-    heat = MOCK_HEAT;
+    heat = [];
   }
 
-  // ── Build schedule builder classes (fall back to mock if no classes yet) ──
+  // ── Build schedule builder classes for this studio only ──
   const allClassRows = allClassesRes.data ?? [];
-  let scheduleClasses: ClassBlock[];
-  if (allClassRows.length > 0) {
-    scheduleClasses = allClassRows.map((r) => {
-      let durationMin = 60;
-      if (r.start_time && r.end_time) {
-        const [sh, sm] = (r.start_time as string).split(":").map(Number);
-        const [eh, em] = (r.end_time as string).split(":").map(Number);
-        durationMin = (eh * 60 + em) - (sh * 60 + sm);
-      }
-      const startTime = r.start_time ? (r.start_time as string).slice(0, 5) : null;
-      return {
-        id: r.id as string,
-        name: r.name as string,
-        discipline: (r.discipline as string | null) ?? "",
-        level: (r.level as string | null) ?? "",
-        durationMin,
-        dayOfWeek: (r.day_of_week as number | null) ?? null,
-        startTime,
-      };
-    });
-  } else {
-    scheduleClasses = UNSCHEDULED;
-  }
+  const scheduleClasses: ClassBlock[] = allClassRows.map((r) => {
+    let durationMin = 60;
+    if (r.start_time && r.end_time) {
+      const [sh, sm] = (r.start_time as string).split(":").map(Number);
+      const [eh, em] = (r.end_time as string).split(":").map(Number);
+      durationMin = (eh * 60 + em) - (sh * 60 + sm);
+    }
+    const startTime = r.start_time ? (r.start_time as string).slice(0, 5) : null;
+    return {
+      id: r.id as string,
+      name: r.name as string,
+      discipline: (r.discipline as string | null) ?? "",
+      level: (r.level as string | null) ?? "",
+      durationMin,
+      dayOfWeek: (r.day_of_week as number | null) ?? null,
+      startTime,
+    };
+  });
 
   return (
     <AdminDashboard
+      studioId={studioId}
       studioName={studioRes.data?.name ?? tCommon("yourStudio")}
       stats={stats}
       heat={heat}

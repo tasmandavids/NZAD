@@ -7,28 +7,9 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { getAdminStudio } from "@/lib/portal/access";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
-
-async function getAdminStudio() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Not signed in.", supabase, studioId: null };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("studio_id, role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "admin") return { error: "Admin only.", supabase, studioId: null };
-  if (!profile.studio_id) return { error: "No studio found.", supabase, studioId: null };
-
-  return { error: null, supabase, studioId: profile.studio_id as string };
-}
 
 // Archive the reusable Stripe Product(s) backing the given class rows so a
 // deleted class doesn't leave an active, orphaned Product + Price behind.
