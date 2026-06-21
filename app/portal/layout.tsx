@@ -33,7 +33,7 @@ export default async function PortalLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, studio_id, account_kind, studios(name, kind)")
+    .select("role, full_name, studio_id, account_kind, studios!profiles_studio_id_fkey(name, kind)")
     .eq("id", user.id)
     .single();
 

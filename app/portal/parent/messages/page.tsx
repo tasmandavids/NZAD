@@ -14,7 +14,7 @@ export default async function ParentMessagesPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, studio_id, studios(name)")
+    .select("role, studio_id, studios!profiles_studio_id_fkey(name)")
     .eq("id", user.id)
     .single();
 
