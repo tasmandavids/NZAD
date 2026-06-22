@@ -71,6 +71,10 @@ push_remote() {
 
   echo "Remote migration status:"
   "${SUPABASE_CLI[@]}" migration list --linked
+
+  echo ""
+  echo "Verifying migration parity (Management API)…"
+  node scripts/verify-migrations.mjs
 }
 
 push_local() {

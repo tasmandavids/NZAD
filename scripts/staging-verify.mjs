@@ -87,20 +87,13 @@ for (const [label, args] of [
   }
 }
 
-section("Phase 1a — Migration sync (supabase migration list)");
-const mig = run("npx", ["supabase", "migration", "list"], { timeout: 120_000 });
-if (!mig.ok) {
-  fail("Could not run supabase migration list (link CLI or check network)");
+section("Phase 1a — Migration sync");
+const mig = run("npm", ["run", "db:verify"], { timeout: 60_000 });
+if (mig.ok) pass("Local and remote migrations aligned");
+else {
+  fail("Migration drift detected — run npm run db:push");
+  if (mig.stdout) console.log(mig.stdout.slice(0, 400));
   if (mig.stderr) console.log(mig.stderr.slice(0, 400));
-} else {
-  const lines = mig.stdout.split("\n");
-  const pending = [];
-  for (const line of lines) {
-    const m = line.match(/^\s+(\d{4})\s+\|\s+(\d{4})?\s+\|/);
-    if (m && !m[2]?.trim()) pending.push(m[1]);
-  }
-  if (pending.length === 0) pass("Local and remote migrations aligned");
-  else warn(`Pending on remote: ${pending.join(", ")} — run npm run db:push`);
 }
 
 section("Phase 1b — Local .env.local");
