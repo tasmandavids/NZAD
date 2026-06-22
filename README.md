@@ -17,7 +17,7 @@ olune/
 ├─ lib/                              branding, tenant, stripe, site blocks
 ├─ supabase/
 │  ├─ config.toml                    CLI + GitHub integration config
-│  ├─ migrations/0001–0049.sql       schema (applied via GitHub or db push)
+│  ├─ migrations/0001–0056.sql       schema (applied via GitHub or db push)
 │  └─ seed.sql                       optional sample data (local reset only)
 └─ tests/                            vitest unit + integration tests
 ```

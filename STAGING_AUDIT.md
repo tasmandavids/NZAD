@@ -1,7 +1,9 @@
 # Staging Test Audit — 2026-06-18
 
-> **Note (2026-06-21):** The migration gap described below may already be resolved.
-> Re-verify with `npm run db:status` before treating P0 migration items as still open.
+> **Note (2026-06-22):** The original P0 migration gap is resolved (0001–0050 applied to staging
+> 2026-06-21). The frontier has since advanced to **0056** locally — see the **2026-06-22**
+> re-verification below. Re-check with `npm run db:status` / `npm run db:verify` before treating
+> any migration item as open.
 
 Full audit per the staging test plan: automated baseline, Supabase/Vercel prerequisites, smoke-test matrix, and follow-up fixes.
 
@@ -255,6 +257,41 @@ Critical tables verified present: `leads`, `notifications`, `orders`, `events`, 
 | P1-5 | Stripe webhook event list not verified (needs dashboard access) |
 
 `npm run staging:verify` re-run 2026-06-21: Phase 0 pass (135 tests), migrations 0001–0050 aligned, Supabase keys OK, Stripe placeholders remain.
+
+---
+
+## Re-verification — 2026-06-22
+
+Migration frontier advanced past the 2026-06-21 snapshot. Sessions 24–26 (see `OLUNE_PROGRESS.md`) shipped:
+
+| Migration | Purpose | Build |
+|-----------|---------|-------|
+| 0051 | `social_platform` enum += `telegram` | Session 24 |
+| 0053 | `private.current_studio()` → active-studio-first RLS scope | Build 1.5.1 |
+| 0054 | Public catalog policies restricted to `anon` (logged-in tenant-leak fix) | Build 1.5.1 |
+| 0055 | `messages` added to `supabase_realtime`; role-aware message notifications | Session 25 |
+| 0056 | `profiles.self_managed` + adult-student self-enroll/waiver/bill RLS | Session 25 |
+
+### Migration state
+
+| Scope | Applied | Action |
+|-------|---------|--------|
+| Local + remote `main` sync | **0001–0056** (CI enforces full prod sync on every push since `defdca8`) | — |
+| Staging `wnoxcwihrzbxvogvmhqv` | 0001–0050 confirmed 2026-06-21; **0051–0056 unverified** | Run `npm run db:verify`; apply 0051–0056 if absent |
+
+> **0054 is security-relevant** — before it, an authenticated admin's RLS could read every studio's
+> `classes`/`events` catalog. Confirm 0054 is applied to staging/production.
+
+### Still open (P1)
+
+| ID | Item |
+|----|------|
+| P1-1 | Apply migrations **0051–0056** to staging; `npm run db:verify` |
+| P1-2 | Replace placeholder Stripe keys + configure webhook (`charge.refunded`) — last payment blocker |
+| P1-3 | Confirm Vercel env mirrors prod (`SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, Stripe, `RESEND_*`/`TWILIO_*`) |
+| P1-4 | Run smoke matrix (tests 1–17) + `npm run test:integration` against migrated staging DB |
+
+Builds 1.5.2 / 1.5.3 closed the open dependency/`postcss` vulnerabilities and auth-gated the Xero status endpoint. Node pinned to 22.x across Vercel/CI/local.
 
 ### Repeat this audit
 

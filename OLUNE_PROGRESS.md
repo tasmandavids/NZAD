@@ -654,27 +654,105 @@ Independent instructor accounts for contractors who teach across multiple studio
 
 ---
 
+## ✅ SESSION 24 — COMPLETE (2026-06-21) · i18n coverage + advertising/site refactor
+
+Full-locale UI coverage and a modular rebuild of the advertising hub and site editor.
+
+### Internationalization ✅
+- Completed i18n so **every** UI surface respects the selected locale — landing/marketing copy, portal sidebar, admin dashboard, billing, leads, subscriptions, office, staff, students, progress tracker, email inbox, messages, enrol funnel.
+- Full `fr` / `it` / `ru` translation passes for landing, dashboard, sidebar, and the full admin portal.
+- Fixed nav label collisions where marketing **section** keys overwrote flat labels (`e80d3a8`, `fd19978`).
+- Dashboard locale resolved on the client via `StatData` label types (`b6aee34`, `45bab43`).
+
+### Advertising hub modularization ✅
+- Split the 695-line `AdvertisingHub` monolith into panels: `AdComposer`, `CampaignsPanel`, `ConnectHub`, `PlatformPreview`, `SeoPanel`, `AdvertisingOverview`, plus a `TelegramWizard`.
+- Migration **0051** extends the `social_platform` enum with `telegram` for channel publishing.
+
+### Site editor refactor ✅
+- Broke up the 1033-line `BlockRenderer`; reworked `EditorBlockPreview` / `EditorCanvas` / `PageEditor`.
+
+### Instructor affiliations ✅
+- `/portal/teacher/affiliations` panel + actions; onboarding wizard branching for instructor workspaces (carry-over from Session 23).
+
+### Migrations to apply: 0051
+### Tests: `npm test` green; i18n is render-layer only.
+
+---
+
+## ✅ SESSION 25 — COMPLETE (2026-06-22) · Go-live platform
+
+Self-service join, realtime messaging, and adult students who manage their own enrollment/billing.
+
+### Join flow ✅
+- Public `/join` — `JoinStudioFlow` + `app/join/actions.ts` let invited users attach to a studio without the full onboarding wizard.
+
+### Realtime messaging ✅
+- Migration **0055** adds `messages` to the `supabase_realtime` publication and makes `notify_message_received` role-aware (correct portal link per recipient role).
+- `MessageStreamProvider` wires the admin Messages hub to live updates; parent + student message pages added.
+
+### Adult student self-service ✅
+- Migration **0056** adds `profiles.self_managed` + `is_self_managed_student()`; RLS lets adult students self-enroll, self-waiver, and self-bill (uses `private.current_studio()` after the 0048 refactor — see fix `9db35fa`).
+- Parent hub gains `AddChildModal` + `PayInvoiceModal`; student portal gains self-enroll + own billing.
+
+### Migrations to apply: 0055, 0056
+### Tests: `npm test` green.
+
+---
+
+## ✅ SESSION 26 — COMPLETE (2026-06-22) · Build 1.5.1–1.5.3 hardening
+
+Tenant-scoping fixes, admin delete flows, and CI/security hardening ahead of go-live.
+
+### Tenant scoping (Build 1.5.1, migrations 0053–0054) ✅
+- **0053** aligns `private.current_studio()` with the JWT hook — RLS now scopes to `active_studio_id` first, falling back to `studio_id`.
+- **0054** restricts the public catalog policies (`classes`, `events`) to **anon only** — closes a leak where a logged-in admin could read every studio's catalog rows; authenticated portal users go through studio-scoped policies.
+- Admin delete flows: `DeleteStudentButton`, staff delete actions, schedule-builder edits.
+- Fixed portal login by disambiguating profiles→studios embeds (`683e819`); fixed font loading via Google Fonts CSS instead of the `next/font` registry (`c77dd04`).
+
+### Security audits (Builds 1.5.2, 1.5.3) ✅
+- **1.5.2** — dependency patches; auth-gated the Xero status endpoint.
+- **1.5.3** — eliminated the remaining `postcss` vulnerability; repo hygiene (`.gitignore`, lockfile trim).
+
+### CI / infra ✅
+- Pinned **Node 22.x** for Vercel, CI, and local (`.nvmrc`).
+- CLI-free migration verifier (`scripts/verify-migrations.mjs`) wired into CI sync checks; `npm run db:verify`.
+- Enforce full production sync on every `main` push (`defdca8`); fixed seed scripts hanging in Node 20 CI (ws transport, Realtime disabled in seed).
+
+### Migrations to apply: 0053, 0054
+### Tests: `npm test` green; `npm run staging:verify` passes Phase 0.
+
+---
+
 ## 🔄 NEXT SESSION — Start here
 
-### Priority 1: Staging / production readiness
-- **Verify migration state** on staging Supabase (`npm run db:status`) — ensure 0004–0049 are applied (see `STAGING_AUDIT.md`; gap may already be resolved).
-- **Set Vercel env vars:** `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, Stripe keys, `NEXT_PUBLIC_APP_URL`, email/Xero/advertising encryption keys.
-- **Seed test data** (`TEST_ACCOUNTS.md`) and re-run smoke matrix from `STAGING_AUDIT.md`.
+> **Migration frontier:** local + remote are at **0056**. Per `STAGING_AUDIT.md`, staging
+> `wnoxcwihrzbxvogvmhqv` had 0001–0050 applied as of 2026-06-21 — **0051–0056 still need to be
+> applied to staging** (run `npm run db:status` / `npm run db:verify` to confirm before treating
+> any feature as live there).
+
+### Priority 1: Staging / production readiness (ops — needs dashboard access)
+- **Apply migrations 0051–0056** to staging Supabase (`npm run db:push:remote` or dashboard), then `npm run db:verify`.
+- **Replace placeholder Stripe keys** with real test/live keys and configure the webhook endpoint (`charge.refunded` enabled). This is the **last blocker** for all payment flows — everything else is wired.
+- **Confirm Vercel env mirrors production:** `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, Stripe keys, `NEXT_PUBLIC_APP_URL`, `RESEND_*` / `TWILIO_*`, Xero/advertising encryption keys.
+- **Seed test data** (`TEST_ACCOUNTS.md`) and re-run the smoke matrix in `STAGING_AUDIT.md`.
 
 ### Priority 2: Integration tests for money flows (carried from Session 17)
 - Webhook idempotency replay (`stripe_events` 23505), refund netting + restock triggers, waitlist auto-promotion (0012 trigger).
-- Needs disposable Supabase + seed script; pure helpers in `lib/webhooks/stripe-events.ts` are ready to compose.
+- Harness exists under `tests/integration/` but skips without a service-role key + migrated DB; pure helpers in `lib/webhooks/stripe-events.ts` are ready to compose. Run `npm run test:integration` with `INTEGRATION_TEST=1`.
 
-### Priority 3: Public `/enrol` paid enrollment (optional upgrade)
-- ✅ Trial lead capture + class picker shipped (Session 22). Optional next: Stripe checkout for paid trial classes on the public page.
+### Priority 3: Partial-refund revenue netting + UI
+- `refundSale()` currently flips the row to `refunded` even for a partial refund, so netting treats a partial as a full removal. Subtract `refund_amount_cents` before exposing a partial-refund UI in the dashboard buttons. **Most self-contained code win.**
 
-### Priority 4: Wire notification delivery end-to-end
-- Set `RESEND_*` + `TWILIO_*` on staging; confirm `email_sent_at`/`sms_sent_at` stamping. Add per-user/per-studio delivery preferences.
+### Priority 4: Public `/enrol` paid enrollment (optional upgrade)
+- ✅ Trial lead capture + class picker shipped (Session 22). Optional next: Stripe checkout for paid trial classes on the public page (depends on Priority 1 Stripe keys).
 
-### Priority 5: Partial-refund revenue netting + UI
-- Fix billing revenue netting to subtract `refund_amount_cents` before exposing partial-refund UI in dashboard buttons.
+### Priority 5: Notification delivery — verify end-to-end + preferences
+- Delivery cron + Resend/Twilio are wired (Session 16). On staging, trigger an enrollment → `deliver-notifications` cron → confirm `email_sent_at` / `sms_sent_at` stamping. Then add per-user/per-studio delivery preferences (routing is still global per type).
 
-### Priority 6: Optional polish
+### Priority 6: Sole-trader tooling (from Session 23 roadmap)
+- Private client roster, contractor invoicing, income dashboard, availability calendar, compliance vault, expense log, personal profile page, substitute board.
+
+### Priority 7: Optional polish
 - richText WYSIWYG (Session 13 carry-over); template live thumbnails; `next build` in CI with stub env vars.
 
 ---
