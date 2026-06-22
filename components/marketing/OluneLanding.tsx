@@ -19,6 +19,10 @@ export default function OluneLanding() {
 
   return (
     <div className="relative min-h-screen scroll-smooth bg-paper text-ink-black">
+      <div className="w-full bg-iris px-4 py-2.5 text-center text-sm font-medium text-white">
+        Olune is currently under development — general release is due in early July.{" "}
+        <span className="font-semibold">All plans are free to try as much as you like until then.</span>
+      </div>
       <LandingNav />
       <LandingHero />
 
