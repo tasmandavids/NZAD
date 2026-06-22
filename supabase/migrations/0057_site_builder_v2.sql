@@ -29,16 +29,19 @@ create index if not exists site_builder_documents_studio_idx
 
 alter table public.site_builder_documents enable row level security;
 
--- Admins manage their own studio's builder documents.
+-- Admins manage their own studio's builder documents. Tenant/role helpers live
+-- in the `private` schema (migration 0048 dropped the old public.* versions and
+-- moved them there); every policy from 0048 onward uses private.current_studio()
+-- / private.current_user_role().
 drop policy if exists "sbd_admin_all" on public.site_builder_documents;
 create policy "sbd_admin_all" on public.site_builder_documents
   for all using (
-    studio_id = public.current_studio()
-    and public.current_user_role() = 'admin'
+    studio_id = private.current_studio()
+    and private.current_user_role() = 'admin'
   )
   with check (
-    studio_id = public.current_studio()
-    and public.current_user_role() = 'admin'
+    studio_id = private.current_studio()
+    and private.current_user_role() = 'admin'
   );
 
 -- Anyone can read a document whose linked page is published.
