@@ -16,6 +16,7 @@
 import { createElement, memo, type CSSProperties, type ReactNode } from "react";
 import type { BuilderNode, NodeId } from "@/lib/builder/schema";
 import { resolveStyle } from "@/lib/builder/cascade";
+import { sanitizeEmbedHtml } from "@/lib/builder/sanitize";
 import { useBuilder, useNode } from "@/lib/builder/store";
 import { RichTextView } from "./RichTextView";
 import { InlineText } from "./InlineText";
@@ -143,7 +144,7 @@ function renderInner(node: BuilderNode, editable: boolean, editing: boolean): Re
 
     case "embed":
       return node.props.html && !editable ? (
-        <div dangerouslySetInnerHTML={{ __html: node.props.html }} />
+        <div dangerouslySetInnerHTML={{ __html: sanitizeEmbedHtml(node.props.html) }} />
       ) : (
         <Placeholder label="Embed / HTML" editable={editable} />
       );

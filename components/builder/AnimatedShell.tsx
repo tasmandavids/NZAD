@@ -41,12 +41,15 @@ function toMotionTarget(s: Partial<StyleSet> | undefined): Record<string, unknow
 export function AnimatedShell({
   tag,
   style,
+  className,
   anim,
   dataId,
   children,
 }: {
   tag: string;
-  style: CSSProperties;
+  /** Editor preview passes a resolved inline style; published output passes a className. */
+  style?: CSSProperties;
+  className?: string;
   anim: AnimationSpec;
   dataId: string;
   children: ReactNode;
@@ -65,7 +68,7 @@ export function AnimatedShell({
   const MotionTag: ElementType =
     (motion as unknown as Record<string, ElementType>)[tag] ?? motion.div;
 
-  const common = { style, "data-builder-node": dataId, transition };
+  const common = { style, className, "data-builder-node": dataId, transition };
 
   if (anim.trigger === "hover") {
     const hoverVariants: Variants = { rest: initial.opacity !== undefined ? { opacity: 1 } : {}, hover: animateTo };

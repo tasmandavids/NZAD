@@ -5,10 +5,31 @@
 //  is intentionally left untouched — this preview route is fully separate.
 // ============================================================================
 
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeDocument } from "@/lib/builder/document";
 import { PublicDocument } from "@/components/builder/PublicDocument";
+
+export async function generateMetadata({ params }: { params: Promise<{ pageId: string }> }): Promise<Metadata> {
+  const { pageId } = await params;
+  const supabase = await createClient();
+  try {
+    const { data } = await supabase
+      .from("site_builder_documents")
+      .select("document")
+      .eq("page_id", pageId)
+      .maybeSingle();
+    const doc = data?.document ? normalizeDocument(data.document) : null;
+    if (!doc) return {};
+    return {
+      title: doc.meta.seoTitle || doc.meta.title || undefined,
+      description: doc.meta.seoDescription || undefined,
+    };
+  } catch {
+    return {};
+  }
+}
 
 export default async function StudioPreviewPage({ params }: { params: Promise<{ pageId: string }> }) {
   const { pageId } = await params;
