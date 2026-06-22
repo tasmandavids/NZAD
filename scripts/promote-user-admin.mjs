@@ -6,7 +6,7 @@
  *   node --env-file=.env.local scripts/promote-user-admin.mjs tasmandavids@gmail.com
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "./lib/supabase-admin.mjs";
 
 const email = process.argv[2]?.trim().toLowerCase();
 if (!email) {
@@ -21,9 +21,7 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
-const admin = createClient(url, serviceKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const admin = createServiceClient(url, serviceKey);
 
 async function findUserByEmail(target) {
   let page = 1;

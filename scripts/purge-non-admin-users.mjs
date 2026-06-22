@@ -7,7 +7,7 @@
  *   KEEP_ADMIN_EMAIL=you@example.com node --env-file=.env.local scripts/purge-non-admin-users.mjs
  */
 
-import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "./lib/supabase-admin.mjs";
 
 const KEEP_EMAIL = (process.env.KEEP_ADMIN_EMAIL ?? "platform-admin@olune.test").toLowerCase();
 
@@ -19,9 +19,7 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
-const admin = createClient(url, serviceKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const admin = createServiceClient(url, serviceKey);
 
 async function listAllUsers() {
   const users = [];
