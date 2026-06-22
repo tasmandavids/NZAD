@@ -48,7 +48,10 @@ export type PublicLabels = {
   defaultHeading: string;
   defaultImageAlt: string;
   defaultLinkLabel: string;
-  spacerLabel: (height: number) => string;
+  // Plain string (not a function) so it can cross the server→client boundary
+  // when produced in BlockRenderer. Contains a literal "{height}" token that
+  // SpacerBlock substitutes at render time.
+  spacerLabel: string;
 };
 
 export function usePublicLabels(): PublicLabels {
@@ -69,7 +72,7 @@ export function usePublicLabels(): PublicLabels {
     defaultHeading: t("defaultHeading"),
     defaultImageAlt: t("defaultImageAlt"),
     defaultLinkLabel: t("defaultLinkLabel"),
-    spacerLabel: (height) => t("spacerLabel", { height }),
+    spacerLabel: t("spacerLabel", { height: "{height}" }),
   };
 }
 
@@ -972,7 +975,7 @@ function SpacerBlock({ p, labels }: { p: BlockProps; labels: PublicLabels }) {
     >
       {show && (
         <div className="flex h-full items-center justify-center rounded border border-dashed border-[--hair] text-xs text-muted">
-          {labels.spacerLabel(h)}
+          {labels.spacerLabel.replace("{height}", String(h))}
         </div>
       )}
     </div>

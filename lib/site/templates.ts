@@ -17,6 +17,7 @@
 
 import { makeBlock, type Block } from "./blocks";
 import { EXTRA_HOME_TEMPLATES } from "./home-templates-extra";
+import { CREATIVE_HOME_TEMPLATES } from "./home-templates-creative";
 import type { PageTemplate, TemplateBlock } from "./template-types";
 
 export type { PageTemplate, TemplateBlock, TemplateCategory } from "./template-types";
@@ -410,7 +411,11 @@ const CORE_HOME_TEMPLATES: PageTemplate[] = [
   HOME_BOLD,
 ];
 
-export const HOME_TEMPLATES: PageTemplate[] = [...CORE_HOME_TEMPLATES, ...EXTRA_HOME_TEMPLATES];
+export const HOME_TEMPLATES: PageTemplate[] = [
+  ...CORE_HOME_TEMPLATES,
+  ...EXTRA_HOME_TEMPLATES,
+  ...CREATIVE_HOME_TEMPLATES,
+];
 
 export const SITE_TEMPLATES: PageTemplate[] = [
   ...HOME_TEMPLATES,

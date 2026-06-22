@@ -40,7 +40,7 @@ export async function BlockRenderer({
     defaultHeading: t("defaultHeading"),
     defaultImageAlt: t("defaultImageAlt"),
     defaultLinkLabel: t("defaultLinkLabel"),
-    spacerLabel: (height) => t("spacerLabel", { height }),
+    spacerLabel: t("spacerLabel", { height: "{height}" }),
   };
 
   return (

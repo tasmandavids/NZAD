@@ -4,14 +4,14 @@ import { getTemplateBrandingSuggestion } from "@/lib/site/setup";
 import { TYPOGRAPHY_PAIRS } from "@/lib/site/typography";
 
 describe("site template catalog", () => {
-  it("offers 20 homepage templates", () => {
-    expect(HOME_TEMPLATES).toHaveLength(20);
+  it("offers 38 homepage templates", () => {
+    expect(HOME_TEMPLATES).toHaveLength(38);
     expect(HOME_TEMPLATES.every((t) => t.kind === "home")).toBe(true);
   });
 
   it("gives each home template unique ids and preview metadata", () => {
     const ids = HOME_TEMPLATES.map((t) => t.id);
-    expect(new Set(ids).size).toBe(20);
+    expect(new Set(ids).size).toBe(HOME_TEMPLATES.length);
     for (const t of HOME_TEMPLATES) {
       expect(t.previewAccent ?? t.suggestedBrandColor).toBeTruthy();
       expect(t.blocks.length).toBeGreaterThan(2);
