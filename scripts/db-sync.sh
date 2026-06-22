@@ -35,11 +35,18 @@ fi
 
 PROJECT_REF="${SUPABASE_PROJECT_REF:-wnoxcwihrzbxvogvmhqv}"
 
+# Prefer Homebrew/system CLI (npm wrapper binary can hang on macOS).
+if command -v supabase >/dev/null 2>&1; then
+  SUPABASE_CLI=(supabase)
+else
+  SUPABASE_CLI=(npx supabase)
+fi
+
 push_remote() {
   echo "── Remote Supabase ($PROJECT_REF) ──"
 
   if [[ -z "${SUPABASE_ACCESS_TOKEN:-}" ]]; then
-    echo "Missing SUPABASE_ACCESS_TOKEN — run: npx supabase login"
+    echo "Missing SUPABASE_ACCESS_TOKEN — run: supabase login"
     echo "  or add SUPABASE_ACCESS_TOKEN to .env.local"
     return 1
   fi
@@ -49,21 +56,21 @@ push_remote() {
   if [[ ! -f supabase/.temp/project-ref ]]; then
     echo "Linking project…"
     if [[ -n "${SUPABASE_DB_PASSWORD:-}" ]]; then
-      npx supabase link --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
+      "${SUPABASE_CLI[@]}" link --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
     else
-      npx supabase link --project-ref "$PROJECT_REF" --yes
+      "${SUPABASE_CLI[@]}" link --project-ref "$PROJECT_REF" --yes
     fi
   fi
 
   echo "Pushing migrations…"
   if [[ -n "${SUPABASE_DB_PASSWORD:-}" ]]; then
-    npx supabase db push --linked --password "$SUPABASE_DB_PASSWORD" --yes
+    "${SUPABASE_CLI[@]}" db push --linked --password "$SUPABASE_DB_PASSWORD" --yes
   else
-    npx supabase db push --linked --yes
+    "${SUPABASE_CLI[@]}" db push --linked --yes
   fi
 
   echo "Remote migration status:"
-  npx supabase migration list --linked
+  "${SUPABASE_CLI[@]}" migration list --linked
 }
 
 push_local() {
@@ -79,16 +86,16 @@ push_local() {
     return 1
   fi
 
-  if ! npx supabase status >/dev/null 2>&1; then
+  if ! "${SUPABASE_CLI[@]}" status >/dev/null 2>&1; then
     echo "Starting local Supabase…"
-    npx supabase start
+    "${SUPABASE_CLI[@]}" start
   fi
 
   echo "Resetting local DB (applies all migrations + seed.sql)…"
-  npx supabase db reset --yes
+  "${SUPABASE_CLI[@]}" db reset --yes
 
   echo "Local migration status:"
-  npx supabase migration list --local
+  "${SUPABASE_CLI[@]}" migration list --local
 }
 
 FAIL=0
