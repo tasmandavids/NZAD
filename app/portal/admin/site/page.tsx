@@ -4,11 +4,29 @@
 //  here, and open a page to edit its blocks.
 // ============================================================================
 
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getBrandingCached } from "@/lib/branding";
 import SiteManager, { type SitePageRow } from "@/components/admin/site/SiteManager";
 import { WebsiteSetupWizard } from "@/components/admin/site/WebsiteSetupWizard";
 import { PublicSiteUrlBanner } from "@/components/admin/site/PublicSiteUrlBanner";
+
+/** Additive, low-risk entry point to the rebuilt visual builder (preview). */
+function StudioPreviewBanner() {
+  return (
+    <Link
+      href="/portal/admin/site/studio"
+      className="flex items-center justify-between rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 to-fuchsia-50 px-4 py-3 transition hover:border-violet-300"
+    >
+      <div>
+        <span className="text-sm font-semibold text-violet-900">Try Studio — the rebuilt visual builder</span>
+        <span className="ml-2 rounded bg-violet-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">v2 · preview</span>
+        <p className="mt-0.5 text-xs text-violet-700/80">Hybrid layouts, responsive breakpoints, inline editing & design tokens. Isolated from your live site.</p>
+      </div>
+      <span className="shrink-0 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white">Open Studio →</span>
+    </Link>
+  );
+}
 
 export default async function SitePagesPage() {
   const supabase = await createClient();
@@ -54,6 +72,7 @@ export default async function SitePagesPage() {
     return (
       <div className="space-y-4">
         <PublicSiteUrlBanner />
+        <StudioPreviewBanner />
         <WebsiteSetupWizard
           studioName={studio.name as string}
           initialBranding={{
@@ -72,6 +91,7 @@ export default async function SitePagesPage() {
   return (
     <div className="space-y-4">
       <PublicSiteUrlBanner />
+      <StudioPreviewBanner />
       <SiteManager pages={rows} />
     </div>
   );
