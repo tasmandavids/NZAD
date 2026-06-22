@@ -27,3 +27,8 @@ supabase/.branches/
 # legacy wix starter (unused)
 .wix/
 jsconfig.json
+
+# local tooling artifacts (never commit — large binaries / scratch deps)
+.tmp_pydeps/
+supabase_*.tar.gz
+*.tar.gz
