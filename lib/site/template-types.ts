@@ -18,6 +18,10 @@ export type TemplateCategory =
   | "elegant"
   | "modern"
   | "editorial"
+  | "dramatic"
+  | "playful"
+  | "luxe"
+  | "retro"
   | "complete";
 
 export type PageTemplate = {
@@ -55,5 +59,9 @@ export const TEMPLATE_CATEGORIES: { id: TemplateCategory | "all" }[] = [
   { id: "elegant" },
   { id: "modern" },
   { id: "editorial" },
+  { id: "dramatic" },
+  { id: "playful" },
+  { id: "luxe" },
+  { id: "retro" },
   { id: "complete" },
 ];

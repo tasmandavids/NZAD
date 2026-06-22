@@ -117,7 +117,17 @@
         "peopleGrid": "Team",
         "schedule": "Schedule",
         "faq": "FAQ",
-        "pageHeader": "Header"
+        "pageHeader": "Header",
+        "videoBlock": "Video",
+        "classTabs": "Class tabs",
+        "imageBlock": "Image",
+        "heading": "Heading",
+        "paragraph": "Text",
+        "linkBlock": "Button",
+        "divider": "Divider",
+        "spacer": "Spacer",
+        "shopGrid": "Shop",
+        "locations": "Locations"
       }
     },
     "templateCategories": {
@@ -130,6 +140,10 @@
       "elegant": "Elegant",
       "modern": "Modern",
       "editorial": "Editorial",
+      "dramatic": "Dramatic",
+      "playful": "Playful",
+      "luxe": "Luxe",
+      "retro": "Retro",
       "complete": "Complete"
     },
     "typography": {
@@ -380,6 +394,78 @@
       "home-complete": {
         "label": "Complete",
         "description": "Everything on one page — the full studio experience in a single scroll."
+      },
+      "home-cinematic": {
+        "label": "Cinematic",
+        "description": "Dark, full-bleed hero, studio gallery, stats, ovations and a closing CTA."
+      },
+      "home-noir": {
+        "label": "Noir",
+        "description": "Black-and-gold drama: bold hero, the company, backstage gallery and testimonials."
+      },
+      "home-eclipse": {
+        "label": "Eclipse",
+        "description": "Electric dark hero, stats, interactive class tabs and testimonials."
+      },
+      "home-playful": {
+        "label": "Playful",
+        "description": "Bright and friendly: feature trio, classes by age, gallery, FAQ and contact."
+      },
+      "home-carnival": {
+        "label": "Carnival",
+        "description": "High-energy hero, stats, class streams, reviews and a showtime gallery."
+      },
+      "home-sunny": {
+        "label": "Sunny",
+        "description": "Warm, upbeat hero with features, classes, upcoming events and a CTA."
+      },
+      "home-atelier": {
+        "label": "Atelier",
+        "description": "Refined boutique layout: story, practitioners, gallery and testimonials."
+      },
+      "home-couture": {
+        "label": "Couture",
+        "description": "Fashion-editorial header, collection gallery, story and featured programmes."
+      },
+      "home-retro": {
+        "label": "Retro",
+        "description": "Vintage poster style: bold hero, stats, the line-up, reviews and contact."
+      },
+      "home-marquee": {
+        "label": "Marquee",
+        "description": "Theatre-marquee dark hero, headline events, showtimes and gallery."
+      },
+      "home-journal": {
+        "label": "Journal",
+        "description": "Long-form editorial: hero, two essays, a divider and a news feed."
+      },
+      "home-broadsheet": {
+        "label": "Broadsheet",
+        "description": "Newspaper feel: print-style header, headlines, classes and testimonials."
+      },
+      "home-lookbook": {
+        "label": "Lookbook",
+        "description": "Image-first layout led by a spacious gallery, stats and testimonials."
+      },
+      "home-reel": {
+        "label": "Reel",
+        "description": "Motion-forward: cinematic hero, a video showreel, gallery and CTA."
+      },
+      "home-grid": {
+        "label": "Grid",
+        "description": "Systematic modern layout with interactive class tabs, stats and features."
+      },
+      "home-pulse": {
+        "label": "Pulse",
+        "description": "Energetic fitness hero, stats, classes, reviews, FAQ and a CTA."
+      },
+      "home-impact": {
+        "label": "Impact",
+        "description": "Maximum-impact dark hero, stats, class streams, gallery and a bold CTA."
+      },
+      "home-whitespace": {
+        "label": "Whitespace",
+        "description": "Ultra-minimal: one big statement, a single idea, classes and a CTA."
       }
     },
     "editor": {
@@ -637,7 +723,32 @@
       "textarea": "Alignment",
       "image": "Video",
       "video": "Button",
-      "list": "Class streams"
+      "list": "Class streams",
+      "heading": "Heading",
+      "paragraph": "Text",
+      "imageBlock": "Image",
+      "videoBlock": "Video",
+      "linkBlock": "Button",
+      "hero": "Hero",
+      "pageHeader": "Page header",
+      "statsRow": "Stats",
+      "classStreams": "Streams",
+      "classTabs": "Class tabs",
+      "richText": "Text section",
+      "features": "Features",
+      "classGrid": "Classes",
+      "schedule": "Schedule",
+      "gallery": "Gallery",
+      "testimonials": "Reviews",
+      "newsFeed": "News",
+      "peopleGrid": "Team",
+      "shopGrid": "Shop",
+      "locations": "Locations",
+      "cta": "CTA",
+      "faq": "FAQ",
+      "contact": "Contact",
+      "spacer": "Spacer",
+      "divider": "Divider"
     },
     "public": {
       "emptyPage": "This page has no content yet.",

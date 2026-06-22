@@ -117,7 +117,17 @@
         "peopleGrid": "Équipe",
         "schedule": "Planning",
         "faq": "FAQ",
-        "pageHeader": "En-tête"
+        "pageHeader": "En-tête",
+        "videoBlock": "Vidéo",
+        "classTabs": "Onglets de cours",
+        "imageBlock": "Image",
+        "heading": "Titre",
+        "paragraph": "Texte",
+        "linkBlock": "Bouton",
+        "divider": "Séparateur",
+        "spacer": "Espace",
+        "shopGrid": "Boutique",
+        "locations": "Lieux"
       }
     },
     "templateCategories": {
@@ -130,6 +140,10 @@
       "elegant": "Élégant",
       "modern": "Moderne",
       "editorial": "Éditorial",
+      "dramatic": "Spectaculaire",
+      "playful": "Ludique",
+      "luxe": "Luxe",
+      "retro": "Rétro",
       "complete": "Complet"
     },
     "typography": {
@@ -380,6 +394,78 @@
       "home-complete": {
         "label": "Complete",
         "description": "Everything on one page — the full studio experience in a single scroll."
+      },
+      "home-cinematic": {
+        "label": "Cinématique",
+        "description": "Héros sombre pleine largeur, galerie du studio, statistiques, avis et appel à l'action final."
+      },
+      "home-noir": {
+        "label": "Noir",
+        "description": "Drame noir et or : héros affirmé, la compagnie, galerie des coulisses et témoignages."
+      },
+      "home-eclipse": {
+        "label": "Éclipse",
+        "description": "Héros sombre électrique, statistiques, onglets de cours interactifs et témoignages."
+      },
+      "home-playful": {
+        "label": "Ludique",
+        "description": "Lumineux et chaleureux : trio d'atouts, cours par âge, galerie, FAQ et contact."
+      },
+      "home-carnival": {
+        "label": "Carnaval",
+        "description": "Héros plein d'énergie, statistiques, parcours de cours, avis et galerie."
+      },
+      "home-sunny": {
+        "label": "Ensoleillé",
+        "description": "Héros chaleureux et enjoué avec atouts, cours, événements à venir et appel à l'action."
+      },
+      "home-atelier": {
+        "label": "Atelier",
+        "description": "Mise en page boutique raffinée : récit, intervenants, galerie et témoignages."
+      },
+      "home-couture": {
+        "label": "Couture",
+        "description": "En-tête mode, galerie collection, récit et programmes en vedette."
+      },
+      "home-retro": {
+        "label": "Rétro",
+        "description": "Style affiche vintage : héros affirmé, statistiques, programme, avis et contact."
+      },
+      "home-marquee": {
+        "label": "Enseigne",
+        "description": "Héros sombre façon marquise de théâtre, événements phares, horaires et galerie."
+      },
+      "home-journal": {
+        "label": "Journal",
+        "description": "Éditorial long format : héros, deux textes, un séparateur et un fil d'actualités."
+      },
+      "home-broadsheet": {
+        "label": "Quotidien",
+        "description": "Esprit journal : en-tête typographique, gros titres, cours et témoignages."
+      },
+      "home-lookbook": {
+        "label": "Lookbook",
+        "description": "Mise en page tout en images menée par une galerie spacieuse, statistiques et avis."
+      },
+      "home-reel": {
+        "label": "Bande-démo",
+        "description": "Tournée vers le mouvement : héros cinématographique, vidéo, galerie et appel à l'action."
+      },
+      "home-grid": {
+        "label": "Grille",
+        "description": "Mise en page moderne et structurée : onglets de cours interactifs, statistiques et atouts."
+      },
+      "home-pulse": {
+        "label": "Pulse",
+        "description": "Héros fitness énergique, statistiques, cours, avis, FAQ et appel à l'action."
+      },
+      "home-impact": {
+        "label": "Impact",
+        "description": "Héros sombre à fort impact, statistiques, parcours de cours, galerie et appel à l'action."
+      },
+      "home-whitespace": {
+        "label": "Épure",
+        "description": "Ultra-minimaliste : une grande affirmation, une seule idée, les cours et un appel à l'action."
       }
     },
     "editor": {
@@ -638,7 +724,32 @@
       "textarea": "Alignment",
       "image": "Video",
       "video": "Button",
-      "list": "Class streams"
+      "list": "Class streams",
+      "heading": "Titre",
+      "paragraph": "Texte",
+      "imageBlock": "Image",
+      "videoBlock": "Vidéo",
+      "linkBlock": "Bouton",
+      "hero": "Bannière",
+      "pageHeader": "En-tête",
+      "statsRow": "Statistiques",
+      "classStreams": "Parcours",
+      "classTabs": "Onglets de cours",
+      "richText": "Récit",
+      "features": "Atouts",
+      "classGrid": "Cours",
+      "schedule": "Planning",
+      "gallery": "Galerie",
+      "testimonials": "Avis",
+      "newsFeed": "Actualités",
+      "peopleGrid": "Équipe",
+      "shopGrid": "Boutique",
+      "locations": "Emplacements",
+      "cta": "Appel à l'action",
+      "faq": "FAQ",
+      "contact": "Contact",
+      "spacer": "Espace",
+      "divider": "Séparateur"
     },
     "public": {
       "emptyPage": "Cette page n'a pas encore de contenu.",

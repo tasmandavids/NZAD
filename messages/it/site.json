@@ -130,6 +130,10 @@
       "elegant": "Elegante",
       "modern": "Moderno",
       "editorial": "Editoriale",
+      "dramatic": "Drammatico",
+      "playful": "Giocoso",
+      "luxe": "Lusso",
+      "retro": "Retrò",
       "complete": "Completo"
     },
     "typography": {
@@ -380,6 +384,78 @@
       "home-complete": {
         "label": "Complete",
         "description": "Everything on one page — the full studio experience in a single scroll."
+      },
+      "home-cinematic": {
+        "label": "Cinematico",
+        "description": "Hero scuro a tutta larghezza, galleria dello studio, statistiche, recensioni e CTA finale."
+      },
+      "home-noir": {
+        "label": "Noir",
+        "description": "Dramma nero e oro: hero deciso, la compagnia, galleria dietro le quinte e testimonianze."
+      },
+      "home-eclipse": {
+        "label": "Eclissi",
+        "description": "Hero scuro elettrico, statistiche, schede corsi interattive e testimonianze."
+      },
+      "home-playful": {
+        "label": "Giocoso",
+        "description": "Luminoso e accogliente: tre punti di forza, corsi per età, galleria, FAQ e contatti."
+      },
+      "home-carnival": {
+        "label": "Carnevale",
+        "description": "Hero pieno di energia, statistiche, percorsi dei corsi, recensioni e galleria."
+      },
+      "home-sunny": {
+        "label": "Soleggiato",
+        "description": "Hero caldo e allegro con punti di forza, corsi, prossimi eventi e CTA."
+      },
+      "home-atelier": {
+        "label": "Atelier",
+        "description": "Layout boutique raffinato: racconto, docenti, galleria e testimonianze."
+      },
+      "home-couture": {
+        "label": "Couture",
+        "description": "Intestazione moda, galleria della collezione, racconto e programmi in evidenza."
+      },
+      "home-retro": {
+        "label": "Retrò",
+        "description": "Stile manifesto vintage: hero deciso, statistiche, cartellone, recensioni e contatti."
+      },
+      "home-marquee": {
+        "label": "Insegna",
+        "description": "Hero scuro stile insegna teatrale, eventi principali, orari e galleria."
+      },
+      "home-journal": {
+        "label": "Diario",
+        "description": "Editoriale long-form: hero, due testi, un separatore e un feed di notizie."
+      },
+      "home-broadsheet": {
+        "label": "Quotidiano",
+        "description": "Stile giornale: intestazione tipografica, titoli, corsi e testimonianze."
+      },
+      "home-lookbook": {
+        "label": "Lookbook",
+        "description": "Layout incentrato sulle immagini con galleria spaziosa, statistiche e recensioni."
+      },
+      "home-reel": {
+        "label": "Reel",
+        "description": "Orientato al movimento: hero cinematografico, video, galleria e CTA."
+      },
+      "home-grid": {
+        "label": "Griglia",
+        "description": "Layout moderno e sistematico con schede corsi interattive, statistiche e punti di forza."
+      },
+      "home-pulse": {
+        "label": "Pulse",
+        "description": "Hero fitness energico, statistiche, corsi, recensioni, FAQ e CTA."
+      },
+      "home-impact": {
+        "label": "Impatto",
+        "description": "Hero scuro a forte impatto, statistiche, percorsi dei corsi, galleria e CTA decisa."
+      },
+      "home-whitespace": {
+        "label": "Spazio",
+        "description": "Ultra-minimal: una grande affermazione, una sola idea, i corsi e una CTA."
       }
     },
     "editor": {
@@ -638,7 +714,32 @@
       "textarea": "Alignment",
       "image": "Video",
       "video": "Button",
-      "list": "Class streams"
+      "list": "Class streams",
+      "heading": "Titolo",
+      "paragraph": "Testo",
+      "imageBlock": "Immagine",
+      "videoBlock": "Video",
+      "linkBlock": "Pulsante",
+      "hero": "Hero",
+      "pageHeader": "Intestazione",
+      "statsRow": "Statistiche",
+      "classStreams": "Percorsi",
+      "classTabs": "Schede corsi",
+      "richText": "Sezione testo",
+      "features": "Caratteristiche",
+      "classGrid": "Corsi",
+      "schedule": "Orario",
+      "gallery": "Galleria",
+      "testimonials": "Recensioni",
+      "newsFeed": "Notizie",
+      "peopleGrid": "Team",
+      "shopGrid": "Shop",
+      "locations": "Sedi",
+      "cta": "Chiamata all'azione",
+      "faq": "FAQ",
+      "contact": "Contatti",
+      "spacer": "Spaziatore",
+      "divider": "Divisore"
     },
     "public": {
       "emptyPage": "Questa pagina non ha ancora contenuti.",
