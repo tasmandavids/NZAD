@@ -11,6 +11,7 @@ import {
   updateStudioTimezone,
   updateStudioRegistration,
 } from "@/app/portal/admin/settings/actions";
+import PortalEmbed from "@/components/admin/PortalEmbed";
 
 const ROOT = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "olune.app";
 
@@ -336,6 +337,13 @@ export default function AdminSettings({ studio }: { studio: StudioInfo | null })
           )}
         </div>
       </section>
+
+      <PortalEmbed
+        slug={studio.slug}
+        customDomain={studio.customDomain}
+        root={ROOT}
+        registrationEnabled={registrationEnabled}
+      />
 
       <section className="space-y-4 rounded-2xl border border-[--hair] bg-surface p-6">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-muted">{t("urlsStatus")}</h2>

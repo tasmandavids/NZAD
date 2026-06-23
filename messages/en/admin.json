@@ -926,7 +926,28 @@
       "studioId": "Studio ID",
       "customDomainSection": "Custom domain",
       "customDomainDescription": "Connect your own domain (e.g. www.mystudio.co.nz) with our step-by-step guide — no DNS jargon required.",
-      "openDomainWizard": "Open domain setup wizard →"
+      "openDomainWizard": "Open domain setup wizard →",
+      "embed": {
+        "title": "Portal links & embed",
+        "description": "Use the parent/student portal without the Olune website. Drop these links — or the ready-made button — onto your own site, social bio, or newsletter. They open the portal in a new tab.",
+        "loginLabel": "Member sign-in",
+        "loginHelp": "For existing families who already have an account.",
+        "joinLabel": "New family registration",
+        "joinHelp": "For new families to sign up. Requires public registration (above) to be on.",
+        "joinDisabledNote": "Turn on public registration above to use this link.",
+        "linkHeading": "Link",
+        "copyLink": "Copy link",
+        "snippetHeading": "Button for your website",
+        "snippetHelp": "Paste this HTML wherever you can add code (most site builders have an “Embed / HTML” block).",
+        "copySnippet": "Copy HTML",
+        "qrHeading": "QR code",
+        "qrHelp": "For posters, flyers or a studio noticeboard.",
+        "downloadQr": "Download QR",
+        "copied": "Copied",
+        "buttonTextLogin": "Member login",
+        "buttonTextJoin": "Join our studio",
+        "iframeNote": "Note: the portal can’t be placed inside an iframe (for sign-in security). Use a link or button that opens it in a new tab."
+      }
     },
     "branding": {
       "title": "Appearance",
