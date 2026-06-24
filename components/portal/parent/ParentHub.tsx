@@ -42,14 +42,14 @@ export default function ParentHub({
   familyChildren,
   invoices,
   selfManaged = false,
-  childProgressHref,
+  childProgressPath,
 }: {
   parentName: string | null;
   familyChildren: Child[];
   invoices: Invoice[];
   selfManaged?: boolean;
-  /** Override child card link (e.g. adult students use /portal/student/progress). */
-  childProgressHref?: (studentId: string) => string;
+  /** Override child card link for every dancer (e.g. adult students use /portal/student/progress). */
+  childProgressPath?: string;
 }) {
   const t = useTranslations("parent.hub");
   const locale = useLocale();
@@ -70,7 +70,8 @@ export default function ParentHub({
     .reduce((sum, i) => sum + i.amountCents, 0);
 
   const tableHeaders = [t("tableDancer"), t("tableAmount"), t("tableStatus"), t("tableDue")];
-  const progressHref = childProgressHref ?? ((id: string) => `/portal/parent/children/${id}`);
+  const progressHref = (studentId: string) =>
+    childProgressPath ?? `/portal/parent/children/${studentId}`;
 
   return (
     <motion.div
