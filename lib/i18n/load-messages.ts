@@ -11,6 +11,7 @@ const MESSAGE_MODULES = [
   "programmes",
   "admin",
   "parent",
+  "portal",
   "teacher",
   "student",
   "platform",

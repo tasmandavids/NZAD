@@ -116,6 +116,7 @@
     },
     "student": {
       "timetable": "My Timetable",
+      "progress": "Progress",
       "hub": "My Account",
       "messages": "Studio chat"
     },

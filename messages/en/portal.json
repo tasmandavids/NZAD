@@ -1,0 +1,27 @@
+{
+  "portal": {
+    "progress": {
+      "currentLevel": "Current level",
+      "attendance": {
+        "title": "Attendance · {count, plural, one {# record} other {# records}}",
+        "attendanceRate": "{rate}% attendance in recent classes",
+        "empty": "No attendance recorded yet.",
+        "date": "Date",
+        "class": "Class",
+        "statusColumn": "Status",
+        "status": {
+          "present": "Present",
+          "late": "Late",
+          "absent": "Absent",
+          "excused": "Excused"
+        }
+      },
+      "certificates": {
+        "title": "Certificates · {count}",
+        "subtitle": "Download a PDF certificate for each award.",
+        "downloadPdf": "Download PDF",
+        "downloadAria": "Download PDF certificate for {title}"
+      }
+    }
+  }
+}

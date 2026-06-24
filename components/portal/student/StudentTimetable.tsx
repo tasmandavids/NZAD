@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import { useFullDayNames, useTimeGreeting, useFormatTimeShort } from "@/lib/i18n/client";
@@ -59,13 +60,21 @@ export default function StudentTimetable({
           <p className="text-sm text-muted">{greetingLine}</p>
           <h1 className="text-2xl font-black tracking-tight text-ink">{t("title")}</h1>
         </div>
-        <p className="text-sm text-muted">
-          {new Date().toLocaleDateString(locale, {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-          })}
-        </p>
+        <div className="flex flex-col items-end gap-2">
+          <p className="text-sm text-muted">
+            {new Date().toLocaleDateString(locale, {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </p>
+          <Link
+            href="/portal/student/progress"
+            className="text-xs font-semibold text-[--brand] hover:underline"
+          >
+            {t("viewProgress")}
+          </Link>
+        </div>
       </motion.header>
 
       <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>

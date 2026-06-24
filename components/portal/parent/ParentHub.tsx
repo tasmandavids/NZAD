@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import { useShortDayNames, useTimeGreeting, useFormatTimeShort } from "@/lib/i18n/client";
@@ -41,11 +42,14 @@ export default function ParentHub({
   familyChildren,
   invoices,
   selfManaged = false,
+  childProgressHref,
 }: {
   parentName: string | null;
   familyChildren: Child[];
   invoices: Invoice[];
   selfManaged?: boolean;
+  /** Override child card link (e.g. adult students use /portal/student/progress). */
+  childProgressHref?: (studentId: string) => string;
 }) {
   const t = useTranslations("parent.hub");
   const locale = useLocale();
@@ -66,6 +70,7 @@ export default function ParentHub({
     .reduce((sum, i) => sum + i.amountCents, 0);
 
   const tableHeaders = [t("tableDancer"), t("tableAmount"), t("tableStatus"), t("tableDue")];
+  const progressHref = childProgressHref ?? ((id: string) => `/portal/parent/children/${id}`);
 
   return (
     <motion.div
@@ -136,10 +141,14 @@ export default function ParentHub({
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {familyChildren.map((child) => (
-              <motion.div
+              <Link
                 key={child.studentId}
+                href={progressHref(child.studentId)}
+                className="group block"
+              >
+              <motion.div
                 whileHover={{ y: -2 }}
-                className="rounded-2xl border border-[--hair] bg-surface p-5"
+                className="rounded-2xl border border-[--hair] bg-surface p-5 transition-colors group-hover:border-[color-mix(in_srgb,var(--brand)_35%,var(--hair))]"
               >
                 <div className="mb-4 flex items-center gap-3">
                   <span
@@ -172,7 +181,12 @@ export default function ParentHub({
                 ) : (
                   <p className="text-xs text-muted">{t("noEnrolments")}</p>
                 )}
+
+                <p className="mt-4 text-xs font-semibold text-[--brand] opacity-0 transition-opacity group-hover:opacity-100">
+                  {t("viewProgress")} →
+                </p>
               </motion.div>
+              </Link>
             ))}
           </div>
         )}

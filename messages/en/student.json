@@ -11,7 +11,13 @@
       "myClasses": "My classes · {count} enrolled",
       "noEnrolments": "No active enrolments found.",
       "noEnrolmentsHint": "Your studio admin will assign you to classes.",
-      "withTeacher": "with {name}"
+      "withTeacher": "with {name}",
+      "viewProgress": "View progress & certificates →"
+    },
+    "progress": {
+      "back": "← Back to timetable",
+      "unnamedStudent": "Student",
+      "emptyProgress": "No progress logged yet. Your instructor will update this when you reach new milestones."
     }
   }
 }

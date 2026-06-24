@@ -30,6 +30,12 @@ interface Props {
   entries: ProgressEntry[];
   /** Hide the delete control (e.g. teacher view). Defaults to false. */
   readOnlyDelete?: boolean;
+  /** Hide the log form and delete controls (e.g. parent view). */
+  readOnly?: boolean;
+  /** Override the empty-state message (e.g. parent-facing copy). */
+  emptyMessage?: string;
+  /** Show PDF download links on certification badges in the timeline. */
+  certificateDownloadEnabled?: boolean;
 }
 
 const LEVEL_KEYS = [
@@ -52,6 +58,9 @@ export default function ProgressTracker({
   studentId,
   entries,
   readOnlyDelete = false,
+  readOnly = false,
+  emptyMessage,
+  certificateDownloadEnabled = false,
 }: Props) {
   const t = useTranslations("admin.students.progress");
   const tShared = useTranslations("admin.shared");
@@ -96,9 +105,17 @@ export default function ProgressTracker({
     });
   }
 
+  const hideDelete = readOnly || readOnlyDelete;
+
+  function certDownloadHref(entryId: string, title: string) {
+    const params = new URLSearchParams({ progressId: entryId, title });
+    return `/api/certificates/download?${params.toString()}`;
+  }
+
   return (
     <div className="space-y-8">
       {/* ── Log a new entry ─────────────────────────────────────────────── */}
+      {!readOnly && (
       <section className="rounded-2xl border border-[--hair] bg-surface p-5">
         <h2 className="mb-4 text-sm font-black text-ink">{t("logProgress")}</h2>
 
@@ -195,6 +212,7 @@ export default function ProgressTracker({
           {pending ? tShared("saving") : t("saveEntry")}
         </button>
       </section>
+      )}
 
       {/* ── Timeline ────────────────────────────────────────────────────── */}
       <section>
@@ -204,7 +222,7 @@ export default function ProgressTracker({
 
         {entries.length === 0 ? (
           <p className="rounded-2xl border border-[--hair] bg-surface px-6 py-10 text-center text-sm text-muted">
-            {t("empty")}
+            {emptyMessage ?? t("empty")}
           </p>
         ) : (
           <ol className="relative space-y-5 border-l border-[--hair] pl-6">
@@ -234,7 +252,7 @@ export default function ProgressTracker({
                           {entry.instructorName ? ` · ${entry.instructorName}` : ""}
                         </span>
                       </div>
-                      {!readOnlyDelete && (
+                      {!hideDelete && (
                         <button
                           onClick={() => remove(entry.id)}
                           disabled={pending}
@@ -253,14 +271,25 @@ export default function ProgressTracker({
 
                     {entry.certifications.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {entry.certifications.map((c) => (
-                          <span
-                            key={c}
-                            className="inline-flex items-center gap-1 rounded-full border border-[--hair] px-2.5 py-0.5 text-[0.62rem] font-semibold text-ink"
-                          >
-                            🏅 {c}
-                          </span>
-                        ))}
+                        {entry.certifications.map((c) =>
+                          certificateDownloadEnabled ? (
+                            <a
+                              key={c}
+                              href={certDownloadHref(entry.id, c)}
+                              download
+                              className="inline-flex items-center gap-1 rounded-full border border-[--hair] px-2.5 py-0.5 text-[0.62rem] font-semibold text-ink transition-colors hover:border-[--brand] hover:text-[--brand]"
+                            >
+                              🏅 {c} ↓
+                            </a>
+                          ) : (
+                            <span
+                              key={c}
+                              className="inline-flex items-center gap-1 rounded-full border border-[--hair] px-2.5 py-0.5 text-[0.62rem] font-semibold text-ink"
+                            >
+                              🏅 {c}
+                            </span>
+                          ),
+                        )}
                       </div>
                     )}
                   </div>

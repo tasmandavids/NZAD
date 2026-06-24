@@ -11,6 +11,7 @@
       "noChildrenHint": "Your studio admin will link your dancer(s) to you.",
       "unnamedDancer": "Unnamed dancer",
       "classesEnrolled": "{count, plural, one {# class enrolled} other {# classes enrolled}}",
+      "viewProgress": "View progress & certificates",
       "noEnrolments": "No active enrolments.",
       "invoices": "Invoices · {count}",
       "noInvoices": "No invoices found.",
@@ -165,6 +166,11 @@
       "emailContentTitle": "Email content",
       "noContent": "(No content)",
       "yourStudio": "your studio"
+    },
+    "childProgress": {
+      "back": "← Back to Family Hub",
+      "unnamedDancer": "Unnamed dancer",
+      "emptyProgress": "No progress logged yet. Your instructor will update this as your dancer progresses."
     }
   }
 }
