@@ -184,6 +184,10 @@ describe("fetchStudentProgressBundle", () => {
       ],
       latestLevel: "Intermediate",
     });
+    expect(calls).toContain("eq:id:student-1");
+    expect(calls.filter((call) => call === "eq:student_id:student-1")).toHaveLength(2);
+    expect(calls).toContain("order:logged_at:false");
+    expect(calls).toContain("order:date:false");
     expect(calls).toContain("limit:12");
   });
 
