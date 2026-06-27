@@ -9,9 +9,9 @@
 import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { StatCard } from "./StatCard";
-import { CapacityHeatmap } from "./CapacityHeatmap";
-import { ScheduleBuilder } from "./ScheduleBuilder";
-import type { Stat, StatData, HeatClass, ClassBlock, StatId } from "./types";
+import { ScheduleBoard } from "./ScheduleBoard";
+import type { Stat, StatData, ScheduleClass, StatId } from "./types";
+import type { TeacherOption } from "@/app/portal/admin/classes/page";
 
 const STAT_LABEL_KEYS: Record<StatId, string> = {
   students: "activeStudents",
@@ -37,18 +37,14 @@ export function AdminDashboard({
   studioId,
   studioName,
   stats: statsData,
-  heat,
-  heatDayDows,
-  heatTimes,
   scheduleClasses,
+  teachers,
 }: {
   studioId: string;
   studioName: string;
   stats: StatData[];
-  heat: HeatClass[];
-  heatDayDows?: number[];
-  heatTimes?: string[];
-  scheduleClasses: ClassBlock[];
+  scheduleClasses: ScheduleClass[];
+  teachers: TeacherOption[];
 }) {
   const tGreeting = useTranslations("common.greeting");
   const tStats = useTranslations("admin.dashboard.stats");
@@ -79,18 +75,18 @@ export function AdminDashboard({
         </p>
       </motion.header>
 
-      {/* 1 — stats row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map((s, i) => <StatCard key={s.id} stat={s} index={i} />)}
       </div>
 
-      {/* 2 — capacity heatmap */}
       <motion.div variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }}>
-        <CapacityHeatmap classes={heat} dayDows={heatDayDows} times={heatTimes} />
+        <ScheduleBoard
+          key={studioId}
+          studioId={studioId}
+          classes={scheduleClasses}
+          teachers={teachers}
+        />
       </motion.div>
-
-      {/* 3 — drag-and-drop schedule builder */}
-      <ScheduleBuilder key={studioId} studioId={studioId} classes={scheduleClasses} />
     </motion.div>
   );
 }

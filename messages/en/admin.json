@@ -182,8 +182,9 @@
         "tooltipFull": " · FULL"
       },
       "schedule": {
-        "title": "Schedule builder",
-        "subtitle": "Drag a class into a day + time slot.",
+        "title": "Weekly schedule",
+        "subtitle": "Drag classes into time slots. Click a class to edit. Colour shows capacity.",
+        "unscheduled": "Unscheduled",
         "allScheduled": "All classes scheduled 🎉",
         "durationMin": "{minutes}m",
         "slots": {

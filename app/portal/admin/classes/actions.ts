@@ -77,6 +77,7 @@ export async function createClass(input: unknown): Promise<ActionResult> {
   if (dbError) return { ok: false, error: dbError.message };
 
   revalidatePath("/portal/admin/classes");
+  revalidatePath("/portal/admin");
   return { ok: true };
 }
 
@@ -117,6 +118,7 @@ export async function updateClass(
   if (dbError) return { ok: false, error: dbError.message };
 
   revalidatePath("/portal/admin/classes");
+  revalidatePath("/portal/admin");
   return { ok: true };
 }
 

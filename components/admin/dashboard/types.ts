@@ -36,8 +36,8 @@ export interface HeatClass {
   capacity: number;
 }
 
-/** A draggable class block in the schedule builder. */
-export interface ClassBlock {
+/** A class on the weekly schedule board (scheduled or unscheduled). */
+export interface ScheduleClass {
   id: string;
   name: string;
   discipline: string;
@@ -45,7 +45,36 @@ export interface ClassBlock {
   durationMin: number;
   /** DB values — null means unscheduled */
   dayOfWeek: number | null;
-  startTime: string | null;  // "HH:MM"
+  startTime: string | null;
+  endTime: string | null;
+  enrolled: number;
+  capacity: number;
+  priceCents: number;
+  teacherId: string | null;
+  teacherName: string | null;
+  recurringGroupId: string | null;
+}
+
+/** @deprecated Use ScheduleClass */
+export type ClassBlock = ScheduleClass;
+
+export function normalizeTime(t: string | null | undefined): string | null {
+  if (!t) return null;
+  return t.slice(0, 5);
+}
+
+/** Common studio hours + every time already used by a class. */
+export function buildTimeSlots(classes: ScheduleClass[]): string[] {
+  const times = new Set<string>([
+    "09:00", "10:00", "11:00", "12:00",
+    "15:30", "16:00", "16:30", "17:00", "17:30",
+    "18:00", "18:30", "19:00", "19:30", "20:00",
+  ]);
+  for (const cls of classes) {
+    const t = normalizeTime(cls.startTime);
+    if (t) times.add(t);
+  }
+  return [...times].sort();
 }
 
 export interface Room { id: string; name: string }
@@ -120,12 +149,12 @@ export const SLOTS: TimeSlot[] = [
   { id: "s4", label: "6:30 pm" },
 ];
 
-export const UNSCHEDULED: ClassBlock[] = [
-  { id: "c1", name: "Ballet Jr", discipline: "Ballet", level: "Grade 2", durationMin: 60, dayOfWeek: null, startTime: null },
-  { id: "c2", name: "Hip-Hop Teens", discipline: "Hip-Hop", level: "Teens", durationMin: 60, dayOfWeek: null, startTime: null },
-  { id: "c3", name: "Contemporary", discipline: "Contemporary", level: "Open", durationMin: 75, dayOfWeek: null, startTime: null },
-  { id: "c4", name: "Tap Beginners", discipline: "Tap", level: "Beginner", durationMin: 45, dayOfWeek: null, startTime: null },
-  { id: "c5", name: "Jazz Int.", discipline: "Jazz", level: "Intermediate", durationMin: 60, dayOfWeek: null, startTime: null },
+export const UNSCHEDULED: ScheduleClass[] = [
+  { id: "c1", name: "Ballet Jr", discipline: "Ballet", level: "Grade 2", durationMin: 60, dayOfWeek: null, startTime: null, endTime: null, enrolled: 0, capacity: 16, priceCents: 0, teacherId: null, teacherName: null, recurringGroupId: null },
+  { id: "c2", name: "Hip-Hop Teens", discipline: "Hip-Hop", level: "Teens", durationMin: 60, dayOfWeek: null, startTime: null, endTime: null, enrolled: 0, capacity: 22, priceCents: 0, teacherId: null, teacherName: null, recurringGroupId: null },
+  { id: "c3", name: "Contemporary", discipline: "Contemporary", level: "Open", durationMin: 75, dayOfWeek: null, startTime: null, endTime: null, enrolled: 0, capacity: 20, priceCents: 0, teacherId: null, teacherName: null, recurringGroupId: null },
+  { id: "c4", name: "Tap Beginners", discipline: "Tap", level: "Beginner", durationMin: 45, dayOfWeek: null, startTime: null, endTime: null, enrolled: 0, capacity: 18, priceCents: 0, teacherId: null, teacherName: null, recurringGroupId: null },
+  { id: "c5", name: "Jazz Int.", discipline: "Jazz", level: "Intermediate", durationMin: 60, dayOfWeek: null, startTime: null, endTime: null, enrolled: 0, capacity: 20, priceCents: 0, teacherId: null, teacherName: null, recurringGroupId: null },
 ];
 
 /** droppableId for a board cell. */

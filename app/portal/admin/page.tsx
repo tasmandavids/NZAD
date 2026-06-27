@@ -1,13 +1,13 @@
 // ============================================================================
 //  /portal/admin  —  server component.
-//  Fetches live stats + real class capacity data (migration 0003).
-//  Schedule + heatmap are scoped to the signed-in studio only.
+//  Fetches live stats + weekly schedule (capacity + timetable) for this studio.
 // ============================================================================
 
 import nextDynamic from "next/dynamic";
 import { getTranslations } from "@/lib/i18n/server";
 import { getPortalSession } from "@/lib/portal/session";
-import { type StatData, type HeatClass, type ClassBlock } from "@/components/admin/dashboard/types";
+import { type StatData, type ScheduleClass } from "@/components/admin/dashboard/types";
+import type { TeacherOption } from "@/app/portal/admin/classes/page";
 
 export const dynamic = "force-dynamic";
 
@@ -33,8 +33,7 @@ export default async function AdminDashboardPage() {
   const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
   const todayDow = new Date().getDay();
 
-  // Run all reads in parallel.
-  const [studioRes, studentsRes, paidRes, todayRes, capacityRes, allClassesRes] = await Promise.all([
+  const [studioRes, studentsRes, paidRes, todayRes, capacityRes, teachersRes] = await Promise.all([
     supabase.from("studios").select("name").eq("id", studioId).single(),
 
     supabase
@@ -56,21 +55,20 @@ export default async function AdminDashboardPage() {
       .eq("studio_id", studioId)
       .eq("day_of_week", todayDow),
 
-    // Real capacity data from migration 0003 view. Skip Sunday (0) — heatmap shows Mon–Sat.
     supabase
       .from("class_capacity")
-      .select("id, name, discipline, day_of_week, start_time, enrolled, capacity")
-      .eq("studio_id", studioId)
-      .neq("day_of_week", 0)
-      .order("day_of_week")
-      .order("start_time"),
-
-    // All classes for the schedule builder (both scheduled and unscheduled).
-    supabase
-      .from("classes")
-      .select("id, name, discipline, level, day_of_week, start_time, end_time")
+      .select(
+        "id, name, discipline, level, day_of_week, start_time, end_time, enrolled, capacity, teacher_id",
+      )
       .eq("studio_id", studioId)
       .order("name"),
+
+    supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("studio_id", studioId)
+      .eq("role", "teacher")
+      .order("full_name"),
   ]);
 
   const revenue =
@@ -82,47 +80,49 @@ export default async function AdminDashboardPage() {
     { id: "today", value: todayRes.count ?? 0, format: "number" },
   ];
 
-  // ── Build heatmap from real data (or fall back to mock) ──────────────────
-  const rows = capacityRes.data ?? [];
-  let heat: HeatClass[];
-  let heatDayDows: number[] | undefined;
-  let heatTimes: string[] | undefined;
+  const classRows = capacityRes.data ?? [];
+  const classIds = classRows.map((r) => r.id as string);
 
-  if (rows.length > 0) {
-    const uniqueDayNums = [...new Set(rows.map((r) => r.day_of_week as number))].sort();
-    const uniqueTimesRaw = [
-      ...new Set(rows.map((r) => (r.start_time as string | null) ?? "00:00")),
-    ].sort();
-
-    heatDayDows = uniqueDayNums;
-    heatTimes = uniqueTimesRaw.map((t) => t.slice(0, 5));
-
-    const dayIdx = new Map(uniqueDayNums.map((d, i) => [d, i]));
-    const timeIdx = new Map(uniqueTimesRaw.map((t, i) => [t, i]));
-
-    heat = rows.map((r) => ({
-      id: r.id as string,
-      name: r.name as string,
-      room: (r.discipline as string | null) ?? tCommon("yourStudio"),
-      day: dayIdx.get(r.day_of_week as number) ?? 0,
-      slot: timeIdx.get((r.start_time as string | null) ?? "00:00") ?? 0,
-      enrolled: Number(r.enrolled ?? 0),
-      capacity: Number(r.capacity ?? 0),
-    }));
-  } else {
-    heat = [];
+  const priceMap = new Map<string, number>();
+  const groupMap = new Map<string, string | null>();
+  if (classIds.length) {
+    const { data: priceRows } = await supabase
+      .from("classes")
+      .select("id, price_cents, recurring_group_id")
+      .in("id", classIds);
+    (priceRows ?? []).forEach((r) => {
+      priceMap.set(r.id, r.price_cents ?? 0);
+      groupMap.set(r.id, (r.recurring_group_id as string | null) ?? null);
+    });
   }
 
-  // ── Build schedule builder classes for this studio only ──
-  const allClassRows = allClassesRes.data ?? [];
-  const scheduleClasses: ClassBlock[] = allClassRows.map((r) => {
+  const teacherIds = [
+    ...new Set(classRows.map((c) => c.teacher_id).filter(Boolean) as string[]),
+  ];
+  const teacherMap = new Map<string, string>();
+  if (teacherIds.length) {
+    const { data: teacherRows } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", teacherIds);
+    (teacherRows ?? []).forEach((t) => {
+      if (t.full_name) teacherMap.set(t.id, t.full_name);
+    });
+  }
+
+  const scheduleClasses: ScheduleClass[] = classRows.map((r) => {
     let durationMin = 60;
-    if (r.start_time && r.end_time) {
-      const [sh, sm] = (r.start_time as string).split(":").map(Number);
-      const [eh, em] = (r.end_time as string).split(":").map(Number);
+    const startRaw = r.start_time as string | null;
+    const endRaw = r.end_time as string | null;
+    if (startRaw && endRaw) {
+      const [sh, sm] = startRaw.split(":").map(Number);
+      const [eh, em] = endRaw.split(":").map(Number);
       durationMin = (eh * 60 + em) - (sh * 60 + sm);
     }
-    const startTime = r.start_time ? (r.start_time as string).slice(0, 5) : null;
+    const startTime = startRaw ? startRaw.slice(0, 5) : null;
+    const endTime = endRaw ? endRaw.slice(0, 5) : null;
+    const teacherId = r.teacher_id as string | null;
+
     return {
       id: r.id as string,
       name: r.name as string,
@@ -131,18 +131,29 @@ export default async function AdminDashboardPage() {
       durationMin,
       dayOfWeek: (r.day_of_week as number | null) ?? null,
       startTime,
+      endTime,
+      enrolled: Number(r.enrolled ?? 0),
+      capacity: Number(r.capacity ?? 0),
+      priceCents: priceMap.get(r.id as string) ?? 0,
+      teacherId,
+      teacherName: teacherId ? (teacherMap.get(teacherId) ?? null) : null,
+      recurringGroupId: groupMap.get(r.id as string) ?? null,
     };
   });
+
+  const teachers: TeacherOption[] = (teachersRes.data ?? []).map((t) => ({
+    id: t.id,
+    name: t.full_name,
+    email: t.email,
+  }));
 
   return (
     <AdminDashboard
       studioId={studioId}
       studioName={studioRes.data?.name ?? tCommon("yourStudio")}
       stats={stats}
-      heat={heat}
-      heatDayDows={heatDayDows}
-      heatTimes={heatTimes}
       scheduleClasses={scheduleClasses}
+      teachers={teachers}
     />
   );
 }
