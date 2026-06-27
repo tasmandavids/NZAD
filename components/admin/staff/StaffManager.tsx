@@ -78,6 +78,7 @@ export default function StaffManager({
   managerOptions,
   locations,
   weekStart,
+  loadError,
 }: {
   staff: StaffRow[];
   shifts: StaffShift[];
@@ -86,6 +87,7 @@ export default function StaffManager({
   managerOptions: StaffOption[];
   locations: string[];
   weekStart: string;
+  loadError?: string | null;
 }) {
   const t = useTranslations("admin.staff");
   const [activeTab, setActiveTab] = useState<"roster" | "calendar">("roster");
@@ -120,6 +122,12 @@ export default function StaffManager({
           {t("addStaff")}
         </button>
       </div>
+
+      {loadError && (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {loadError}
+        </p>
+      )}
 
       <div className="flex gap-1 rounded-xl border border-[--hair] bg-base p-1 w-fit">
         {(["roster", "calendar"] as const).map((tab) => (

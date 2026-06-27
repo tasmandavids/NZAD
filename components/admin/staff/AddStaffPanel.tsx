@@ -96,6 +96,7 @@ export default function AddStaffPanel({
       }
       router.refresh();
       onClose();
+      if (result.id) router.push(`/portal/admin/staff/${result.id}`);
     });
   };
 

@@ -10,6 +10,7 @@
       "refreshing": "Refreshing…",
       "disconnecting": "Disconnecting…",
       "refunding": "Refunding…",
+      "voiding": "Voiding…",
       "publishing": "Publishing…",
       "summarizing": "Summarizing…",
       "connecting": "Connecting…",
@@ -106,6 +107,7 @@
         "month": "Monthly"
       },
       "refund": "Refund",
+      "void": "Void",
       "noCardPayment": "No card payment",
       "viewInXero": "View in Xero",
       "remind": "Remind",
@@ -305,6 +307,40 @@
         "saveEntry": "Save entry",
         "history": "Progress history · {count}",
         "empty": "No progress logged yet. Add the first entry above."
+      },
+      "schedule": {
+        "title": "Schedule",
+        "subtitle": "Add private lessons, rehearsals, and other items. Parents are notified automatically.",
+        "addEntry": "+ Add",
+        "newEntry": "New schedule item",
+        "editEntry": "Edit schedule item",
+        "cancelEntry": "Cancel item",
+        "days": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        },
+        "fields": {
+          "title": "Title",
+          "description": "Notes (optional)",
+          "type": "Type",
+          "location": "Location (optional)",
+          "startTime": "Start time",
+          "endTime": "End time"
+        },
+        "types": {
+          "private_lesson": "Private lesson",
+          "rehearsal": "Rehearsal",
+          "makeup": "Make-up class",
+          "competition": "Competition",
+          "event": "Event",
+          "note": "Note",
+          "other": "Other"
+        }
       }
     },
     "parents": {
@@ -373,6 +409,7 @@
         "invoicesTitle": "Invoices",
         "noInvoices": "No invoices yet.",
         "table": {
+          "number": "Invoice #",
           "issued": "Issued",
           "student": "Student",
           "amount": "Amount",
@@ -448,6 +485,7 @@
         "searchPlaceholder": "Search…",
         "empty": "No invoices found.",
         "table": {
+          "number": "Invoice #",
           "dancer": "Dancer",
           "parent": "Parent",
           "amount": "Amount",
@@ -473,7 +511,15 @@
         "createAndSend": "Create & send",
         "saveDraft": "Save draft"
       },
-      "refundConfirm": "Refund {amount} to {payer}?"
+      "refundConfirm": "Refund {amount} to {payer}?",
+      "voidConfirm": "Void invoice for {amount} ({payer})? This cannot be undone and will void the invoice in Xero if synced.",
+      "voidXeroSyncError": "Invoice voided, but Xero sync failed: {error}",
+      "subscriptions": {
+        "title": "Auto-pay subscriptions",
+        "subtitle": "Recurring plans — cancel at period end or stop immediately",
+        "empty": "No active subscriptions.",
+        "manageAll": "Manage all subscriptions"
+      }
     },
     "accounting": {
       "title": "Accounting",
@@ -552,6 +598,8 @@
         "nextCharge": "Next charge"
       },
       "defaultPlan": "Subscription",
+      "cancelAtPeriodEndConfirm": "Cancel {plan} at the end of the current billing period?",
+      "cancelNowConfirm": "Cancel {plan} immediately? This stops auto-pay right away.",
       "status": {
         "active": "Active",
         "trialing": "Trialing",

@@ -1,21 +1,15 @@
 #!/usr/bin/env node
 /**
- * Configure Supabase Auth for Google + Apple OAuth.
+ * Configure Supabase Auth for Google OAuth.
  *
  * Usage:
  *   node --env-file=.env.local scripts/setup-oauth.mjs
  *   node --env-file=.env.local scripts/setup-oauth.mjs --enable-google
- *   node --env-file=.env.local scripts/setup-oauth.mjs --enable-google --enable-apple
  *
  * Optional env vars for provider credentials:
  *   GOOGLE_OAUTH_CLIENT_ID
  *   GOOGLE_OAUTH_CLIENT_SECRET
- *   APPLE_OAUTH_CLIENT_ID      (Services ID, e.g. com.olune.app.web)
- *   APPLE_OAUTH_CLIENT_SECRET  (JWT secret generated from Apple .p8 key)
  */
-
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 
 const PROJECT_REF = process.env.SUPABASE_PROJECT_REF ?? "wnoxcwihrzbxvogvmhqv";
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
@@ -30,7 +24,6 @@ if (!TOKEN) {
 
 const args = new Set(process.argv.slice(2));
 const enableGoogle = args.has("--enable-google") || Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID);
-const enableApple = args.has("--enable-apple") || Boolean(process.env.APPLE_OAUTH_CLIENT_ID);
 
 function callbackUrls() {
   const urls = new Set([
@@ -102,18 +95,6 @@ async function main() {
     patch.external_google_skip_nonce_check = false;
   }
 
-  if (enableApple) {
-    const id = process.env.APPLE_OAUTH_CLIENT_ID;
-    const secret = process.env.APPLE_OAUTH_CLIENT_SECRET;
-    if (!id || !secret) {
-      console.error("Apple enable requested but APPLE_OAUTH_CLIENT_ID / APPLE_OAUTH_CLIENT_SECRET missing.");
-      process.exit(1);
-    }
-    patch.external_apple_enabled = true;
-    patch.external_apple_client_id = id;
-    patch.external_apple_secret = secret;
-  }
-
   const updated = await api("/config/auth", {
     method: "PATCH",
     body: JSON.stringify(patch),
@@ -127,11 +108,10 @@ async function main() {
   }
   console.log("\nProviders:");
   console.log("  Google:", updated.external_google_enabled ? "enabled" : "disabled");
-  console.log("  Apple:", updated.external_apple_enabled ? "enabled" : "disabled");
 
   const supabaseCallback = `https://${PROJECT_REF}.supabase.co/auth/v1/callback`;
   console.log("\n── Provider console setup ──────────────────────────────");
-  console.log("\nUse this redirect URI in Google Cloud + Apple Developer:");
+  console.log("\nUse this redirect URI in Google Cloud Console:");
   console.log(" ", supabaseCallback);
   console.log("\nGoogle Cloud Console → APIs & Services → Credentials → OAuth client:");
   console.log("  https://console.cloud.google.com/apis/credentials");
@@ -143,15 +123,12 @@ async function main() {
   console.log("  Authorized JavaScript origins:");
   for (const o of origins) console.log("   ", o);
   console.log("  Authorized redirect URIs:", supabaseCallback);
-  console.log("\nApple Developer → Identifiers → Services ID → Sign in with Apple:");
-  console.log("  https://developer.apple.com/account/resources/identifiers/list/serviceId");
-  console.log("  Return URL:", supabaseCallback);
   console.log("\nSupabase provider settings:");
   console.log(`  https://supabase.com/dashboard/project/${PROJECT_REF}/auth/providers`);
 
-  if (!updated.external_google_enabled || !updated.external_apple_enabled) {
-    console.log("\nTo enable providers once credentials are in .env.local, run:");
-    console.log("  node --env-file=.env.local scripts/setup-oauth.mjs --enable-google --enable-apple");
+  if (!updated.external_google_enabled) {
+    console.log("\nTo enable Google once credentials are in .env.local, run:");
+    console.log("  node --env-file=.env.local scripts/setup-oauth.mjs --enable-google");
   }
 }
 

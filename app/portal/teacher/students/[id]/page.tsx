@@ -11,6 +11,9 @@ import { createClient } from "@/lib/supabase/server";
 import ProgressTracker, {
   type ProgressEntry,
 } from "@/components/admin/students/ProgressTracker";
+import StudentSchedulePanel from "@/components/admin/students/StudentSchedulePanel";
+import type { ScheduleEntry } from "@/lib/students/schedule-types";
+import { getWeekRange } from "@/lib/staff/week";
 import { getTranslations } from "@/lib/i18n/server";
 
 export default async function TeacherStudentProgressPage({
@@ -26,7 +29,7 @@ export default async function TeacherStudentProgressPage({
     getTranslations("common"),
   ]);
 
-  const [studentRes, progressRes] = await Promise.all([
+  const [studentRes, progressRes, scheduleRes] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name, email")
@@ -43,6 +46,15 @@ export default async function TeacherStudentProgressPage({
       )
       .eq("student_id", id)
       .order("logged_at", { ascending: false }),
+
+    supabase
+      .from("student_schedule_entries")
+      .select(
+        "id, student_id, title, description, entry_date, start_time, end_time, entry_type, location_name, cancelled_at",
+      )
+      .eq("student_id", id)
+      .order("entry_date")
+      .order("start_time"),
   ]);
 
   if (studentRes.error || !studentRes.data) notFound();
@@ -60,8 +72,23 @@ export default async function TeacherStudentProgressPage({
     };
   });
 
+  const scheduleEntries: ScheduleEntry[] = (scheduleRes.data ?? []).map((row) => ({
+    id: row.id as string,
+    studentId: row.student_id as string,
+    title: row.title as string,
+    description: (row.description as string | null) ?? null,
+    entryDate: row.entry_date as string,
+    startTime: (row.start_time as string | null)?.slice(0, 5) ?? null,
+    endTime: (row.end_time as string | null)?.slice(0, 5) ?? null,
+    entryType: row.entry_type as ScheduleEntry["entryType"],
+    locationName: (row.location_name as string | null) ?? null,
+    cancelledAt: (row.cancelled_at as string | null) ?? null,
+  }));
+
+  const weekStart = getWeekRange().weekStart;
+
   return (
-    <div className="mx-auto max-w-3xl space-y-8 p-6">
+    <div className="mx-auto max-w-5xl space-y-8 p-6">
       <div>
         <Link href="/portal/teacher" className="text-xs text-muted hover:text-ink">
           {t("back")}
@@ -73,6 +100,12 @@ export default async function TeacherStudentProgressPage({
       </div>
 
       <ProgressTracker studentId={p.id} entries={entries} readOnlyDelete />
+
+      <StudentSchedulePanel
+        studentId={p.id}
+        entries={scheduleEntries}
+        weekStart={weekStart}
+      />
     </div>
   );
 }

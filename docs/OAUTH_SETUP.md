@@ -1,9 +1,9 @@
-# Google & Apple OAuth setup
+# Google OAuth setup
 
 Olune uses Supabase Auth with a Next.js callback at `/auth/callback`.
 
 **Supabase project:** `wnoxcwihrzbxvogvmhqv`  
-**Supabase OAuth callback (use in Google + Apple consoles):**
+**Supabase OAuth callback (use in Google Cloud Console):**
 
 ```
 https://wnoxcwihrzbxvogvmhqv.supabase.co/auth/v1/callback
@@ -59,47 +59,14 @@ Or paste credentials in [Supabase → Auth → Providers → Google](https://sup
 
 ---
 
-## 3. Apple
-
-Apple requires a paid Apple Developer account.
-
-### A. Apple Developer
-
-1. [Identifiers → App IDs](https://developer.apple.com/account/resources/identifiers/list) — create an App ID with **Sign in with Apple**
-2. [Identifiers → Services IDs](https://developer.apple.com/account/resources/identifiers/list/serviceId) — create a Services ID (this is your `client_id`)
-3. Configure **Sign in with Apple** on the Services ID:
-   - Primary App ID: your App ID
-   - **Return URL:** `https://wnoxcwihrzbxvogvmhqv.supabase.co/auth/v1/callback`
-4. [Keys](https://developer.apple.com/account/resources/authkeys/list) — create a key with **Sign in with Apple**
-5. Generate the client secret JWT (Supabase dashboard has a helper, or use their docs)
-
-### B. Enable in Supabase
-
-Add to `.env.local`:
-
-```env
-APPLE_OAUTH_CLIENT_ID=com.yourco.olune.web
-APPLE_OAUTH_CLIENT_SECRET=your-generated-jwt-secret
-```
-
-Then run:
-
-```bash
-node --env-file=.env.local scripts/setup-oauth.mjs --enable-apple
-```
-
-Apple secrets expire every 6 months — regenerate before expiry.
-
----
-
-## 4. Test locally
+## 3. Test locally
 
 ```bash
 npm run dev
 ```
 
 1. Visit `http://localhost:3000/login`
-2. Click **Continue with Google** or **Continue with Apple**
+2. Click **Continue with Google**
 3. After auth you should land in `/portal` (existing user) or `/onboarding` (new user)
 
 ---
@@ -108,6 +75,6 @@ npm run dev
 
 | Symptom | Fix |
 |--------|-----|
-| `redirect_uri_mismatch` | Google/Apple redirect URI must be the **Supabase** callback URL, not `/auth/callback` |
+| `redirect_uri_mismatch` | Google redirect URI must be the **Supabase** callback URL, not `/auth/callback` |
 | Bounced back to login | Check redirect URLs in Supabase include `http://localhost:3000/auth/callback` |
 | New user stuck | Should redirect to `/onboarding` — profile is created by `handle_new_user` trigger |

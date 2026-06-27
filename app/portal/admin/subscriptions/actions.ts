@@ -280,5 +280,7 @@ export async function adminCancelSubscription(
     .eq("stripe_subscription_id", stripeSubscriptionId);
 
   revalidatePath("/portal/admin/subscriptions");
+  revalidatePath("/portal/admin/billing");
+  revalidatePath("/portal/parent");
   return { ok: true };
 }

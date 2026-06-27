@@ -10,6 +10,7 @@
       "refreshing": "Aggiornamento…",
       "disconnecting": "Disconnessione…",
       "refunding": "Rimborso…",
+      "voiding": "Annullamento…",
       "publishing": "Pubblicazione...",
       "summarizing": "Riassumendo...",
       "connecting": "Connessione…",
@@ -105,6 +106,7 @@
         "month": "Mensile"
       },
       "refund": "Rimborso",
+      "void": "Annulla",
       "noCardPayment": "Nessun pagamento con carta",
       "viewInXero": "Visualizza in Xero",
       "remind": "Ricordare",
@@ -372,6 +374,7 @@
         "invoicesTitle": "Fatture",
         "noInvoices": "Ancora nessuna fattura.",
         "table": {
+          "number": "N. fattura",
           "issued": "Rilasciato",
           "student": "Studente",
           "amount": "Importo",
@@ -447,6 +450,7 @@
         "searchPlaceholder": "Cerca...",
         "empty": "Nessuna fattura trovata.",
         "table": {
+          "number": "N. fattura",
           "dancer": "Ballerino",
           "parent": "Genitore",
           "amount": "Importo",
@@ -472,7 +476,15 @@
         "createAndSend": "Crea e invia",
         "saveDraft": "Salva bozza"
       },
-      "refundConfirm": "Rimborsare {amount} a {payer}?"
+      "refundConfirm": "Rimborsare {amount} a {payer}?",
+      "voidConfirm": "Annullare la fattura di {amount} ({payer})? L'operazione è irreversibile e annullerà la fattura in Xero se sincronizzata.",
+      "voidXeroSyncError": "Fattura annullata, ma la sincronizzazione Xero non è riuscita: {error}",
+      "subscriptions": {
+        "title": "Abbonamenti auto-pay",
+        "subtitle": "Piani ricorrenti — annulla a fine periodo o subito",
+        "empty": "Nessun abbonamento attivo.",
+        "manageAll": "Gestisci tutti gli abbonamenti"
+      }
     },
     "accounting": {
       "title": "Contabilità",
@@ -551,6 +563,8 @@
         "nextCharge": "Prossima carica"
       },
       "defaultPlan": "Abbonamento",
+      "cancelAtPeriodEndConfirm": "Annullare {plan} alla fine del periodo di fatturazione corrente?",
+      "cancelNowConfirm": "Annullare {plan} immediatamente? L'auto-pay si interrompe subito.",
       "status": {
         "active": "Attivo",
         "trialing": "Prova",

@@ -315,3 +315,69 @@ export async function addInvoicesToActivePlan(
   if (updErr || !updated) throw new Error(updErr?.message ?? "Could not update payment plan.");
   return updated as TermPaymentPlanRow;
 }
+
+/** Detach an invoice from its active plan and recalculate or cancel the plan. */
+export async function removeInvoiceFromActivePlan(
+  supabase: SupabaseClient,
+  invoiceId: string,
+): Promise<void> {
+  const { data: inv, error: invErr } = await supabase
+    .from("invoices")
+    .select("term_payment_plan_id, amount_cents")
+    .eq("id", invoiceId)
+    .single();
+
+  if (invErr || !inv?.term_payment_plan_id) return;
+
+  const planId = inv.term_payment_plan_id as string;
+  const { data: plan, error: planErr } = await supabase
+    .from("term_payment_plans")
+    .select("*")
+    .eq("id", planId)
+    .single();
+
+  if (planErr || !plan) {
+    await supabase.from("term_payment_plan_invoices").delete().eq("invoice_id", invoiceId);
+    await supabase.from("invoices").update({ term_payment_plan_id: null }).eq("id", invoiceId);
+    return;
+  }
+
+  const row = plan as TermPaymentPlanRow;
+  if (row.status === "active" && row.installments_paid > 0) {
+    throw new Error("Cannot void an invoice on a payment plan with instalments already paid.");
+  }
+
+  await supabase.from("term_payment_plan_invoices").delete().eq("invoice_id", invoiceId);
+  await supabase.from("invoices").update({ term_payment_plan_id: null }).eq("id", invoiceId);
+
+  const { data: links } = await supabase
+    .from("term_payment_plan_invoices")
+    .select("invoice_id")
+    .eq("plan_id", planId);
+
+  const remainingIds = (links ?? []).map((l) => l.invoice_id as string);
+  if (remainingIds.length === 0) {
+    await supabase.from("term_payment_plans").update({ status: "cancelled" }).eq("id", planId);
+    return;
+  }
+
+  const { data: remainingInvoices } = await supabase
+    .from("invoices")
+    .select("amount_cents")
+    .in("id", remainingIds)
+    .in("status", [...OPEN_INVOICE_STATUSES]);
+
+  const newTotal = (remainingInvoices ?? []).reduce(
+    (sum, i) => sum + (i.amount_cents as number),
+    0,
+  );
+  const installmentAmounts = splitTermInstallments(newTotal, row.installment_count);
+
+  await supabase
+    .from("term_payment_plans")
+    .update({
+      total_cents: newTotal,
+      installment_amounts: installmentAmounts,
+    })
+    .eq("id", planId);
+}

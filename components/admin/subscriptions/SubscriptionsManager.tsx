@@ -1,9 +1,8 @@
 "use client";
 import { useTranslations } from "next-intl";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { adminCancelSubscription } from "@/app/portal/admin/subscriptions/actions";
 import type {
   ClassOption,
   ParentOption,
@@ -11,6 +10,7 @@ import type {
   SubscriptionRow,
 } from "@/app/portal/admin/subscriptions/page";
 import { CreateSubscriptionModal } from "@/components/admin/subscriptions/CreateSubscriptionModal";
+import { SubscriptionCancelActions } from "@/components/admin/subscriptions/SubscriptionCancelActions";
 import { formatMoney } from "@/lib/currency";
 import { intervalLabel, type BillingInterval } from "@/lib/subscriptions/pricing";
 import { useLocale } from "next-intl";
@@ -75,36 +75,38 @@ export default function SubscriptionsManager({
   const locale = useLocale();
   const [filter, setFilter] = useState<"all" | "active" | "canceled">("all");
   const [showCreate, setShowCreate] = useState(false);
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [rows, setRows] = useState(subscriptions);
   const [error, setError] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
 
   const activeMrrCents = useMemo(
     () =>
-      subscriptions
+      rows
         .filter((s) => s.status === "active" || s.status === "trialing")
         .reduce((sum, s) => sum + s.monthlyAmountCents, 0),
-    [subscriptions],
+    [rows],
   );
-  const activeCount = subscriptions.filter(
+  const activeCount = rows.filter(
     (s) => s.status === "active" || s.status === "trialing",
   ).length;
 
-  const filtered = subscriptions.filter((s) => {
+  const filtered = rows.filter((s) => {
     if (filter === "active") return s.status === "active" || s.status === "trialing";
     if (filter === "canceled") return s.status === "canceled";
     return true;
   });
 
-  const cancel = (s: SubscriptionRow, immediate: boolean) => {
-    if (!s.stripeSubscriptionId) return;
-    setError(null);
-    setPendingId(s.id);
-    startTransition(async () => {
-      const result = await adminCancelSubscription(s.stripeSubscriptionId as string, immediate);
-      setPendingId(null);
-      if (!result.ok) setError(result.error);
-    });
+  const markCanceled = (id: string, immediate: boolean) => {
+    setRows((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              status: immediate ? "canceled" : s.status,
+              cancelAtPeriodEnd: immediate ? false : true,
+            }
+          : s,
+      ),
+    );
   };
 
   return (
@@ -145,7 +147,7 @@ export default function SubscriptionsManager({
         </div>
         <div className="rounded-2xl border border-[--hair] bg-surface p-4">
           <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">{t("stats.total")}</p>
-          <p className="mt-1 text-2xl font-black tabular-nums text-ink">{subscriptions.length}</p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-ink">{rows.length}</p>
         </div>
       </div>
 
@@ -217,10 +219,6 @@ export default function SubscriptionsManager({
               <tbody>
                 <AnimatePresence initial={false}>
                   {filtered.map((s) => {
-                    const canCancel =
-                      s.status !== "canceled" &&
-                      !s.cancelAtPeriodEnd &&
-                      Boolean(s.stripeSubscriptionId);
                     return (
                       <tr
                         key={s.id}
@@ -266,28 +264,11 @@ export default function SubscriptionsManager({
                           {s.cancelAtPeriodEnd ? "—" : fmtDate(s.currentPeriodEnd, locale)}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          {canCancel ? (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => cancel(s, false)}
-                                disabled={pendingId === s.id}
-                                className="text-xs text-muted transition-colors hover:text-amber-500 disabled:opacity-50"
-                                title={tShared("cancelAtPeriodEndTitle")}
-                              >
-                                {pendingId === s.id ? "…" : tShared("cancelAtPeriodEnd")}
-                              </button>
-                              <button
-                                onClick={() => cancel(s, true)}
-                                disabled={pendingId === s.id}
-                                className="text-xs text-muted transition-colors hover:text-red-400 disabled:opacity-50"
-                                title={tShared("cancelImmediatelyTitle")}
-                              >
-                                {tShared("cancelNow")}
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-muted">—</span>
-                          )}
+                          <SubscriptionCancelActions
+                            subscription={s}
+                            onCanceled={markCanceled}
+                            align="end"
+                          />
                         </td>
                       </tr>
                     );

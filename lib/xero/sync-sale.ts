@@ -11,6 +11,7 @@ import {
   Payment,
 } from "xero-node";
 import { loadStudioXeroClient } from "./client";
+import { formatInvoiceNumber } from "@/lib/invoices/format-invoice-number";
 import { dollarsFromCents } from "./reports";
 import type { XeroConnectionSettings, XeroSyncSourceType } from "./types";
 import { DEFAULT_XERO_SETTINGS } from "./types";
@@ -201,7 +202,7 @@ async function loadInvoiceRecord(
   const { data: inv } = await supabase
     .from("invoices")
     .select(`
-      id, studio_id, payer_id, amount_cents, due_date, issued_at, xero_invoice_id,
+      id, studio_id, payer_id, amount_cents, due_date, issued_at, xero_invoice_id, invoice_number,
       student:profiles!student_id ( full_name )
     `)
     .eq("id", invoiceId)
@@ -221,7 +222,7 @@ async function loadInvoiceRecord(
     dueDate: (inv.due_date as string | null) ?? null,
     issuedAt: (inv.issued_at as string | null) ?? null,
     xeroInvoiceId: (inv.xero_invoice_id as string | null) ?? null,
-    reference: `INV-${(inv.id as string).slice(0, 8)}`,
+    reference: formatInvoiceNumber(inv.invoice_number as number),
     lineDescription,
     lineItems: [
       {
@@ -618,4 +619,53 @@ export async function syncRefundToXero(
   await loaded.client.accountingApi.createCreditNotes(loaded.tenantId, {
     creditNotes: [creditNote],
   } as CreditNotes);
+}
+
+export async function voidInvoiceInXero(
+  supabase: SupabaseClient,
+  invoiceId: string,
+  redirectUri: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const record = await loadInvoiceRecord(supabase, invoiceId);
+  let xeroInvoiceId = record.xeroInvoiceId;
+
+  if (!xeroInvoiceId) {
+    const { data: log } = await supabase
+      .from("xero_sync_log")
+      .select("xero_invoice_id")
+      .eq("source_type", "invoice")
+      .eq("source_id", invoiceId)
+      .maybeSingle();
+    xeroInvoiceId = (log?.xero_invoice_id as string | null) ?? null;
+  }
+
+  if (!xeroInvoiceId) return { ok: true };
+
+  const loaded = await loadStudioXeroClient(supabase, record.studioId, redirectUri);
+  if (!loaded) return { ok: false, error: "Xero not connected" };
+
+  const cfg = settings(loaded.connection.settings);
+  if (cfg.sync_enabled === false) return { ok: false, error: "Xero sync disabled" };
+
+  try {
+    await loaded.client.accountingApi.updateInvoice(loaded.tenantId, xeroInvoiceId, {
+      invoices: [{ invoiceID: xeroInvoiceId, status: Invoice.StatusEnum.VOIDED }],
+    } as Invoices);
+
+    await supabase
+      .from("xero_sync_log")
+      .update({ status: "voided", error: null })
+      .eq("source_type", "invoice")
+      .eq("source_id", invoiceId);
+
+    await supabase
+      .from("xero_connections")
+      .update({ last_sync_at: new Date().toISOString(), sync_error: null })
+      .eq("studio_id", record.studioId);
+
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Xero void failed";
+    return { ok: false, error: message };
+  }
 }

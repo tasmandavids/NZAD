@@ -70,6 +70,21 @@ function normalizeTime(t: string): string {
   return t.length === 5 ? `${t}:00` : t;
 }
 
+function getStaffAdminClient(): ReturnType<typeof createAdminClient> | { error: string } {
+  try {
+    return createAdminClient();
+  } catch {
+    return {
+      error:
+        "Adding staff requires SUPABASE_SERVICE_ROLE_KEY in .env.local (Supabase → Settings → API).",
+    };
+  }
+}
+
+async function rollbackAuthUser(admin: ReturnType<typeof createAdminClient>, userId: string) {
+  await admin.auth.admin.deleteUser(userId).catch(() => undefined);
+}
+
 export async function createStaffMember(
   input: z.infer<typeof CreateStaffSchema>,
 ): Promise<ActionResult> {
@@ -80,15 +95,21 @@ export async function createStaffMember(
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = parsed.data;
 
-  const admin = createAdminClient();
+  const adminOrError = getStaffAdminClient();
+  if ("error" in adminOrError) return { ok: false, error: adminOrError.error };
+  const admin = adminOrError;
 
   const { data: existing } = await admin
     .from("profiles")
-    .select("id")
-    .eq("studio_id", studioId)
+    .select("id, studio_id, role")
     .eq("email", data.email)
     .maybeSingle();
-  if (existing) return { ok: false, error: `A user with email ${data.email} already exists.` };
+  if (existing?.studio_id === studioId) {
+    return { ok: false, error: `A user with email ${data.email} already exists in this studio.` };
+  }
+  if (existing) {
+    return { ok: false, error: `Email ${data.email} is already registered to another account.` };
+  }
 
   const { data: authData, error: authErr } = await admin.auth.admin.createUser({
     email: data.email,
@@ -100,15 +121,28 @@ export async function createStaffMember(
   const userId = authData.user.id;
   const managerId = data.managerId && data.managerId !== "" ? data.managerId : null;
 
-  const { error: profileErr } = await admin.from("profiles").upsert({
-    id: userId,
-    studio_id: studioId,
-    role: data.role,
-    full_name: data.fullName,
-    email: data.email,
-    phone: data.phone || null,
-  });
-  if (profileErr) return { ok: false, error: profileErr.message };
+  // Auth trigger inserts a bare profile row; update it with studio + role.
+  const { data: profileRow, error: profileErr } = await admin
+    .from("profiles")
+    .update({
+      studio_id: studioId,
+      role: data.role,
+      full_name: data.fullName,
+      email: data.email,
+      phone: data.phone || null,
+      active_studio_id: studioId,
+    })
+    .eq("id", userId)
+    .select("id")
+    .maybeSingle();
+  if (profileErr) {
+    await rollbackAuthUser(admin, userId);
+    return { ok: false, error: profileErr.message };
+  }
+  if (!profileRow) {
+    await rollbackAuthUser(admin, userId);
+    return { ok: false, error: "Could not create staff profile." };
+  }
 
   const { error: memberErr } = await admin.from("staff_members").insert({
     profile_id: userId,
@@ -123,7 +157,22 @@ export async function createStaffMember(
     start_date: data.startDate || null,
     active: true,
   });
-  if (memberErr) return { ok: false, error: memberErr.message };
+  if (memberErr) {
+    await rollbackAuthUser(admin, userId);
+    return { ok: false, error: memberErr.message };
+  }
+
+  await admin.from("studio_memberships").upsert(
+    {
+      user_id: userId,
+      studio_id: studioId,
+      role: data.role,
+      is_primary: true,
+      linked_via: "admin",
+      status: "active",
+    },
+    { onConflict: "user_id,studio_id" },
+  );
 
   revalidateStaffPaths(userId);
   return { ok: true, id: userId };
@@ -139,10 +188,12 @@ export async function updateStaffMember(
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = parsed.data;
 
-  const admin = createAdminClient();
+  const adminOrError = getStaffAdminClient();
+  if ("error" in adminOrError) return { ok: false, error: adminOrError.error };
+  const admin = adminOrError;
   const managerId = data.managerId && data.managerId !== "" ? data.managerId : null;
 
-  const { error: profileErr } = await admin
+  const { data: profileRow, error: profileErr } = await admin
     .from("profiles")
     .update({
       full_name: data.fullName,
@@ -151,23 +202,29 @@ export async function updateStaffMember(
     })
     .eq("id", data.id)
     .eq("studio_id", studioId)
-    .in("role", ["teacher", "office"]);
+    .in("role", ["teacher", "office"])
+    .select("id")
+    .maybeSingle();
   if (profileErr) return { ok: false, error: profileErr.message };
+  if (!profileRow) return { ok: false, error: "Staff member not found." };
 
-  const { error: memberErr } = await admin.from("staff_members").upsert({
-    profile_id: data.id,
-    studio_id: studioId,
-    employment_type: data.employmentType ?? null,
-    work_location: data.workLocation ?? null,
-    location_names: data.locationNames,
-    schedule_notes: data.scheduleNotes || null,
-    contract_notes: data.contractNotes || null,
-    pay_notes: data.payNotes || null,
-    manager_id: managerId,
-    start_date: data.startDate || null,
-    end_date: data.endDate || null,
-    active: data.active ?? true,
-  });
+  const { error: memberErr } = await admin.from("staff_members").upsert(
+    {
+      profile_id: data.id,
+      studio_id: studioId,
+      employment_type: data.employmentType ?? null,
+      work_location: data.workLocation ?? null,
+      location_names: data.locationNames,
+      schedule_notes: data.scheduleNotes || null,
+      contract_notes: data.contractNotes || null,
+      pay_notes: data.payNotes || null,
+      manager_id: managerId,
+      start_date: data.startDate || null,
+      end_date: data.endDate || null,
+      active: data.active ?? true,
+    },
+    { onConflict: "profile_id" },
+  );
   if (memberErr) return { ok: false, error: memberErr.message };
 
   revalidateStaffPaths(data.id);
@@ -184,8 +241,11 @@ export async function updateStaffProfile(
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   const data = parsed.data;
 
-  const admin = createAdminClient();
-  const { error: profileErr } = await admin
+  const adminOrError = getStaffAdminClient();
+  if ("error" in adminOrError) return { ok: false, error: adminOrError.error };
+  const admin = adminOrError;
+
+  const { data: profileRow, error: profileErr } = await admin
     .from("profiles")
     .update({
       full_name: data.fullName,
@@ -194,8 +254,11 @@ export async function updateStaffProfile(
     })
     .eq("id", data.id)
     .eq("studio_id", studioId)
-    .in("role", ["teacher", "office"]);
+    .in("role", ["teacher", "office"])
+    .select("id")
+    .maybeSingle();
   if (profileErr) return { ok: false, error: profileErr.message };
+  if (!profileRow) return { ok: false, error: "Staff member not found." };
 
   revalidateStaffPaths(data.id);
   return { ok: true, id: data.id };

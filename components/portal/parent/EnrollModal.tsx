@@ -794,18 +794,19 @@ export function EnrollModal({
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-4 backdrop-blur-sm"
     >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 8 }}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="relative w-full max-w-md rounded-2xl border border-[--hair] bg-base shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[--hair] px-6 py-4">
+      <div className="flex min-h-full items-start justify-center py-2 sm:items-center sm:py-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 8 }}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="relative flex w-full max-w-md max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-2xl border border-[--hair] bg-base shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex shrink-0 items-center justify-between border-b border-[--hair] px-6 py-4">
           <div>
             <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-muted">
               {t("title")}
@@ -825,7 +826,7 @@ export function EnrollModal({
         </div>
 
         {/* Body */}
-        <div className="p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -906,6 +907,7 @@ export function EnrollModal({
           </AnimatePresence>
         </div>
       </motion.div>
+      </div>
     </div>
   );
 }

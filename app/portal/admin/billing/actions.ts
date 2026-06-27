@@ -5,8 +5,11 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { CURRENCY, gstComponentCents } from "@/lib/currency";
 import { stripe } from "@/lib/stripe";
-import { xeroSyncOutstandingInvoice } from "@/lib/xero/webhook-sync";
+import { xeroSyncOutstandingInvoice, xeroVoidInvoice } from "@/lib/xero/webhook-sync";
+import { removeInvoiceFromActivePlan } from "@/lib/term-payment-plan-service";
 import { getTranslations } from "@/lib/i18n/server";
+
+const VOIDABLE_INVOICE_STATUSES = ["draft", "sent", "overdue"] as const;
 
 async function getAdminStudio() {
   const t = await getTranslations("errors.actions");
@@ -250,4 +253,62 @@ export async function sendBulkPaymentReminders(
 
   if (sent === 0) return { ok: false, error: t("noRemindersSent") };
   return { ok: true, sent };
+}
+
+export async function voidInvoice(
+  invoiceId: string,
+): Promise<{ ok: true; xeroError?: string } | { ok: false; error: string }> {
+  const t = await getTranslations("errors.actions");
+  const { error, supabase, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? t("unknown") };
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("id, status, stripe_payment_intent_id")
+    .eq("id", invoiceId)
+    .eq("studio_id", studioId)
+    .single();
+
+  if (!invoice) return { ok: false, error: t("invoiceNotFound") };
+
+  const status = invoice.status as string;
+  if (status === "void") return { ok: false, error: t("invoiceAlreadyVoid") };
+  if (status === "paid" || status === "refunded") {
+    return { ok: false, error: t("paidInvoiceUseRefund") };
+  }
+  if (!VOIDABLE_INVOICE_STATUSES.includes(status as (typeof VOIDABLE_INVOICE_STATUSES)[number])) {
+    return { ok: false, error: t("cannotVoidInvoice") };
+  }
+
+  try {
+    await removeInvoiceFromActivePlan(supabase, invoiceId);
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : t("voidOnActivePlan"),
+    };
+  }
+
+  const intentId = invoice.stripe_payment_intent_id as string | null;
+  if (intentId) {
+    try {
+      await stripe.paymentIntents.cancel(intentId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not cancel payment link.";
+      return { ok: false, error: message };
+    }
+  }
+
+  const { error: updErr } = await supabase
+    .from("invoices")
+    .update({ status: "void" })
+    .eq("id", invoiceId);
+
+  if (updErr) return { ok: false, error: updErr.message };
+
+  const xero = await xeroVoidInvoice(supabase, invoiceId);
+  const xeroError = xero.ok ? undefined : xero.error;
+
+  revalidatePath("/portal/admin/billing");
+  return { ok: true, xeroError };
 }

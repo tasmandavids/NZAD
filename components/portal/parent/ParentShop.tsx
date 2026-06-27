@@ -324,7 +324,13 @@ export function ParentShop({ products }: Props) {
               </div>
 
               {cart.length > 0 && (
-                <div className="border-t border-[--hair] px-6 py-4 space-y-3">
+                <div
+                  className={`border-t border-[--hair] px-6 py-4 space-y-3 ${
+                    clientSecret
+                      ? "min-h-0 max-h-[min(60dvh,28rem)] shrink-0 overflow-y-auto overscroll-contain"
+                      : "shrink-0"
+                  }`}
+                >
                   {error && (
                     <p className="rounded-xl bg-red-500/10 px-3 py-2 text-xs text-red-500">{error}</p>
                   )}

@@ -82,11 +82,13 @@ export const OFFICE_NAV: NavSection[] = [
 export const PORTAL_NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
   teacher: [
     { href: "/portal/teacher", labelKey: "nav.teacher.schedule", exact: true },
+    { href: "/portal/teacher/messages", labelKey: "nav.teacher.messages" },
     { href: "/portal/teacher/affiliations", labelKey: "nav.teacher.affiliations" },
   ],
   office: [{ href: "/portal/office", labelKey: "nav.office.dashboard", exact: true }],
   parent: [
     { href: "/portal/parent", labelKey: "nav.parent.familyHub", exact: true },
+    { href: "/portal/parent/schedule", labelKey: "nav.parent.schedule" },
     { href: "/portal/parent/billing", labelKey: "nav.parent.billing" },
     { href: "/portal/parent/chat", labelKey: "nav.parent.studioChat" },
     { href: "/portal/parent/messages", labelKey: "nav.parent.studioEmail" },

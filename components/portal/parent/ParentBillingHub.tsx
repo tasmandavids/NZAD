@@ -10,10 +10,12 @@ import AutoPaySetup from "@/components/portal/parent/AutoPaySetup";
 import { PayInvoiceModal } from "@/components/portal/parent/PayInvoiceModal";
 import { TermInstallmentPayModal } from "@/components/portal/parent/TermInstallmentPayModal";
 import type { AccountBillingSummary } from "@/app/portal/parent/billing/actions";
+import { formatInvoiceNumber } from "@/lib/invoices/format-invoice-number";
 import { TERM_INSTALLMENT_COUNT, splitTermInstallments } from "@/lib/term-payments";
 
 export type BillingInvoice = {
   id: string;
+  invoiceNumber: number;
   amountCents: number;
   status: string;
   dueDate: string | null;
@@ -28,6 +30,7 @@ export type BillingPayment = {
   status: string;
   createdAt: string;
   invoiceId: string | null;
+  invoiceNumber: number | null;
 };
 
 export type BillingOrder = {
@@ -176,6 +179,13 @@ export function ParentBillingHub({
         </div>
       </div>
 
+      <p className="text-sm text-muted">
+        {t("contactStudioBilling")}{" "}
+        <Link href="/portal/parent/chat?topic=billing" className="font-semibold text-brand hover:underline">
+          {t("contactStudioBillingLink")}
+        </Link>
+      </p>
+
       {stripeConfigured && outstanding > 0 && (
         <section className="rounded-2xl border border-[--brand]/30 bg-[color-mix(in_srgb,var(--brand)_6%,transparent)] p-5">
           <h2 className="text-sm font-bold text-ink">{t("termPlanTitle")}</h2>
@@ -218,7 +228,7 @@ export function ParentBillingHub({
             <table className="w-full min-w-[520px] text-sm">
               <thead>
                 <tr className="border-b border-[--hair]">
-                  {[t("table.issued"), t("table.student"), t("table.amount"), t("table.due"), t("table.status"), t("table.actions")].map(
+                  {[t("table.number"), t("table.issued"), t("table.student"), t("table.amount"), t("table.due"), t("table.status"), t("table.actions")].map(
                     (h) => (
                       <th
                         key={h}
@@ -238,6 +248,9 @@ export function ParentBillingHub({
                       inv.status === "overdue" ? "bg-[color-mix(in_srgb,#ef4444_4%,transparent)]" : ""
                     }`}
                   >
+                    <td className="px-4 py-3 font-mono text-xs text-ink">
+                      {formatInvoiceNumber(inv.invoiceNumber)}
+                    </td>
                     <td className="px-4 py-3 text-ink">{fmtDate(inv.issuedAt, locale)}</td>
                     <td className="px-4 py-3 text-ink">{inv.studentName ?? "—"}</td>
                     <td className="px-4 py-3 font-semibold tabular-nums text-ink">
@@ -295,7 +308,7 @@ export function ParentBillingHub({
                       {formatMoney(p.amountCents)}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-muted">
-                      {p.invoiceId ? `${p.invoiceId.slice(0, 8)}…` : "—"}
+                      {p.invoiceNumber != null ? formatInvoiceNumber(p.invoiceNumber) : "—"}
                     </td>
                   </tr>
                 ))}

@@ -45,6 +45,7 @@ export type ParentDetail = {
 
 export type ParentInvoice = {
   id: string;
+  invoiceNumber: number;
   amountCents: number;
   status: string;
   dueDate: string | null;
@@ -60,6 +61,7 @@ export type ParentPayment = {
   status: string;
   createdAt: string;
   invoiceId: string | null;
+  invoiceNumber: number | null;
   stripePaymentIntentId: string | null;
 };
 

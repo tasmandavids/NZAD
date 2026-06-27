@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MessagesPanel } from "@/components/admin/messages/MessagesPanel";
 import { loadStaffMessageContacts } from "@/lib/portal/staff-messages";
+import { resolveEffectiveStudioId } from "@/lib/portal/access";
 
 export default async function StudentMessagesPage({
   searchParams,
@@ -17,15 +18,16 @@ export default async function StudentMessagesPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("studio_id, role, self_managed")
+    .select("studio_id, active_studio_id, role, self_managed")
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "student" || !profile.self_managed || !profile.studio_id) {
+  const studioId = profile ? resolveEffectiveStudioId(profile) : null;
+  if (profile?.role !== "student" || !profile.self_managed || !studioId) {
     redirect("/portal/student");
   }
 
-  const { contacts, recentMessages } = await loadStaffMessageContacts(user.id, profile.studio_id);
+  const { contacts, recentMessages } = await loadStaffMessageContacts(user.id, studioId);
 
   return (
     <MessagesPanel

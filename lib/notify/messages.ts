@@ -22,7 +22,8 @@ export type NotificationType =
   | "subscription_sent"
   | "birthday_greeting"
   | "message_received"
-  | "waitlist_promoted";
+  | "waitlist_promoted"
+  | "schedule_updated";
 
 export type DeliveryChannel = "email" | "sms";
 
@@ -65,6 +66,7 @@ export function channelsForType(type: string): DeliveryChannel[] {
     case "payment_reminder":
     case "subscription_sent":
     case "birthday_greeting":
+    case "schedule_updated":
       return ["email"];
     case "message_received":
     default:

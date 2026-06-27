@@ -19,6 +19,7 @@ const BillingDashboard = dynamic(
 
 export type InvoiceRow = {
   id: string;
+  invoiceNumber: number;
   payerId: string;
   amountCents: number;
   status: string;
@@ -55,6 +56,19 @@ export type SourceBreakdown = {
   eventsCents: number;
 };
 
+export type BillingSubscriptionRow = {
+  id: string;
+  stripeSubscriptionId: string | null;
+  planLabel: string | null;
+  payerName: string | null;
+  studentName: string | null;
+  monthlyAmountCents: number;
+  billingInterval: string;
+  status: string;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+};
+
 const YEAR_AGO = () => new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
 const YEAR_START = () => `${new Date().getFullYear()}-01-01`;
 
@@ -63,6 +77,7 @@ function mapInvoice(inv: Record<string, unknown>): InvoiceRow {
   const payer = inv.payer as { full_name: string | null } | null;
   return {
     id: inv.id as string,
+    invoiceNumber: inv.invoice_number as number,
     payerId: inv.payer_id as string,
     amountCents: inv.amount_cents as number,
     status: inv.status as string,
@@ -81,7 +96,7 @@ export default async function BillingPage() {
   const tCommon = await getTranslations("common");
 
   const invoiceSelect = `
-    id, payer_id, amount_cents, status, due_date, issued_at, paid_at,
+    id, invoice_number, payer_id, amount_cents, status, due_date, issued_at, paid_at,
     stripe_payment_intent_id, xero_invoice_id,
     profiles!student_id ( full_name ),
     payer:profiles!payer_id ( full_name )
@@ -158,10 +173,31 @@ export default async function BillingPage() {
 
     supabase
       .from("subscriptions")
-      .select("amount_cents, interval, status")
+      .select(
+        "id, stripe_subscription_id, plan_label, amount_cents, monthly_amount_cents, billing_interval, interval, status, current_period_end, cancel_at_period_end, payer_id, student_id",
+      )
       .eq("studio_id", studioId)
-      .in("status", ["active", "trialing", "past_due"]),
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
+
+  const subProfileIds = [
+    ...new Set(
+      (subsRes.data ?? [])
+        .flatMap((s) => [s.payer_id, s.student_id])
+        .filter(Boolean) as string[],
+    ),
+  ];
+
+  const subProfilesRes =
+    subProfileIds.length > 0
+      ? await supabase.from("profiles").select("id, full_name").in("id", subProfileIds)
+      : { data: [] as { id: string; full_name: string | null }[] };
+
+  const subNameMap = new Map<string, string>();
+  for (const p of subProfilesRes.data ?? []) {
+    if (p.full_name) subNameMap.set(p.id as string, p.full_name as string);
+  }
 
   const invoices = (invoicesRes.data ?? []).map((inv) => mapInvoice(inv as Record<string, unknown>));
   const unpaidInvoices = (unpaidRes.data ?? []).map((inv) => mapInvoice(inv as Record<string, unknown>));
@@ -231,11 +267,23 @@ export default async function BillingPage() {
     eventsCents: sum(ticketsRes.data, (r) => r.total_cents as number),
   };
 
-  const mrrCents = (subsRes.data ?? []).reduce((s, sub) => {
-    const amt = (sub.amount_cents as number) || 0;
-    return s + (sub.interval === "year" ? Math.round(amt / 12) : amt);
-  }, 0);
-  const activeSubs = (subsRes.data ?? []).filter((s) => s.status === "active").length;
+  const subscriptions: BillingSubscriptionRow[] = (subsRes.data ?? []).map((s) => ({
+    id: s.id as string,
+    stripeSubscriptionId: s.stripe_subscription_id as string | null,
+    planLabel: s.plan_label as string | null,
+    payerName: s.payer_id ? (subNameMap.get(s.payer_id as string) ?? null) : null,
+    studentName: s.student_id ? (subNameMap.get(s.student_id as string) ?? null) : null,
+    monthlyAmountCents: Number(s.monthly_amount_cents ?? s.amount_cents ?? 0),
+    billingInterval: (s.billing_interval as string) ?? (s.interval as string) ?? "month",
+    status: (s.status as string) ?? "incomplete",
+    currentPeriodEnd: s.current_period_end as string | null,
+    cancelAtPeriodEnd: Boolean(s.cancel_at_period_end),
+  }));
+
+  const mrrCents = subscriptions
+    .filter((s) => ["active", "trialing", "past_due"].includes(s.status))
+    .reduce((s, sub) => s + sub.monthlyAmountCents, 0);
+  const activeSubs = subscriptions.filter((s) => s.status === "active").length;
 
   const totalOutstandingCents = unpaidInvoices.reduce((s, i) => s + i.amountCents, 0);
   const overdueCount = unpaidInvoices.filter((i) => i.status === "overdue").length;
@@ -254,6 +302,7 @@ export default async function BillingPage() {
       totalPaidCents={totalPaidCents}
       totalOutstandingCents={totalOutstandingCents}
       overdueCount={overdueCount}
+      subscriptions={subscriptions}
     />
   );
 }

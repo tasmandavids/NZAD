@@ -10,6 +10,7 @@
       "refreshing": "Обновление…",
       "disconnecting": "Отключение…",
       "refunding": "Возврат средств…",
+      "voiding": "Аннулирование…",
       "publishing": "Издательский…",
       "summarizing": "Подведение итогов…",
       "connecting": "Подключение…",
@@ -105,6 +106,7 @@
         "month": "Ежемесячно"
       },
       "refund": "Возвращать деньги",
+      "void": "Аннулировать",
       "noCardPayment": "Нет оплаты картой",
       "viewInXero": "Посмотреть в Xero",
       "remind": "Напоминать",
@@ -372,6 +374,7 @@
         "invoicesTitle": "Счета-фактуры",
         "noInvoices": "Счетов-фактур пока нет.",
         "table": {
+          "number": "№ счёта",
           "issued": "Изданный",
           "student": "Студент",
           "amount": "Количество",
@@ -447,6 +450,7 @@
         "searchPlaceholder": "Поиск…",
         "empty": "Счета-фактуры не найдены.",
         "table": {
+          "number": "№ счёта",
           "dancer": "Танцор",
           "parent": "Родитель",
           "amount": "Количество",
@@ -472,7 +476,15 @@
         "createAndSend": "Создать и отправить",
         "saveDraft": "Сохранить черновик"
       },
-      "refundConfirm": "Возвращать деньги{amount}к{payer}?"
+      "refundConfirm": "Возвращать деньги{amount}к{payer}?",
+      "voidConfirm": "Аннулировать счёт на {amount} ({payer})? Это необратимо и аннулирует счёт в Xero, если он синхронизирован.",
+      "voidXeroSyncError": "Счёт аннулирован, но синхронизация с Xero не удалась: {error}",
+      "subscriptions": {
+        "title": "Подписки с автоплатежом",
+        "subtitle": "Регулярные планы — отмена в конце периода или сразу",
+        "empty": "Нет активных подписок.",
+        "manageAll": "Управление всеми подписками"
+      }
     },
     "accounting": {
       "title": "Бухгалтерский учет",
@@ -551,6 +563,8 @@
         "nextCharge": "Следующий платеж"
       },
       "defaultPlan": "Подписка",
+      "cancelAtPeriodEndConfirm": "Отменить {plan} в конце текущего расчётного периода?",
+      "cancelNowConfirm": "Отменить {plan} немедленно? Автоплатёж прекратится сразу.",
       "status": {
         "active": "Активный",
         "trialing": "испытание",

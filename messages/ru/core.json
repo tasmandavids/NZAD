@@ -115,6 +115,7 @@
     },
     "parent": {
       "familyHub": "Семейный кабинет",
+      "schedule": "Расписание",
       "billing": "Счета и оплата",
       "studioChat": "Чат со студией",
       "studioEmail": "Почта студии"

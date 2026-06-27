@@ -98,6 +98,14 @@ export default function ParentHub({
               </p>
             </div>
           )}
+          {!selfManaged && familyChildren.length > 0 && (
+            <Link
+              href="/portal/parent/schedule"
+              className="rounded-xl border border-[--hair] px-5 py-2.5 text-sm font-semibold text-ink hover:bg-surface"
+            >
+              {t("viewSchedule")}
+            </Link>
+          )}
           {(familyChildren.length > 0 || selfManaged) && (
             <button
               type="button"
@@ -264,7 +272,16 @@ export default function ParentHub({
             </table>
           </div>
         )}
-        <p className="mt-2 text-xs text-muted">{t("billingNote")}</p>
+        <p className="mt-2 text-xs text-muted">
+          {t("billingNote")}{" "}
+          <Link href="/portal/parent/chat?topic=billing" className="font-semibold text-brand hover:underline">
+            {t("contactBilling")}
+          </Link>
+          {" · "}
+          <Link href="/portal/parent/chat" className="font-semibold text-brand hover:underline">
+            {t("contactStudio")}
+          </Link>
+        </p>
       </motion.section>
 
       <AnimatePresence>

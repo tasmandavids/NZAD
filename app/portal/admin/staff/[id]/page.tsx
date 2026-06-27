@@ -36,7 +36,7 @@ export default async function StaffDetailPage({
       .from("profiles")
       .select(`
         id, full_name, email, phone, role, created_at,
-        staff_members (
+        staff_members!profile_id (
           employment_type, work_location, location_names, schedule_notes,
           contract_notes, pay_notes, manager_id, start_date, end_date, active
         )
