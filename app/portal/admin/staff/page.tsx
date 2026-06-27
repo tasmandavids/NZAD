@@ -43,7 +43,7 @@ export default async function StaffPage() {
       .from("profiles")
       .select(`
         id, full_name, email, phone, role, created_at,
-        staff_members (
+        staff_members!profile_id (
           employment_type, work_location, location_names, schedule_notes,
           contract_notes, pay_notes, manager_id, start_date, end_date, active
         )
@@ -91,6 +91,10 @@ export default async function StaffPage() {
   const profileNameMap = new Map(
     (profilesRes.data ?? []).map((p) => [p.id, p.full_name as string | null]),
   );
+
+  if (profilesRes.error) {
+    console.error("[staff page] profiles query failed:", profilesRes.error.message);
+  }
 
   const staff: StaffRow[] = (profilesRes.data ?? []).map((p) => {
     const sm = p.staff_members as StaffMemberRow | StaffMemberRow[] | null;
@@ -173,6 +177,7 @@ export default async function StaffPage() {
       managerOptions={managerOptions}
       locations={locations}
       weekStart={weekStart}
+      loadError={profilesRes.error?.message ?? null}
     />
   );
 }
