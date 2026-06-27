@@ -139,7 +139,11 @@
       "enrolledTitle": "Iscritto!",
       "waitlistedBody": "{name} è in lista d'attesa per {className}. Riceverai una notifica quando si libera un posto.",
       "enrolledBody": "{name} è ora iscritto a {className}.",
+      "enrolledForDancer": "for {name}",
       "invoiceHint": "Una fattura di {amount} apparirà a breve nel tuo account.",
+      "classSelected": "{count} class selected",
+      "classesSelected": "{count} classes selected",
+      "multipleClasses": "{count} classes",
       "done": "Fatto"
     },
     "email": {

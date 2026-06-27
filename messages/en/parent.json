@@ -168,7 +168,11 @@
       "enrolledTitle": "Enrolled!",
       "waitlistedBody": "{name} is on the waitlist for {className}. You'll be notified when a spot opens.",
       "enrolledBody": "{name} is now enrolled in {className}.",
+      "enrolledForDancer": "for {name}",
       "invoiceHint": "An invoice for {amount} will appear in your account shortly.",
+      "classSelected": "{count} class selected",
+      "classesSelected": "{count} classes selected",
+      "multipleClasses": "{count} classes",
       "done": "Done"
     },
     "email": {

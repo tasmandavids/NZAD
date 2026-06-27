@@ -139,7 +139,11 @@
       "enrolledTitle": "Записан!",
       "waitlistedBody": "{name} в листе ожидания на {className}. Мы сообщим, когда освободится место.",
       "enrolledBody": "{name} записан на {className}.",
+      "enrolledForDancer": "for {name}",
       "invoiceHint": "Счёт на {amount} скоро появится в вашем аккаунте.",
+      "classSelected": "{count} class selected",
+      "classesSelected": "{count} classes selected",
+      "multipleClasses": "{count} classes",
       "done": "Готово"
     },
     "email": {

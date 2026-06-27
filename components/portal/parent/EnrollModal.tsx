@@ -40,6 +40,16 @@ import CheckoutForm from "@/components/payments/CheckoutForm";
 
 const NZD = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" });
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type SelectedClass = {
+  classId: string;
+  className: string;
+  priceCents: number;
+  billableCents: number;
+  includedInProgramme: boolean;
+};
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function StepIndicator({ step, total }: { step: number; total: number }) {
@@ -62,11 +72,11 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
 function ClassCard({
   cls,
   selected,
-  onSelect,
+  onToggle,
 }: {
   cls: AvailableClass;
   selected: boolean;
-  onSelect: () => void;
+  onToggle: () => void;
 }) {
   const t = useTranslations("parent.enroll");
   const dayShort = useShortDayNames();
@@ -77,7 +87,8 @@ function ClassCard({
   return (
     <button
       type="button"
-      onClick={onSelect}
+      onClick={isFull ? undefined : onToggle}
+      disabled={isFull}
       className={`w-full rounded-xl border p-4 text-left transition-all ${
         selected
           ? "border-[--brand] bg-[color-mix(in_srgb,var(--brand)_8%,transparent)]"
@@ -86,28 +97,43 @@ function ClassCard({
           : "border-[--hair] bg-surface hover:border-[--brand]"
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="font-semibold text-ink">{cls.name}</p>
-          <p className="mt-0.5 text-xs text-muted">
-            {cls.discipline}
-            {cls.level ? ` · ${cls.level}` : ""}
-          </p>
-          <p className="mt-1 text-xs text-muted">
-            {cls.dayOfWeek !== null ? dayShort[cls.dayOfWeek] : ""}
-            {cls.startTime ? ` · ${fmtTime(cls.startTime)}` : ""}
-          </p>
+      <div className="flex items-start gap-3">
+        <div
+          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+            selected
+              ? "border-[--brand] bg-[--brand] text-white"
+              : "border-[--hair] bg-base"
+          }`}
+        >
+          {selected && (
+            <svg viewBox="0 0 10 8" fill="none" className="h-2.5 w-2.5">
+              <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
         </div>
-        <div className="text-right shrink-0">
-          <p className="text-sm font-bold text-ink">
-            {cls.priceCents > 0 ? NZD.format(cls.priceCents / 100) : t("free")}
-          </p>
-          <p
-            className="mt-1 text-[0.62rem] font-semibold uppercase tracking-wide"
-            style={{ color: isFull ? "#ef4444" : spotsLeft <= 3 ? "var(--brand-hot)" : "var(--muted)" }}
-          >
-            {isFull ? t("fullWaitlist") : t("spotsLeft", { count: spotsLeft })}
-          </p>
+        <div className="flex flex-1 items-start justify-between gap-2">
+          <div>
+            <p className="font-semibold text-ink">{cls.name}</p>
+            <p className="mt-0.5 text-xs text-muted">
+              {cls.discipline}
+              {cls.level ? ` · ${cls.level}` : ""}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              {cls.dayOfWeek !== null ? dayShort[cls.dayOfWeek] : ""}
+              {cls.startTime ? ` · ${fmtTime(cls.startTime)}` : ""}
+            </p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-sm font-bold text-ink">
+              {cls.priceCents > 0 ? NZD.format(cls.priceCents / 100) : t("free")}
+            </p>
+            <p
+              className="mt-1 text-[0.62rem] font-semibold uppercase tracking-wide"
+              style={{ color: isFull ? "#ef4444" : spotsLeft <= 3 ? "var(--brand-hot)" : "var(--muted)" }}
+            >
+              {isFull ? t("fullWaitlist") : t("spotsLeft", { count: spotsLeft })}
+            </p>
+          </div>
         </div>
       </div>
     </button>
@@ -119,11 +145,7 @@ function ClassCard({
 type EnrollData = {
   childId: string;
   childName: string | null;
-  classId: string;
-  className: string;
-  priceCents: number;
-  billableCents: number;
-  includedInProgramme: boolean;
+  classes: SelectedClass[];
   waitlisted: boolean;
   payLater?: boolean;
   paidOnline?: boolean;
@@ -136,14 +158,14 @@ function Step1SelectClass({
   onNext,
 }: {
   familyChildren: Child[];
-  onNext: (data: { childId: string; childName: string | null; cls: AvailableClass }) => void;
+  onNext: (data: { childId: string; childName: string | null; classes: AvailableClass[] }) => void;
 }) {
   const t = useTranslations("parent.enroll");
   const dayShort = useShortDayNames();
   const [childId, setChildId] = useState(familyChildren[0]?.studentId ?? "");
   const [classes, setClasses] = useState<AvailableClass[]>([]);
   const [filter, setFilter] = useState("");
-  const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -166,8 +188,18 @@ function Step1SelectClass({
     );
   });
 
-  const selectedCls = classes.find((c) => c.id === selectedClassId);
+  function toggleClass(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   const selectedChild = familyChildren.find((c) => c.studentId === childId);
+  const selectedClasses = classes.filter((c) => selectedIds.has(c.id));
+  const totalCents = selectedClasses.reduce((sum, c) => sum + c.priceCents, 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -181,7 +213,7 @@ function Step1SelectClass({
           </label>
           <select
             value={childId}
-            onChange={(e) => setChildId(e.target.value)}
+            onChange={(e) => { setChildId(e.target.value); setSelectedIds(new Set()); }}
             className="w-full rounded-lg border border-[--hair] bg-base px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-[--brand]"
           >
             {familyChildren.map((c) => (
@@ -215,18 +247,34 @@ function Step1SelectClass({
             <ClassCard
               key={cls.id}
               cls={cls}
-              selected={selectedClassId === cls.id}
-              onSelect={() => setSelectedClassId(cls.id)}
+              selected={selectedIds.has(cls.id)}
+              onToggle={() => toggleClass(cls.id)}
             />
           ))}
         </div>
       )}
 
+      {/* Selection summary */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between rounded-lg border border-[--hair] bg-surface px-3 py-2 text-xs">
+          <span className="text-muted">
+            {selectedIds.size === 1
+              ? t("classSelected", { count: 1 })
+              : t("classesSelected", { count: selectedIds.size })}
+          </span>
+          {totalCents > 0 && (
+            <span className="font-bold text-ink">{NZD.format(totalCents / 100)}</span>
+          )}
+        </div>
+      )}
+
       <button
         type="button"
-        disabled={!selectedCls || !childId}
+        disabled={selectedIds.size === 0 || !childId}
         onClick={() => {
-          if (selectedCls) onNext({ childId, childName: selectedChild?.name ?? null, cls: selectedCls });
+          if (selectedClasses.length > 0) {
+            onNext({ childId, childName: selectedChild?.name ?? null, classes: selectedClasses });
+          }
         }}
         className="mt-2 w-full rounded-xl py-3 text-sm font-bold text-white transition-opacity disabled:opacity-40"
         style={{ background: "var(--brand)" }}
@@ -358,18 +406,12 @@ function Step2SignWaivers({
 
 function Step3Review({
   childId,
-  classId,
   enrollData,
   onComplete,
   onBack,
 }: {
   childId: string;
-  classId: string;
-  enrollData: Pick<
-    EnrollData,
-    "childName" | "className" | "priceCents" | "billableCents" | "includedInProgramme"
-  >;
-  /** Fired once enrollment (and any optional payment) is finalised. */
+  enrollData: Pick<EnrollData, "childName" | "classes">;
   onComplete: (
     waitlisted: boolean,
     opts?: { payLater?: boolean; paidOnline?: boolean; payMonthly?: boolean; installmentCents?: number },
@@ -381,7 +423,7 @@ function Step3Review({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [enrollmentDone, setEnrollmentDone] = useState(false);
+  const [enrolledClassIds, setEnrolledClassIds] = useState<Set<string>>(new Set());
   const [payMeta, setPayMeta] = useState<{
     installmentCents: number;
     installmentNumber: number;
@@ -390,7 +432,11 @@ function Step3Review({
   } | null>(null);
   const [accountSummary, setAccountSummary] = useState<AccountBillingSummary | null>(null);
 
-  const isPaid = enrollData.billableCents > 0;
+  const classes = enrollData.classes;
+  const totalBillableCents = classes.reduce((sum, c) => sum + c.billableCents, 0);
+  const totalPriceCents = classes.reduce((sum, c) => sum + c.priceCents, 0);
+  const isPaid = totalBillableCents > 0;
+  const isSingleClass = classes.length === 1;
 
   useEffect(() => {
     if (!isPaid) return;
@@ -399,47 +445,44 @@ function Step3Review({
     });
   }, [isPaid]);
 
-  const projectedTermTotal =
-    (accountSummary?.outstandingCents ?? 0) + enrollData.billableCents;
+  const projectedTermTotal = (accountSummary?.outstandingCents ?? 0) + totalBillableCents;
 
-  async function ensureEnrolled(): Promise<{ waitlisted: boolean } | null> {
-    if (enrollmentDone) return { waitlisted: false };
+  async function enrollAll(): Promise<{ anyWaitlisted: boolean } | null> {
+    const toEnroll = classes.filter((c) => !enrolledClassIds.has(c.classId));
+    let anyWaitlisted = false;
+    const newEnrolled = new Set(enrolledClassIds);
 
-    const res = await enrollChildInClass(childId, classId);
-    if (!res.ok) {
-      setError(res.error);
-      return null;
+    for (const cls of toEnroll) {
+      const res = await enrollChildInClass(childId, cls.classId);
+      if (!res.ok) {
+        setError(res.error);
+        return null;
+      }
+      if (res.data.waitlisted) anyWaitlisted = true;
+      newEnrolled.add(cls.classId);
     }
 
-    setEnrollmentDone(true);
-    return { waitlisted: res.data.waitlisted };
+    setEnrolledClassIds(newEnrolled);
+    return { anyWaitlisted };
   }
 
   async function handlePayLater() {
     setBusy(true);
     setError(null);
 
-    const enrolled = await ensureEnrolled();
-    if (!enrolled) {
-      setBusy(false);
-      return;
-    }
-    if (enrolled.waitlisted || !isPaid) {
-      onComplete(enrolled.waitlisted);
+    const enrolled = await enrollAll();
+    if (!enrolled) { setBusy(false); return; }
+
+    if (enrolled.anyWaitlisted || !isPaid) {
+      onComplete(enrolled.anyWaitlisted);
       setBusy(false);
       return;
     }
 
-    const invRes = await createEnrollmentPayLaterInvoice(
-      childId,
-      classId,
-      enrollData.className,
-      enrollData.priceCents,
-    );
-    if (!invRes.ok) {
-      setError(invRes.error);
-      setBusy(false);
-      return;
+    for (const cls of classes) {
+      if (cls.billableCents <= 0) continue;
+      const invRes = await createEnrollmentPayLaterInvoice(childId, cls.classId, cls.className, cls.priceCents);
+      if (!invRes.ok) { setError(invRes.error); setBusy(false); return; }
     }
 
     onComplete(false, { payLater: true });
@@ -450,40 +493,31 @@ function Step3Review({
     setBusy(true);
     setError(null);
 
-    const enrolled = await ensureEnrolled();
-    if (!enrolled) {
-      setBusy(false);
-      return;
-    }
-    if (enrolled.waitlisted || !isPaid) {
-      onComplete(enrolled.waitlisted);
+    const enrolled = await enrollAll();
+    if (!enrolled) { setBusy(false); return; }
+
+    if (enrolled.anyWaitlisted || !isPaid) {
+      onComplete(enrolled.anyWaitlisted);
       setBusy(false);
       return;
     }
 
-    const invRes = await createEnrollmentPayLaterInvoice(
-      childId,
-      classId,
-      enrollData.className,
-      enrollData.priceCents,
-    );
-    if (!invRes.ok) {
-      setError(invRes.error);
-      setBusy(false);
-      return;
+    let lastInvoiceId: string | null = null;
+    for (const cls of classes) {
+      if (cls.billableCents <= 0) continue;
+      const invRes = await createEnrollmentPayLaterInvoice(childId, cls.classId, cls.className, cls.priceCents);
+      if (!invRes.ok) { setError(invRes.error); setBusy(false); return; }
+      if (invRes.data.invoiceId) lastInvoiceId = invRes.data.invoiceId;
     }
-    if (invRes.data.billingSkipped || !invRes.data.invoiceId) {
+
+    if (!lastInvoiceId) {
       onComplete(false);
       setBusy(false);
       return;
     }
 
-    const termRes = await startTermPlanAfterEnrollment(invRes.data.invoiceId);
-    if (!termRes.ok) {
-      setError(termRes.error);
-      setBusy(false);
-      return;
-    }
+    const termRes = await startTermPlanAfterEnrollment(lastInvoiceId);
+    if (!termRes.ok) { setError(termRes.error); setBusy(false); return; }
 
     setPayMeta({
       installmentCents: termRes.data.installmentCents,
@@ -497,31 +531,22 @@ function Step3Review({
   }
 
   async function handlePayNow() {
+    if (!isSingleClass) return;
     setBusy(true);
     setError(null);
 
-    const enrolled = await ensureEnrolled();
-    if (!enrolled) {
-      setBusy(false);
-      return;
-    }
-    if (enrolled.waitlisted || !isPaid) {
-      onComplete(enrolled.waitlisted);
+    const cls = classes[0];
+    const enrolled = await enrollAll();
+    if (!enrolled) { setBusy(false); return; }
+
+    if (enrolled.anyWaitlisted || !isPaid) {
+      onComplete(enrolled.anyWaitlisted);
       setBusy(false);
       return;
     }
 
-    const intentRes = await createEnrollmentIntent(
-      childId,
-      classId,
-      enrollData.className,
-      enrollData.priceCents,
-    );
-    if (!intentRes.ok) {
-      setError(intentRes.error);
-      setBusy(false);
-      return;
-    }
+    const intentRes = await createEnrollmentIntent(childId, cls.classId, cls.className, cls.priceCents);
+    if (!intentRes.ok) { setError(intentRes.error); setBusy(false); return; }
 
     if ("billingSkipped" in intentRes.data) {
       onComplete(false);
@@ -537,24 +562,20 @@ function Step3Review({
   async function handleFreeConfirm() {
     setBusy(true);
     setError(null);
-    const res = await enrollChildInClass(childId, classId);
-    if (!res.ok) {
-      setError(res.error);
-      setBusy(false);
-      return;
-    }
-    onComplete(res.data.waitlisted);
+    const enrolled = await enrollAll();
+    if (!enrolled) { setBusy(false); return; }
+    onComplete(enrolled.anyWaitlisted);
     setBusy(false);
   }
 
   function handlePaymentCancelled() {
-    // Enrollment (and invoice) already exist — treat as pay later.
     onComplete(false, { payLater: true });
   }
 
   // ── Card capture phase ─────────────────────────────────────────────────────
   if (phase === "pay" && clientSecret) {
-    const chargeCents = payMeta?.installmentCents ?? enrollData.billableCents;
+    const chargeCents = payMeta?.installmentCents ?? totalBillableCents;
+    const label = isSingleClass ? classes[0].className : t("multipleClasses", { count: classes.length });
     return (
       <div className="flex flex-col gap-4">
         <h3 className="text-base font-bold text-ink">
@@ -570,7 +591,7 @@ function Step3Review({
           </p>
         )}
         <div className="flex items-center justify-between rounded-xl border border-[--hair] bg-surface px-4 py-3">
-          <span className="text-sm text-muted">{enrollData.className}</span>
+          <span className="text-sm text-muted">{label}</span>
           <span className="font-black text-ink">{NZD.format(chargeCents / 100)}</span>
         </div>
         <CheckoutForm
@@ -594,15 +615,26 @@ function Step3Review({
   }
 
   // ── Summary phase ──────────────────────────────────────────────────────────
+  const allIncluded = classes.every((c) => c.includedInProgramme);
+
   return (
     <div className="flex flex-col gap-4">
       <h3 className="text-base font-bold text-ink">{t("reviewTitle")}</h3>
 
       <div className="rounded-xl border border-[--hair] bg-surface p-5 space-y-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted">{t("summaryClass")}</span>
-          <span className="font-semibold text-ink">{enrollData.className}</span>
-        </div>
+        {/* Class list */}
+        {classes.map((cls) => (
+          <div key={cls.classId} className="flex justify-between text-sm">
+            <span className="text-muted truncate pr-2">{cls.className}</span>
+            <span className="font-semibold text-ink shrink-0">
+              {cls.includedInProgramme
+                ? t("programIncluded")
+                : cls.billableCents > 0
+                ? NZD.format(cls.billableCents / 100)
+                : t("free")}
+            </span>
+          </div>
+        ))}
         <div className="flex justify-between text-sm">
           <span className="text-muted">{t("summaryDancer")}</span>
           <span className="font-semibold text-ink">{enrollData.childName ?? "—"}</span>
@@ -611,25 +643,19 @@ function Step3Review({
         <div className="flex justify-between">
           <span className="font-bold text-ink">{t("summaryTotalDue")}</span>
           <span className="font-black text-ink">
-            {enrollData.includedInProgramme
+            {allIncluded
               ? t("programIncluded")
               : isPaid
-                ? NZD.format(enrollData.billableCents / 100)
-                : t("free")}
+              ? NZD.format(totalBillableCents / 100)
+              : t("free")}
           </span>
         </div>
       </div>
 
-      {enrollData.includedInProgramme && (
-        <div className="rounded-lg border border-[--hair] bg-base p-3 text-xs text-muted">
-          {t("programIncludedHint", { className: enrollData.className })}
-        </div>
-      )}
-
       {isPaid && (
         <div className="rounded-lg border border-[--hair] bg-base p-3 text-xs text-muted space-y-1">
           <p>{t("paymentChoiceHint")}</p>
-          {projectedTermTotal > enrollData.billableCents && (
+          {projectedTermTotal > totalBillableCents && (
             <p>
               {t("termAccountTotalHint", {
                 total: NZD.format(projectedTermTotal / 100),
@@ -681,14 +707,16 @@ function Step3Review({
             >
               {busy ? t("processing") : t("payMonthly")}
             </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={handlePayNow}
-              className="w-full rounded-xl border border-[--hair] bg-surface py-3 text-sm font-bold text-ink transition-colors hover:bg-base disabled:opacity-40"
-            >
-              {busy ? t("processing") : t("payNow")}
-            </button>
+            {isSingleClass && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={handlePayNow}
+                className="w-full rounded-xl border border-[--hair] bg-surface py-3 text-sm font-bold text-ink transition-colors hover:bg-base disabled:opacity-40"
+              >
+                {busy ? t("processing") : t("payNow")}
+              </button>
+            )}
           </>
         ) : (
           <button
@@ -715,6 +743,9 @@ function Step4Confirmation({
 }) {
   const t = useTranslations("parent.enroll");
   const dancerName = enrollData.childName ?? t("yourDancer");
+  const classes = enrollData.classes;
+  const totalBillableCents = classes.reduce((sum, c) => sum + c.billableCents, 0);
+  const totalPriceCents = classes.reduce((sum, c) => sum + c.priceCents, 0);
 
   return (
     <div className="flex flex-col items-center gap-5 py-4 text-center">
@@ -728,28 +759,32 @@ function Step4Confirmation({
         <h3 className="text-lg font-black text-ink">
           {enrollData.waitlisted ? t("waitlistedTitle") : t("enrolledTitle")}
         </h3>
-        <p className="mt-1 text-sm text-muted">
-          {enrollData.waitlisted
-            ? t("waitlistedBody", { name: dancerName, className: enrollData.className })
-            : t("enrolledBody", { name: dancerName, className: enrollData.className })}
-        </p>
-        {enrollData.includedInProgramme && !enrollData.waitlisted && (
-          <p className="mt-2 text-xs text-muted">
-            {t("programIncludedHint", { className: enrollData.className })}
+        {classes.length === 1 ? (
+          <p className="mt-1 text-sm text-muted">
+            {enrollData.waitlisted
+              ? t("waitlistedBody", { name: dancerName, className: classes[0].className })
+              : t("enrolledBody", { name: dancerName, className: classes[0].className })}
           </p>
+        ) : (
+          <div className="mt-2 space-y-0.5">
+            {classes.map((cls) => (
+              <p key={cls.classId} className="text-sm text-ink font-medium">{cls.className}</p>
+            ))}
+            <p className="mt-1 text-xs text-muted">{t("enrolledForDancer", { name: dancerName })}</p>
+          </div>
         )}
-        {enrollData.billableCents > 0 && !enrollData.waitlisted && !enrollData.includedInProgramme && (
+        {totalBillableCents > 0 && !enrollData.waitlisted && (
           <p className="mt-2 text-xs text-muted">
             {enrollData.paidOnline
-              ? t("paidOnlineHint", { amount: NZD.format(enrollData.priceCents / 100) })
+              ? t("paidOnlineHint", { amount: NZD.format(totalPriceCents / 100) })
               : enrollData.payMonthly
                 ? t("termPaidHint", {
                     amount: NZD.format((enrollData.installmentCents ?? 0) / 100),
                     count: TERM_INSTALLMENT_COUNT,
                   })
                 : enrollData.payLater
-                ? t("payLaterHint", { amount: NZD.format(enrollData.priceCents / 100) })
-                : t("invoiceHint", { amount: NZD.format(enrollData.priceCents / 100) })}
+                ? t("payLaterHint", { amount: NZD.format(totalPriceCents / 100) })
+                : t("invoiceHint", { amount: NZD.format(totalPriceCents / 100) })}
           </p>
         )}
       </div>
@@ -782,7 +817,7 @@ export function EnrollModal({
     t("steps.done"),
   ];
   const [step, setStep] = useState(0);
-  const [enrollData, setEnrollData] = useState<Partial<EnrollData>>({});
+  const [enrollData, setEnrollData] = useState<Partial<EnrollData>>({ classes: [] });
   const backdropRef = useRef<HTMLDivElement>(null);
 
   // Close on backdrop click
@@ -838,15 +873,17 @@ export function EnrollModal({
               {step === 0 && (
                 <Step1SelectClass
                   familyChildren={familyChildren}
-                  onNext={({ childId, childName, cls }) => {
+                  onNext={({ childId, childName, classes }) => {
                     setEnrollData({
                       childId,
                       childName,
-                      classId: cls.id,
-                      className: cls.name,
-                      priceCents: cls.priceCents,
-                      billableCents: cls.priceCents,
-                      includedInProgramme: false,
+                      classes: classes.map((cls) => ({
+                        classId: cls.id,
+                        className: cls.name,
+                        priceCents: cls.priceCents,
+                        billableCents: cls.priceCents,
+                        includedInProgramme: false,
+                      })),
                     });
                     setStep(1);
                   }}
@@ -857,16 +894,22 @@ export function EnrollModal({
                   childName={enrollData.childName ?? null}
                   childId={enrollData.childId!}
                   onNext={async () => {
-                    const quote = await getEnrollmentBillingQuote(
-                      enrollData.childId!,
-                      enrollData.className!,
-                      enrollData.priceCents!,
+                    // Fetch billing quotes for each selected class
+                    const updatedClasses = await Promise.all(
+                      (enrollData.classes ?? []).map(async (cls) => {
+                        const quote = await getEnrollmentBillingQuote(
+                          enrollData.childId!,
+                          cls.className,
+                          cls.priceCents,
+                        );
+                        return {
+                          ...cls,
+                          billableCents: quote.ok ? quote.data.billableCents : cls.priceCents,
+                          includedInProgramme: quote.ok ? quote.data.includedInProgramme : false,
+                        };
+                      }),
                     );
-                    setEnrollData((prev) => ({
-                      ...prev,
-                      billableCents: quote.ok ? quote.data.billableCents : prev.priceCents ?? 0,
-                      includedInProgramme: quote.ok ? quote.data.includedInProgramme : false,
-                    }));
+                    setEnrollData((prev) => ({ ...prev, classes: updatedClasses }));
                     setStep(2);
                   }}
                   onBack={() => setStep(0)}
@@ -875,13 +918,9 @@ export function EnrollModal({
               {step === 2 && (
                 <Step3Review
                   childId={enrollData.childId!}
-                  classId={enrollData.classId!}
                   enrollData={{
                     childName: enrollData.childName ?? null,
-                    className: enrollData.className!,
-                    priceCents: enrollData.priceCents!,
-                    billableCents: enrollData.billableCents ?? enrollData.priceCents!,
-                    includedInProgramme: enrollData.includedInProgramme ?? false,
+                    classes: enrollData.classes ?? [],
                   }}
                   onComplete={(waitlisted, opts) => {
                     setEnrollData((prev) => ({
@@ -897,7 +936,7 @@ export function EnrollModal({
                   onBack={() => setStep(1)}
                 />
               )}
-              {step === 3 && enrollData.childId && enrollData.classId && (
+              {step === 3 && enrollData.childId && (enrollData.classes?.length ?? 0) > 0 && (
                 <Step4Confirmation
                   enrollData={enrollData as EnrollData}
                   onClose={onClose}
