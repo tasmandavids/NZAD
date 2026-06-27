@@ -256,6 +256,103 @@ export async function enrollChildInClass(
   };
 }
 
+async function enrollmentChargeCents(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  studioId: string,
+  userId: string,
+  studentId: string,
+  priceCents: number,
+  mode: "parent" | "self" | null,
+) {
+  return mode === "self"
+    ? priceCents
+    : siblingDiscountedCents(supabase, studioId, userId, studentId, priceCents);
+}
+
+async function insertEnrollmentInvoice(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  studioId: string,
+  userId: string,
+  studentId: string,
+  chargeCents: number,
+  className: string,
+  t: Awaited<ReturnType<typeof getTranslations>>,
+) {
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 7);
+
+  const { data: invoice, error: invErr } = await supabase
+    .from("invoices")
+    .insert({
+      studio_id: studioId,
+      payer_id: userId,
+      student_id: studentId,
+      amount_cents: chargeCents,
+      gst_cents: gstComponentCents(chargeCents),
+      status: "sent",
+      due_date: dueDate.toISOString().slice(0, 10),
+      issued_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+
+  if (invErr || !invoice) {
+    return { ok: false as const, error: invErr?.message ?? t("couldNotCreateInvoice") };
+  }
+
+  await xeroSyncOutstandingInvoice(supabase, invoice.id as string, {
+    lineDescription: `Enrollment — ${className}`,
+  });
+
+  return { ok: true as const, invoiceId: invoice.id as string };
+}
+
+// ─── Create invoice only (pay later — no Stripe charge at enrollment) ───────
+
+export async function createEnrollmentPayLaterInvoice(
+  studentId: string,
+  classId: string,
+  className: string,
+  priceCents: number,
+): Promise<ActionResult<{ invoiceId: string }>> {
+  const t = await getTranslations("errors.actions");
+  const ctx = await getEnrollmentContext();
+  const { error, supabase, userId, studioId, mode } = ctx;
+  if (error || !userId || !studioId) return { ok: false, error: error ?? t("unknown") };
+  if (!uuidField.safeParse(studentId).success || !uuidField.safeParse(classId).success) {
+    return { ok: false, error: t("invalidStudentOrClass") };
+  }
+  if (priceCents <= 0) return { ok: false, error: t("classNoFee") };
+
+  const accessErr = await assertStudentAccess(ctx, studentId, t);
+  if (accessErr) return { ok: false, error: accessErr };
+
+  const chargeCents = await enrollmentChargeCents(
+    supabase,
+    studioId,
+    userId,
+    studentId,
+    priceCents,
+    mode,
+  );
+
+  const invoiceRes = await insertEnrollmentInvoice(
+    supabase,
+    studioId,
+    userId,
+    studentId,
+    chargeCents,
+    className,
+    t,
+  );
+  if (!invoiceRes.ok) return { ok: false, error: invoiceRes.error };
+
+  revalidatePath("/portal/parent");
+  revalidatePath("/portal/student");
+  revalidatePath("/portal/parent/billing");
+  return { ok: true, data: { invoiceId: invoiceRes.invoiceId } };
+}
+
 // ─── Create invoice + PaymentIntent for a paid enrollment ────────────────────
 //  Returns a Stripe clientSecret consumed by the EnrollModal <CheckoutForm />.
 //  The payment_intent.succeeded webhook (metadata.invoice_id) marks the invoice
@@ -279,31 +376,25 @@ export async function createEnrollmentIntent(
   const accessErr = await assertStudentAccess(ctx, studentId, t);
   if (accessErr) return { ok: false, error: accessErr };
 
-  const chargeCents =
-    mode === "self"
-      ? priceCents
-      : await siblingDiscountedCents(supabase, studioId, userId, studentId, priceCents);
+  const chargeCents = await enrollmentChargeCents(
+    supabase,
+    studioId,
+    userId,
+    studentId,
+    priceCents,
+    mode,
+  );
 
-  // Create the invoice (status 'sent' — owed until the webhook marks it paid).
-  const dueDate = new Date();
-  dueDate.setDate(dueDate.getDate() + 7);
-
-  const { data: invoice, error: invErr } = await supabase
-    .from("invoices")
-    .insert({
-      studio_id:    studioId,
-      payer_id:     userId,
-      student_id:   studentId,
-      amount_cents: chargeCents,
-      gst_cents:    gstComponentCents(chargeCents),
-      status:       "sent",
-      due_date:     dueDate.toISOString().slice(0, 10),
-      issued_at:    new Date().toISOString(),
-    })
-    .select("id")
-    .single();
-
-  if (invErr || !invoice) return { ok: false, error: invErr?.message ?? t("couldNotCreateInvoice") };
+  const invoiceRes = await insertEnrollmentInvoice(
+    supabase,
+    studioId,
+    userId,
+    studentId,
+    chargeCents,
+    className,
+    t,
+  );
+  if (!invoiceRes.ok) return { ok: false, error: invoiceRes.error };
 
   // Resolve / create the Stripe customer.
   const { data: profile } = await supabase
@@ -325,29 +416,28 @@ export async function createEnrollmentIntent(
   }
 
   const intent = await stripe.paymentIntents.create({
-    amount:      chargeCents,
-    currency:    CURRENCY,
-    customer:    customerId,
+    amount: chargeCents,
+    currency: CURRENCY,
+    customer: customerId,
     description: `Enrollment — ${className}`,
     metadata: {
-      invoice_id:       invoice.id as string,
-      studio_id:        studioId,
+      invoice_id: invoiceRes.invoiceId,
+      studio_id: studioId,
       supabase_user_id: userId,
-      student_id:       studentId,
-      class_id:         classId,
+      student_id: studentId,
+      class_id: classId,
     },
   });
 
   await supabase
     .from("invoices")
     .update({ stripe_payment_intent_id: intent.id })
-    .eq("id", invoice.id);
-
-  await xeroSyncOutstandingInvoice(supabase, invoice.id as string, {
-    lineDescription: `Enrollment — ${className}`,
-  });
+    .eq("id", invoiceRes.invoiceId);
 
   if (!intent.client_secret) return { ok: false, error: t("stripeNoClientSecret") };
 
-  return { ok: true, data: { clientSecret: intent.client_secret, invoiceId: invoice.id as string } };
+  return {
+    ok: true,
+    data: { clientSecret: intent.client_secret, invoiceId: invoiceRes.invoiceId },
+  };
 }

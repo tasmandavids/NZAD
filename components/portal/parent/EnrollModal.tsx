@@ -5,7 +5,7 @@
 //
 //  Step 1: Select child + class (browse by day / discipline, capacity check)
 //  Step 2: Sign studio waivers (required waivers only)
-//  Step 3: Payment summary (invoice-based; Stripe card flow added in Phase 3)
+//  Step 3: Review — confirm enrollment; optional pay now or pay later
 //  Step 4: Confirmation
 //
 //  State machine: uses a simple step index + accumulated data object.
@@ -23,6 +23,7 @@ import {
   signWaiver,
   enrollChildInClass,
   createEnrollmentIntent,
+  createEnrollmentPayLaterInvoice,
   type AvailableClass,
   type Waiver,
 } from "@/app/portal/parent/enroll/actions";
@@ -115,6 +116,8 @@ type EnrollData = {
   className: string;
   priceCents: number;
   waitlisted: boolean;
+  payLater?: boolean;
+  paidOnline?: boolean;
 };
 
 function Step1SelectClass({
@@ -342,7 +345,7 @@ function Step2SignWaivers({
   );
 }
 
-function Step3Payment({
+function Step3Review({
   childId,
   classId,
   enrollData,
@@ -352,8 +355,11 @@ function Step3Payment({
   childId: string;
   classId: string;
   enrollData: Pick<EnrollData, "childName" | "className" | "priceCents">;
-  /** Fired once enrollment (and any payment) is finalised. */
-  onComplete: (waitlisted: boolean) => void;
+  /** Fired once enrollment (and any optional payment) is finalised. */
+  onComplete: (
+    waitlisted: boolean,
+    opts?: { payLater?: boolean; paidOnline?: boolean },
+  ) => void;
   onBack: () => void;
 }) {
   const t = useTranslations("parent.enroll");
@@ -361,21 +367,66 @@ function Step3Payment({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [enrollmentDone, setEnrollmentDone] = useState(false);
 
   const isPaid = enrollData.priceCents > 0;
 
-  // Enroll first (reserves the spot + tells us waitlist status), then — for a
-  // paid, non-waitlisted enrollment — create the invoice + PaymentIntent and
-  // reveal the card form. Free or waitlisted enrollments skip payment.
-  async function handleConfirm() {
+  async function ensureEnrolled(): Promise<{ waitlisted: boolean } | null> {
+    if (enrollmentDone) return { waitlisted: false };
+
+    const res = await enrollChildInClass(childId, classId);
+    if (!res.ok) {
+      setError(res.error);
+      return null;
+    }
+
+    setEnrollmentDone(true);
+    return { waitlisted: res.data.waitlisted };
+  }
+
+  async function handlePayLater() {
     setBusy(true);
     setError(null);
 
-    const res = await enrollChildInClass(childId, classId);
-    if (!res.ok) { setError(res.error); setBusy(false); return; }
+    const enrolled = await ensureEnrolled();
+    if (!enrolled) {
+      setBusy(false);
+      return;
+    }
+    if (enrolled.waitlisted || !isPaid) {
+      onComplete(enrolled.waitlisted);
+      setBusy(false);
+      return;
+    }
 
-    if (res.data.waitlisted || !isPaid) {
-      onComplete(res.data.waitlisted);
+    const invRes = await createEnrollmentPayLaterInvoice(
+      childId,
+      classId,
+      enrollData.className,
+      enrollData.priceCents,
+    );
+    if (!invRes.ok) {
+      setError(invRes.error);
+      setBusy(false);
+      return;
+    }
+
+    onComplete(false, { payLater: true });
+    setBusy(false);
+  }
+
+  async function handlePayNow() {
+    setBusy(true);
+    setError(null);
+
+    const enrolled = await ensureEnrolled();
+    if (!enrolled) {
+      setBusy(false);
+      return;
+    }
+    if (enrolled.waitlisted || !isPaid) {
+      onComplete(enrolled.waitlisted);
+      setBusy(false);
       return;
     }
 
@@ -385,11 +436,33 @@ function Step3Payment({
       enrollData.className,
       enrollData.priceCents,
     );
-    if (!intentRes.ok) { setError(intentRes.error); setBusy(false); return; }
+    if (!intentRes.ok) {
+      setError(intentRes.error);
+      setBusy(false);
+      return;
+    }
 
     setClientSecret(intentRes.data.clientSecret);
     setPhase("pay");
     setBusy(false);
+  }
+
+  async function handleFreeConfirm() {
+    setBusy(true);
+    setError(null);
+    const res = await enrollChildInClass(childId, classId);
+    if (!res.ok) {
+      setError(res.error);
+      setBusy(false);
+      return;
+    }
+    onComplete(res.data.waitlisted);
+    setBusy(false);
+  }
+
+  function handlePaymentCancelled() {
+    // Enrollment (and invoice) already exist — treat as pay later.
+    onComplete(false, { payLater: true });
   }
 
   // ── Card capture phase ─────────────────────────────────────────────────────
@@ -404,10 +477,12 @@ function Step3Payment({
         <CheckoutForm
           clientSecret={clientSecret}
           submitLabel={t("payAmount", { amount: NZD.format(enrollData.priceCents / 100) })}
-          onSuccess={() => onComplete(false)}
+          onSuccess={() => onComplete(false, { paidOnline: true })}
+          onCancel={handlePaymentCancelled}
+          cancelLabel={t("payLaterInstead")}
         />
         <p className="text-center text-[0.65rem] text-muted">
-          {t("paymentReservedHint")}
+          {t("payNowHint")}
         </p>
       </div>
     );
@@ -416,7 +491,7 @@ function Step3Payment({
   // ── Summary phase ──────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-base font-bold text-ink">{t("summaryTitle")}</h3>
+      <h3 className="text-base font-bold text-ink">{t("reviewTitle")}</h3>
 
       <div className="rounded-xl border border-[--hair] bg-surface p-5 space-y-3">
         <div className="flex justify-between text-sm">
@@ -438,32 +513,56 @@ function Step3Payment({
 
       {isPaid && (
         <div className="rounded-lg border border-[--hair] bg-base p-3 text-xs text-muted">
-          {t("paidCardHint")}
+          {t("paymentChoiceHint")}
         </div>
       )}
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">{error}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400">
+          {error}
+        </div>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3">
         <button
           type="button"
           onClick={onBack}
           disabled={busy}
-          className="flex-1 rounded-xl border border-[--hair] py-3 text-sm font-semibold text-muted transition-colors hover:border-[--brand] hover:text-ink disabled:opacity-40"
+          className="w-full rounded-xl border border-[--hair] py-3 text-sm font-semibold text-muted transition-colors hover:text-ink disabled:opacity-40"
         >
           {t("back")}
         </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={handleConfirm}
-          className="flex-1 rounded-xl py-3 text-sm font-bold text-white transition-opacity disabled:opacity-40"
-          style={{ background: "var(--brand)" }}
-        >
-          {busy ? t("processing") : isPaid ? t("continueToPayment") : t("confirmEnrollment")}
-        </button>
+        {isPaid ? (
+          <>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={handlePayLater}
+              className="w-full rounded-xl py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              style={{ background: "var(--brand)" }}
+            >
+              {busy ? t("processing") : t("payLater")}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={handlePayNow}
+              className="w-full rounded-xl border border-[--hair] bg-surface py-3 text-sm font-bold text-ink transition-colors hover:bg-base disabled:opacity-40"
+            >
+              {busy ? t("processing") : t("payNow")}
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={handleFreeConfirm}
+            className="w-full rounded-xl py-3 text-sm font-bold text-white transition-opacity disabled:opacity-40"
+            style={{ background: "var(--brand)" }}
+          >
+            {busy ? t("processing") : t("confirmEnrollment")}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -498,7 +597,11 @@ function Step4Confirmation({
         </p>
         {enrollData.priceCents > 0 && !enrollData.waitlisted && (
           <p className="mt-2 text-xs text-muted">
-            {t("invoiceHint", { amount: NZD.format(enrollData.priceCents / 100) })}
+            {enrollData.paidOnline
+              ? t("paidOnlineHint", { amount: NZD.format(enrollData.priceCents / 100) })
+              : enrollData.payLater
+                ? t("payLaterHint", { amount: NZD.format(enrollData.priceCents / 100) })
+                : t("invoiceHint", { amount: NZD.format(enrollData.priceCents / 100) })}
           </p>
         )}
       </div>
@@ -527,7 +630,7 @@ export function EnrollModal({
   const steps = [
     t("steps.selectClass"),
     t("steps.waivers"),
-    t("steps.payment"),
+    t("steps.review"),
     t("steps.done"),
   ];
   const [step, setStep] = useState(0);
@@ -601,7 +704,7 @@ export function EnrollModal({
                 />
               )}
               {step === 2 && (
-                <Step3Payment
+                <Step3Review
                   childId={enrollData.childId!}
                   classId={enrollData.classId!}
                   enrollData={{
@@ -609,8 +712,13 @@ export function EnrollModal({
                     className: enrollData.className!,
                     priceCents: enrollData.priceCents!,
                   }}
-                  onComplete={(waitlisted) => {
-                    setEnrollData((prev) => ({ ...prev, waitlisted }));
+                  onComplete={(waitlisted, opts) => {
+                    setEnrollData((prev) => ({
+                      ...prev,
+                      waitlisted,
+                      payLater: opts?.payLater,
+                      paidOnline: opts?.paidOnline,
+                    }));
                     setStep(3);
                   }}
                   onBack={() => setStep(1)}
