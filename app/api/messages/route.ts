@@ -5,11 +5,12 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { isUuid } from "@/lib/validation/uuid";
+import { resolveEffectiveStudioId } from "@/lib/portal/access";
 import {
   canMessagePeer,
   loadPeerProfile,
 } from "@/lib/portal/message-recipients";
+import { isUuid } from "@/lib/validation/uuid";
 import type { Role } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
@@ -25,22 +26,23 @@ export async function GET(req: NextRequest) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("studio_id, role")
+    .select("studio_id, active_studio_id, role")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.studio_id) {
+  const studioId = profile ? resolveEffectiveStudioId(profile) : null;
+  if (!studioId) {
     return NextResponse.json({ error: "Profile not found" }, { status: 400 });
   }
 
-  const peer = await loadPeerProfile(supabase, peerId, profile.studio_id);
+  const peer = await loadPeerProfile(supabase, peerId, studioId);
   if (!peer) {
     return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
   }
 
   const allowed = await canMessagePeer(
     supabase,
-    { id: user.id, role: profile.role as Role, studioId: profile.studio_id },
+    { id: user.id, role: profile!.role as Role, studioId },
     peer,
   );
   if (!allowed) {
@@ -50,12 +52,7 @@ export async function GET(req: NextRequest) {
   // Fetch the thread (bidirectional) ordered oldest-first
   const { data, error } = await supabase
     .from("messages")
-    .select(
-      `id, body, channel, sent_at, read_at,
-       from_user_id, to_user_id,
-       sender:profiles!messages_from_user_id_fkey(id, first_name, last_name, avatar_url),
-       recipient:profiles!messages_to_user_id_fkey(id, first_name, last_name, avatar_url)`
-    )
+    .select("id, body, channel, sent_at, read_at, from_user_id, to_user_id")
     .or(
       `and(from_user_id.eq.${user.id},to_user_id.eq.${peerId}),` +
       `and(from_user_id.eq.${peerId},to_user_id.eq.${user.id})`
@@ -113,22 +110,23 @@ export async function POST(req: NextRequest) {
   // Resolve studio_id from profile
   const { data: profile } = await supabase
     .from("profiles")
-    .select("studio_id, role")
+    .select("studio_id, active_studio_id, role")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.studio_id) {
+  const studioId = profile ? resolveEffectiveStudioId(profile) : null;
+  if (!studioId) {
     return NextResponse.json({ error: "Profile not found" }, { status: 400 });
   }
 
-  const peer = await loadPeerProfile(supabase, toUserId, profile.studio_id);
+  const peer = await loadPeerProfile(supabase, toUserId, studioId);
   if (!peer) {
     return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
   }
 
   const allowed = await canMessagePeer(
     supabase,
-    { id: user.id, role: profile.role as Role, studioId: profile.studio_id },
+    { id: user.id, role: profile!.role as Role, studioId },
     peer,
   );
   if (!allowed) {
@@ -138,18 +136,13 @@ export async function POST(req: NextRequest) {
   const { data, error } = await supabase
     .from("messages")
     .insert({
-      studio_id:    profile.studio_id,
+      studio_id:    studioId,
       from_user_id: user.id,
       to_user_id:   toUserId,
       body:         trimmed,
       channel,
     })
-    .select(
-      `id, body, channel, sent_at, read_at,
-       from_user_id, to_user_id,
-       sender:profiles!messages_from_user_id_fkey(id, first_name, last_name, avatar_url),
-       recipient:profiles!messages_to_user_id_fkey(id, first_name, last_name, avatar_url)`
-    )
+    .select("id, body, channel, sent_at, read_at, from_user_id, to_user_id")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

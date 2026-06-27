@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { normalizeMessageContact } from "@/lib/portal/staff-messages";
 
 export async function loadTeacherMessageContacts(teacherId: string, studioId: string) {
   const supabase = await createClient();
@@ -62,21 +63,19 @@ export async function loadTeacherMessageContacts(teacherId: string, studioId: st
 
   const { data: contacts } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, role, avatar_url, full_name")
+    .select("id, full_name, role")
     .eq("studio_id", studioId)
     .in("id", [...contactIds])
     .in("role", ["parent", "student", "admin", "office"])
-    .order("first_name");
+    .order("full_name");
 
-  const normalizedContacts = (contacts ?? []).map((c) => ({
-    id: c.id as string,
-    first_name: (c.first_name ?? c.full_name?.split(" ")[0] ?? null) as string | null,
-    last_name: (c.last_name ?? (c.full_name?.split(" ").slice(1).join(" ") || null)) as
-      | string
-      | null,
-    role: c.role as string,
-    avatar_url: c.avatar_url as string | null,
-  }));
+  const normalizedContacts = (contacts ?? []).map((c) =>
+    normalizeMessageContact({
+      id: c.id as string,
+      full_name: c.full_name as string | null,
+      role: c.role as string,
+    }),
+  );
 
   return { contacts: normalizedContacts, recentMessages: recentMessages ?? [] };
 }

@@ -1,15 +1,38 @@
 import { createClient } from "@/lib/supabase/server";
 
+export type MessageContact = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string;
+  avatar_url: string | null;
+};
+
+export function normalizeMessageContact(row: {
+  id: string;
+  full_name: string | null;
+  role: string;
+}): MessageContact {
+  const parts = row.full_name?.trim().split(/\s+/).filter(Boolean) ?? [];
+  return {
+    id: row.id,
+    first_name: parts[0] ?? null,
+    last_name: parts.length > 1 ? parts.slice(1).join(" ") : null,
+    role: row.role,
+    avatar_url: null,
+  };
+}
+
 export async function loadStaffMessageContacts(userId: string, studioId: string) {
   const supabase = await createClient();
 
   const { data: contacts } = await supabase
     .from("profiles")
-    .select("id, first_name, last_name, role, avatar_url, full_name")
+    .select("id, full_name, role")
     .eq("studio_id", studioId)
     .in("role", ["admin", "office"])
     .neq("id", userId)
-    .order("first_name");
+    .order("full_name");
 
   const { data: recentMessages } = await supabase
     .from("messages")
@@ -19,13 +42,13 @@ export async function loadStaffMessageContacts(userId: string, studioId: string)
     .order("sent_at", { ascending: false })
     .limit(100);
 
-  const normalizedContacts = (contacts ?? []).map((c) => ({
-    id: c.id as string,
-    first_name: (c.first_name ?? c.full_name?.split(" ")[0] ?? null) as string | null,
-    last_name: (c.last_name ?? (c.full_name?.split(" ").slice(1).join(" ") || null)) as string | null,
-    role: c.role as string,
-    avatar_url: c.avatar_url as string | null,
-  }));
+  const normalizedContacts = (contacts ?? []).map((c) =>
+    normalizeMessageContact({
+      id: c.id as string,
+      full_name: c.full_name as string | null,
+      role: c.role as string,
+    }),
+  );
 
   return { contacts: normalizedContacts, recentMessages: recentMessages ?? [] };
 }
