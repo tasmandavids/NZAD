@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStudioOpsStudio } from "@/lib/portal/access";
+import { listStudioMemberProfileIds } from "@/lib/portal/studio-members";
 import type { GuardianRelationship } from "@/lib/parents/types";
 
 async function getAdminStudio() {
@@ -84,6 +85,19 @@ async function createParentProfile(
   });
 
   if (dbError) return { ok: false, error: dbError.message };
+
+  await admin.from("studio_memberships").upsert(
+    {
+      user_id: userId,
+      studio_id: studioId,
+      role: "parent",
+      is_primary: true,
+      linked_via: "admin",
+      status: "active",
+    },
+    { onConflict: "user_id,studio_id" },
+  );
+
   return { ok: true, id: userId };
 }
 
@@ -244,14 +258,8 @@ export async function updateParent(input: unknown): Promise<ActionResult> {
 
   const { id, fullName, email, phone } = parsed.data;
 
-  const { data: existing } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", id)
-    .eq("studio_id", studioId)
-    .eq("role", "parent")
-    .maybeSingle();
-  if (!existing) return { ok: false, error: "Parent not found." };
+  const parentIds = await listStudioMemberProfileIds(supabase, studioId, "parent");
+  if (!parentIds.includes(id)) return { ok: false, error: "Parent not found." };
 
   if (email) {
     const { data: dup } = await supabase
@@ -298,25 +306,13 @@ export async function linkChild(input: unknown): Promise<ActionResult> {
 
   const { guardianId, studentId, relationship, isPrimary } = parsed.data;
 
-  const [{ data: guardian }, { data: student }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", guardianId)
-      .eq("studio_id", studioId)
-      .eq("role", "parent")
-      .maybeSingle(),
-    supabase
-      .from("profiles")
-      .select("id")
-      .eq("id", studentId)
-      .eq("studio_id", studioId)
-      .eq("role", "student")
-      .maybeSingle(),
+  const [parentIds, studentIds] = await Promise.all([
+    listStudioMemberProfileIds(supabase, studioId, "parent"),
+    listStudioMemberProfileIds(supabase, studioId, "student"),
   ]);
 
-  if (!guardian) return { ok: false, error: "Parent not found." };
-  if (!student) return { ok: false, error: "Student not found." };
+  if (!parentIds.includes(guardianId)) return { ok: false, error: "Parent not found." };
+  if (!studentIds.includes(studentId)) return { ok: false, error: "Student not found." };
 
   let primary = isPrimary ?? false;
   if (isPrimary === undefined) {
@@ -507,5 +503,91 @@ export async function updateChildRelationship(input: unknown): Promise<ActionRes
   if (updateErr) return { ok: false, error: updateErr.message };
 
   revalidateParentPaths(guardianId);
+  return { ok: true };
+}
+
+// ─── DELETE PARENT ────────────────────────────────────────────────────────────
+
+export async function deleteParent(parentId: string): Promise<ActionResult> {
+  if (!parentId) return { ok: false, error: "Missing parent ID" };
+
+  const { error, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return {
+      ok: false,
+      error: "Deleting parents requires SUPABASE_SERVICE_ROLE_KEY in .env.local (Supabase → Settings → API).",
+    };
+  }
+
+  const parentIds = await listStudioMemberProfileIds(admin, studioId, "parent");
+  if (!parentIds.includes(parentId)) {
+    return { ok: false, error: "Parent not found." };
+  }
+
+  const { data: profile, error: profileErr } = await admin
+    .from("profiles")
+    .select("id, role, studio_id")
+    .eq("id", parentId)
+    .eq("role", "parent")
+    .maybeSingle();
+
+  if (profileErr) return { ok: false, error: profileErr.message };
+  if (!profile) return { ok: false, error: "Parent not found." };
+
+  const { count: invoiceCount } = await admin
+    .from("invoices")
+    .select("id", { count: "exact", head: true })
+    .eq("payer_id", parentId)
+    .eq("studio_id", studioId);
+
+  if (invoiceCount && invoiceCount > 0) {
+    return {
+      ok: false,
+      error: "This parent has billing records at this studio and cannot be removed.",
+    };
+  }
+
+  const { count: subCount } = await admin
+    .from("subscriptions")
+    .select("id", { count: "exact", head: true })
+    .eq("payer_id", parentId)
+    .eq("studio_id", studioId);
+
+  if (subCount && subCount > 0) {
+    return {
+      ok: false,
+      error: "This parent has active subscriptions at this studio and cannot be removed.",
+    };
+  }
+
+  const isHomeStudio = profile.studio_id === studioId;
+
+  if (isHomeStudio) {
+    await admin.from("events").update({ created_by: null }).eq("created_by", parentId);
+
+    const { error: deleteErr } = await admin.auth.admin.deleteUser(parentId);
+    if (deleteErr) return { ok: false, error: deleteErr.message };
+  } else {
+    const { error: guardianshipErr } = await admin
+      .from("guardianships")
+      .delete()
+      .eq("studio_id", studioId)
+      .eq("guardian_id", parentId);
+    if (guardianshipErr) return { ok: false, error: guardianshipErr.message };
+
+    const { error: membershipErr } = await admin
+      .from("studio_memberships")
+      .delete()
+      .eq("studio_id", studioId)
+      .eq("user_id", parentId);
+    if (membershipErr) return { ok: false, error: membershipErr.message };
+  }
+
+  revalidateParentPaths();
   return { ok: true };
 }

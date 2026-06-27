@@ -47,10 +47,22 @@ export default async function JoinPage() {
         .maybeSingle()
     : { data: null };
 
-  if (profile?.studio_id) {
-    if (profile.role === "student" && profile.self_managed) redirect("/portal/student");
-    if (profile.role === "parent") redirect("/portal/parent");
-    redirect("/portal");
+  if (profile?.studio_id && user) {
+    const { data: existingMembership } = studioInfo?.id
+      ? await supabase
+          .from("studio_memberships")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("studio_id", studioInfo.id)
+          .eq("status", "active")
+          .maybeSingle()
+      : { data: null };
+
+    if (existingMembership) {
+      if (profile.role === "student" && profile.self_managed) redirect("/portal/student");
+      if (profile.role === "parent") redirect("/portal/parent");
+      redirect("/portal");
+    }
   }
 
   return (

@@ -377,7 +377,11 @@
         "linkStudentButton": "Lien étudiant",
         "primaryPayer": "Payeur principal",
         "unlink": "Dissocier",
-        "relationship": "Relation"
+        "relationship": "Relation",
+        "dangerZone": "Zone dangereuse",
+        "deleteDescription": "Supprime définitivement ce responsable et ses liens de tutelle dans ce studio. Les dossiers de facturation bloquent la suppression.",
+        "deleteParent": "Supprimer le responsable",
+        "deleteConfirm": "Supprimer « {name} » ? Cela supprime définitivement son profil dans ce studio et ne peut pas être annulé."
       },
       "billing": {
         "outstanding": "Remarquable",

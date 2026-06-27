@@ -43,7 +43,7 @@ export async function loadTeacherMessageContacts(teacherId: string, studioId: st
 
   const { data: recentMessages } = await supabase
     .from("messages")
-    .select("id, from_user_id, to_user_id, body, channel, sent_at, read_at")
+    .select("id, from_user_id, to_user_id, body, channel, topic, sent_at, read_at")
     .eq("studio_id", studioId)
     .or(`from_user_id.eq.${teacherId},to_user_id.eq.${teacherId}`)
     .order("sent_at", { ascending: false })

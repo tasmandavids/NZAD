@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { mapMembershipRow, type MembershipRow } from "@/lib/account/memberships";
 import { resolveEffectiveStudioId } from "@/lib/portal/access";
+import { resolveTenantStudioId } from "@/lib/portal/tenant-studio";
 import type { AccountKind } from "@/lib/account/kinds";
 import type { Role, StudioMembershipSummary } from "@/lib/types";
 
@@ -54,7 +55,10 @@ export const getPortalSession = cache(async (): Promise<PortalSession | null> =>
     };
   });
 
-  const studioId = resolveEffectiveStudioId(profile);
+  const tenantScope = await resolveTenantStudioId(supabase, user.id, profile);
+  if (tenantScope.error) return null;
+
+  const studioId = tenantScope.studioId ?? resolveEffectiveStudioId(profile);
   if (!studioId) return null;
 
   return {

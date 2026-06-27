@@ -377,7 +377,11 @@
         "linkStudentButton": "Collega studente",
         "primaryPayer": "Pagatore principale",
         "unlink": "Scollega",
-        "relationship": "Relazione"
+        "relationship": "Relazione",
+        "dangerZone": "Zona pericolosa",
+        "deleteDescription": "Rimuove definitivamente questo genitore e i suoi collegamenti di tutela in questo studio. I record di fatturazione bloccano l'eliminazione.",
+        "deleteParent": "Elimina genitore",
+        "deleteConfirm": "Eliminare \"{name}\"? Questo rimuove definitivamente il profilo in questo studio e non può essere annullato."
       },
       "billing": {
         "outstanding": "Eccezionale",

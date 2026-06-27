@@ -25,6 +25,7 @@ import type {
 } from "@/lib/parents/types";
 import ParentBillingTab from "./ParentBillingTab";
 import ParentMessagesTab from "./ParentMessagesTab";
+import DeleteParentButton from "./DeleteParentButton";
 
 type Tab = "profile" | "children" | "billing" | "messages";
 
@@ -236,6 +237,8 @@ export default function ParentDetailHub({
             >
               {pending ? tShared("saving") : t("saveChanges")}
             </button>
+
+            <DeleteParentButton parentId={parent.id} parentName={parent.name} />
           </section>
 
           <section className="space-y-4">

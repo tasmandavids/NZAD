@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ParentChatPanel } from "@/components/portal/parent/ParentChatPanel";
-import { loadParentChatData, type ParentChatTopic } from "@/lib/portal/parent-chat";
-
-const TOPICS = new Set<ParentChatTopic>(["billing", "absence", "general"]);
+import { loadParentChatData } from "@/lib/portal/parent-chat";
+import { isMessageTopic } from "@/lib/portal/message-topics";
 
 export default async function ParentChatPage({
   searchParams,
@@ -31,9 +30,7 @@ export default async function ParentChatPage({
   );
 
   const initialTopic =
-    topicParam && TOPICS.has(topicParam as ParentChatTopic)
-      ? (topicParam as ParentChatTopic)
-      : null;
+    topicParam && isMessageTopic(topicParam) ? topicParam : null;
 
   return (
     <ParentChatPanel

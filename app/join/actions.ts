@@ -84,11 +84,12 @@ async function addChildDuringRegistration(input: z.infer<typeof AddChildSchema>)
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("studio_id, role")
+    .select("studio_id, active_studio_id, role")
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "parent" || !profile.studio_id) {
+  const studioId = (profile?.active_studio_id as string | null) ?? profile?.studio_id;
+  if (profile?.role !== "parent" || !studioId) {
     return { ok: false, error: "Parent account required." };
   }
 
@@ -103,7 +104,7 @@ async function addChildDuringRegistration(input: z.infer<typeof AddChildSchema>)
   const studentId = authData.user.id;
   const { error: profileErr } = await admin.from("profiles").upsert({
     id: studentId,
-    studio_id: profile.studio_id,
+    studio_id: studioId,
     role: "student",
     full_name: input.fullName,
     birthday: input.birthday ?? null,
@@ -112,7 +113,7 @@ async function addChildDuringRegistration(input: z.infer<typeof AddChildSchema>)
   if (profileErr) return { ok: false, error: profileErr.message };
 
   const { error: linkErr } = await admin.from("guardianships").insert({
-    studio_id: profile.studio_id,
+    studio_id: studioId,
     guardian_id: user.id,
     student_id: studentId,
     is_primary: true,
@@ -120,7 +121,7 @@ async function addChildDuringRegistration(input: z.infer<typeof AddChildSchema>)
   });
   if (linkErr) return { ok: false, error: linkErr.message };
 
-  return { ok: true, studioId: profile.studio_id };
+  return { ok: true, studioId };
 }
 
 export async function getStudioRegistrationInfo(studioSlug: string) {

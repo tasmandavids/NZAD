@@ -16,6 +16,11 @@ import type {
   ParentChatTeacher,
   ParentChatTopic,
 } from "@/lib/portal/parent-chat";
+import {
+  adminTopicThreadKey,
+  MESSAGE_TOPICS,
+  normalizeMessageTopic,
+} from "@/lib/portal/message-topics";
 
 type Selection =
   | { kind: "admin"; topic: ParentChatTopic; peerId: string }
@@ -81,42 +86,59 @@ function ParentChatPanelContent({
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [lastMessages, setLastMessages] = useState<Record<string, ParentChatMessage>>({});
 
-  const adminTopics: ParentChatTopic[] = ["billing", "absence", "general"];
+  const adminTopics = MESSAGE_TOPICS;
+
+  function messageListKey(m: ParentChatMessage) {
+    const peerId = m.from_user_id === currentUserId ? m.to_user_id : m.from_user_id;
+    if (admin && peerId === admin.id) {
+      return adminTopicThreadKey(normalizeMessageTopic(m.topic));
+    }
+    return peerId;
+  }
+
+  function selectionMatchesMessage(current: Selection | null, m: ParentChatMessage) {
+    if (!current) return false;
+    const peerId = m.from_user_id === currentUserId ? m.to_user_id : m.from_user_id;
+    if (current.peerId !== peerId) return false;
+    if (current.kind === "admin") {
+      return normalizeMessageTopic(m.topic) === current.topic;
+    }
+    return current.kind === "teacher";
+  }
 
   useEffect(() => {
     const last: Record<string, ParentChatMessage> = {};
     const unread: Record<string, number> = {};
 
     recentMessages.forEach((m) => {
-      const peerId = m.from_user_id === currentUserId ? m.to_user_id : m.from_user_id;
-      if (!last[peerId]) last[peerId] = m;
+      const key = messageListKey(m);
+      if (!last[key] || last[key].sent_at < m.sent_at) last[key] = m;
       if (m.to_user_id === currentUserId && !m.read_at) {
-        unread[peerId] = (unread[peerId] ?? 0) + 1;
+        unread[key] = (unread[key] ?? 0) + 1;
       }
     });
 
     setLastMessages(last);
     setUnreadCounts(unread);
-  }, [recentMessages, currentUserId]);
+  }, [recentMessages, currentUserId, admin]);
 
   useEffect(() => {
     if (!stream) return;
     return stream.subscribe((newMsg) => {
-      const peerId =
-        newMsg.from_user_id === currentUserId ? newMsg.to_user_id : newMsg.from_user_id;
+      const key = messageListKey(newMsg as ParentChatMessage);
 
-      setLastMessages((prev) => ({ ...prev, [peerId]: newMsg }));
+      setLastMessages((prev) => ({ ...prev, [key]: newMsg as ParentChatMessage }));
 
       setSelection((current) => {
-        if (!current || current.peerId !== peerId) {
-          setUnreadCounts((u) => ({ ...u, [peerId]: (u[peerId] ?? 0) + 1 }));
+        if (!selectionMatchesMessage(current, newMsg as ParentChatMessage)) {
+          setUnreadCounts((u) => ({ ...u, [key]: (u[key] ?? 0) + 1 }));
         } else {
-          setUnreadCounts((prev) => ({ ...prev, [peerId]: 0 }));
+          setUnreadCounts((prev) => ({ ...prev, [key]: 0 }));
         }
         return current;
       });
     });
-  }, [stream, currentUserId]);
+  }, [stream, currentUserId, admin]);
 
   const activePeerId = selection?.peerId ?? null;
 
@@ -148,14 +170,18 @@ function ParentChatPanelContent({
   }, [selection, admin, teachers, t, tShared]);
 
   const handleThreadMessage = (msg: ThreadMessage) => {
-    if (!activePeerId) return;
-    setLastMessages((prev) => ({ ...prev, [activePeerId]: msg }));
+    if (!selection) return;
+    const key =
+      selection.kind === "admin"
+        ? adminTopicThreadKey(selection.topic)
+        : selection.peerId;
+    setLastMessages((prev) => ({ ...prev, [key]: msg as ParentChatMessage }));
   };
 
   const selectAdminTopic = (topic: ParentChatTopic) => {
     if (!admin) return;
     setSelection({ kind: "admin", topic, peerId: admin.id });
-    setUnreadCounts((prev) => ({ ...prev, [admin.id]: 0 }));
+    setUnreadCounts((prev) => ({ ...prev, [adminTopicThreadKey(topic)]: 0 }));
   };
 
   const selectTeacher = (teacherId: string) => {
@@ -202,8 +228,9 @@ function ParentChatPanelContent({
                     {t("studioSection")}
                   </p>
                   {adminTopics.map((topic) => {
-                    const unread = unreadCounts[admin.id] ?? 0;
-                    const last = lastMessages[admin.id];
+                    const key = adminTopicThreadKey(topic);
+                    const unread = unreadCounts[key] ?? 0;
+                    const last = lastMessages[key];
                     const selected = isAdminTopicSelected(topic);
 
                     return (
@@ -228,7 +255,7 @@ function ParentChatPanelContent({
                             >
                               {t(`topics.${topic}.label`)}
                             </span>
-                            {last && selected && (
+                            {last && (
                               <span className="shrink-0 text-[0.65rem] text-muted">
                                 {formatDate(last.sent_at) === t("today")
                                   ? formatTime(last.sent_at)
@@ -238,7 +265,7 @@ function ParentChatPanelContent({
                           </div>
                           <div className="flex items-center justify-between gap-1">
                             <p className="truncate text-xs text-muted">
-                              {last && selected
+                              {last
                                 ? (last.from_user_id === currentUserId ? t("youPrefix") : "") +
                                   last.body
                                 : t(`topics.${topic}.hint`)}
@@ -330,6 +357,7 @@ function ParentChatPanelContent({
           <MessageThread
             currentUserId={currentUserId}
             peerId={activePeerId}
+            topic={selection.kind === "admin" ? selection.topic : undefined}
             contact={{
               id: threadContact.id,
               name: threadContact.name,

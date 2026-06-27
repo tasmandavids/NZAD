@@ -413,7 +413,11 @@
         "linkStudentButton": "Link student",
         "primaryPayer": "Primary payer",
         "unlink": "Unlink",
-        "relationship": "Relationship"
+        "relationship": "Relationship",
+        "dangerZone": "Danger zone",
+        "deleteDescription": "Permanently removes this parent and their guardian links at this studio. Billing records block deletion.",
+        "deleteParent": "Delete parent",
+        "deleteConfirm": "Delete \"{name}\"? This permanently removes their profile at this studio and cannot be undone."
       },
       "billing": {
         "outstanding": "Outstanding",
@@ -941,7 +945,9 @@
       "contacts": "{count} contacts",
       "youPrefix": "You: ",
       "selectContact": "Select a contact",
-      "selectDescription": "Choose someone from the list to start a conversation.",
+      "selectDescription": "Choose a parent enquiry channel, then pick who sent the message.",
+      "parentEnquiries": "Parent enquiries",
+      "otherContacts": "Other contacts",
       "noMessages": "No messages yet.",
       "sayHello": "Say hello to {name}!",
       "placeholder": "Message… (Enter to send)",

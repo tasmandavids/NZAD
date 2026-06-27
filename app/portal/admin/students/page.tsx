@@ -5,6 +5,7 @@
 // ============================================================================
 
 import { requirePortalSession } from "@/lib/portal/session";
+import { listStudioMemberProfileIds } from "@/lib/portal/studio-members";
 import StudentsManager from "@/components/admin/students/StudentsManager";
 
 export type StudentEnrollment = {
@@ -35,21 +36,25 @@ export type ClassOption = {
 
 export default async function StudentsPage() {
   const { supabase, studioId } = await requirePortalSession();
+  if (!studioId) return <StudentsManager students={[]} allClasses={[]} />;
+
+  const studentIds = await listStudioMemberProfileIds(supabase, studioId, "student");
 
   const [studentsRes, classesRes] = await Promise.all([
-    // Fetch all students with their active enrollments + class details
-    supabase
-      .from("profiles")
-      .select(`
+    studentIds.length === 0
+      ? Promise.resolve({ data: [] as never[] })
+      : supabase
+          .from("profiles")
+          .select(`
         id, full_name, email, phone, created_at,
         enrollments!student_id (
           class_id, status,
           classes ( id, name, day_of_week, start_time )
         )
       `)
-      .eq("studio_id", studioId ?? "")
-      .eq("role", "student")
-      .order("full_name"),
+          .in("id", studentIds)
+          .eq("role", "student")
+          .order("full_name"),
 
     // Fetch class_capacity for the enrollment dropdown
     supabase

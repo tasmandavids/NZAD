@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useMessageStream } from "@/components/admin/messages/MessageStreamProvider";
+import type { MessageTopic } from "@/lib/portal/message-topics";
+import { normalizeMessageTopic } from "@/lib/portal/message-topics";
 
 export interface ThreadMessage {
   id: string;
@@ -11,6 +13,7 @@ export interface ThreadMessage {
   to_user_id: string;
   body: string;
   channel: string;
+  topic?: string | null;
   sent_at: string;
   read_at: string | null;
 }
@@ -34,6 +37,7 @@ interface MessageThreadProps {
   compact?: boolean;
   placeholder?: string;
   messagesNamespace?: string;
+  topic?: MessageTopic;
   onNewMessage?: (msg: ThreadMessage) => void;
 }
 
@@ -44,6 +48,7 @@ export function MessageThread({
   compact = false,
   placeholder,
   messagesNamespace = "admin.messages",
+  topic,
   onNewMessage,
 }: MessageThreadProps) {
   const t = useTranslations(messagesNamespace);
@@ -58,12 +63,14 @@ export function MessageThread({
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const loadThread = useCallback(async (id: string) => {
+  const loadThread = useCallback(async (id: string, threadTopic?: MessageTopic) => {
     setLoadingThread(true);
     setLoadError(null);
     setThread([]);
     try {
-      const res = await fetch(`/api/messages?with=${id}`);
+      const params = new URLSearchParams({ with: id });
+      if (threadTopic) params.set("topic", threadTopic);
+      const res = await fetch(`/api/messages?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) {
         setLoadError(data.error ?? t("loadFailed"));
@@ -78,8 +85,8 @@ export function MessageThread({
   }, [t]);
 
   useEffect(() => {
-    loadThread(peerId);
-  }, [peerId, loadThread]);
+    loadThread(peerId, topic);
+  }, [peerId, topic, loadThread]);
 
   useEffect(() => {
     if (!stream) return;
@@ -88,13 +95,20 @@ export function MessageThread({
         newMsg.from_user_id === currentUserId ? newMsg.to_user_id : newMsg.from_user_id;
       if (msgPeer !== peerId) return;
 
+      const msgTopic = newMsg.topic ?? null;
+      if (topic) {
+        if (normalizeMessageTopic(msgTopic) !== topic) return;
+      } else if (msgTopic) {
+        return;
+      }
+
       setThread((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
         return [...prev, newMsg];
       });
       onNewMessage?.(newMsg);
     });
-  }, [stream, currentUserId, peerId, onNewMessage]);
+  }, [stream, currentUserId, peerId, topic, onNewMessage]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -113,16 +127,20 @@ export function MessageThread({
       to_user_id: peerId,
       body,
       channel: "internal",
+      topic: topic ?? null,
       sent_at: new Date().toISOString(),
       read_at: null,
     };
     setThread((prev) => [...prev, optimistic]);
 
     try {
+      const payload: Record<string, string> = { toUserId: peerId, message: body };
+      if (topic) payload.topic = topic;
+
       const res = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ toUserId: peerId, message: body }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
 
@@ -188,7 +206,7 @@ export function MessageThread({
             <p className="text-red-400">{loadError}</p>
             <button
               type="button"
-              onClick={() => loadThread(peerId)}
+              onClick={() => loadThread(peerId, topic)}
               className="rounded-lg border border-[--hair] px-3 py-1.5 text-xs text-ink hover:bg-surface"
             >
               {tShared("retry")}

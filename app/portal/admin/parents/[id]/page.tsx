@@ -4,6 +4,7 @@
 
 import { notFound } from "next/navigation";
 import { requirePortalSession } from "@/lib/portal/session";
+import { listStudioMemberProfileIds } from "@/lib/portal/studio-members";
 import ParentDetailHub from "@/components/admin/parents/ParentDetailHub";
 import type {
   GuardianRelationship,
@@ -23,6 +24,13 @@ export default async function ParentDetailPage({
   const { supabase, studioId, userId } = await requirePortalSession();
   if (!studioId) notFound();
 
+  const [parentIds, studentIds] = await Promise.all([
+    listStudioMemberProfileIds(supabase, studioId, "parent"),
+    listStudioMemberProfileIds(supabase, studioId, "student"),
+  ]);
+
+  if (!parentIds.includes(id)) notFound();
+
   const [
     parentRes,
     guardianshipsRes,
@@ -35,7 +43,6 @@ export default async function ParentDetailPage({
       .from("profiles")
       .select("id, full_name, email, phone, created_at")
       .eq("id", id)
-      .eq("studio_id", studioId)
       .eq("role", "parent")
       .single(),
 
@@ -47,12 +54,14 @@ export default async function ParentDetailPage({
       `)
       .eq("studio_id", studioId),
 
-    supabase
-      .from("profiles")
-      .select("id, full_name")
-      .eq("studio_id", studioId)
-      .eq("role", "student")
-      .order("full_name"),
+    studentIds.length === 0
+      ? Promise.resolve({ data: [] as never[] })
+      : supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", studentIds)
+          .eq("role", "student")
+          .order("full_name"),
 
     supabase
       .from("invoices")

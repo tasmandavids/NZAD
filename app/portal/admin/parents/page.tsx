@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { requirePortalSession } from "@/lib/portal/session";
+import { listStudioMemberProfileIds } from "@/lib/portal/studio-members";
 import ParentsManager from "@/components/admin/parents/ParentsManager";
 import type { ParentRow, StudentOption } from "@/lib/parents/types";
 
@@ -10,14 +11,22 @@ export type { ParentRow } from "@/lib/parents/types";
 
 export default async function ParentsPage() {
   const { supabase, studioId } = await requirePortalSession();
+  if (!studioId) return <ParentsManager parents={[]} students={[]} />;
+
+  const [parentIds, studentIds] = await Promise.all([
+    listStudioMemberProfileIds(supabase, studioId, "parent"),
+    listStudioMemberProfileIds(supabase, studioId, "student"),
+  ]);
 
   const [parentsRes, guardianshipsRes, studentsRes] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, full_name, email, phone, created_at")
-      .eq("studio_id", studioId ?? "")
-      .eq("role", "parent")
-      .order("full_name"),
+    parentIds.length === 0
+      ? Promise.resolve({ data: [] as never[] })
+      : supabase
+          .from("profiles")
+          .select("id, full_name, email, phone, created_at")
+          .in("id", parentIds)
+          .eq("role", "parent")
+          .order("full_name"),
 
     supabase
       .from("guardianships")
@@ -25,14 +34,16 @@ export default async function ParentsPage() {
         guardian_id, student_id, is_primary, relationship,
         profiles!guardian_id ( id, full_name, email, phone )
       `)
-      .eq("studio_id", studioId ?? ""),
+      .eq("studio_id", studioId),
 
-    supabase
-      .from("profiles")
-      .select("id, full_name")
-      .eq("studio_id", studioId ?? "")
-      .eq("role", "student")
-      .order("full_name"),
+    studentIds.length === 0
+      ? Promise.resolve({ data: [] as never[] })
+      : supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", studentIds)
+          .eq("role", "student")
+          .order("full_name"),
   ]);
 
   const allGuardianships = guardianshipsRes.data ?? [];

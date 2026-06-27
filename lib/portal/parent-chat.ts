@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { loadStudioAdminContact } from "@/lib/portal/message-recipients";
+import type { MessageTopic } from "@/lib/portal/message-topics";
 import { normalizeMessageContact } from "@/lib/portal/staff-messages";
 
-export type ParentChatTopic = "billing" | "absence" | "general";
+export type ParentChatTopic = MessageTopic;
 
 export type ParentChatTeacher = {
   id: string;
@@ -26,6 +27,7 @@ export type ParentChatMessage = {
   to_user_id: string;
   body: string;
   channel: string;
+  topic: string | null;
   sent_at: string;
   read_at: string | null;
 };
@@ -127,7 +129,7 @@ export async function loadParentChatData(parentId: string, studioId: string) {
 
   const { data: recentMessages } = await supabase
     .from("messages")
-    .select("id, from_user_id, to_user_id, body, channel, sent_at, read_at")
+    .select("id, from_user_id, to_user_id, body, channel, topic, sent_at, read_at")
     .eq("studio_id", studioId)
     .or(`from_user_id.eq.${parentId},to_user_id.eq.${parentId}`)
     .order("sent_at", { ascending: false })

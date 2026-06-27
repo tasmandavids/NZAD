@@ -185,6 +185,18 @@ export async function addStudent(input: unknown): Promise<ActionResult> {
 
   if (dbError) return { ok: false, error: dbError.message };
 
+  await admin.from("studio_memberships").upsert(
+    {
+      user_id: userId,
+      studio_id: studioId,
+      role: "student",
+      is_primary: true,
+      linked_via: "admin",
+      status: "active",
+    },
+    { onConflict: "user_id,studio_id" },
+  );
+
   revalidatePath("/portal/admin/students");
   return { ok: true };
 }

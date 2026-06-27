@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { resolveTenantStudioId } from "@/lib/portal/tenant-studio";
 import type { Role } from "@/lib/types";
 
 export type StudioAccess = {
@@ -42,9 +43,29 @@ async function getStudioAccess(allowed: (role: Role) => boolean): Promise<Studio
     return { error: "Not authorized.", supabase, studioId: null, userId: user.id, role };
   }
 
-  const studioId = profile ? resolveEffectiveStudioId(profile) : null;
+  const tenantScope = profile
+    ? await resolveTenantStudioId(supabase, user.id, profile, { requireOpsAccess: true })
+    : { studioId: null, error: "No studio found." as string | null };
+
+  if (tenantScope.error) {
+    return {
+      error: tenantScope.error,
+      supabase,
+      studioId: null,
+      userId: user.id,
+      role,
+    };
+  }
+
+  const studioId = tenantScope.studioId ?? (profile ? resolveEffectiveStudioId(profile) : null);
   if (!studioId) {
-    return { error: "No studio found.", supabase, studioId: null, userId: user.id, role };
+    return {
+      error: "No studio found.",
+      supabase,
+      studioId: null,
+      userId: user.id,
+      role,
+    };
   }
 
   return {

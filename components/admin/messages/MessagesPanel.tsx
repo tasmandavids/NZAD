@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { MessageThread, type ThreadMessage } from "@/components/admin/messages/MessageThread";
 import {
   MessageStreamProvider,
   useMessageStream,
 } from "@/components/admin/messages/MessageStreamProvider";
+import {
+  adminTopicThreadKey,
+  MESSAGE_TOPICS,
+  normalizeMessageTopic,
+  type MessageTopic,
+} from "@/lib/portal/message-topics";
 
 interface Contact {
   id: string;
@@ -22,17 +28,21 @@ interface Message {
   to_user_id: string;
   body: string;
   channel: string;
+  topic: string | null;
   sent_at: string;
   read_at: string | null;
 }
 
-interface RecentMessage extends Message {}
+type Selection =
+  | { kind: "parentTopic"; topic: MessageTopic; peerId: string }
+  | { kind: "direct"; peerId: string };
 
 interface Props {
   currentUserId: string;
   contacts: Contact[];
-  recentMessages: RecentMessage[];
+  recentMessages: Message[];
   initialContactId?: string | null;
+  initialTopic?: MessageTopic | null;
 }
 
 function initials(c: Contact) {
@@ -48,6 +58,10 @@ function formatTime(iso: string, locale: string) {
   return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
+function peerIdForMessage(m: Message, currentUserId: string) {
+  return m.from_user_id === currentUserId ? m.to_user_id : m.from_user_id;
+}
+
 export function MessagesPanel(props: Props) {
   return (
     <MessageStreamProvider currentUserId={props.currentUserId}>
@@ -61,77 +75,192 @@ function MessagesPanelContent({
   contacts,
   recentMessages,
   initialContactId = null,
+  initialTopic = null,
 }: Props) {
   const t = useTranslations("admin.messages");
+  const tParentTopics = useTranslations("parent.chat.topics");
   const tShared = useTranslations("admin.shared");
   const locale = useLocale();
   const stream = useMessageStream();
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(
-    initialContactId && contacts.some((c) => c.id === initialContactId)
-      ? initialContactId
-      : null,
-  );
-  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const [lastMessages, setLastMessages] = useState<Record<string, RecentMessage>>({});
 
-  useEffect(() => {
+  const parentContacts = useMemo(
+    () => contacts.filter((c) => c.role === "parent"),
+    [contacts],
+  );
+  const parentIds = useMemo(() => new Set(parentContacts.map((c) => c.id)), [parentContacts]);
+  const otherContacts = useMemo(
+    () => contacts.filter((c) => c.role !== "parent"),
+    [contacts],
+  );
+
+  const resolveInitialSelection = (): { selection: Selection | null; topic: MessageTopic | null } => {
     if (
       initialContactId &&
-      contacts.some((c) => c.id === initialContactId) &&
-      !selectedContactId
+      initialTopic &&
+      parentIds.has(initialContactId)
     ) {
-      setSelectedContactId(initialContactId);
+      return {
+        selection: { kind: "parentTopic", topic: initialTopic, peerId: initialContactId },
+        topic: initialTopic,
+      };
     }
-  }, [initialContactId, contacts, selectedContactId]);
+    if (initialContactId && contacts.some((c) => c.id === initialContactId)) {
+      const contact = contacts.find((c) => c.id === initialContactId);
+      if (contact?.role === "parent") {
+        return {
+          selection: { kind: "parentTopic", topic: "general", peerId: initialContactId },
+          topic: "general",
+        };
+      }
+      return { selection: { kind: "direct", peerId: initialContactId }, topic: null };
+    }
+    return { selection: null, topic: MESSAGE_TOPICS[0] };
+  };
+
+  const initial = resolveInitialSelection();
+  const [activeTopic, setActiveTopic] = useState<MessageTopic | null>(initial.topic);
+  const [selection, setSelection] = useState<Selection | null>(initial.selection);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [lastMessages, setLastMessages] = useState<Record<string, Message>>({});
+
+  function listKeyForMessage(m: Message) {
+    const peerId = peerIdForMessage(m, currentUserId);
+    if (parentIds.has(peerId)) {
+      return adminTopicThreadKey(normalizeMessageTopic(m.topic));
+    }
+    return peerId;
+  }
+
+  function parentTopicKey(topic: MessageTopic, parentId: string) {
+    return `${topic}:${parentId}`;
+  }
+
+  function selectionMatchesMessage(current: Selection | null, m: Message) {
+    if (!current) return false;
+    const peerId = peerIdForMessage(m, currentUserId);
+    if (current.peerId !== peerId) return false;
+    if (current.kind === "parentTopic") {
+      return normalizeMessageTopic(m.topic) === current.topic;
+    }
+    return !m.topic;
+  }
 
   useEffect(() => {
-    const last: Record<string, RecentMessage> = {};
+    const last: Record<string, Message> = {};
     const unread: Record<string, number> = {};
 
     recentMessages.forEach((m) => {
-      const peerId = m.from_user_id === currentUserId ? m.to_user_id : m.from_user_id;
-      if (!last[peerId]) last[peerId] = m;
-      if (m.to_user_id === currentUserId && !m.read_at) {
-        unread[peerId] = (unread[peerId] ?? 0) + 1;
+      const key = listKeyForMessage(m);
+      if (!last[key] || last[key].sent_at < m.sent_at) last[key] = m;
+
+      if (parentIds.has(peerIdForMessage(m, currentUserId))) {
+        const topic = normalizeMessageTopic(m.topic);
+        const parentKey = parentTopicKey(topic, peerIdForMessage(m, currentUserId));
+        if (!last[parentKey] || last[parentKey].sent_at < m.sent_at) {
+          last[parentKey] = m;
+        }
+        if (m.to_user_id === currentUserId && !m.read_at) {
+          unread[parentKey] = (unread[parentKey] ?? 0) + 1;
+        }
+      } else {
+        if (m.to_user_id === currentUserId && !m.read_at) {
+          unread[key] = (unread[key] ?? 0) + 1;
+        }
       }
     });
 
     setLastMessages(last);
     setUnreadCounts(unread);
-  }, [recentMessages, currentUserId]);
+  }, [recentMessages, currentUserId, parentIds]);
 
   useEffect(() => {
     if (!stream) return;
     return stream.subscribe((newMsg) => {
-      const peerId =
-        newMsg.from_user_id === currentUserId ? newMsg.to_user_id : newMsg.from_user_id;
+      const msg = newMsg as Message;
+      const key = listKeyForMessage(msg);
+      const peerId = peerIdForMessage(msg, currentUserId);
 
-      setLastMessages((prev) => ({ ...prev, [peerId]: newMsg }));
+      setLastMessages((prev) => {
+        const next = { ...prev, [key]: msg };
+        if (parentIds.has(peerId)) {
+          const topic = normalizeMessageTopic(msg.topic);
+          next[parentTopicKey(topic, peerId)] = msg;
+        }
+        return next;
+      });
 
-      setSelectedContactId((current) => {
-        if (current !== peerId) {
-          setUnreadCounts((u) => ({ ...u, [peerId]: (u[peerId] ?? 0) + 1 }));
+      setSelection((current) => {
+        const unreadKey = parentIds.has(peerId)
+          ? parentTopicKey(normalizeMessageTopic(msg.topic), peerId)
+          : key;
+
+        if (!selectionMatchesMessage(current, msg)) {
+          setUnreadCounts((u) => ({ ...u, [unreadKey]: (u[unreadKey] ?? 0) + 1 }));
         } else {
-          setUnreadCounts((prev) => ({ ...prev, [peerId]: 0 }));
+          setUnreadCounts((prev) => ({ ...prev, [unreadKey]: 0 }));
         }
         return current;
       });
     });
-  }, [stream, currentUserId]);
+  }, [stream, currentUserId, parentIds]);
+
+  const parentsInTopic = useMemo(() => {
+    if (!activeTopic) return [];
+
+    const seen = new Map<string, Message>();
+    recentMessages.forEach((m) => {
+      if (!parentIds.has(peerIdForMessage(m, currentUserId))) return;
+      if (normalizeMessageTopic(m.topic) !== activeTopic) return;
+      const parentId = peerIdForMessage(m, currentUserId);
+      const existing = seen.get(parentId);
+      if (!existing || existing.sent_at < m.sent_at) seen.set(parentId, m);
+    });
+
+    return [...seen.entries()]
+      .map(([parentId, lastMsg]) => ({
+        contact: parentContacts.find((c) => c.id === parentId)!,
+        lastMsg,
+      }))
+      .filter((row) => row.contact)
+      .sort((a, b) => {
+        const ua = unreadCounts[parentTopicKey(activeTopic, a.contact.id)] ?? 0;
+        const ub = unreadCounts[parentTopicKey(activeTopic, b.contact.id)] ?? 0;
+        if (ub !== ua) return ub - ua;
+        return (b.lastMsg?.sent_at ?? "").localeCompare(a.lastMsg?.sent_at ?? "");
+      });
+  }, [activeTopic, recentMessages, parentContacts, parentIds, currentUserId, unreadCounts]);
 
   const handleThreadMessage = (msg: ThreadMessage) => {
-    if (!selectedContactId) return;
-    setLastMessages((prev) => ({ ...prev, [selectedContactId]: msg }));
+    if (!selection) return;
+    if (selection.kind === "parentTopic") {
+      setLastMessages((prev) => ({
+        ...prev,
+        [parentTopicKey(selection.topic, selection.peerId)]: msg as Message,
+        [adminTopicThreadKey(selection.topic)]: msg as Message,
+      }));
+      return;
+    }
+    setLastMessages((prev) => ({ ...prev, [selection.peerId]: msg as Message }));
   };
 
-  const selectContact = (id: string) => {
-    setSelectedContactId(id);
+  const selectParentTopic = (topic: MessageTopic, parentId: string) => {
+    setActiveTopic(topic);
+    setSelection({ kind: "parentTopic", topic, peerId: parentId });
+    setUnreadCounts((prev) => ({ ...prev, [parentTopicKey(topic, parentId)]: 0 }));
+  };
+
+  const selectTopic = (topic: MessageTopic) => {
+    setActiveTopic(topic);
+    setSelection(null);
+  };
+
+  const selectDirectContact = (id: string) => {
+    setActiveTopic(null);
+    setSelection({ kind: "direct", peerId: id });
     setUnreadCounts((prev) => ({ ...prev, [id]: 0 }));
   };
 
-  const selectedContact = contacts.find((c) => c.id === selectedContactId);
-
-  const sortedContacts = [...contacts].sort((a, b) => {
+  const sortedOtherContacts = [...otherContacts].sort((a, b) => {
     const ua = unreadCounts[a.id] ?? 0;
     const ub = unreadCounts[b.id] ?? 0;
     if (ub !== ua) return ub - ua;
@@ -150,82 +279,247 @@ function MessagesPanelContent({
     return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
   }
 
+  const threadContact = useMemo(() => {
+    if (!selection) return null;
+    const contact = contacts.find((c) => c.id === selection.peerId);
+    if (!contact) return null;
+
+    const name = displayName(contact, tShared("unknown"));
+    if (selection.kind === "parentTopic") {
+      return {
+        id: contact.id,
+        name,
+        role: contact.role,
+        subtitle: tParentTopics(`${selection.topic}.subtitle`),
+        topic: selection.topic,
+      };
+    }
+    return { id: contact.id, name, role: contact.role, topic: undefined as MessageTopic | undefined };
+  }, [selection, contacts, tParentTopics, tShared]);
+
+  const topicUnread = (topic: MessageTopic) =>
+    parentsInTopicForCount(topic).reduce(
+      (sum, parentId) => sum + (unreadCounts[parentTopicKey(topic, parentId)] ?? 0),
+      0,
+    );
+
+  function parentsInTopicForCount(topic: MessageTopic) {
+    const ids = new Set<string>();
+    recentMessages.forEach((m) => {
+      if (!parentIds.has(peerIdForMessage(m, currentUserId))) return;
+      if (normalizeMessageTopic(m.topic) !== topic) return;
+      ids.add(peerIdForMessage(m, currentUserId));
+    });
+    return [...ids];
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-base">
-      <aside className="flex w-72 shrink-0 flex-col border-r border-[--hair] bg-surface">
+      <aside className="flex w-80 shrink-0 flex-col border-r border-[--hair] bg-surface">
         <div className="border-b border-[--hair] px-5 py-4">
           <h1 className="text-lg font-black text-ink">{t("title")}</h1>
           <p className="text-xs text-muted">{t("contacts", { count: contacts.length })}</p>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {sortedContacts.map((c) => {
-            const unread = unreadCounts[c.id] ?? 0;
-            const last = lastMessages[c.id];
-            const isSelected = selectedContactId === c.id;
-            const name = displayName(c, tShared("unknown"));
+          <div className="border-b border-[--hair] py-2">
+            <p className="px-4 py-2 text-[0.65rem] font-bold uppercase tracking-wider text-muted">
+              {t("parentEnquiries")}
+            </p>
+            {MESSAGE_TOPICS.map((topic) => {
+              const unread = topicUnread(topic);
+              const last = lastMessages[adminTopicThreadKey(topic)];
 
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => selectContact(c.id)}
-                className={`flex w-full items-start gap-3 border-b border-[--hair] px-4 py-3 text-left transition-colors ${
-                  isSelected ? "bg-brand/10" : "hover:bg-surface/60"
-                }`}
-              >
-                <span
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white"
-                  style={{ background: "var(--brand)" }}
-                >
-                  {initials(c)}
-                </span>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-1">
+              return (
+                <div key={topic}>
+                  <button
+                    type="button"
+                    onClick={() => selectTopic(topic)}
+                    className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors ${
+                      activeTopic === topic && !selection ? "bg-brand/10" : "hover:bg-surface/60"
+                    }`}
+                  >
                     <span
-                      className={`truncate text-sm font-semibold ${isSelected ? "text-brand" : "text-ink"}`}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white"
+                      style={{ background: "var(--brand)" }}
                     >
-                      {name}
+                      {topic === "billing" ? "💳" : topic === "absence" ? "📅" : "💬"}
                     </span>
-                    {last && (
-                      <span className="shrink-0 text-[0.65rem] text-muted">
-                        {formatDate(last.sent_at) === tShared("today")
-                          ? formatTime(last.sent_at, locale)
-                          : formatDate(last.sent_at)}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between gap-1">
-                    <p className="truncate text-xs text-muted">
-                      {last ? (
-                        (last.from_user_id === currentUserId ? t("youPrefix") : "") + last.body
-                      ) : (
-                        <span className="capitalize text-muted/60">{c.role}</span>
-                      )}
-                    </p>
-                    {unread > 0 && (
-                      <span className="ml-1 shrink-0 rounded-full bg-brand px-1.5 py-0.5 text-[0.6rem] font-bold text-white">
-                        {unread}
-                      </span>
-                    )}
-                  </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span
+                          className={`truncate text-sm font-semibold ${
+                            activeTopic === topic ? "text-brand" : "text-ink"
+                          }`}
+                        >
+                          {tParentTopics(`${topic}.label`)}
+                        </span>
+                        {last && (
+                          <span className="shrink-0 text-[0.65rem] text-muted">
+                            {formatDate(last.sent_at) === tShared("today")
+                              ? formatTime(last.sent_at, locale)
+                              : formatDate(last.sent_at)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="truncate text-xs text-muted">
+                          {last
+                            ? (last.from_user_id === currentUserId ? t("youPrefix") : "") +
+                              last.body
+                            : tParentTopics(`${topic}.hint`)}
+                        </p>
+                        {unread > 0 && (
+                          <span className="ml-1 shrink-0 rounded-full bg-brand px-1.5 py-0.5 text-[0.6rem] font-bold text-white">
+                            {unread}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+
+                  {activeTopic === topic &&
+                    parentsInTopic.map(({ contact, lastMsg }) => {
+                      const isSelected =
+                        selection?.kind === "parentTopic" &&
+                        selection.topic === topic &&
+                        selection.peerId === contact.id;
+                      const parentUnread =
+                        unreadCounts[parentTopicKey(topic, contact.id)] ?? 0;
+                      const name = displayName(contact, tShared("unknown"));
+
+                      return (
+                        <button
+                          key={contact.id}
+                          type="button"
+                          onClick={() => selectParentTopic(topic, contact.id)}
+                          className={`flex w-full items-start gap-3 border-t border-[--hair]/60 py-2.5 pl-10 pr-4 text-left transition-colors ${
+                            isSelected ? "bg-brand/10" : "hover:bg-surface/60"
+                          }`}
+                        >
+                          <span
+                            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[0.65rem] font-bold text-white"
+                            style={{ background: "var(--brand-deep, var(--brand))" }}
+                          >
+                            {initials(contact)}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-1">
+                              <span
+                                className={`truncate text-sm font-semibold ${
+                                  isSelected ? "text-brand" : "text-ink"
+                                }`}
+                              >
+                                {name}
+                              </span>
+                              {lastMsg && (
+                                <span className="shrink-0 text-[0.65rem] text-muted">
+                                  {formatDate(lastMsg.sent_at) === tShared("today")
+                                    ? formatTime(lastMsg.sent_at, locale)
+                                    : formatDate(lastMsg.sent_at)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between gap-1">
+                              <p className="truncate text-xs text-muted">
+                                {lastMsg
+                                  ? (lastMsg.from_user_id === currentUserId
+                                      ? t("youPrefix")
+                                      : "") + lastMsg.body
+                                  : t("parentRole")}
+                              </p>
+                              {parentUnread > 0 && (
+                                <span className="ml-1 shrink-0 rounded-full bg-brand px-1.5 py-0.5 text-[0.6rem] font-bold text-white">
+                                  {parentUnread}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
                 </div>
-              </button>
-            );
-          })}
+              );
+            })}
+          </div>
+
+          {sortedOtherContacts.length > 0 && (
+            <div className="py-2">
+              <p className="px-4 py-2 text-[0.65rem] font-bold uppercase tracking-wider text-muted">
+                {t("otherContacts")}
+              </p>
+              {sortedOtherContacts.map((c) => {
+                const unread = unreadCounts[c.id] ?? 0;
+                const last = lastMessages[c.id];
+                const isSelected = selection?.kind === "direct" && selection.peerId === c.id;
+                const name = displayName(c, tShared("unknown"));
+
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => selectDirectContact(c.id)}
+                    className={`flex w-full items-start gap-3 border-b border-[--hair] px-4 py-3 text-left transition-colors ${
+                      isSelected ? "bg-brand/10" : "hover:bg-surface/60"
+                    }`}
+                  >
+                    <span
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white"
+                      style={{ background: "var(--brand)" }}
+                    >
+                      {initials(c)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span
+                          className={`truncate text-sm font-semibold ${
+                            isSelected ? "text-brand" : "text-ink"
+                          }`}
+                        >
+                          {name}
+                        </span>
+                        {last && (
+                          <span className="shrink-0 text-[0.65rem] text-muted">
+                            {formatDate(last.sent_at) === tShared("today")
+                              ? formatTime(last.sent_at, locale)
+                              : formatDate(last.sent_at)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="truncate text-xs text-muted">
+                          {last ? (
+                            (last.from_user_id === currentUserId ? t("youPrefix") : "") + last.body
+                          ) : (
+                            <span className="capitalize text-muted/60">{c.role}</span>
+                          )}
+                        </p>
+                        {unread > 0 && (
+                          <span className="ml-1 shrink-0 rounded-full bg-brand px-1.5 py-0.5 text-[0.6rem] font-bold text-white">
+                            {unread}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </aside>
 
       <div className="flex flex-1 flex-col">
-        {selectedContact && selectedContactId ? (
+        {selection && threadContact ? (
           <MessageThread
             currentUserId={currentUserId}
-            peerId={selectedContactId}
+            peerId={selection.peerId}
+            topic={threadContact.topic}
             contact={{
-              id: selectedContact.id,
-              name: displayName(selectedContact, tShared("unknown")),
-              role: selectedContact.role,
+              id: threadContact.id,
+              name: threadContact.name,
+              role: threadContact.role,
+              subtitle: threadContact.subtitle,
             }}
             onNewMessage={handleThreadMessage}
           />
