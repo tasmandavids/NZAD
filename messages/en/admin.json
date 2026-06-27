@@ -245,6 +245,19 @@
       "emptySearch": "No students match your search.",
       "empty": "No students yet — add your first one above.",
       "noClasses": "No classes",
+      "selectAll": "Select all shown",
+      "selectedCount": "{count, plural, one {# student selected} other {# students selected}}",
+      "clearSelection": "Clear selection",
+      "editProfiles": "Edit profiles",
+      "deleteSelected": "Delete selected",
+      "deleteSelectedConfirm": "Delete {count, plural, one {# student} other {# students}}? This permanently removes their profiles and cannot be undone.",
+      "bulkDeleteSuccess": "{count, plural, one {# student deleted} other {# students deleted}}.",
+      "bulkDeletePartial": "{deleted} deleted, {failed} could not be deleted (e.g. billing records).",
+      "bulkUpdateSuccess": "Updated {count, plural, one {# profile} other {# profiles}}.",
+      "bulkEdit": {
+        "title": "Edit {count, plural, one {# profile} other {# profiles}}",
+        "saveChanges": "Save changes"
+      },
       "addPanel": {
         "title": "Add student",
         "fullName": "Full name *",
@@ -255,6 +268,9 @@
       },
       "panel": {
         "noContact": "No contact",
+        "profileSection": "Profile",
+        "saveProfile": "Save profile",
+        "profileSaved": "Profile saved.",
         "viewProgress": "View progress & profile",
         "enrolledClasses": "Enrolled classes · {count}",
         "notEnrolled": "Not enrolled in any classes yet.",

@@ -244,6 +244,19 @@
       "emptySearch": "Aucun étudiant ne correspond à votre recherche.",
       "empty": "Aucun étudiant pour l'instant : ajoutez votre premier ci-dessus.",
       "noClasses": "Pas de cours",
+      "selectAll": "Tout sélectionner",
+      "selectedCount": "{count, plural, one {# élève sélectionné} other {# élèves sélectionnés}}",
+      "clearSelection": "Effacer la sélection",
+      "editProfiles": "Modifier les profils",
+      "deleteSelected": "Supprimer la sélection",
+      "deleteSelectedConfirm": "Supprimer {count, plural, one {# élève} other {# élèves}} ? Cela supprime définitivement leurs profils et ne peut pas être annulé.",
+      "bulkDeleteSuccess": "{count, plural, one {# élève supprimé} other {# élèves supprimés}}.",
+      "bulkDeletePartial": "{deleted} supprimé(s), {failed} n'ont pas pu être supprimé(s) (ex. facturation).",
+      "bulkUpdateSuccess": "{count, plural, one {# profil mis à jour} other {# profils mis à jour}}.",
+      "bulkEdit": {
+        "title": "Modifier {count, plural, one {# profil} other {# profils}}",
+        "saveChanges": "Enregistrer les modifications"
+      },
       "addPanel": {
         "title": "Ajouter un étudiant",
         "fullName": "Nom et prénom *",
@@ -254,6 +267,9 @@
       },
       "panel": {
         "noContact": "Aucun contact",
+        "profileSection": "Profil",
+        "saveProfile": "Enregistrer le profil",
+        "profileSaved": "Profil enregistré.",
         "viewProgress": "Afficher la progression et le profil",
         "enrolledClasses": "Classes inscrites · {count}",
         "notEnrolled": "Je ne suis pas encore inscrit à aucun cours.",

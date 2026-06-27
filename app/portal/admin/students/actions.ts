@@ -238,3 +238,152 @@ export async function deleteStudent(studentId: string): Promise<ActionResult> {
   revalidatePath("/portal/admin/classes");
   return { ok: true };
 }
+
+// ─── UPDATE STUDENT ───────────────────────────────────────────────────────────
+
+const UpdateStudentSchema = z.object({
+  id: z.string().uuid(),
+  fullName: z.string().min(1).max(120),
+  email: z.string().email().optional().or(z.literal("")),
+  phone: z.string().max(30).optional().or(z.literal("")),
+});
+
+export async function updateStudent(input: unknown): Promise<ActionResult> {
+  const parsed = UpdateStudentSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const { error, supabase, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+
+  const { id, fullName, email, phone } = parsed.data;
+
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", id)
+    .eq("studio_id", studioId)
+    .eq("role", "student")
+    .maybeSingle();
+  if (!existing) return { ok: false, error: "Student not found." };
+
+  if (email) {
+    const { data: dup } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("studio_id", studioId)
+      .eq("email", email)
+      .eq("role", "student")
+      .neq("id", id)
+      .maybeSingle();
+    if (dup) return { ok: false, error: "Another student already uses this email." };
+  }
+
+  const { error: updateErr } = await supabase
+    .from("profiles")
+    .update({
+      full_name: fullName,
+      email: email || null,
+      phone: phone || null,
+    })
+    .eq("id", id);
+
+  if (updateErr) return { ok: false, error: updateErr.message };
+
+  revalidatePath("/portal/admin/students");
+  revalidatePath(`/portal/admin/students/${id}`);
+  return { ok: true };
+}
+
+// ─── BULK UPDATE STUDENTS ─────────────────────────────────────────────────────
+
+const BulkUpdateSchema = z.object({
+  updates: z
+    .array(UpdateStudentSchema)
+    .min(1, "No students to update")
+    .max(50, "Too many students at once (max 50)"),
+});
+
+export async function bulkUpdateStudents(
+  input: unknown,
+): Promise<{ ok: true; updated: number } | { ok: false; error: string; partial?: number }> {
+  const parsed = BulkUpdateSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  let updated = 0;
+  let firstError: string | null = null;
+
+  for (const row of parsed.data.updates) {
+    const result = await updateStudent(row);
+    if (result.ok) {
+      updated += 1;
+    } else if (!firstError) {
+      firstError = result.error;
+    }
+  }
+
+  if (updated === 0) {
+    return { ok: false, error: firstError ?? "No students were updated." };
+  }
+
+  revalidatePath("/portal/admin/students");
+  return { ok: true, updated };
+}
+
+// ─── BULK DELETE STUDENTS ─────────────────────────────────────────────────────
+
+const BulkDeleteSchema = z.object({
+  studentIds: z.array(z.string().uuid()).min(1, "No students selected").max(50),
+});
+
+export type BulkDeleteResult =
+  | { ok: true; deleted: number; failures: { id: string; name: string; error: string }[] }
+  | { ok: false; error: string };
+
+export async function bulkDeleteStudents(input: unknown): Promise<BulkDeleteResult> {
+  const parsed = BulkDeleteSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const { error, supabase, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("id, full_name")
+    .eq("studio_id", studioId)
+    .eq("role", "student")
+    .in("id", parsed.data.studentIds);
+
+  const nameById = new Map(
+    (profiles ?? []).map((p) => [p.id, p.full_name ?? "Unknown"]),
+  );
+
+  let deleted = 0;
+  const failures: { id: string; name: string; error: string }[] = [];
+
+  for (const studentId of parsed.data.studentIds) {
+    const result = await deleteStudent(studentId);
+    if (result.ok) {
+      deleted += 1;
+    } else {
+      failures.push({
+        id: studentId,
+        name: nameById.get(studentId) ?? "Unknown",
+        error: result.error,
+      });
+    }
+  }
+
+  if (deleted === 0 && failures.length > 0) {
+    return { ok: false, error: failures[0]?.error ?? "No students were deleted." };
+  }
+
+  revalidatePath("/portal/admin/students");
+  revalidatePath("/portal/admin/classes");
+  return { ok: true, deleted, failures };
+}

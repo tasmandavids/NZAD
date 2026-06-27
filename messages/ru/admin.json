@@ -244,6 +244,19 @@
       "emptySearch": "Ни один студент не соответствует вашему запросу.",
       "empty": "Студентов пока нет — добавьте первого выше.",
       "noClasses": "Нет занятий",
+      "selectAll": "Выбрать всех",
+      "selectedCount": "{count, plural, one {# студент выбран} few {# студента выбрано} other {# студентов выбрано}}",
+      "clearSelection": "Снять выбор",
+      "editProfiles": "Редактировать профили",
+      "deleteSelected": "Удалить выбранных",
+      "deleteSelectedConfirm": "Удалить {count, plural, one {# студента} few {# студентов} other {# студентов}}? Профили будут удалены безвозвратно.",
+      "bulkDeleteSuccess": "Удалено: {count, plural, one {# студент} few {# студента} other {# студентов}}.",
+      "bulkDeletePartial": "Удалено: {deleted}, не удалено: {failed} (например, из‑за биллинга).",
+      "bulkUpdateSuccess": "Обновлено профилей: {count, plural, one {#} few {#} other {#}}.",
+      "bulkEdit": {
+        "title": "Редактировать {count, plural, one {# профиль} few {# профиля} other {# профилей}}",
+        "saveChanges": "Сохранить изменения"
+      },
       "addPanel": {
         "title": "Добавить студента",
         "fullName": "Полное имя *",
@@ -254,6 +267,9 @@
       },
       "panel": {
         "noContact": "Нет контакта",
+        "profileSection": "Профиль",
+        "saveProfile": "Сохранить профиль",
+        "profileSaved": "Профиль сохранён.",
         "viewProgress": "Посмотреть прогресс и профиль",
         "enrolledClasses": "Зачисленные классы ·{count}",
         "notEnrolled": "Пока не записался ни на какие курсы.",
