@@ -3,18 +3,21 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
-import { authCallbackUrl } from "@/lib/auth/oauth";
+import { authCallbackUrl, GOOGLE_ACCOUNT_RECOVERY_URL } from "@/lib/auth/oauth";
 
 export function OAuthButtons({
   next,
   disabled,
+  callbackError = false,
 }: {
   next: string;
   disabled?: boolean;
+  callbackError?: boolean;
 }) {
   const t = useTranslations("auth");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const googleError = error ?? (callbackError ? t("callbackError") : null);
 
   async function signInWithGoogle() {
     setBusy(true);
@@ -36,10 +39,23 @@ export function OAuthButtons({
 
   return (
     <div className="space-y-3">
-      {error && (
-        <p className="rounded-lg border border-[--hair] bg-base/50 px-3 py-2 text-sm text-red-400">
-          {error}
-        </p>
+      {googleError && (
+        <div className="space-y-2">
+          <p className="rounded-lg border border-[--hair] bg-base/50 px-3 py-2 text-sm text-red-400">
+            {googleError}
+          </p>
+          <p className="text-center text-sm text-muted">
+            {t("googleForgotPassword")}{" "}
+            <a
+              href={GOOGLE_ACCOUNT_RECOVERY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ink underline"
+            >
+              {t("googleForgotPasswordLink")}
+            </a>
+          </p>
+        </div>
       )}
 
       <button

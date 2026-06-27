@@ -20,9 +20,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(
-    callbackError ? t("callbackError") : null,
-  );
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function signIn(e: React.FormEvent) {
@@ -53,7 +51,7 @@ function LoginForm() {
         <p className="mt-1 text-sm text-muted">{t("signInSubtitle")}</p>
 
         <div className="mt-6">
-          <OAuthButtons next={next} disabled={busy} />
+          <OAuthButtons next={next} disabled={busy} callbackError={callbackError} />
         </div>
 
         <AuthDivider />

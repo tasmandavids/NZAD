@@ -1,3 +1,6 @@
+/** Google account recovery — shown when Google sign-in fails on the login page. */
+export const GOOGLE_ACCOUNT_RECOVERY_URL = "https://accounts.google.com/signin/recovery";
+
 /** Build the Supabase OAuth redirect URL with a safe internal `next` path. */
 export function authCallbackUrl(next: string): string {
   const origin = window.location.origin;

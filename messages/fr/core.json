@@ -153,7 +153,9 @@
     "continueWithGoogle": "Continue with Google",
     "continueWithApple": "Continue with Apple",
     "redirecting": "Redirecting…",
-    "orContinueWithEmail": "or continue with email"
+    "orContinueWithEmail": "or continue with email",
+    "googleForgotPassword": "Mot de passe Google oublié ?",
+    "googleForgotPasswordLink": "Réinitialiser sur Google"
   },
   "marketing": {
     "features": "Fonctionnalités",
