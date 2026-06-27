@@ -1,6 +1,10 @@
 {
-  "paymentNotCompleted": "Impossibile completare il pagamento.",
-  "paymentIncomplete": "Il pagamento non è stato completato. Prova un altro metodo.",
-  "processing": "Elaborazione…",
-  "payNow": "Paga ora"
+  "payments": {
+    "paymentNotCompleted": "Impossibile completare il pagamento.",
+    "paymentIncomplete": "Il pagamento non è stato completato. Prova un altro metodo.",
+    "processing": "Elaborazione…",
+    "payNow": "Paga ora",
+    "payAmount": "Paga {amount}",
+    "secureCheckout": "Pagamento sicuro con carta"
+  }
 }
