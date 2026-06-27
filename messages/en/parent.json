@@ -19,7 +19,9 @@
       "tableAmount": "Amount",
       "tableStatus": "Status",
       "tableDue": "Due",
-      "billingNote": "Pay outstanding invoices online, or contact the studio for billing queries.",
+      "billingNote": "Pay outstanding invoices online, or",
+      "contactBilling": "contact the studio about billing",
+      "contactStudio": "message the studio",
       "adultTitle": "My Account",
       "addChild": "+ Add dancer",
       "addChildTitle": "Add a dancer",
@@ -44,7 +46,8 @@
         "overdue": "Overdue",
         "draft": "Draft",
         "void": "Void"
-      }
+      },
+      "viewSchedule": "View weekly schedule"
     },
     "shop": {
       "title": "Studio Shop",
@@ -187,6 +190,48 @@
       "unnamedDancer": "Unnamed dancer",
       "emptyProgress": "No progress logged yet. Your instructor will update this as your dancer progresses."
     },
+    "chat": {
+      "title": "Studio chat",
+      "subtitle": "Reach the studio admin or your child's teachers.",
+      "studioSection": "Studio admin",
+      "teachersSection": "Your teachers",
+      "studioAdmin": "Studio admin",
+      "selectPrompt": "Choose a topic",
+      "selectDescription": "Billing, absences, and general questions go to the studio admin. You can also message your teachers directly.",
+      "noContacts": "Messaging is not available yet — please contact the studio by email.",
+      "youPrefix": "You: ",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "placeholder": "Write your message… (Enter to send)",
+      "teacherPlaceholder": "Message {name}…",
+      "send": "Send",
+      "noMessages": "No messages yet.",
+      "sayHello": "Start a conversation with {name}.",
+      "loadFailed": "Could not load messages.",
+      "sendFailed": "Message could not be sent.",
+      "internalChannel": "Messages are sent securely to the studio team.",
+      "parentRole": "parent",
+      "topics": {
+        "billing": {
+          "label": "Billing & payments",
+          "hint": "Invoices, payments, refunds",
+          "subtitle": "Billing enquiry",
+          "placeholder": "I have a question about my invoice or payment…"
+        },
+        "absence": {
+          "label": "Report an absence",
+          "hint": "Let us know when your dancer will be away",
+          "subtitle": "Absence notice",
+          "placeholder": "My dancer will be absent on…"
+        },
+        "general": {
+          "label": "General question",
+          "hint": "Enrolment, schedule, anything else",
+          "subtitle": "General enquiry",
+          "placeholder": "I have a question about…"
+        }
+      }
+    },
     "billing": {
       "title": "Billing & payments",
       "subtitle": "Pay invoices, review receipts, and manage auto-pay for tuition.",
@@ -204,6 +249,8 @@
       "openingPortal": "Opening…",
       "portalFailed": "Could not open the payment portal. Try again or contact the studio.",
       "stripeNotConfigured": "Online payments are not configured for this studio yet. Contact the studio to pay by other methods.",
+      "contactStudioBilling": "Questions about an invoice?",
+      "contactStudioBillingLink": "Message the studio about billing",
       "termPlanTitle": "Pay your term in 3 monthly instalments",
       "termPlanIntro": "Split your outstanding balance of {total} into {count} monthly payments of about {installment}. All open invoices on your account are combined.",
       "termPlanActiveHint": "You are on a payment plan ({paid} of {total} instalments paid). Next payment: {next}.",
@@ -219,6 +266,7 @@
       "termPayFailed": "Could not start the payment plan. Try again or contact the studio.",
       "invoiceFallback": "Invoice",
       "table": {
+        "number": "Invoice #",
         "issued": "Issued",
         "student": "Dancer",
         "amount": "Amount",
@@ -243,6 +291,35 @@
         "draft": "Draft",
         "void": "Void",
         "refunded": "Refunded"
+      }
+    },
+    "schedule": {
+      "title": "Family schedule",
+      "subtitle": "Weekly classes and studio updates for your dancers.",
+      "backToHub": "← Family Hub",
+      "prevWeek": "Previous week",
+      "nextWeek": "Next week",
+      "allChildren": "All dancers",
+      "unnamedDancer": "Unnamed dancer",
+      "nothingScheduled": "Nothing scheduled",
+      "legend": "Recurring classes come from enrolments. Extra items are added by studio staff.",
+      "days": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      },
+      "types": {
+        "private_lesson": "Private lesson",
+        "rehearsal": "Rehearsal",
+        "makeup": "Make-up class",
+        "competition": "Competition",
+        "event": "Event",
+        "note": "Note",
+        "other": "Other"
       }
     }
   }

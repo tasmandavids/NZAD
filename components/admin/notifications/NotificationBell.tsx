@@ -22,6 +22,7 @@ const TYPE_ICON: Record<string, string> = {
   invoice_overdue:      "⚠️",
   birthday_greeting:    "🎂",
   message_received:     "✉️",
+  schedule_updated:     "📅",
 };
 
 export function NotificationBell() {

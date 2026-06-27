@@ -57,7 +57,7 @@ export default async function ParentDetailPage({
     supabase
       .from("invoices")
       .select(`
-        id, amount_cents, status, due_date, issued_at, paid_at,
+        id, invoice_number, amount_cents, status, due_date, issued_at, paid_at,
         student:profiles!invoices_student_id_fkey ( full_name )
       `)
       .eq("studio_id", studioId)
@@ -66,7 +66,7 @@ export default async function ParentDetailPage({
 
     supabase
       .from("payments")
-      .select("id, amount_cents, currency, status, created_at, invoice_id, stripe_payment_intent_id")
+      .select("id, amount_cents, currency, status, created_at, invoice_id, stripe_payment_intent_id, invoices(invoice_number)")
       .eq("studio_id", studioId)
       .eq("payer_id", id)
       .eq("status", "succeeded")
@@ -138,6 +138,7 @@ export default async function ParentDetailPage({
     const student = inv.student as unknown as { full_name: string | null } | null;
     return {
       id: inv.id,
+      invoiceNumber: inv.invoice_number as number,
       amountCents: inv.amount_cents as number,
       status: inv.status as string,
       dueDate: inv.due_date as string | null,
@@ -147,15 +148,19 @@ export default async function ParentDetailPage({
     };
   });
 
-  const payments: ParentPayment[] = (paymentsRes.data ?? []).map((pay) => ({
-    id: pay.id,
-    amountCents: pay.amount_cents as number,
-    currency: pay.currency as string,
-    status: pay.status as string,
-    createdAt: pay.created_at as string,
-    invoiceId: pay.invoice_id as string | null,
-    stripePaymentIntentId: pay.stripe_payment_intent_id as string | null,
-  }));
+  const payments: ParentPayment[] = (paymentsRes.data ?? []).map((pay) => {
+    const invoice = pay.invoices as unknown as { invoice_number: number } | null;
+    return {
+      id: pay.id,
+      amountCents: pay.amount_cents as number,
+      currency: pay.currency as string,
+      status: pay.status as string,
+      createdAt: pay.created_at as string,
+      invoiceId: pay.invoice_id as string | null,
+      invoiceNumber: invoice?.invoice_number ?? null,
+      stripePaymentIntentId: pay.stripe_payment_intent_id as string | null,
+    };
+  });
 
   const orders: ParentOrder[] = (ordersRes.data ?? []).map((o) => ({
     id: o.id,

@@ -115,6 +115,7 @@
     },
     "parent": {
       "familyHub": "Espace famille",
+      "schedule": "Planning",
       "billing": "Facturation et paiements",
       "studioChat": "Chat studio",
       "studioEmail": "E-mail du studio"

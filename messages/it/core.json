@@ -115,6 +115,7 @@
     },
     "parent": {
       "familyHub": "Hub famiglia",
+      "schedule": "Orario",
       "billing": "Fatturazione e pagamenti",
       "studioChat": "Chat studio",
       "studioEmail": "Email dello studio"

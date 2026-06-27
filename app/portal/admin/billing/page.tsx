@@ -19,6 +19,7 @@ const BillingDashboard = dynamic(
 
 export type InvoiceRow = {
   id: string;
+  invoiceNumber: number;
   payerId: string;
   amountCents: number;
   status: string;
@@ -76,6 +77,7 @@ function mapInvoice(inv: Record<string, unknown>): InvoiceRow {
   const payer = inv.payer as { full_name: string | null } | null;
   return {
     id: inv.id as string,
+    invoiceNumber: inv.invoice_number as number,
     payerId: inv.payer_id as string,
     amountCents: inv.amount_cents as number,
     status: inv.status as string,
@@ -94,7 +96,7 @@ export default async function BillingPage() {
   const tCommon = await getTranslations("common");
 
   const invoiceSelect = `
-    id, payer_id, amount_cents, status, due_date, issued_at, paid_at,
+    id, invoice_number, payer_id, amount_cents, status, due_date, issued_at, paid_at,
     stripe_payment_intent_id, xero_invoice_id,
     profiles!student_id ( full_name ),
     payer:profiles!payer_id ( full_name )

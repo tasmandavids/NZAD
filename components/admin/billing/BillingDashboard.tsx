@@ -35,6 +35,7 @@ import { formatMoney } from "@/lib/currency";
 import { formatMonthKey, formatShortDate } from "@/lib/xero/format";
 import { intervalLabel, type BillingInterval } from "@/lib/subscriptions/pricing";
 import Link from "next/link";
+import { formatInvoiceNumber } from "@/lib/invoices/format-invoice-number";
 
 const NZD = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 0 });
 const NZD2 = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" });
@@ -542,6 +543,7 @@ export function BillingDashboard({
   ];
 
   const invoiceHeaders = [
+    t("allInvoices.table.number"),
     t("allInvoices.table.dancer"),
     t("allInvoices.table.parent"),
     t("allInvoices.table.amount"),
@@ -932,7 +934,7 @@ export function BillingDashboard({
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-sm text-muted">
+                    <td colSpan={8} className="px-4 py-10 text-center text-sm text-muted">
                       {t("allInvoices.empty")}
                     </td>
                   </tr>
@@ -942,6 +944,9 @@ export function BillingDashboard({
                       key={inv.id}
                       className="border-b border-[--hair] last:border-0 hover:bg-[color-mix(in_srgb,var(--brand)_3%,transparent)]"
                     >
+                      <td className="px-4 py-3 font-mono text-xs text-ink">
+                        {formatInvoiceNumber(inv.invoiceNumber)}
+                      </td>
                       <td className="px-4 py-3 text-ink">
                         {inv.studentName ?? <span className="text-muted">{tShared("dash")}</span>}
                       </td>

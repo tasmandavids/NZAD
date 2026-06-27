@@ -307,6 +307,40 @@
         "saveEntry": "Save entry",
         "history": "Progress history · {count}",
         "empty": "No progress logged yet. Add the first entry above."
+      },
+      "schedule": {
+        "title": "Schedule",
+        "subtitle": "Add private lessons, rehearsals, and other items. Parents are notified automatically.",
+        "addEntry": "+ Add",
+        "newEntry": "New schedule item",
+        "editEntry": "Edit schedule item",
+        "cancelEntry": "Cancel item",
+        "days": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        },
+        "fields": {
+          "title": "Title",
+          "description": "Notes (optional)",
+          "type": "Type",
+          "location": "Location (optional)",
+          "startTime": "Start time",
+          "endTime": "End time"
+        },
+        "types": {
+          "private_lesson": "Private lesson",
+          "rehearsal": "Rehearsal",
+          "makeup": "Make-up class",
+          "competition": "Competition",
+          "event": "Event",
+          "note": "Note",
+          "other": "Other"
+        }
       }
     },
     "parents": {
@@ -375,6 +409,7 @@
         "invoicesTitle": "Invoices",
         "noInvoices": "No invoices yet.",
         "table": {
+          "number": "Invoice #",
           "issued": "Issued",
           "student": "Student",
           "amount": "Amount",
@@ -450,6 +485,7 @@
         "searchPlaceholder": "Search…",
         "empty": "No invoices found.",
         "table": {
+          "number": "Invoice #",
           "dancer": "Dancer",
           "parent": "Parent",
           "amount": "Amount",

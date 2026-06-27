@@ -108,6 +108,7 @@
     },
     "teacher": {
       "schedule": "Schedule & Roll",
+      "messages": "Messages",
       "affiliations": "Studio affiliations"
     },
     "office": {
@@ -115,6 +116,7 @@
     },
     "parent": {
       "familyHub": "Family Hub",
+      "schedule": "Schedule",
       "billing": "Billing & payments",
       "studioChat": "Studio chat",
       "studioEmail": "Studio email"

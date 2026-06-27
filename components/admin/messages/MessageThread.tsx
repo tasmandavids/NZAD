@@ -32,6 +32,8 @@ interface MessageThreadProps {
   peerId: string;
   contact: ThreadContact;
   compact?: boolean;
+  placeholder?: string;
+  messagesNamespace?: string;
   onNewMessage?: (msg: ThreadMessage) => void;
 }
 
@@ -40,9 +42,11 @@ export function MessageThread({
   peerId,
   contact,
   compact = false,
+  placeholder,
+  messagesNamespace = "admin.messages",
   onNewMessage,
 }: MessageThreadProps) {
-  const t = useTranslations("admin.messages");
+  const t = useTranslations(messagesNamespace);
   const tShared = useTranslations("admin.shared");
   const stream = useMessageStream();
   const [thread, setThread] = useState<ThreadMessage[]>([]);
@@ -243,7 +247,7 @@ export function MessageThread({
             value={draftText}
             onChange={(e) => setDraftText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={t("placeholder")}
+            placeholder={placeholder ?? t("placeholder")}
             rows={1}
             className="flex-1 resize-none rounded-xl border border-[--hair] bg-base px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:border-brand focus:outline-none"
             style={{ maxHeight: "120px", overflowY: "auto" }}

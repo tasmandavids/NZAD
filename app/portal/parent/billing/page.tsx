@@ -18,7 +18,7 @@ export default async function ParentBillingPage() {
       supabase
         .from("invoices")
         .select(`
-          id, amount_cents, status, due_date, issued_at, paid_at,
+          id, invoice_number, amount_cents, status, due_date, issued_at, paid_at,
           profiles!student_id ( full_name )
         `)
         .eq("payer_id", user!.id)
@@ -27,7 +27,7 @@ export default async function ParentBillingPage() {
 
       supabase
         .from("payments")
-        .select("id, amount_cents, status, created_at, invoice_id")
+        .select("id, amount_cents, status, created_at, invoice_id, invoices(invoice_number)")
         .eq("payer_id", user!.id)
         .eq("status", "succeeded")
         .order("created_at", { ascending: false })
@@ -65,6 +65,7 @@ export default async function ParentBillingPage() {
     const student = inv.profiles as unknown as { full_name: string | null } | null;
     return {
       id: inv.id as string,
+      invoiceNumber: inv.invoice_number as number,
       amountCents: inv.amount_cents as number,
       status: inv.status as string,
       dueDate: inv.due_date as string | null,
@@ -74,13 +75,17 @@ export default async function ParentBillingPage() {
     };
   });
 
-  const payments = (paymentsRes.data ?? []).map((p) => ({
-    id: p.id as string,
-    amountCents: p.amount_cents as number,
-    status: p.status as string,
-    createdAt: p.created_at as string,
-    invoiceId: p.invoice_id as string | null,
-  }));
+  const payments = (paymentsRes.data ?? []).map((p) => {
+    const invoice = p.invoices as unknown as { invoice_number: number } | null;
+    return {
+      id: p.id as string,
+      amountCents: p.amount_cents as number,
+      status: p.status as string,
+      createdAt: p.created_at as string,
+      invoiceId: p.invoice_id as string | null,
+      invoiceNumber: invoice?.invoice_number ?? null,
+    };
+  });
 
   const orders = (ordersRes.data ?? []).map((o) => ({
     id: o.id as string,

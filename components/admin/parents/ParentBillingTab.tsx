@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import type { ParentInvoice, ParentOrder, ParentPayment } from "@/lib/parents/types";
 import { formatMoney } from "@/lib/currency";
+import { formatInvoiceNumber } from "@/lib/invoices/format-invoice-number";
 
 const STATUS_KEYS = ["paid", "sent", "overdue", "draft", "void", "refunded"] as const;
 
@@ -84,6 +85,7 @@ export default function ParentBillingTab({
             <table className="w-full min-w-[520px] text-left text-sm">
               <thead>
                 <tr className="border-b border-[--hair] bg-surface/60 text-xs uppercase tracking-wider text-muted">
+                  <th className="px-4 py-3 font-semibold">{t("table.number")}</th>
                   <th className="px-4 py-3 font-semibold">{t("table.issued")}</th>
                   <th className="px-4 py-3 font-semibold">{t("table.student")}</th>
                   <th className="px-4 py-3 font-semibold">{t("table.amount")}</th>
@@ -94,6 +96,9 @@ export default function ParentBillingTab({
               <tbody>
                 {invoices.map((inv) => (
                   <tr key={inv.id} className="border-b border-[--hair] last:border-0">
+                    <td className="px-4 py-3 font-mono text-xs text-ink">
+                      {formatInvoiceNumber(inv.invoiceNumber)}
+                    </td>
                     <td className="px-4 py-3 text-ink">{fmtDate(inv.issuedAt)}</td>
                     <td className="px-4 py-3 text-muted">{inv.studentName ?? tShared("dash")}</td>
                     <td className="px-4 py-3 font-medium text-ink">
@@ -134,7 +139,9 @@ export default function ParentBillingTab({
                       {formatMoney(p.amountCents)}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-muted">
-                      {p.invoiceId ? p.invoiceId.slice(0, 8) + "…" : tShared("dash")}
+                      {p.invoiceNumber != null
+                        ? formatInvoiceNumber(p.invoiceNumber)
+                        : tShared("dash")}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-muted">
                       {p.stripePaymentIntentId?.slice(0, 16) ?? tShared("dash")}

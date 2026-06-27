@@ -374,6 +374,7 @@
         "invoicesTitle": "Счета-фактуры",
         "noInvoices": "Счетов-фактур пока нет.",
         "table": {
+          "number": "№ счёта",
           "issued": "Изданный",
           "student": "Студент",
           "amount": "Количество",
@@ -449,6 +450,7 @@
         "searchPlaceholder": "Поиск…",
         "empty": "Счета-фактуры не найдены.",
         "table": {
+          "number": "№ счёта",
           "dancer": "Танцор",
           "parent": "Родитель",
           "amount": "Количество",

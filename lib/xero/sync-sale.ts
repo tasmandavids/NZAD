@@ -11,6 +11,7 @@ import {
   Payment,
 } from "xero-node";
 import { loadStudioXeroClient } from "./client";
+import { formatInvoiceNumber } from "@/lib/invoices/format-invoice-number";
 import { dollarsFromCents } from "./reports";
 import type { XeroConnectionSettings, XeroSyncSourceType } from "./types";
 import { DEFAULT_XERO_SETTINGS } from "./types";
@@ -201,7 +202,7 @@ async function loadInvoiceRecord(
   const { data: inv } = await supabase
     .from("invoices")
     .select(`
-      id, studio_id, payer_id, amount_cents, due_date, issued_at, xero_invoice_id,
+      id, studio_id, payer_id, amount_cents, due_date, issued_at, xero_invoice_id, invoice_number,
       student:profiles!student_id ( full_name )
     `)
     .eq("id", invoiceId)
@@ -221,7 +222,7 @@ async function loadInvoiceRecord(
     dueDate: (inv.due_date as string | null) ?? null,
     issuedAt: (inv.issued_at as string | null) ?? null,
     xeroInvoiceId: (inv.xero_invoice_id as string | null) ?? null,
-    reference: `INV-${(inv.id as string).slice(0, 8)}`,
+    reference: formatInvoiceNumber(inv.invoice_number as number),
     lineDescription,
     lineItems: [
       {

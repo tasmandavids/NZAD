@@ -12,6 +12,9 @@ import ProgressTracker, {
   type ProgressEntry,
 } from "@/components/admin/students/ProgressTracker";
 import DeleteStudentButton from "@/components/admin/students/DeleteStudentButton";
+import StudentSchedulePanel from "@/components/admin/students/StudentSchedulePanel";
+import type { ScheduleEntry } from "@/lib/students/schedule-types";
+import { getWeekRange } from "@/lib/staff/week";
 
 export type StudentDetail = {
   id: string;
@@ -33,7 +36,7 @@ export default async function StudentDetailPage({
   const t = await getTranslations("admin.students.detail");
   const tShared = await getTranslations("admin.shared");
 
-  const [studentRes, progressRes] = await Promise.all([
+  const [studentRes, progressRes, scheduleRes] = await Promise.all([
     supabase
       .from("profiles")
       .select(
@@ -58,6 +61,15 @@ export default async function StudentDetailPage({
       )
       .eq("student_id", id)
       .order("logged_at", { ascending: false }),
+
+    supabase
+      .from("student_schedule_entries")
+      .select(
+        "id, student_id, title, description, entry_date, start_time, end_time, entry_type, location_name, cancelled_at",
+      )
+      .eq("student_id", id)
+      .order("entry_date")
+      .order("start_time"),
   ]);
 
   if (studentRes.error || !studentRes.data) notFound();
@@ -92,10 +104,25 @@ export default async function StudentDetailPage({
     };
   });
 
+  const scheduleEntries: ScheduleEntry[] = (scheduleRes.data ?? []).map((row) => ({
+    id: row.id as string,
+    studentId: row.student_id as string,
+    title: row.title as string,
+    description: (row.description as string | null) ?? null,
+    entryDate: row.entry_date as string,
+    startTime: (row.start_time as string | null)?.slice(0, 5) ?? null,
+    endTime: (row.end_time as string | null)?.slice(0, 5) ?? null,
+    entryType: row.entry_type as ScheduleEntry["entryType"],
+    locationName: (row.location_name as string | null) ?? null,
+    cancelledAt: (row.cancelled_at as string | null) ?? null,
+  }));
+
+  const weekStart = getWeekRange().weekStart;
+
   void DAY_SHORT;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 p-6">
+    <div className="mx-auto max-w-5xl space-y-8 p-6">
       <div>
         <Link
           href="/portal/admin/students"
@@ -132,6 +159,12 @@ export default async function StudentDetailPage({
       </div>
 
       <ProgressTracker studentId={student.id} entries={entries} />
+
+      <StudentSchedulePanel
+        studentId={student.id}
+        entries={scheduleEntries}
+        weekStart={weekStart}
+      />
 
       <DeleteStudentButton studentId={student.id} studentName={student.name} />
     </div>

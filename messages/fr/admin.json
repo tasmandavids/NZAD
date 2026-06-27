@@ -374,6 +374,7 @@
         "invoicesTitle": "Factures",
         "noInvoices": "Pas encore de factures.",
         "table": {
+          "number": "N° facture",
           "issued": "Émis",
           "student": "Étudiant",
           "amount": "Montant",
@@ -449,6 +450,7 @@
         "searchPlaceholder": "Rechercher…",
         "empty": "Aucune facture trouvée.",
         "table": {
+          "number": "N° facture",
           "dancer": "Danseur",
           "parent": "Mère",
           "amount": "Montant",

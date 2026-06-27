@@ -374,6 +374,7 @@
         "invoicesTitle": "Fatture",
         "noInvoices": "Ancora nessuna fattura.",
         "table": {
+          "number": "N. fattura",
           "issued": "Rilasciato",
           "student": "Studente",
           "amount": "Importo",
@@ -449,6 +450,7 @@
         "searchPlaceholder": "Cerca...",
         "empty": "Nessuna fattura trovata.",
         "table": {
+          "number": "N. fattura",
           "dancer": "Ballerino",
           "parent": "Genitore",
           "amount": "Importo",

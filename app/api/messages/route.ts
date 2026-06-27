@@ -6,6 +6,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isUuid } from "@/lib/validation/uuid";
+import {
+  canMessagePeer,
+  loadPeerProfile,
+} from "@/lib/portal/message-recipients";
+import type { Role } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -17,6 +22,30 @@ export async function GET(req: NextRequest) {
   const peerId = req.nextUrl.searchParams.get("with");
   if (!peerId) return NextResponse.json({ error: "Missing ?with param" }, { status: 400 });
   if (!isUuid(peerId)) return NextResponse.json({ error: "Invalid peer id" }, { status: 400 });
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("studio_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.studio_id) {
+    return NextResponse.json({ error: "Profile not found" }, { status: 400 });
+  }
+
+  const peer = await loadPeerProfile(supabase, peerId, profile.studio_id);
+  if (!peer) {
+    return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
+  }
+
+  const allowed = await canMessagePeer(
+    supabase,
+    { id: user.id, role: profile.role as Role, studioId: profile.studio_id },
+    peer,
+  );
+  if (!allowed) {
+    return NextResponse.json({ error: "Not allowed to message this contact" }, { status: 403 });
+  }
 
   // Fetch the thread (bidirectional) ordered oldest-first
   const { data, error } = await supabase
@@ -84,7 +113,7 @@ export async function POST(req: NextRequest) {
   // Resolve studio_id from profile
   const { data: profile } = await supabase
     .from("profiles")
-    .select("studio_id")
+    .select("studio_id, role")
     .eq("id", user.id)
     .single();
 
@@ -92,15 +121,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Profile not found" }, { status: 400 });
   }
 
-  const { data: recipient } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", toUserId)
-    .eq("studio_id", profile.studio_id)
-    .maybeSingle();
+  const peer = await loadPeerProfile(supabase, toUserId, profile.studio_id);
+  if (!peer) {
+    return NextResponse.json({ error: "Recipient not found" }, { status: 404 });
+  }
 
-  if (!recipient) {
-    return NextResponse.json({ error: "Recipient not found" }, { status: 400 });
+  const allowed = await canMessagePeer(
+    supabase,
+    { id: user.id, role: profile.role as Role, studioId: profile.studio_id },
+    peer,
+  );
+  if (!allowed) {
+    return NextResponse.json({ error: "Not allowed to message this contact" }, { status: 403 });
   }
 
   const { data, error } = await supabase
