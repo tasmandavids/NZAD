@@ -34,6 +34,7 @@
       "none": "- aucun -",
       "unassignedOption": "- non attribué -",
       "chooseClass": "— choisissez la classe —",
+      "chooseStudent": "— choisir un élève —",
       "notLinkedStudent": "— Non lié à un étudiant —",
       "familyPlan": "— Forfait famille —",
       "unchanged": "- inchangé -",
@@ -236,6 +237,17 @@
         "description": "Cela supprimera la classe et tous ses enregistrements d'inscription. Cela ne peut pas être annulé.",
         "deleteSeries": "Supprimez toute la série récurrente (chaque jour de la semaine dans ce groupe), pas seulement cette classe.",
         "deleteSeriesButton": "Supprimer la série"
+      },
+      "panel": {
+        "enrollment": "Inscription",
+        "enrolledStudents": "Élèves inscrits · {count}",
+        "waitlisted": "Liste d'attente · {count}",
+        "noStudents": "Aucun élève inscrit pour l'instant.",
+        "noWaitlist": "Personne en liste d'attente.",
+        "loading": "Chargement…",
+        "editClass": "Modifier la classe",
+        "addStudent": "Ajouter un élève",
+        "waitlistHint": "Cours complet — les nouvelles inscriptions iront en liste d'attente."
       }
     },
     "students": {

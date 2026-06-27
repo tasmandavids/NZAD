@@ -48,6 +48,127 @@ const ClassSchema = z.object({
 export type ClassFormData = z.infer<typeof ClassSchema>;
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
+export type ClassEnrollmentRow = {
+  studentId: string;
+  name: string | null;
+  email: string | null;
+  status: "active" | "waitlisted";
+  enrolledAt: string;
+};
+
+export type ClassEnrollmentsResult =
+  | { ok: true; data: ClassEnrollmentRow[] }
+  | { ok: false; error: string };
+
+export type StudentOption = {
+  studentId: string;
+  name: string | null;
+  email: string | null;
+};
+
+export type StudentOptionsResult =
+  | { ok: true; data: StudentOption[] }
+  | { ok: false; error: string };
+
+// ─── ENROLLMENTS FOR A CLASS ─────────────────────────────────────────────────
+
+export async function getClassEnrollments(classId: string): Promise<ClassEnrollmentsResult> {
+  if (!classId) return { ok: false, error: "Missing class ID" };
+
+  const { error, supabase, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+
+  const { data: cls } = await supabase
+    .from("classes")
+    .select("id")
+    .eq("id", classId)
+    .eq("studio_id", studioId)
+    .single();
+
+  if (!cls) return { ok: false, error: "Class not found." };
+
+  const { data: rows, error: dbError } = await supabase
+    .from("enrollments")
+    .select(`
+      student_id, status, enrolled_at,
+      profiles!student_id ( full_name, email )
+    `)
+    .eq("class_id", classId)
+    .eq("studio_id", studioId)
+    .in("status", ["active", "waitlisted"])
+    .order("status")
+    .order("enrolled_at");
+
+  if (dbError) return { ok: false, error: dbError.message };
+
+  const data: ClassEnrollmentRow[] = (rows ?? [])
+    .map((r) => {
+      const profile = r.profiles as unknown as { full_name: string | null; email: string | null } | null;
+      return {
+        studentId: r.student_id as string,
+        name: profile?.full_name ?? null,
+        email: profile?.email ?? null,
+        status: r.status as "active" | "waitlisted",
+        enrolledAt: r.enrolled_at as string,
+      };
+    })
+    .sort((a, b) => {
+      if (a.status !== b.status) return a.status === "active" ? -1 : 1;
+      return (a.name ?? "").localeCompare(b.name ?? "");
+    });
+
+  return { ok: true, data };
+}
+
+// ─── STUDENTS NOT YET IN CLASS (for enroll dropdown) ─────────────────────────
+
+export async function getStudentsNotInClass(classId: string): Promise<StudentOptionsResult> {
+  if (!classId) return { ok: false, error: "Missing class ID" };
+
+  const { error, supabase, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+
+  const { data: cls } = await supabase
+    .from("classes")
+    .select("id")
+    .eq("id", classId)
+    .eq("studio_id", studioId)
+    .single();
+
+  if (!cls) return { ok: false, error: "Class not found." };
+
+  const [profilesRes, enrolledRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("studio_id", studioId)
+      .eq("role", "student")
+      .order("full_name"),
+    supabase
+      .from("enrollments")
+      .select("student_id")
+      .eq("class_id", classId)
+      .eq("studio_id", studioId)
+      .in("status", ["active", "waitlisted"]),
+  ]);
+
+  if (profilesRes.error) return { ok: false, error: profilesRes.error.message };
+
+  const enrolledIds = new Set(
+    (enrolledRes.data ?? []).map((r) => r.student_id as string),
+  );
+
+  const data: StudentOption[] = (profilesRes.data ?? [])
+    .filter((p) => !enrolledIds.has(p.id))
+    .map((p) => ({
+      studentId: p.id,
+      name: p.full_name,
+      email: p.email,
+    }));
+
+  return { ok: true, data };
+}
+
 // ─── CREATE ─────────────────────────────────────────────────────────────────
 
 export async function createClass(input: unknown): Promise<ActionResult> {

@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl";
 import { useFormatTimeShort } from "@/lib/i18n/client";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { rescheduleClass } from "@/app/portal/admin/classes/schedule-actions";
+import { ClassDetailPanel } from "@/components/admin/classes/ClassDetailPanel";
 import { ClassEditPanel } from "@/components/admin/classes/ClassEditPanel";
 import type { ClassRow, TeacherOption } from "@/app/portal/admin/classes/page";
 import {
@@ -96,13 +97,13 @@ function ClassCard({
   block,
   dragging,
   durationLabel,
-  onEdit,
+  onView,
   dragHandleProps,
 }: {
   block: ScheduleClass;
   dragging?: boolean;
   durationLabel?: string;
-  onEdit: () => void;
+  onView: () => void;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
 }) {
   const ratio = block.capacity > 0 ? block.enrolled / block.capacity : 0;
@@ -130,7 +131,7 @@ function ClassCard({
         </div>
         <button
           type="button"
-          onClick={onEdit}
+          onClick={onView}
           className="min-w-0 flex-1 text-left"
         >
           <span className="block truncate text-xs font-bold" style={{ color: textColor }}>
@@ -173,7 +174,7 @@ export function ScheduleBoard({
   const [lists, setLists] = useState<Lists>(() => buildLists(classes, timeSlots));
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [editing, setEditing] = useState<ClassRow | null>(null);
+  const [panel, setPanel] = useState<{ type: "view" | "edit"; cls: ClassRow } | null>(null);
 
   useEffect(() => {
     if (isPending) return;
@@ -321,7 +322,7 @@ export function ScheduleBoard({
                                 ? t("durationMin", { minutes: block.durationMin })
                                 : undefined
                             }
-                            onEdit={() => setEditing(toClassRow(block))}
+                            onView={() => setPanel({ type: "view", cls: toClassRow(block) })}
                           />
                         </div>
                       )}
@@ -388,7 +389,7 @@ export function ScheduleBoard({
                                           ? t("durationMin", { minutes: block.durationMin })
                                           : undefined
                                       }
-                                      onEdit={() => setEditing(toClassRow(block))}
+                                      onView={() => setPanel({ type: "view", cls: toClassRow(block) })}
                                     />
                                   </div>
                                 )}
@@ -408,12 +409,19 @@ export function ScheduleBoard({
       </DragDropContext>
 
       <AnimatePresence>
-        {editing && (
+        {panel?.type === "view" && (
+          <ClassDetailPanel
+            cls={panel.cls}
+            onClose={() => setPanel(null)}
+            onEdit={() => setPanel({ type: "edit", cls: panel.cls })}
+          />
+        )}
+        {panel?.type === "edit" && (
           <ClassEditPanel
             mode="edit"
-            editing={editing}
+            editing={panel.cls}
             teachers={teachers}
-            onClose={() => setEditing(null)}
+            onClose={() => setPanel(null)}
           />
         )}
       </AnimatePresence>

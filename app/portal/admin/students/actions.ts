@@ -47,16 +47,16 @@ export async function enrollStudent(input: unknown): Promise<ActionResult> {
     .single();
 
   if (!cap) return { ok: false, error: "Class not found." };
-  if (Number(cap.enrolled) >= Number(cap.capacity)) {
-    return { ok: false, error: "Class is full. Student will be placed on waitlist." };
-  }
+
+  const isFull = Number(cap.enrolled) >= Number(cap.capacity);
+  const status = isFull ? "waitlisted" : "active";
 
   const { error: dbError } = await supabase.from("enrollments").upsert(
     {
       studio_id:  studioId,
       student_id: studentId,
       class_id:   classId,
-      status:     "active",
+      status,
     },
     { onConflict: "student_id,class_id" },
   );
@@ -65,6 +65,7 @@ export async function enrollStudent(input: unknown): Promise<ActionResult> {
 
   revalidatePath("/portal/admin/students");
   revalidatePath("/portal/admin/classes");
+  revalidatePath("/portal/admin");
   return { ok: true };
 }
 
@@ -90,6 +91,7 @@ export async function unenrollStudent(
 
   revalidatePath("/portal/admin/students");
   revalidatePath("/portal/admin/classes");
+  revalidatePath("/portal/admin");
   return { ok: true };
 }
 
@@ -120,6 +122,7 @@ export async function dropEnrollment(
 
   revalidatePath("/portal/admin/students");
   revalidatePath("/portal/admin/classes");
+  revalidatePath("/portal/admin");
   return { ok: true };
 }
 

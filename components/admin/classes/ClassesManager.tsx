@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { deleteClass, deleteRecurringGroup } from "@/app/portal/admin/classes/actions";
 import type { ClassRow, TeacherOption } from "@/app/portal/admin/classes/page";
+import { ClassDetailPanel } from "@/components/admin/classes/ClassDetailPanel";
 import { ClassEditPanel } from "@/components/admin/classes/ClassEditPanel";
 import { formatMoney } from "@/lib/currency";
 import { useFormatTimeShort } from "@/lib/i18n/client";
@@ -91,11 +92,13 @@ function DeleteConfirm({
 
 function ClassRowItem({
   cls,
+  onView,
   onEdit,
   onDelete,
   readOnly = false,
 }: {
   cls: ClassRow;
+  onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
   readOnly?: boolean;
@@ -108,7 +111,10 @@ function ClassRowItem({
   const isFull = fill >= 1;
 
   return (
-    <tr className="border-b border-[--hair] last:border-0 hover:bg-[color-mix(in_srgb,var(--brand)_3%,transparent)] transition-colors">
+    <tr
+      className="border-b border-[--hair] last:border-0 hover:bg-[color-mix(in_srgb,var(--brand)_3%,transparent)] transition-colors cursor-pointer"
+      onClick={onView}
+    >
       <td className="px-4 py-3">
         <p className="flex items-center gap-2 font-semibold text-ink text-sm">
           {cls.name}
@@ -169,13 +175,13 @@ function ClassRowItem({
       {!readOnly && (
         <td className="px-4 py-3 text-right">
           <button
-            onClick={onEdit}
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className="mr-2 text-xs text-muted hover:text-ink transition-colors"
           >
             {tCommon("edit")}
           </button>
           <button
-            onClick={onDelete}
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="text-xs text-muted hover:text-red-400 transition-colors"
           >
             {tCommon("delete")}
@@ -199,6 +205,7 @@ export default function ClassesManager({
 
   type Panel =
     | { type: "create" }
+    | { type: "view"; cls: ClassRow }
     | { type: "edit"; cls: ClassRow }
     | { type: "delete"; cls: ClassRow }
     | null;
@@ -288,6 +295,7 @@ export default function ClassesManager({
                     key={cls.id}
                     cls={cls}
                     readOnly={readOnly}
+                    onView={() => setPanel({ type: "view", cls })}
                     onEdit={() => setPanel({ type: "edit", cls })}
                     onDelete={() => setPanel({ type: "delete", cls })}
                   />
@@ -299,6 +307,14 @@ export default function ClassesManager({
       </div>
 
       <AnimatePresence>
+        {panel?.type === "view" && (
+          <ClassDetailPanel
+            cls={panel.cls}
+            readOnly={readOnly}
+            onClose={() => setPanel(null)}
+            onEdit={() => setPanel({ type: "edit", cls: panel.cls })}
+          />
+        )}
         {(panel?.type === "create" || panel?.type === "edit") && (
           <ClassEditPanel
             mode={panel.type}

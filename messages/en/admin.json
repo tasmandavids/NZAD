@@ -35,6 +35,7 @@
       "none": "— none —",
       "unassignedOption": "— unassigned —",
       "chooseClass": "— choose class —",
+      "chooseStudent": "— choose student —",
       "notLinkedStudent": "— Not linked to a student —",
       "familyPlan": "— Family plan —",
       "unchanged": "— unchanged —",
@@ -183,7 +184,7 @@
       },
       "schedule": {
         "title": "Weekly schedule",
-        "subtitle": "Drag classes into time slots. Click a class to edit. Colour shows capacity.",
+        "subtitle": "Drag classes into time slots. Click a class to view enrolled students. Colour shows capacity.",
         "unscheduled": "Unscheduled",
         "allScheduled": "All classes scheduled 🎉",
         "durationMin": "{minutes}m",
@@ -198,7 +199,7 @@
     },
     "classes": {
       "title": "Classes",
-      "subtitle": "{count, plural, one {# class} other {# classes}} · manage your timetable",
+      "subtitle": "{count, plural, one {# class} other {# classes}} · click a class to view enrolled students",
       "newClass": "+ New class",
       "searchPlaceholder": "Search by name, discipline or level…",
       "emptySearch": "No classes match your search.",
@@ -238,6 +239,17 @@
         "description": "This will remove the class and all its enrollment records. This cannot be undone.",
         "deleteSeries": "Delete the entire recurring series (every weekday in this group), not just this one class.",
         "deleteSeriesButton": "Delete series"
+      },
+      "panel": {
+        "enrollment": "Enrollment",
+        "enrolledStudents": "Enrolled students · {count}",
+        "waitlisted": "Waitlist · {count}",
+        "noStudents": "No students enrolled yet.",
+        "noWaitlist": "No one on the waitlist.",
+        "loading": "Loading…",
+        "editClass": "Edit class",
+        "addStudent": "Add a student",
+        "waitlistHint": "Class is full — new enrollments will go on the waitlist."
       }
     },
     "students": {
