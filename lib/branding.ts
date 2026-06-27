@@ -58,7 +58,7 @@ export function derivePalette(brandColor: string): Palette {
 
 /** Neutral surfaces + atmosphere knobs for each base. The cinematic overlays
  *  (spotlight glow, grain, vignette) dial themselves down in light mode. */
-const BASES: Record<ThemeBase, Record<string, string>> = {
+export const THEME_BASE_VARS: Record<ThemeBase, Record<string, string>> = {
   dark: {
     // Midnight base — the night sky the brand lives on
     base: "#1B1A38", surface: "#24234A", text: "#F7F4EE", muted: "#6C6A7E",
@@ -73,21 +73,28 @@ const BASES: Record<ThemeBase, Record<string, string>> = {
 
 /** The complete set of CSS custom properties for a studio — drop straight onto
  *  <html style={...}> (SSR) or any preview wrapper (admin editor). */
+/** Surface + text tokens for a light/dark base — used by branding and portal theme override. */
+export function themeBaseCssVars(base: ThemeBase): Record<string, string> {
+  const tokens = THEME_BASE_VARS[base];
+  return {
+    "--base": tokens.base,
+    "--surface": tokens.surface,
+    "--text": tokens.text,
+    "--muted": tokens.muted,
+    "--hair": tokens.hair,
+    "--glow": tokens.glow,
+    "--vignette": tokens.vignette,
+    "--grain": tokens.grain,
+  };
+}
+
 export function brandingToCssVars(b: Branding): Record<string, string> {
   const p = derivePalette(b.brandColor);
-  const base = BASES[b.base];
   return {
     "--brand": p.brand,
     "--brand-hot": p.brandHot,
     "--brand-deep": p.brandDeep,
-    "--base": base.base,
-    "--surface": base.surface,
-    "--text": base.text,
-    "--muted": base.muted,
-    "--hair": base.hair,
-    "--glow": base.glow,
-    "--vignette": base.vignette,
-    "--grain": base.grain,
+    ...themeBaseCssVars(b.base),
     "--font-display": `${b.fontDisplay}, system-ui, sans-serif`,
     "--font-body": `${b.fontBody}, system-ui, sans-serif`,
   };

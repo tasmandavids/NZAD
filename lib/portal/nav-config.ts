@@ -87,6 +87,7 @@ export const PORTAL_NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
   office: [{ href: "/portal/office", labelKey: "nav.office.dashboard", exact: true }],
   parent: [
     { href: "/portal/parent", labelKey: "nav.parent.familyHub", exact: true },
+    { href: "/portal/parent/billing", labelKey: "nav.parent.billing" },
     { href: "/portal/parent/chat", labelKey: "nav.parent.studioChat" },
     { href: "/portal/parent/messages", labelKey: "nav.parent.studioEmail" },
   ],
@@ -98,6 +99,7 @@ export const PORTAL_NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
 
 export const SELF_MANAGED_STUDENT_NAV: NavItem[] = [
   { href: "/portal/student", labelKey: "nav.student.hub", exact: true },
+  { href: "/portal/parent/billing", labelKey: "nav.parent.billing" },
   { href: "/portal/student/progress", labelKey: "nav.student.progress" },
   { href: "/portal/student/messages", labelKey: "nav.student.messages" },
 ];

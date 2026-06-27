@@ -37,6 +37,7 @@
       "cancelPay": "Cancel",
       "invoicePayment": "Invoice",
       "tableActions": "Actions",
+      "viewBilling": "Billing & payments",
       "invoiceStatus": {
         "paid": "Paid",
         "sent": "Sent",
@@ -171,6 +172,51 @@
       "back": "← Back to Family Hub",
       "unnamedDancer": "Unnamed dancer",
       "emptyProgress": "No progress logged yet. Your instructor will update this as your dancer progresses."
+    },
+    "billing": {
+      "title": "Billing & payments",
+      "subtitle": "Pay invoices, review receipts, and manage auto-pay for tuition.",
+      "backToHub": "← Family Hub",
+      "outstanding": "Outstanding",
+      "totalPaid": "Total paid",
+      "invoiceCount": "Invoices",
+      "invoicesTitle": "Invoices",
+      "noInvoices": "No invoices yet.",
+      "paymentsTitle": "Payment history",
+      "noPayments": "No payments recorded yet.",
+      "ordersTitle": "Shop orders",
+      "payNow": "Pay",
+      "managePaymentMethods": "Manage payment methods",
+      "openingPortal": "Opening…",
+      "portalFailed": "Could not open the payment portal. Try again or contact the studio.",
+      "stripeNotConfigured": "Online payments are not configured for this studio yet. Contact the studio to pay by other methods.",
+      "invoiceFallback": "Invoice",
+      "table": {
+        "issued": "Issued",
+        "student": "Dancer",
+        "amount": "Amount",
+        "due": "Due",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "paymentsTable": {
+        "date": "Date",
+        "amount": "Amount",
+        "invoice": "Invoice"
+      },
+      "ordersTable": {
+        "date": "Date",
+        "amount": "Amount",
+        "status": "Status"
+      },
+      "invoiceStatus": {
+        "paid": "Paid",
+        "sent": "Sent",
+        "overdue": "Overdue",
+        "draft": "Draft",
+        "void": "Void",
+        "refunded": "Refunded"
+      }
     }
   }
 }

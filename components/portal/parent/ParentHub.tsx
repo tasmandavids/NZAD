@@ -102,8 +102,7 @@ export default function ParentHub({
             <button
               type="button"
               onClick={() => setShowEnroll(true)}
-              className="rounded-xl px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90"
-              style={{ background: "var(--brand)" }}
+              className="rounded-xl border border-[--brand] bg-[color-mix(in_srgb,var(--brand)_10%,var(--surface))] px-5 py-2.5 text-sm font-bold text-ink shadow-sm transition hover:bg-[color-mix(in_srgb,var(--brand)_16%,var(--surface))]"
             >
               {t("enroll")}
             </button>
@@ -193,9 +192,17 @@ export default function ParentHub({
       </motion.section>
 
       <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
-        <h2 className="mb-3 text-xs uppercase tracking-widest text-muted">
-          {t("invoices", { count: invoices.length })}
-        </h2>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-xs uppercase tracking-widest text-muted">
+            {t("invoices", { count: invoices.length })}
+          </h2>
+          <Link
+            href="/portal/parent/billing"
+            className="text-xs font-semibold text-[--brand] hover:underline"
+          >
+            {t("viewBilling")} →
+          </Link>
+        </div>
         {invoices.length === 0 ? (
           <div className="rounded-2xl border border-[--hair] bg-surface px-6 py-10 text-center">
             <p className="text-sm text-muted">{t("noInvoices")}</p>
@@ -245,7 +252,7 @@ export default function ParentHub({
                         <button
                           type="button"
                           onClick={() => setPayInvoice(inv)}
-                          className="rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-white"
+                          className="rounded-lg border border-[--brand] px-3 py-1.5 text-xs font-bold text-[--brand] transition hover:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)]"
                         >
                           {t("payNow")}
                         </button>

@@ -11,6 +11,7 @@ import { PortalShell } from "@/components/portal/PortalShell";
 import { PlatformAnnouncementsBanner } from "@/components/admin/PlatformAnnouncementsBanner";
 import { SetupResumeBanner } from "@/components/setup/SetupResumeBanner";
 import { getBrandingCached } from "@/lib/branding";
+import { resolvePortalTheme } from "@/lib/portal/theme";
 import { fetchStudioSetupState, setupBlocksPortal, setupNeedsBanner } from "@/lib/setup/server";
 import { showAffiliationsNav } from "@/lib/account/memberships";
 import { resolveEffectiveStudioId } from "@/lib/portal/access";
@@ -46,7 +47,7 @@ export default async function PortalLayout({
   const accountKind = (profile.account_kind as AccountKind | null) ?? null;
   const now = new Date().toISOString();
 
-  const [{ count: membershipCount }, activeStudioRes, setupResult, announcementsResult, branding, tCommon] =
+  const [{ count: membershipCount }, activeStudioRes, setupResult, announcementsResult, branding, tCommon, portalTheme] =
     await Promise.all([
     supabase
       .from("studio_memberships")
@@ -68,6 +69,7 @@ export default async function PortalLayout({
       : Promise.resolve({ data: null }),
     getBrandingCached(studioId),
     getTranslations("common"),
+    resolvePortalTheme(),
   ]);
 
   const studio = activeStudioRes.data as { name: string; kind: string } | null;
@@ -98,6 +100,7 @@ export default async function PortalLayout({
       userName={profile.full_name}
       showAffiliations={showAffiliationsNav(accountKind, membershipCount ?? 0)}
       selfManagedStudent={profile.role === "student" && !!profile.self_managed}
+      portalTheme={portalTheme}
     >
       {isAdmin && setupState && setupNeedsBanner(setupState) && (
         <SetupResumeBanner

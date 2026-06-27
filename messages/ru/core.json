@@ -73,7 +73,11 @@
     "keepSidebarOpen": "Оставить меню открытым",
     "hideSidebar": "Скрыть меню",
     "showSidebar": "Показать меню",
-    "toggleMenu": "Переключить меню"
+    "toggleMenu": "Переключить меню",
+    "theme": "Тема",
+    "themeLight": "Светлая",
+    "themeDark": "Тёмная",
+    "selectTheme": "Выберите тему"
   },
   "nav": {
     "sections": {
@@ -111,6 +115,8 @@
     },
     "parent": {
       "familyHub": "Семейный кабинет",
+      "billing": "Счета и оплата",
+      "studioChat": "Чат со студией",
       "studioEmail": "Почта студии"
     },
     "student": {

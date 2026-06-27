@@ -73,7 +73,11 @@
     "keepSidebarOpen": "Garder le menu ouvert",
     "hideSidebar": "Masquer le menu",
     "showSidebar": "Afficher le menu",
-    "toggleMenu": "Basculer le menu"
+    "toggleMenu": "Basculer le menu",
+    "theme": "Thème",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "selectTheme": "Choisir le thème"
   },
   "nav": {
     "sections": {
@@ -111,6 +115,8 @@
     },
     "parent": {
       "familyHub": "Espace famille",
+      "billing": "Facturation et paiements",
+      "studioChat": "Chat studio",
       "studioEmail": "E-mail du studio"
     },
     "student": {

@@ -11,9 +11,6 @@ import { ParentShop } from "@/components/portal/parent/ParentShop";
 import EventsTickets, {
   type ParentEvent,
 } from "@/components/portal/parent/EventsTickets";
-import AutoPaySetup, {
-  type AutoPayItem,
-} from "@/components/portal/parent/AutoPaySetup";
 
 export type ShopProduct = {
   id: string;
@@ -70,7 +67,6 @@ export default async function ParentPortal() {
     productsRes,
     eventsRes,
     ticketsRes,
-    subscriptionsRes,
   ] = await Promise.all([
     supabase
       .from("guardianships")
@@ -128,12 +124,6 @@ export default async function ParentPortal() {
       .from("event_tickets")
       .select("event_id, quantity, status, qr_code")
       .eq("user_id", user!.id),
-
-    // Active auto-pay subscriptions, to mark classes already on auto-pay.
-    supabase
-      .from("subscriptions")
-      .select("class_id, student_id, status, stripe_subscription_id, current_period_end, cancel_at_period_end")
-      .eq("payer_id", user!.id),
   ]);
 
   const children: Child[] = (guardianshipsRes.data ?? []).map((g) => {
@@ -215,42 +205,6 @@ export default async function ParentPortal() {
     };
   });
 
-  // ── Auto-pay (Phase 3.2) ──────────────────────────────────────────────────
-  // Map existing subscriptions keyed by student+class, then build a flat list
-  // of paid enrolled classes the parent can put on (or already has on) auto-pay.
-  type SubRow = {
-    class_id: string | null;
-    student_id: string | null;
-    status: string;
-    stripe_subscription_id: string | null;
-    cancel_at_period_end: boolean | null;
-  };
-  const subByKey = new Map<string, SubRow>(
-    ((subscriptionsRes.data ?? []) as SubRow[]).map((s) => [
-      `${s.student_id}:${s.class_id}`,
-      s,
-    ]),
-  );
-
-  const autoPayItems: AutoPayItem[] = [];
-  for (const child of children) {
-    for (const cls of child.classes) {
-      if (cls.priceCents <= 0) continue; // free classes need no auto-pay
-      const sub = subByKey.get(`${child.studentId}:${cls.id}`);
-      const active = sub && ["active", "trialing", "past_due", "incomplete"].includes(sub.status);
-      autoPayItems.push({
-        studentId: child.studentId,
-        studentName: child.name,
-        classId: cls.id,
-        className: cls.name,
-        priceCents: cls.priceCents,
-        subscriptionId: active ? (sub!.stripe_subscription_id ?? null) : null,
-        status: active ? sub!.status : null,
-        cancelAtPeriodEnd: active ? (sub!.cancel_at_period_end ?? false) : false,
-      });
-    }
-  }
-
   return (
     <>
       <ParentHub
@@ -259,9 +213,8 @@ export default async function ParentPortal() {
         invoices={invoices}
       />
 
-      {(events.length > 0 || products.length > 0 || autoPayItems.length > 0) && (
+      {(events.length > 0 || products.length > 0) && (
         <div className="mx-auto max-w-5xl space-y-12 px-6 pb-16">
-          {autoPayItems.length > 0 && <AutoPaySetup items={autoPayItems} />}
           {events.length > 0 && <EventsTickets events={events} />}
           {products.length > 0 && <ParentShop products={products} />}
         </div>

@@ -7,7 +7,6 @@ import StudentTimetable from "@/components/portal/student/StudentTimetable";
 import ParentHub from "@/components/portal/parent/ParentHub";
 import { ParentShop } from "@/components/portal/parent/ParentShop";
 import EventsTickets, { type ParentEvent } from "@/components/portal/parent/EventsTickets";
-import AutoPaySetup, { type AutoPayItem } from "@/components/portal/parent/AutoPaySetup";
 import type { Child, Invoice, ShopProduct } from "@/app/portal/parent/page";
 
 export type EnrolledClass = {
@@ -105,7 +104,7 @@ export default async function StudentPortal() {
     })),
   };
 
-  const [invoicesRes, productsRes, eventsRes, ticketsRes, subscriptionsRes] = await Promise.all([
+  const [invoicesRes, productsRes, eventsRes, ticketsRes] = await Promise.all([
     supabase
       .from("invoices")
       .select("id, amount_cents, gst_cents, status, due_date, issued_at, profiles!student_id ( full_name )")
@@ -125,10 +124,6 @@ export default async function StudentPortal() {
       .eq("status", "published")
       .order("event_date", { ascending: true }),
     supabase.from("event_tickets").select("event_id, quantity, status, qr_code").eq("user_id", user!.id),
-    supabase
-      .from("subscriptions")
-      .select("class_id, student_id, status, stripe_subscription_id, cancel_at_period_end")
-      .eq("payer_id", user!.id),
   ]);
 
   const invoices: Invoice[] = (invoicesRes.data ?? []).map((inv) => ({
@@ -165,27 +160,6 @@ export default async function StudentPortal() {
     };
   });
 
-  const subByKey = new Map(
-    (subscriptionsRes.data ?? []).map((s) => [`${s.student_id}:${s.class_id}`, s]),
-  );
-
-  const autoPayItems: AutoPayItem[] = [];
-  for (const cls of selfChild.classes) {
-    if (cls.priceCents <= 0) continue;
-    const sub = subByKey.get(`${user!.id}:${cls.id}`);
-    const active = sub && ["active", "trialing", "past_due", "incomplete"].includes(sub.status as string);
-    autoPayItems.push({
-      studentId: user!.id,
-      studentName: profile.full_name,
-      classId: cls.id,
-      className: cls.name,
-      priceCents: cls.priceCents,
-      subscriptionId: active ? ((sub!.stripe_subscription_id as string | null) ?? null) : null,
-      status: active ? (sub!.status as string) : null,
-      cancelAtPeriodEnd: active ? ((sub!.cancel_at_period_end as boolean | null) ?? false) : false,
-    });
-  }
-
   return (
     <>
       <StudentTimetable
@@ -200,9 +174,8 @@ export default async function StudentPortal() {
         selfManaged
         childProgressHref={() => "/portal/student/progress"}
       />
-      {(events.length > 0 || products.length > 0 || autoPayItems.length > 0) && (
+      {(events.length > 0 || products.length > 0) && (
         <div className="mx-auto max-w-5xl space-y-12 px-6 pb-16">
-          {autoPayItems.length > 0 && <AutoPaySetup items={autoPayItems} />}
           {events.length > 0 && <EventsTickets events={events} />}
           {products.length > 0 && <ParentShop products={products} />}
         </div>

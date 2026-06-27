@@ -1,5 +1,6 @@
 import type { Role } from "@/lib/types";
 import { PortalShellClient } from "./PortalShellClient";
+import type { ThemeBase } from "@/lib/types";
 
 export function PortalShell({
   role,
@@ -8,6 +9,7 @@ export function PortalShell({
   userName,
   showAffiliations = false,
   selfManagedStudent = false,
+  portalTheme = "light",
   children,
 }: {
   role: Role;
@@ -16,6 +18,7 @@ export function PortalShell({
   userName: string | null;
   showAffiliations?: boolean;
   selfManagedStudent?: boolean;
+  portalTheme?: ThemeBase;
   children: React.ReactNode;
 }) {
   return (
@@ -26,6 +29,7 @@ export function PortalShell({
       userName={userName}
       showAffiliations={showAffiliations}
       selfManagedStudent={selfManagedStudent}
+      portalTheme={portalTheme}
     >
       {children}
     </PortalShellClient>

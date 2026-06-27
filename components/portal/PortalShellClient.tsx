@@ -12,6 +12,9 @@ import { OptimizableImage } from "@/components/ui/OptimizableImage";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 import { PoweredByOlune } from "@/components/brand/PoweredByOlune";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { ThemeSwitcher } from "@/components/portal/ThemeSwitcher";
+import { PortalThemeSync } from "@/components/portal/PortalThemeSync";
+import type { ThemeBase } from "@/lib/types";
 
 const NotificationBell = dynamic(
   () =>
@@ -61,6 +64,7 @@ function SidebarContent({
   onToggleCollapse,
   showAffiliations = false,
   selfManagedStudent = false,
+  portalTheme = "light",
 }: {
   role: Role;
   studioName: string;
@@ -72,6 +76,7 @@ function SidebarContent({
   onToggleCollapse?: () => void;
   showAffiliations?: boolean;
   selfManagedStudent?: boolean;
+  portalTheme?: ThemeBase;
 }) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -92,7 +97,9 @@ function SidebarContent({
         scroll={false}
         onClick={onNavClick}
         className={`flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
-          active ? "bg-brand text-white" : "text-muted hover:text-ink"
+          active
+            ? "bg-[color-mix(in_srgb,var(--brand)_14%,var(--surface))] font-semibold text-ink"
+            : "text-muted hover:bg-base hover:text-ink"
         }`}
       >
         {t(item.labelKey as Parameters<typeof t>[0])}
@@ -164,6 +171,7 @@ function SidebarContent({
 
       <div className="border-t border-[--hair] p-4">
         <PoweredByOlune className="mb-4" />
+        <ThemeSwitcher value={portalTheme} className="mb-3 w-full justify-between" />
         <LanguageSwitcher className="mb-4 w-full justify-between" />
         <p className="mb-2.5 truncate text-xs font-medium text-ink">{userName ?? tCommon("you")}</p>
         <form action={signOut}>
@@ -183,6 +191,7 @@ export function PortalShellClient({
   userName,
   showAffiliations = false,
   selfManagedStudent = false,
+  portalTheme = "light",
   children,
 }: {
   role: Role;
@@ -191,6 +200,7 @@ export function PortalShellClient({
   userName: string | null;
   showAffiliations?: boolean;
   selfManagedStudent?: boolean;
+  portalTheme?: ThemeBase;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -252,6 +262,7 @@ export function PortalShellClient({
 
   return (
     <div className="flex h-screen overflow-hidden bg-base">
+      <PortalThemeSync theme={portalTheme} />
       <div
         className="relative hidden shrink-0 md:block"
         style={{ width: collapsed && !hoverPeek ? 12 : 224 }}
@@ -281,6 +292,7 @@ export function PortalShellClient({
             onToggleCollapse={toggleCollapse}
             showAffiliations={showAffiliations}
             selfManagedStudent={selfManagedStudent}
+            portalTheme={portalTheme}
           />
         </aside>
       </div>
@@ -314,6 +326,7 @@ export function PortalShellClient({
             onNavClick={() => setMobileOpen(false)}
             showAffiliations={showAffiliations}
             selfManagedStudent={selfManagedStudent}
+            portalTheme={portalTheme}
           />
         </div>
       </div>

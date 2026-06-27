@@ -73,7 +73,11 @@
     "keepSidebarOpen": "Keep sidebar open",
     "hideSidebar": "Hide sidebar",
     "showSidebar": "Show sidebar",
-    "toggleMenu": "Toggle menu"
+    "toggleMenu": "Toggle menu",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "selectTheme": "Select theme"
   },
   "nav": {
     "sections": {
@@ -111,6 +115,7 @@
     },
     "parent": {
       "familyHub": "Family Hub",
+      "billing": "Billing & payments",
       "studioChat": "Studio chat",
       "studioEmail": "Studio email"
     },
