@@ -11,7 +11,7 @@ import { PortalShell } from "@/components/portal/PortalShell";
 import { PlatformAnnouncementsBanner } from "@/components/admin/PlatformAnnouncementsBanner";
 import { SetupResumeBanner } from "@/components/setup/SetupResumeBanner";
 import { getBrandingCached } from "@/lib/branding";
-import { resolvePortalTheme } from "@/lib/portal/theme";
+import { resolvePortalTheme } from "@/lib/portal/resolve-portal-theme";
 import { fetchStudioSetupState, setupBlocksPortal, setupNeedsBanner } from "@/lib/setup/server";
 import { showAffiliationsNav } from "@/lib/account/memberships";
 import { resolveEffectiveStudioId } from "@/lib/portal/access";
