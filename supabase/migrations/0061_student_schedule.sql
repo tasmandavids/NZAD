@@ -41,7 +41,7 @@ create index if not exists student_schedule_studio_date_idx
 drop trigger if exists student_schedule_entries_updated_at on public.student_schedule_entries;
 create trigger student_schedule_entries_updated_at
   before update on public.student_schedule_entries
-  for each row execute function public.touch_updated_at();
+  for each row execute function private.touch_updated_at();
 
 -- ─── RLS ─────────────────────────────────────────────────────────────────────
 
