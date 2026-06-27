@@ -69,13 +69,19 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
   );
 }
 
+function normProgramme(name: string) {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 function ClassCard({
   cls,
   selected,
+  includedInBatch,
   onToggle,
 }: {
   cls: AvailableClass;
   selected: boolean;
+  includedInBatch: boolean;
   onToggle: () => void;
 }) {
   const t = useTranslations("parent.enroll");
@@ -124,9 +130,15 @@ function ClassCard({
             </p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-sm font-bold text-ink">
-              {cls.priceCents > 0 ? NZD.format(cls.priceCents / 100) : t("free")}
-            </p>
+            {includedInBatch ? (
+              <p className="text-sm font-bold" style={{ color: "var(--brand)" }}>
+                {t("programIncluded")}
+              </p>
+            ) : (
+              <p className="text-sm font-bold text-ink">
+                {cls.priceCents > 0 ? NZD.format(cls.priceCents / 100) : t("free")}
+              </p>
+            )}
             <p
               className="mt-1 text-[0.62rem] font-semibold uppercase tracking-wide"
               style={{ color: isFull ? "#ef4444" : spotsLeft <= 3 ? "var(--brand-hot)" : "var(--muted)" }}
@@ -199,7 +211,21 @@ function Step1SelectClass({
 
   const selectedChild = familyChildren.find((c) => c.studentId === childId);
   const selectedClasses = classes.filter((c) => selectedIds.has(c.id));
-  const totalCents = selectedClasses.reduce((sum, c) => sum + c.priceCents, 0);
+
+  // Compute which selected classes are "included" (same programme name, not the first).
+  const paidProgrammesInSelection = new Set<string>();
+  const includedInBatchIds = new Set<string>();
+  for (const c of selectedClasses) {
+    const norm = normProgramme(c.name);
+    if (paidProgrammesInSelection.has(norm)) {
+      includedInBatchIds.add(c.id);
+    } else {
+      paidProgrammesInSelection.add(norm);
+    }
+  }
+  const totalCents = selectedClasses
+    .filter((c) => !includedInBatchIds.has(c.id))
+    .reduce((sum, c) => sum + c.priceCents, 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -248,6 +274,7 @@ function Step1SelectClass({
               key={cls.id}
               cls={cls}
               selected={selectedIds.has(cls.id)}
+              includedInBatch={includedInBatchIds.has(cls.id)}
               onToggle={() => toggleClass(cls.id)}
             />
           ))}
