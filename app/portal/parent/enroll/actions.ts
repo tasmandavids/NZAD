@@ -10,6 +10,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { CURRENCY, gstComponentCents } from "@/lib/currency";
 import { siblingDiscountedCents } from "@/lib/discounts";
+import { enrollmentBillableCents } from "@/lib/enrollment-billing";
 import { xeroSyncOutstandingInvoice } from "@/lib/xero/webhook-sync";
 import { getTranslations } from "@/lib/i18n/server";
 
@@ -261,12 +262,51 @@ async function enrollmentChargeCents(
   studioId: string,
   userId: string,
   studentId: string,
+  className: string,
   priceCents: number,
   mode: "parent" | "self" | null,
 ) {
+  const baseCents = await enrollmentBillableCents(supabase, studentId, className, priceCents);
+  if (baseCents <= 0) return 0;
+
   return mode === "self"
-    ? priceCents
-    : siblingDiscountedCents(supabase, studioId, userId, studentId, priceCents);
+    ? baseCents
+    : siblingDiscountedCents(supabase, studioId, userId, studentId, baseCents);
+}
+
+export async function getEnrollmentBillingQuote(
+  studentId: string,
+  className: string,
+  priceCents: number,
+): Promise<ActionResult<{ billableCents: number; includedInProgramme: boolean }>> {
+  const t = await getTranslations("errors.actions");
+  const ctx = await getEnrollmentContext();
+  const { error, supabase, userId, studioId, mode } = ctx;
+  if (error || !userId || !studioId) return { ok: false, error: error ?? t("unknown") };
+  if (!uuidField.safeParse(studentId).success) {
+    return { ok: false, error: t("invalidStudentOrClass") };
+  }
+
+  const accessErr = await assertStudentAccess(ctx, studentId, t);
+  if (accessErr) return { ok: false, error: accessErr };
+
+  const billableCents = await enrollmentChargeCents(
+    supabase,
+    studioId,
+    userId,
+    studentId,
+    className,
+    priceCents,
+    mode,
+  );
+
+  return {
+    ok: true,
+    data: {
+      billableCents,
+      includedInProgramme: priceCents > 0 && billableCents === 0,
+    },
+  };
 }
 
 async function insertEnrollmentInvoice(
@@ -314,7 +354,7 @@ export async function createEnrollmentPayLaterInvoice(
   classId: string,
   className: string,
   priceCents: number,
-): Promise<ActionResult<{ invoiceId: string }>> {
+): Promise<ActionResult<{ invoiceId?: string; billingSkipped?: boolean }>> {
   const t = await getTranslations("errors.actions");
   const ctx = await getEnrollmentContext();
   const { error, supabase, userId, studioId, mode } = ctx;
@@ -332,9 +372,17 @@ export async function createEnrollmentPayLaterInvoice(
     studioId,
     userId,
     studentId,
+    className,
     priceCents,
     mode,
   );
+
+  if (chargeCents <= 0) {
+    revalidatePath("/portal/parent");
+    revalidatePath("/portal/student");
+    revalidatePath("/portal/parent/billing");
+    return { ok: true, data: { billingSkipped: true } };
+  }
 
   const invoiceRes = await insertEnrollmentInvoice(
     supabase,
@@ -363,7 +411,11 @@ export async function createEnrollmentIntent(
   classId: string,
   className: string,
   priceCents: number,
-): Promise<ActionResult<{ clientSecret: string; invoiceId: string }>> {
+): Promise<
+  ActionResult<
+    { clientSecret: string; invoiceId: string } | { billingSkipped: true }
+  >
+> {
   const t = await getTranslations("errors.actions");
   const ctx = await getEnrollmentContext();
   const { error, supabase, userId, studioId, mode } = ctx;
@@ -381,9 +433,17 @@ export async function createEnrollmentIntent(
     studioId,
     userId,
     studentId,
+    className,
     priceCents,
     mode,
   );
+
+  if (chargeCents <= 0) {
+    revalidatePath("/portal/parent");
+    revalidatePath("/portal/student");
+    revalidatePath("/portal/parent/billing");
+    return { ok: true, data: { billingSkipped: true } };
+  }
 
   const invoiceRes = await insertEnrollmentInvoice(
     supabase,

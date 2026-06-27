@@ -24,6 +24,7 @@ import {
   enrollChildInClass,
   createEnrollmentIntent,
   createEnrollmentPayLaterInvoice,
+  getEnrollmentBillingQuote,
   type AvailableClass,
   type Waiver,
 } from "@/app/portal/parent/enroll/actions";
@@ -115,6 +116,8 @@ type EnrollData = {
   classId: string;
   className: string;
   priceCents: number;
+  billableCents: number;
+  includedInProgramme: boolean;
   waitlisted: boolean;
   payLater?: boolean;
   paidOnline?: boolean;
@@ -354,7 +357,10 @@ function Step3Review({
 }: {
   childId: string;
   classId: string;
-  enrollData: Pick<EnrollData, "childName" | "className" | "priceCents">;
+  enrollData: Pick<
+    EnrollData,
+    "childName" | "className" | "priceCents" | "billableCents" | "includedInProgramme"
+  >;
   /** Fired once enrollment (and any optional payment) is finalised. */
   onComplete: (
     waitlisted: boolean,
@@ -369,7 +375,7 @@ function Step3Review({
   const [error, setError] = useState<string | null>(null);
   const [enrollmentDone, setEnrollmentDone] = useState(false);
 
-  const isPaid = enrollData.priceCents > 0;
+  const isPaid = enrollData.billableCents > 0;
 
   async function ensureEnrolled(): Promise<{ waitlisted: boolean } | null> {
     if (enrollmentDone) return { waitlisted: false };
@@ -442,6 +448,12 @@ function Step3Review({
       return;
     }
 
+    if ("billingSkipped" in intentRes.data) {
+      onComplete(false);
+      setBusy(false);
+      return;
+    }
+
     setClientSecret(intentRes.data.clientSecret);
     setPhase("pay");
     setBusy(false);
@@ -472,11 +484,11 @@ function Step3Review({
         <h3 className="text-base font-bold text-ink">{t("paymentTitle")}</h3>
         <div className="flex items-center justify-between rounded-xl border border-[--hair] bg-surface px-4 py-3">
           <span className="text-sm text-muted">{enrollData.className}</span>
-          <span className="font-black text-ink">{NZD.format(enrollData.priceCents / 100)}</span>
+          <span className="font-black text-ink">{NZD.format(enrollData.billableCents / 100)}</span>
         </div>
         <CheckoutForm
           clientSecret={clientSecret}
-          submitLabel={t("payAmount", { amount: NZD.format(enrollData.priceCents / 100) })}
+          submitLabel={t("payAmount", { amount: NZD.format(enrollData.billableCents / 100) })}
           onSuccess={() => onComplete(false, { paidOnline: true })}
           onCancel={handlePaymentCancelled}
           cancelLabel={t("payLaterInstead")}
@@ -506,10 +518,20 @@ function Step3Review({
         <div className="flex justify-between">
           <span className="font-bold text-ink">{t("summaryTotalDue")}</span>
           <span className="font-black text-ink">
-            {isPaid ? NZD.format(enrollData.priceCents / 100) : t("free")}
+            {enrollData.includedInProgramme
+              ? t("programIncluded")
+              : isPaid
+                ? NZD.format(enrollData.billableCents / 100)
+                : t("free")}
           </span>
         </div>
       </div>
+
+      {enrollData.includedInProgramme && (
+        <div className="rounded-lg border border-[--hair] bg-base p-3 text-xs text-muted">
+          {t("programIncludedHint", { className: enrollData.className })}
+        </div>
+      )}
 
       {isPaid && (
         <div className="rounded-lg border border-[--hair] bg-base p-3 text-xs text-muted">
@@ -595,7 +617,12 @@ function Step4Confirmation({
             ? t("waitlistedBody", { name: dancerName, className: enrollData.className })
             : t("enrolledBody", { name: dancerName, className: enrollData.className })}
         </p>
-        {enrollData.priceCents > 0 && !enrollData.waitlisted && (
+        {enrollData.includedInProgramme && !enrollData.waitlisted && (
+          <p className="mt-2 text-xs text-muted">
+            {t("programIncludedHint", { className: enrollData.className })}
+          </p>
+        )}
+        {enrollData.billableCents > 0 && !enrollData.waitlisted && !enrollData.includedInProgramme && (
           <p className="mt-2 text-xs text-muted">
             {enrollData.paidOnline
               ? t("paidOnlineHint", { amount: NZD.format(enrollData.priceCents / 100) })
@@ -690,7 +717,15 @@ export function EnrollModal({
                 <Step1SelectClass
                   familyChildren={familyChildren}
                   onNext={({ childId, childName, cls }) => {
-                    setEnrollData({ childId, childName, classId: cls.id, className: cls.name, priceCents: cls.priceCents });
+                    setEnrollData({
+                      childId,
+                      childName,
+                      classId: cls.id,
+                      className: cls.name,
+                      priceCents: cls.priceCents,
+                      billableCents: cls.priceCents,
+                      includedInProgramme: false,
+                    });
                     setStep(1);
                   }}
                 />
@@ -699,7 +734,19 @@ export function EnrollModal({
                 <Step2SignWaivers
                   childName={enrollData.childName ?? null}
                   childId={enrollData.childId!}
-                  onNext={() => setStep(2)}
+                  onNext={async () => {
+                    const quote = await getEnrollmentBillingQuote(
+                      enrollData.childId!,
+                      enrollData.className!,
+                      enrollData.priceCents!,
+                    );
+                    setEnrollData((prev) => ({
+                      ...prev,
+                      billableCents: quote.ok ? quote.data.billableCents : prev.priceCents ?? 0,
+                      includedInProgramme: quote.ok ? quote.data.includedInProgramme : false,
+                    }));
+                    setStep(2);
+                  }}
                   onBack={() => setStep(0)}
                 />
               )}
@@ -711,6 +758,8 @@ export function EnrollModal({
                     childName: enrollData.childName ?? null,
                     className: enrollData.className!,
                     priceCents: enrollData.priceCents!,
+                    billableCents: enrollData.billableCents ?? enrollData.priceCents!,
+                    includedInProgramme: enrollData.includedInProgramme ?? false,
                   }}
                   onComplete={(waitlisted, opts) => {
                     setEnrollData((prev) => ({
