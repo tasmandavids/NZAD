@@ -48,6 +48,8 @@
       "classNoFee": "Занятие бесплатное.",
       "couldNotCreateInvoice": "Не удалось создать счёт.",
       "stripeNoClientSecret": "Stripe не вернул client secret.",
+      "noOutstandingInvoices": "Нет неоплаченных счетов.",
+      "termPlanComplete": "Этот план оплаты уже завершён.",
       "invalidInvoiceDetails": "Некорректные данные счёта.",
       "parentNotFound": "Аккаунт родителя не найден.",
       "studentNotLinked": "Выбранный ученик не привязан к этому родителю.",

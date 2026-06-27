@@ -28,6 +28,12 @@ import {
   type AvailableClass,
   type Waiver,
 } from "@/app/portal/parent/enroll/actions";
+import {
+  startTermPlanAfterEnrollment,
+  getAccountBillingSummary,
+  type AccountBillingSummary,
+} from "@/app/portal/parent/billing/actions";
+import { splitTermInstallments, TERM_INSTALLMENT_COUNT } from "@/lib/term-payments";
 import CheckoutForm from "@/components/payments/CheckoutForm";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -121,6 +127,8 @@ type EnrollData = {
   waitlisted: boolean;
   payLater?: boolean;
   paidOnline?: boolean;
+  payMonthly?: boolean;
+  installmentCents?: number;
 };
 
 function Step1SelectClass({
@@ -364,7 +372,7 @@ function Step3Review({
   /** Fired once enrollment (and any optional payment) is finalised. */
   onComplete: (
     waitlisted: boolean,
-    opts?: { payLater?: boolean; paidOnline?: boolean },
+    opts?: { payLater?: boolean; paidOnline?: boolean; payMonthly?: boolean; installmentCents?: number },
   ) => void;
   onBack: () => void;
 }) {
@@ -374,8 +382,25 @@ function Step3Review({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enrollmentDone, setEnrollmentDone] = useState(false);
+  const [payMeta, setPayMeta] = useState<{
+    installmentCents: number;
+    installmentNumber: number;
+    installmentCount: number;
+    totalCents: number;
+  } | null>(null);
+  const [accountSummary, setAccountSummary] = useState<AccountBillingSummary | null>(null);
 
   const isPaid = enrollData.billableCents > 0;
+
+  useEffect(() => {
+    if (!isPaid) return;
+    getAccountBillingSummary().then((res) => {
+      if (res.ok) setAccountSummary(res.data);
+    });
+  }, [isPaid]);
+
+  const projectedTermTotal =
+    (accountSummary?.outstandingCents ?? 0) + enrollData.billableCents;
 
   async function ensureEnrolled(): Promise<{ waitlisted: boolean } | null> {
     if (enrollmentDone) return { waitlisted: false };
@@ -418,6 +443,56 @@ function Step3Review({
     }
 
     onComplete(false, { payLater: true });
+    setBusy(false);
+  }
+
+  async function handlePayMonthly() {
+    setBusy(true);
+    setError(null);
+
+    const enrolled = await ensureEnrolled();
+    if (!enrolled) {
+      setBusy(false);
+      return;
+    }
+    if (enrolled.waitlisted || !isPaid) {
+      onComplete(enrolled.waitlisted);
+      setBusy(false);
+      return;
+    }
+
+    const invRes = await createEnrollmentPayLaterInvoice(
+      childId,
+      classId,
+      enrollData.className,
+      enrollData.priceCents,
+    );
+    if (!invRes.ok) {
+      setError(invRes.error);
+      setBusy(false);
+      return;
+    }
+    if (invRes.data.billingSkipped || !invRes.data.invoiceId) {
+      onComplete(false);
+      setBusy(false);
+      return;
+    }
+
+    const termRes = await startTermPlanAfterEnrollment(invRes.data.invoiceId);
+    if (!termRes.ok) {
+      setError(termRes.error);
+      setBusy(false);
+      return;
+    }
+
+    setPayMeta({
+      installmentCents: termRes.data.installmentCents,
+      installmentNumber: termRes.data.installmentNumber,
+      installmentCount: termRes.data.installmentCount,
+      totalCents: termRes.data.totalCents,
+    });
+    setClientSecret(termRes.data.clientSecret);
+    setPhase("pay");
     setBusy(false);
   }
 
@@ -479,22 +554,40 @@ function Step3Review({
 
   // ── Card capture phase ─────────────────────────────────────────────────────
   if (phase === "pay" && clientSecret) {
+    const chargeCents = payMeta?.installmentCents ?? enrollData.billableCents;
     return (
       <div className="flex flex-col gap-4">
-        <h3 className="text-base font-bold text-ink">{t("paymentTitle")}</h3>
+        <h3 className="text-base font-bold text-ink">
+          {payMeta ? t("termPayTitle") : t("paymentTitle")}
+        </h3>
+        {payMeta && (
+          <p className="text-xs text-muted">
+            {t("termInstallmentProgress", {
+              current: payMeta.installmentNumber,
+              total: payMeta.installmentCount,
+              accountTotal: NZD.format(payMeta.totalCents / 100),
+            })}
+          </p>
+        )}
         <div className="flex items-center justify-between rounded-xl border border-[--hair] bg-surface px-4 py-3">
           <span className="text-sm text-muted">{enrollData.className}</span>
-          <span className="font-black text-ink">{NZD.format(enrollData.billableCents / 100)}</span>
+          <span className="font-black text-ink">{NZD.format(chargeCents / 100)}</span>
         </div>
         <CheckoutForm
           clientSecret={clientSecret}
-          submitLabel={t("payAmount", { amount: NZD.format(enrollData.billableCents / 100) })}
-          onSuccess={() => onComplete(false, { paidOnline: true })}
+          submitLabel={t("payAmount", { amount: NZD.format(chargeCents / 100) })}
+          onSuccess={() =>
+            onComplete(false, {
+              paidOnline: !payMeta,
+              payMonthly: !!payMeta,
+              installmentCents: payMeta?.installmentCents,
+            })
+          }
           onCancel={handlePaymentCancelled}
           cancelLabel={t("payLaterInstead")}
         />
         <p className="text-center text-[0.65rem] text-muted">
-          {t("payNowHint")}
+          {payMeta ? t("termPayNowHint") : t("payNowHint")}
         </p>
       </div>
     );
@@ -534,8 +627,23 @@ function Step3Review({
       )}
 
       {isPaid && (
-        <div className="rounded-lg border border-[--hair] bg-base p-3 text-xs text-muted">
-          {t("paymentChoiceHint")}
+        <div className="rounded-lg border border-[--hair] bg-base p-3 text-xs text-muted space-y-1">
+          <p>{t("paymentChoiceHint")}</p>
+          {projectedTermTotal > enrollData.billableCents && (
+            <p>
+              {t("termAccountTotalHint", {
+                total: NZD.format(projectedTermTotal / 100),
+              })}
+            </p>
+          )}
+          <p>
+            {t("termMonthlyOptionHint", {
+              count: TERM_INSTALLMENT_COUNT,
+              amount: NZD.format(
+                (splitTermInstallments(projectedTermTotal)[0] ?? 0) / 100,
+              ),
+            })}
+          </p>
         </div>
       )}
 
@@ -564,6 +672,14 @@ function Step3Review({
               style={{ background: "var(--brand)" }}
             >
               {busy ? t("processing") : t("payLater")}
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={handlePayMonthly}
+              className="w-full rounded-xl border border-[--brand] bg-[color-mix(in_srgb,var(--brand)_8%,transparent)] py-3 text-sm font-bold text-ink transition-colors hover:bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] disabled:opacity-40"
+            >
+              {busy ? t("processing") : t("payMonthly")}
             </button>
             <button
               type="button"
@@ -626,7 +742,12 @@ function Step4Confirmation({
           <p className="mt-2 text-xs text-muted">
             {enrollData.paidOnline
               ? t("paidOnlineHint", { amount: NZD.format(enrollData.priceCents / 100) })
-              : enrollData.payLater
+              : enrollData.payMonthly
+                ? t("termPaidHint", {
+                    amount: NZD.format((enrollData.installmentCents ?? 0) / 100),
+                    count: TERM_INSTALLMENT_COUNT,
+                  })
+                : enrollData.payLater
                 ? t("payLaterHint", { amount: NZD.format(enrollData.priceCents / 100) })
                 : t("invoiceHint", { amount: NZD.format(enrollData.priceCents / 100) })}
           </p>
@@ -767,6 +888,8 @@ export function EnrollModal({
                       waitlisted,
                       payLater: opts?.payLater,
                       paidOnline: opts?.paidOnline,
+                      payMonthly: opts?.payMonthly,
+                      installmentCents: opts?.installmentCents,
                     }));
                     setStep(3);
                   }}

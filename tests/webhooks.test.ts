@@ -28,6 +28,33 @@ describe("classifyPaymentIntent", () => {
     });
   });
 
+  it("classifies a term payment plan installment", () => {
+    expect(
+      classifyPaymentIntent({
+        payment_plan_id: "plan_1",
+        installment_number: "2",
+        studio_id: "st_1",
+        supabase_user_id: "u_1",
+      }),
+    ).toEqual({
+      kind: "term_plan",
+      planId: "plan_1",
+      installmentNumber: 2,
+      studioId: "st_1",
+      payerId: "u_1",
+    });
+  });
+
+  it("term plan takes precedence over invoice_id", () => {
+    expect(
+      classifyPaymentIntent({
+        payment_plan_id: "plan_1",
+        installment_number: "1",
+        invoice_id: "inv_1",
+      }).kind,
+    ).toBe("term_plan");
+  });
+
   it("falls back to user_id when supabase_user_id is absent", () => {
     const t = classifyPaymentIntent({ invoice_id: "inv_2", user_id: "u_legacy" });
     expect(t).toMatchObject({ kind: "invoice", payerId: "u_legacy", studioId: null });

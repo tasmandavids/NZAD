@@ -5,6 +5,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ParentBillingHub } from "@/components/portal/parent/ParentBillingHub";
 import type { AutoPayItem } from "@/components/portal/parent/AutoPaySetup";
+import { getAccountBillingSummary } from "@/app/portal/parent/billing/actions";
 
 export default async function ParentBillingPage() {
   const supabase = await createClient();
@@ -136,6 +137,8 @@ export default async function ParentBillingPage() {
   }
 
   const stripeConfigured = !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  const accountSummaryRes = await getAccountBillingSummary();
+  const accountSummary = accountSummaryRes.ok ? accountSummaryRes.data : null;
 
   return (
     <ParentBillingHub
@@ -144,6 +147,7 @@ export default async function ParentBillingPage() {
       orders={orders}
       autoPayItems={autoPayItems}
       stripeConfigured={stripeConfigured}
+      accountSummary={accountSummary}
     />
   );
 }

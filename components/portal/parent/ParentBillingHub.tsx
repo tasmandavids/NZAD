@@ -8,6 +8,9 @@ import { formatMoney } from "@/lib/currency";
 import type { AutoPayItem } from "@/components/portal/parent/AutoPaySetup";
 import AutoPaySetup from "@/components/portal/parent/AutoPaySetup";
 import { PayInvoiceModal } from "@/components/portal/parent/PayInvoiceModal";
+import { TermInstallmentPayModal } from "@/components/portal/parent/TermInstallmentPayModal";
+import type { AccountBillingSummary } from "@/app/portal/parent/billing/actions";
+import { TERM_INSTALLMENT_COUNT, splitTermInstallments } from "@/lib/term-payments";
 
 export type BillingInvoice = {
   id: string;
@@ -77,22 +80,29 @@ export function ParentBillingHub({
   orders,
   autoPayItems,
   stripeConfigured,
+  accountSummary,
 }: {
   invoices: BillingInvoice[];
   payments: BillingPayment[];
   orders: BillingOrder[];
   autoPayItems: AutoPayItem[];
   stripeConfigured: boolean;
+  accountSummary: AccountBillingSummary | null;
 }) {
   const t = useTranslations("parent.billing");
   const locale = useLocale();
   const [payInvoice, setPayInvoice] = useState<BillingInvoice | null>(null);
+  const [showTermPay, setShowTermPay] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
 
   const outstanding = invoices
     .filter((i) => i.status === "sent" || i.status === "overdue")
     .reduce((sum, i) => sum + i.amountCents, 0);
+
+  const termFirstInstallment =
+    outstanding > 0 ? splitTermInstallments(outstanding)[0] ?? 0 : 0;
+  const activePlan = accountSummary?.activePlan;
 
   const totalPaid = payments.reduce((sum, p) => sum + p.amountCents, 0);
 
@@ -165,6 +175,37 @@ export function ParentBillingHub({
           <p className="mt-1 text-xl font-black text-ink">{invoices.length}</p>
         </div>
       </div>
+
+      {stripeConfigured && outstanding > 0 && (
+        <section className="rounded-2xl border border-[--brand]/30 bg-[color-mix(in_srgb,var(--brand)_6%,transparent)] p-5">
+          <h2 className="text-sm font-bold text-ink">{t("termPlanTitle")}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {activePlan
+              ? t("termPlanActiveHint", {
+                  paid: activePlan.installmentsPaid,
+                  total: activePlan.installmentCount,
+                  next: activePlan.nextDueCents
+                    ? formatMoney(activePlan.nextDueCents)
+                    : "—",
+                })
+              : t("termPlanIntro", {
+                  count: TERM_INSTALLMENT_COUNT,
+                  total: formatMoney(outstanding),
+                  installment: formatMoney(termFirstInstallment),
+                })}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setShowTermPay(true)}
+              className="rounded-xl px-4 py-2.5 text-sm font-bold text-white"
+              style={{ background: "var(--brand)" }}
+            >
+              {activePlan ? t("payNextInstallment") : t("startTermPlan")}
+            </button>
+          </div>
+        </section>
+      )}
 
       <section>
         <h2 className="mb-3 text-xs uppercase tracking-widest text-muted">{t("invoicesTitle")}</h2>
@@ -301,6 +342,13 @@ export function ParentBillingHub({
         <section className="border-t border-[--hair] pt-8">
           <AutoPaySetup items={autoPayItems} />
         </section>
+      )}
+
+      {showTermPay && (
+        <TermInstallmentPayModal
+          onClose={() => setShowTermPay(false)}
+          onPaid={() => window.location.reload()}
+        />
       )}
 
       {payInvoice && (

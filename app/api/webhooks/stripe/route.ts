@@ -18,6 +18,7 @@ import { stripe } from "@/lib/stripe";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { CURRENCY, gstComponentCents } from "@/lib/currency";
+import { recordTermInstallmentPaid } from "@/lib/term-payment-plan-service";
 import {
   classifyPaymentIntent,
   subscriptionIdFromInvoice,
@@ -96,6 +97,47 @@ export async function POST(req: NextRequest) {
       case "payment_intent.succeeded": {
         const intent = event.data.object as Stripe.PaymentIntent;
         const target = classifyPaymentIntent(intent.metadata);
+
+        // ── Term payment plan installment ──────────────────────────────────
+        if (target.kind === "term_plan") {
+          if (!target.installmentNumber) {
+            console.warn("[stripe-webhook] term_plan missing installment_number");
+            break;
+          }
+
+          const { completed, plan } = await recordTermInstallmentPaid(
+            supabase,
+            target.planId,
+            intent.amount_received,
+            target.installmentNumber,
+          );
+
+          await supabase.from("payments").insert({
+            studio_id: target.studioId ?? plan.studio_id,
+            payer_id: target.payerId ?? plan.payer_id,
+            amount_cents: intent.amount_received,
+            currency: intent.currency,
+            stripe_payment_intent_id: intent.id,
+            term_payment_plan_id: target.planId,
+            status: "succeeded",
+            description: intent.description,
+          });
+
+          if (completed) {
+            const { data: links } = await supabase
+              .from("term_payment_plan_invoices")
+              .select("invoice_id")
+              .eq("plan_id", target.planId);
+            for (const link of links ?? []) {
+              await xeroSyncAfterPayment(supabase, "invoice", link.invoice_id as string);
+            }
+          }
+
+          console.log(
+            `[stripe-webhook] term_plan ${target.planId} installment ${target.installmentNumber}${completed ? " (complete)" : ""}`,
+          );
+          break;
+        }
 
         // ── Invoice payment ────────────────────────────────────────────────
         if (target.kind === "invoice") {

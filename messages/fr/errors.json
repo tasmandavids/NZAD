@@ -48,6 +48,8 @@
       "classNoFee": "Ce cours est gratuit.",
       "couldNotCreateInvoice": "Impossible de créer la facture.",
       "stripeNoClientSecret": "Stripe n'a pas renvoyé de secret client.",
+      "noOutstandingInvoices": "Aucun montant en attente à payer.",
+      "termPlanComplete": "Ce plan de paiement est déjà terminé.",
       "invalidInvoiceDetails": "Détails de facture invalides.",
       "parentNotFound": "Compte parent introuvable.",
       "studentNotLinked": "L'élève sélectionné n'est pas lié à ce parent.",

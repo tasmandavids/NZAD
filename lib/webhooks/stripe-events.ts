@@ -16,10 +16,17 @@ import type Stripe from "stripe";
 // ── payment_intent.succeeded routing ────────────────────────────────────────
 
 /** Which kind of sale a succeeded PaymentIntent finalises. */
-export type PaymentIntentKind = "invoice" | "order" | "ticket" | "none";
+export type PaymentIntentKind = "invoice" | "order" | "ticket" | "term_plan" | "none";
 
 export type PaymentIntentTarget =
   | { kind: "invoice"; invoiceId: string; studioId: string | null; payerId: string | null }
+  | {
+      kind: "term_plan";
+      planId: string;
+      installmentNumber: number;
+      studioId: string | null;
+      payerId: string | null;
+    }
   | { kind: "order"; orderId: string }
   | { kind: "ticket"; eventId: string; userId: string | null }
   | { kind: "none" };
@@ -34,9 +41,22 @@ export function classifyPaymentIntent(
   meta: Stripe.Metadata | null | undefined,
 ): PaymentIntentTarget {
   const m = meta ?? {};
+  const planId = nonEmpty(m.payment_plan_id);
+  const installmentRaw = nonEmpty(m.installment_number);
   const invoiceId = nonEmpty(m.invoice_id);
   const orderId = nonEmpty(m.order_id);
   const eventId = nonEmpty(m.event_id);
+
+  if (planId) {
+    const installmentNumber = installmentRaw ? Number.parseInt(installmentRaw, 10) : NaN;
+    return {
+      kind: "term_plan",
+      planId,
+      installmentNumber: Number.isFinite(installmentNumber) ? installmentNumber : 0,
+      studioId: nonEmpty(m.studio_id),
+      payerId: nonEmpty(m.supabase_user_id) ?? nonEmpty(m.user_id),
+    };
+  }
 
   if (invoiceId) {
     return {

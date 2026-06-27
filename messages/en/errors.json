@@ -48,6 +48,8 @@
       "classNoFee": "Class has no fee.",
       "couldNotCreateInvoice": "Could not create invoice.",
       "stripeNoClientSecret": "Stripe did not return a client secret.",
+      "noOutstandingInvoices": "There is nothing outstanding to pay.",
+      "termPlanComplete": "This payment plan is already complete.",
       "invalidInvoiceDetails": "Invalid invoice details.",
       "parentNotFound": "Parent account not found.",
       "studentNotLinked": "Selected student is not linked to this parent.",
