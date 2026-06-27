@@ -894,21 +894,28 @@ export function EnrollModal({
                   childName={enrollData.childName ?? null}
                   childId={enrollData.childId!}
                   onNext={async () => {
-                    // Fetch billing quotes for each selected class
-                    const updatedClasses = await Promise.all(
-                      (enrollData.classes ?? []).map(async (cls) => {
-                        const quote = await getEnrollmentBillingQuote(
-                          enrollData.childId!,
-                          cls.className,
-                          cls.priceCents,
-                        );
-                        return {
-                          ...cls,
-                          billableCents: quote.ok ? quote.data.billableCents : cls.priceCents,
-                          includedInProgramme: quote.ok ? quote.data.includedInProgramme : false,
-                        };
-                      }),
-                    );
+                    // Process quotes sequentially so that within this batch,
+                    // the second day of the same programme (same class name)
+                    // is correctly treated as included — mirroring the DB logic
+                    // in enrollment-billing.ts which charges once per programme name.
+                    const paidProgrammes = new Set<string>();
+                    const updatedClasses: SelectedClass[] = [];
+                    for (const cls of enrollData.classes ?? []) {
+                      const normName = cls.className.trim().toLowerCase().replace(/\s+/g, " ");
+                      if (paidProgrammes.has(normName)) {
+                        updatedClasses.push({ ...cls, billableCents: 0, includedInProgramme: true });
+                        continue;
+                      }
+                      const quote = await getEnrollmentBillingQuote(
+                        enrollData.childId!,
+                        cls.className,
+                        cls.priceCents,
+                      );
+                      const billable = quote.ok ? quote.data.billableCents : cls.priceCents;
+                      const included = quote.ok ? quote.data.includedInProgramme : false;
+                      if (billable > 0) paidProgrammes.add(normName);
+                      updatedClasses.push({ ...cls, billableCents: billable, includedInProgramme: included });
+                    }
                     setEnrollData((prev) => ({ ...prev, classes: updatedClasses }));
                     setStep(2);
                   }}
