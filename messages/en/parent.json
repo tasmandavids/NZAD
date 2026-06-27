@@ -293,6 +293,27 @@
         "refunded": "Refunded"
       }
     },
+    "studioSchedule": {
+      "title": "Full studio schedule",
+      "subtitle": "Every class at the studio this term — tap a class for teacher and fees.",
+      "backToHub": "← Family Hub",
+      "noClasses": "No scheduled classes yet.",
+      "teacher": "Teacher",
+      "teacherTba": "To be announced",
+      "costPerTerm": "Cost per term",
+      "free": "Free",
+      "close": "Close",
+      "hint": "Tap any class to see the teacher and term fee.",
+      "days": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
+    },
     "schedule": {
       "title": "Family schedule",
       "subtitle": "Weekly classes and studio updates for your dancers.",

@@ -155,6 +155,27 @@
       "emailContentTitle": "Contenuto e-mail",
       "noContent": "(Nessun contenuto)",
       "yourStudio": "il tuo studio"
+    },
+    "studioSchedule": {
+      "title": "Orario completo dello studio",
+      "subtitle": "Tutti i corsi dello studio in questo trimestre — tocca un corso per insegnante e tariffe.",
+      "backToHub": "← Hub famiglia",
+      "noClasses": "Nessun corso in programma.",
+      "teacher": "Insegnante",
+      "teacherTba": "Da definire",
+      "costPerTerm": "Costo per trimestre",
+      "free": "Gratuito",
+      "close": "Chiudi",
+      "hint": "Tocca un corso per vedere l'insegnante e la quota trimestrale.",
+      "days": {
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mer",
+        "thu": "Gio",
+        "fri": "Ven",
+        "sat": "Sab",
+        "sun": "Dom"
+      }
     }
   }
 }

@@ -89,6 +89,7 @@ export const PORTAL_NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
   parent: [
     { href: "/portal/parent", labelKey: "nav.parent.familyHub", exact: true },
     { href: "/portal/parent/schedule", labelKey: "nav.parent.schedule" },
+    { href: "/portal/parent/studio-schedule", labelKey: "nav.parent.fullStudioSchedule" },
     { href: "/portal/parent/billing", labelKey: "nav.parent.billing" },
     { href: "/portal/parent/chat", labelKey: "nav.parent.studioChat" },
     { href: "/portal/parent/messages", labelKey: "nav.parent.studioEmail" },

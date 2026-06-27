@@ -117,6 +117,7 @@
     "parent": {
       "familyHub": "Family Hub",
       "schedule": "Schedule",
+      "fullStudioSchedule": "Full studio schedule",
       "billing": "Billing & payments",
       "studioChat": "Studio chat",
       "studioEmail": "Studio email"
