@@ -49,12 +49,12 @@ grant select, insert on public.term_payment_plan_invoices to authenticated;
 drop policy if exists "term_plans_admin_all" on public.term_payment_plans;
 create policy "term_plans_admin_all" on public.term_payment_plans
   for all using (
-    studio_id = public.current_studio()
-    and public.current_user_role() = 'admin'
+    studio_id = private.current_studio()
+    and private.current_user_role() = 'admin'
   )
   with check (
-    studio_id = public.current_studio()
-    and public.current_user_role() = 'admin'
+    studio_id = private.current_studio()
+    and private.current_user_role() = 'admin'
   );
 
 drop policy if exists "term_plans_payer_read" on public.term_payment_plans;
@@ -75,16 +75,16 @@ create policy "term_plan_invoices_admin" on public.term_payment_plan_invoices
     exists (
       select 1 from public.term_payment_plans p
       where p.id = plan_id
-        and p.studio_id = public.current_studio()
-        and public.current_user_role() = 'admin'
+        and p.studio_id = private.current_studio()
+        and private.current_user_role() = 'admin'
     )
   )
   with check (
     exists (
       select 1 from public.term_payment_plans p
       where p.id = plan_id
-        and p.studio_id = public.current_studio()
-        and public.current_user_role() = 'admin'
+        and p.studio_id = private.current_studio()
+        and private.current_user_role() = 'admin'
     )
   );
 
