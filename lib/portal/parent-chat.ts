@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { loadStudioAdminContact } from "@/lib/portal/message-recipients";
+import { normalizeMessageContact } from "@/lib/portal/staff-messages";
 
 export type ParentChatTopic = "billing" | "absence" | "general";
 
@@ -29,14 +30,8 @@ export type ParentChatMessage = {
   read_at: string | null;
 };
 
-function displayName(row: {
-  first_name: string | null;
-  last_name: string | null;
-  full_name?: string | null;
-}) {
-  const fromParts = [row.first_name, row.last_name].filter(Boolean).join(" ");
-  if (fromParts) return fromParts;
-  return row.full_name?.trim() || null;
+function displayName(row: { first_name: string | null; last_name: string | null }) {
+  return [row.first_name, row.last_name].filter(Boolean).join(" ") || null;
 }
 
 export async function loadParentChatData(parentId: string, studioId: string) {
@@ -48,20 +43,22 @@ export async function loadParentChatData(parentId: string, studioId: string) {
   if (adminContact) {
     const { data: adminProfile } = await supabase
       .from("profiles")
-      .select("id, first_name, last_name, avatar_url, full_name, role")
+      .select("id, full_name, role")
       .eq("id", adminContact.id)
       .single();
 
     if (adminProfile) {
-      admin = {
+      const normalized = normalizeMessageContact({
         id: adminProfile.id as string,
-        first_name: (adminProfile.first_name ??
-          adminProfile.full_name?.split(" ")[0] ??
-          null) as string | null,
-        last_name: (adminProfile.last_name ??
-          (adminProfile.full_name?.split(" ").slice(1).join(" ") || null)) as string | null,
-        avatar_url: adminProfile.avatar_url as string | null,
+        full_name: adminProfile.full_name as string | null,
         role: adminProfile.role as string,
+      });
+      admin = {
+        id: normalized.id,
+        first_name: normalized.first_name,
+        last_name: normalized.last_name,
+        avatar_url: normalized.avatar_url,
+        role: normalized.role,
       };
     }
   }
@@ -79,7 +76,7 @@ export async function loadParentChatData(parentId: string, studioId: string) {
     const { data: enrollments } = await supabase
       .from("enrollments")
       .select(
-        "student_id, classes!inner(id, name, teacher_id, studio_id, teacher:profiles!classes_teacher_id_fkey(id, first_name, last_name, avatar_url, full_name))",
+        "student_id, classes!inner(id, name, teacher_id, studio_id, teacher:profiles!classes_teacher_id_fkey(id, full_name))",
       )
       .eq("studio_id", studioId)
       .eq("status", "active")
@@ -92,9 +89,6 @@ export async function loadParentChatData(parentId: string, studioId: string) {
         studio_id: string;
         teacher: {
           id: string;
-          first_name: string | null;
-          last_name: string | null;
-          avatar_url: string | null;
           full_name: string | null;
         } | null;
       } | null;
@@ -109,14 +103,17 @@ export async function loadParentChatData(parentId: string, studioId: string) {
         continue;
       }
 
-      teachersById.set(cls.teacher_id, {
+      const normalized = normalizeMessageContact({
         id: cls.teacher.id,
-        first_name: (cls.teacher.first_name ??
-          cls.teacher.full_name?.split(" ")[0] ??
-          null) as string | null,
-        last_name: (cls.teacher.last_name ??
-          (cls.teacher.full_name?.split(" ").slice(1).join(" ") || null)) as string | null,
-        avatar_url: cls.teacher.avatar_url as string | null,
+        full_name: cls.teacher.full_name,
+        role: "teacher",
+      });
+
+      teachersById.set(cls.teacher_id, {
+        id: normalized.id,
+        first_name: normalized.first_name,
+        last_name: normalized.last_name,
+        avatar_url: normalized.avatar_url,
         classNames: [cls.name],
       });
     }
