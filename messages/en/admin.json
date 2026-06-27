@@ -10,6 +10,7 @@
       "refreshing": "Refreshing…",
       "disconnecting": "Disconnecting…",
       "refunding": "Refunding…",
+      "voiding": "Voiding…",
       "publishing": "Publishing…",
       "summarizing": "Summarizing…",
       "connecting": "Connecting…",
@@ -106,6 +107,7 @@
         "month": "Monthly"
       },
       "refund": "Refund",
+      "void": "Void",
       "noCardPayment": "No card payment",
       "viewInXero": "View in Xero",
       "remind": "Remind",
@@ -473,7 +475,15 @@
         "createAndSend": "Create & send",
         "saveDraft": "Save draft"
       },
-      "refundConfirm": "Refund {amount} to {payer}?"
+      "refundConfirm": "Refund {amount} to {payer}?",
+      "voidConfirm": "Void invoice for {amount} ({payer})? This cannot be undone and will void the invoice in Xero if synced.",
+      "voidXeroSyncError": "Invoice voided, but Xero sync failed: {error}",
+      "subscriptions": {
+        "title": "Auto-pay subscriptions",
+        "subtitle": "Recurring plans — cancel at period end or stop immediately",
+        "empty": "No active subscriptions.",
+        "manageAll": "Manage all subscriptions"
+      }
     },
     "accounting": {
       "title": "Accounting",
@@ -552,6 +562,8 @@
         "nextCharge": "Next charge"
       },
       "defaultPlan": "Subscription",
+      "cancelAtPeriodEndConfirm": "Cancel {plan} at the end of the current billing period?",
+      "cancelNowConfirm": "Cancel {plan} immediately? This stops auto-pay right away.",
       "status": {
         "active": "Active",
         "trialing": "Trialing",

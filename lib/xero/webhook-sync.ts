@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { xeroRedirectUriForJobs } from "./config";
-import { syncOutstandingInvoiceToXero, syncRefundToXero, syncSaleToXero } from "./sync-sale";
+import {
+  syncOutstandingInvoiceToXero,
+  syncRefundToXero,
+  syncSaleToXero,
+  voidInvoiceInXero,
+} from "./sync-sale";
 import type { XeroSyncSourceType } from "./types";
 
 const redirectUri = () => xeroRedirectUriForJobs();
@@ -73,5 +78,18 @@ export async function xeroSyncAfterRefund(
     await syncRefundToXero(syncSupabase(supabase), sourceType, sourceId, refundCents, redirectUri());
   } catch (err) {
     console.warn(`[xero-sync] refund ${sourceType} ${sourceId} failed:`, err);
+  }
+}
+
+export async function xeroVoidInvoice(
+  supabase: SupabaseClient,
+  invoiceId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    return await voidInvoiceInXero(syncSupabase(supabase), invoiceId, redirectUri());
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Xero void failed";
+    console.warn(`[xero-sync] void invoice ${invoiceId}: ${message}`);
+    return { ok: false, error: message };
   }
 }

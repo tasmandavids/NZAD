@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import {
   createEnrollmentSubscription,
   cancelSubscription,
 } from "@/app/portal/parent/subscriptions/actions";
 import CheckoutForm from "@/components/payments/CheckoutForm";
+import { PaymentModalBody, PaymentModalShell } from "@/components/payments/PaymentModalShell";
 
 export type AutoPayItem = {
   studentId: string;
@@ -135,26 +136,17 @@ export default function AutoPaySetup({ items }: { items: AutoPayItem[] }) {
 
       <AnimatePresence>
         {activeKey && clientSecret && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                setActiveKey(null);
-                setClientSecret(null);
-              }}
-            />
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-            >
-              <div className="w-full max-w-md rounded-2xl border border-[--hair] bg-surface p-6 shadow-2xl">
-                <h3 className="mb-1 font-black text-ink">{t("confirmTitle")}</h3>
-                <p className="mb-4 text-sm text-muted">{t("confirmHint")}</p>
+          <PaymentModalShell
+            onClose={() => {
+              setActiveKey(null);
+              setClientSecret(null);
+            }}
+          >
+              <div className="shrink-0 border-b border-[--hair] px-6 py-5">
+                <h3 className="font-black text-ink">{t("confirmTitle")}</h3>
+                <p className="mt-1 text-sm text-muted">{t("confirmHint")}</p>
+              </div>
+              <PaymentModalBody>
                 <CheckoutForm
                   clientSecret={clientSecret}
                   submitLabel={t("startAutoPay")}
@@ -169,9 +161,8 @@ export default function AutoPaySetup({ items }: { items: AutoPayItem[] }) {
                     setClientSecret(null);
                   }}
                 />
-              </div>
-            </motion.div>
-          </>
+              </PaymentModalBody>
+            </PaymentModalShell>
         )}
       </AnimatePresence>
     </section>

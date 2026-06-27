@@ -71,19 +71,21 @@ function InnerForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <PaymentElement
-        options={{
-          layout: "accordion",
-          paymentMethodOrder: ["card"],
-          wallets: { applePay: "never", googlePay: "never" },
-        }}
-      />
+      <div className="min-h-0 max-h-[min(55dvh,24rem)] overflow-y-auto overscroll-contain">
+        <PaymentElement
+          options={{
+            layout: "accordion",
+            paymentMethodOrder: ["card"],
+            wallets: { applePay: "never", googlePay: "never" },
+          }}
+        />
+      </div>
 
       {error && (
         <p className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-500">{error}</p>
       )}
 
-      <div className={`flex gap-3 ${onCancel ? "" : ""}`}>
+      <div className={`flex shrink-0 gap-3 ${onCancel ? "" : ""}`}>
         {onCancel && (
           <button
             type="button"

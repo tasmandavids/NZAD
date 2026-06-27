@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useLocale, useTranslations } from "next-intl";
 import CheckoutForm from "@/components/payments/CheckoutForm";
+import { PaymentModalBody, PaymentModalShell } from "@/components/payments/PaymentModalShell";
 
 export type ParentEvent = {
   id: string;
@@ -154,22 +155,9 @@ export default function EventsTickets({ events }: Props) {
 
       <AnimatePresence>
         {active && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-              onClick={close}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
-              className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-surface p-6 shadow-2xl"
-            >
-              <div className="mb-4 flex items-start justify-between gap-4">
+          <PaymentModalShell onClose={close}>
+            <div className="shrink-0 border-b border-[--hair] px-6 py-5">
+              <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-lg font-black text-ink">{active.name}</h3>
                   <p className="mt-0.5 text-xs text-muted">{formatDate(active.eventDate)}</p>
@@ -184,7 +172,9 @@ export default function EventsTickets({ events }: Props) {
                   ✕
                 </button>
               </div>
+            </div>
 
+            <PaymentModalBody>
               {qrCode ? (
                 <div className="flex flex-col items-center text-center">
                   <p className="mb-3 font-semibold text-ink">{t("allSet")}</p>
@@ -282,8 +272,8 @@ export default function EventsTickets({ events }: Props) {
                   )}
                 </>
               )}
-            </motion.div>
-          </>
+            </PaymentModalBody>
+          </PaymentModalShell>
         )}
       </AnimatePresence>
     </section>

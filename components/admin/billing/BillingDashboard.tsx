@@ -15,6 +15,7 @@ import {
   YAxis,
 } from "recharts";
 import type {
+  BillingSubscriptionRow,
   InvoiceRow,
   ParentOption,
   RevenueSeries,
@@ -25,14 +26,35 @@ import {
   createInvoice,
   sendBulkPaymentReminders,
   sendPaymentReminder,
+  voidInvoice,
 } from "@/app/portal/admin/billing/actions";
 import { refundSale } from "@/app/portal/admin/billing/refund-actions";
+import { SubscriptionCancelActions } from "@/components/admin/subscriptions/SubscriptionCancelActions";
 import { openInXeroUrl } from "@/lib/xero/links";
 import { formatMoney } from "@/lib/currency";
 import { formatMonthKey, formatShortDate } from "@/lib/xero/format";
+import { intervalLabel, type BillingInterval } from "@/lib/subscriptions/pricing";
+import Link from "next/link";
 
 const NZD = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 0 });
 const NZD2 = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD" });
+
+const SUBSCRIPTION_STATUS_KEYS = [
+  "active",
+  "trialing",
+  "past_due",
+  "unpaid",
+  "incomplete",
+  "canceled",
+] as const;
+
+function subscriptionBillingLabel(interval: string) {
+  try {
+    return intervalLabel(interval as BillingInterval);
+  } catch {
+    return interval;
+  }
+}
 
 const STATUS_KEYS = ["paid", "sent", "overdue", "draft", "void", "refunded"] as const;
 
@@ -51,6 +73,31 @@ function StatusBadge({ status }: { status: string }) {
   const label = (STATUS_KEYS as readonly string[]).includes(status)
     ? tStatus(status as (typeof STATUS_KEYS)[number])
     : status;
+  return (
+    <span
+      className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wider"
+      style={{ background: s.bg, color: s.text }}
+    >
+      {label}
+    </span>
+  );
+}
+
+const SUBSCRIPTION_STATUS_STYLES: Record<string, { bg: string; text: string }> = {
+  active: { bg: "#dcfce7", text: "#16a34a" },
+  trialing: { bg: "#dbeafe", text: "#2563eb" },
+  past_due: { bg: "#fef3c7", text: "#d97706" },
+  unpaid: { bg: "#fef3c7", text: "#d97706" },
+  incomplete: { bg: "#f1f5f9", text: "#64748b" },
+  canceled: { bg: "#fee2e2", text: "#dc2626" },
+};
+
+function SubscriptionStatusBadge({ status }: { status: string }) {
+  const tSubs = useTranslations("admin.subscriptions");
+  const s = SUBSCRIPTION_STATUS_STYLES[status] ?? { bg: "#f1f5f9", text: "#64748b" };
+  const label = SUBSCRIPTION_STATUS_KEYS.includes(status as (typeof SUBSCRIPTION_STATUS_KEYS)[number])
+    ? tSubs(`status.${status}` as "status.active")
+    : status.replace("_", " ");
   return (
     <span
       className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wider"
@@ -327,6 +374,57 @@ function RefundButton({ invoice, onDone }: { invoice: InvoiceRow; onDone: (id: s
   );
 }
 
+function VoidButton({ invoice, onDone }: { invoice: InvoiceRow; onDone: (id: string) => void }) {
+  const t = useTranslations("admin.billing");
+  const tShared = useTranslations("admin.shared");
+  const [pending, startTransition] = useTransition();
+  const [err, setErr] = useState<string | null>(null);
+  const [xeroWarn, setXeroWarn] = useState<string | null>(null);
+
+  if (!["draft", "sent", "overdue"].includes(invoice.status)) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col items-start gap-0.5">
+      <button
+        type="button"
+        onClick={() => {
+          setErr(null);
+          setXeroWarn(null);
+          if (
+            !window.confirm(
+              t("voidConfirm", {
+                amount: NZD2.format(invoice.amountCents / 100),
+                payer: invoice.payerName ?? tShared("unknown"),
+              }),
+            )
+          ) {
+            return;
+          }
+          startTransition(async () => {
+            const res = await voidInvoice(invoice.id);
+            if (res.ok) {
+              onDone(invoice.id);
+              if (res.xeroError) {
+                setXeroWarn(t("voidXeroSyncError", { error: res.xeroError }));
+              }
+            } else {
+              setErr(res.error);
+            }
+          });
+        }}
+        disabled={pending}
+        className="rounded-lg border border-[--hair] px-2.5 py-1 text-[0.7rem] font-semibold text-muted hover:bg-surface disabled:opacity-50"
+      >
+        {pending ? tShared("voiding") : tShared("void")}
+      </button>
+      {err && <span className="text-[0.65rem] text-[#dc2626]">{err}</span>}
+      {xeroWarn && <span className="text-[0.65rem] text-amber-700">{xeroWarn}</span>}
+    </div>
+  );
+}
+
 export function BillingDashboard({
   invoices: initialInvoices,
   unpaidInvoices,
@@ -339,6 +437,7 @@ export function BillingDashboard({
   totalPaidCents,
   totalOutstandingCents,
   overdueCount,
+  subscriptions: initialSubscriptions,
 }: {
   invoices: InvoiceRow[];
   unpaidInvoices: InvoiceRow[];
@@ -351,8 +450,10 @@ export function BillingDashboard({
   totalPaidCents: number;
   totalOutstandingCents: number;
   overdueCount: number;
+  subscriptions: BillingSubscriptionRow[];
 }) {
   const t = useTranslations("admin.billing");
+  const tSubs = useTranslations("admin.subscriptions");
   const tShared = useTranslations("admin.shared");
   const tStatus = useTranslations("admin.shared.status");
   const router = useRouter();
@@ -361,11 +462,39 @@ export function BillingDashboard({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [invoices, setInvoices] = useState<InvoiceRow[]>(initialInvoices);
+  const [subscriptions, setSubscriptions] = useState(initialSubscriptions);
   const [bulkPending, startBulk] = useTransition();
   const [bulkError, setBulkError] = useState<string | null>(null);
 
   const markRefunded = (id: string) =>
     setInvoices((prev) => prev.map((i) => (i.id === id ? { ...i, status: "refunded" } : i)));
+
+  const markVoided = (id: string) =>
+    setInvoices((prev) => prev.map((i) => (i.id === id ? { ...i, status: "void" } : i)));
+
+  const markSubscriptionCanceled = (id: string, immediate: boolean) => {
+    setSubscriptions((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              status: immediate ? "canceled" : s.status,
+              cancelAtPeriodEnd: immediate ? false : true,
+            }
+          : s,
+      ),
+    );
+  };
+
+  const cancelableSubscriptions = useMemo(
+    () =>
+      subscriptions.filter(
+        (s) =>
+          s.status !== "canceled" &&
+          (["active", "trialing", "past_due", "unpaid"].includes(s.status) || s.cancelAtPeriodEnd),
+      ),
+    [subscriptions],
+  );
 
   const refresh = () => router.refresh();
 
@@ -482,6 +611,93 @@ export function BillingDashboard({
             sub={t("stats.mrrSub", { count: activeSubs })}
           />
         </motion.div>
+
+        <motion.section
+          variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
+          className="rounded-2xl border border-[--hair] bg-surface"
+        >
+          <div className="flex flex-wrap items-center gap-3 border-b border-[--hair] px-6 py-4">
+            <div className="mr-auto">
+              <h2 className="text-sm font-bold text-ink">{t("subscriptions.title")}</h2>
+              <p className="text-xs text-muted">{t("subscriptions.subtitle")}</p>
+            </div>
+            <Link
+              href="/portal/admin/subscriptions"
+              className="text-xs font-semibold text-ink underline hover:opacity-80"
+            >
+              {t("subscriptions.manageAll")}
+            </Link>
+          </div>
+
+          {cancelableSubscriptions.length === 0 ? (
+            <p className="px-6 py-10 text-center text-sm text-muted">{t("subscriptions.empty")}</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-sm">
+                <thead>
+                  <tr className="border-b border-[--hair]">
+                    {[
+                      tSubs("table.plan"),
+                      tSubs("table.payer"),
+                      tSubs("table.student"),
+                      tSubs("table.monthly"),
+                      tSubs("table.status"),
+                      tSubs("table.nextCharge"),
+                      "",
+                    ].map((h, idx) => (
+                      <th
+                        key={h || `sub-col-${idx}`}
+                        className="px-4 py-3 text-left text-[0.62rem] font-semibold uppercase tracking-wider text-muted"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {cancelableSubscriptions.map((sub) => (
+                    <tr
+                      key={sub.id}
+                      className="border-b border-[--hair] last:border-0 hover:bg-[color-mix(in_srgb,var(--brand)_3%,transparent)]"
+                    >
+                      <td className="px-4 py-3 font-medium text-ink">
+                        {sub.planLabel ?? tSubs("defaultPlan")}
+                      </td>
+                      <td className="px-4 py-3 text-muted">{sub.payerName ?? tShared("dash")}</td>
+                      <td className="px-4 py-3 text-muted">{sub.studentName ?? tShared("dash")}</td>
+                      <td className="px-4 py-3 font-semibold tabular-nums">
+                        {formatMoney(sub.monthlyAmountCents)}
+                        <span className="block text-xs font-normal text-muted">
+                          {subscriptionBillingLabel(sub.billingInterval)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <SubscriptionStatusBadge status={sub.status} />
+                        {sub.cancelAtPeriodEnd && sub.status !== "canceled" && (
+                          <span className="ml-1.5 text-[0.6rem] font-semibold text-amber-600">
+                            {tShared("ending")}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-muted">
+                        {sub.cancelAtPeriodEnd || !sub.currentPeriodEnd
+                          ? tShared("dash")
+                          : formatShortDate(sub.currentPeriodEnd.slice(0, 10))}
+                      </td>
+                      <td className="px-4 py-3">
+                        <SubscriptionCancelActions
+                          subscription={sub}
+                          onCanceled={markSubscriptionCanceled}
+                          align="start"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </motion.section>
 
         <motion.section
           variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
@@ -745,6 +961,7 @@ export function BillingDashboard({
                           {["sent", "overdue"].includes(inv.status) && (
                             <RemindButton invoiceId={inv.id} onDone={refresh} />
                           )}
+                          <VoidButton invoice={inv} onDone={markVoided} />
                           <RefundButton invoice={inv} onDone={markRefunded} />
                           {inv.xeroInvoiceId && (
                             <a
