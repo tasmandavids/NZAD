@@ -13,6 +13,7 @@
 export const runtime = "experimental-edge";
 
 import { NextResponse, type NextRequest } from "next/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { portalHomeForAccount } from "@/lib/account/memberships";
 import type { AccountKind } from "@/lib/account/kinds";
 import { checkPlatformOperator } from "@/lib/platform/operator-edge";
@@ -51,6 +52,24 @@ function isSafeRelativePath(path: string): boolean {
   return path.startsWith("/") && !path.startsWith("//");
 }
 
+/** DB fallback for sessions that pre-date the JWT claims hook being enabled. */
+async function getProfileFromDb(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<ProfileAccess | null> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("role, studio_id, account_kind")
+    .eq("id", userId)
+    .single();
+  if (!data?.role) return null;
+  return {
+    role: data.role as Role,
+    studioId: (data.studio_id as string | null) ?? null,
+    accountKind: (data.account_kind as AccountKind | null) ?? null,
+  };
+}
+
 export async function middleware(request: NextRequest) {
   const { supabase, response, user: sessionUser } = await refreshSession(request);
 
@@ -74,7 +93,8 @@ export async function middleware(request: NextRequest) {
     const isOperator = await checkPlatformOperator(supabase, user.id, user.email);
     if (!isOperator) {
       const { data: { session } } = await supabase.auth.getSession();
-      const profile = profileFromJwt(session?.access_token);
+      const profile =
+        profileFromJwt(session?.access_token) ?? await getProfileFromDb(supabase, user.id);
       const dest = profile?.studioId ? resolveHome(profile) : "/onboarding";
       return mergeSessionCookies(NextResponse.redirect(new URL(dest, request.url)), response);
     }
@@ -87,9 +107,11 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user) {
-    // Read profile from JWT — no DB call.
+    // Try JWT claims first (zero DB cost); fall back to DB for old tokens
+    // that pre-date the custom_access_token_hook being enabled.
     const { data: { session } } = await supabase.auth.getSession();
-    const profile = profileFromJwt(session?.access_token);
+    const profile =
+      profileFromJwt(session?.access_token) ?? await getProfileFromDb(supabase, user.id);
 
     if (!profile?.studioId) {
       if (inJoin) return response;
