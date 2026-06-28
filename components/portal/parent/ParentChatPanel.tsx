@@ -138,6 +138,7 @@ function ParentChatPanelContent({
         return current;
       });
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stream, currentUserId, admin]);
 
   const activePeerId = selection?.peerId ?? null;

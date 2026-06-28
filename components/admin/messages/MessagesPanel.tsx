@@ -202,6 +202,7 @@ function MessagesPanelContent({
         return current;
       });
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stream, currentUserId, parentIds]);
 
   const parentsInTopic = useMemo(() => {
