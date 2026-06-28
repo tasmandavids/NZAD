@@ -31,9 +31,10 @@ export async function middleware(request: NextRequest) {
   const inPlatform = pathname === "/platform" || pathname.startsWith("/platform/");
   const inLogin = pathname === "/login";
   const inJoin = pathname === "/join";
+  const inRoot = pathname === "/";
 
-  // Session refresh only — no routing rules on public pages (except join handled below).
-  if (!inPortal && !inPlatform && !inLogin && !inJoin) {
+  // Session refresh only — no routing rules on public pages (except join and root handled below).
+  if (!inPortal && !inPlatform && !inLogin && !inJoin && !inRoot) {
     return response;
   }
 
@@ -67,7 +68,7 @@ export async function middleware(request: NextRequest) {
     // Signed up but hasn't created/joined a studio yet (role defaults to parent).
     if (!profile?.studioId) {
       if (inJoin) return response;
-      if (inPortal || inLogin || pathname === "/portal" || pathname === "/portal/") {
+      if (inPortal || inLogin || inRoot || pathname === "/portal" || pathname === "/portal/") {
         return mergeSessionCookies(
           NextResponse.redirect(new URL("/onboarding", request.url)),
           response,
@@ -78,8 +79,8 @@ export async function middleware(request: NextRequest) {
 
     const home = resolveHome(profile);
 
-    // On /login or bare /portal → send to the intended destination.
-    if (pathname === "/login" || pathname === "/portal" || pathname === "/portal/") {
+    // On /login, bare /portal, or root → send to the intended destination.
+    if (pathname === "/login" || pathname === "/portal" || pathname === "/portal/" || inRoot) {
       const dest = await resolveSignedInDestination(
         request,
         supabase,

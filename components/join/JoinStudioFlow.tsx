@@ -34,8 +34,6 @@ export function JoinStudioFlow({
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [birthday, setBirthday] = useState("");
-  const [childName, setChildName] = useState("");
-  const [childBirthday, setChildBirthday] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -87,8 +85,6 @@ export function JoinStudioFlow({
         studioSlug,
         path,
         birthday: path === "adult_student" ? birthday : undefined,
-        childName: path === "parent" ? childName : undefined,
-        childBirthday: path === "parent" ? childBirthday : undefined,
       });
       if (!res.ok) {
         setError(res.error);
@@ -152,25 +148,6 @@ export function JoinStudioFlow({
                     required
                     value={birthday}
                     onChange={(e) => setBirthday(e.target.value)}
-                    className="field-premium w-full"
-                  />
-                </div>
-              )}
-
-              {path === "parent" && (
-                <div className="space-y-3 rounded-xl border border-[--hair] bg-base/50 p-4">
-                  <p className="text-xs font-semibold text-ink">{t("optionalChild")}</p>
-                  <input
-                    type="text"
-                    value={childName}
-                    onChange={(e) => setChildName(e.target.value)}
-                    placeholder={t("childNamePlaceholder")}
-                    className="field-premium w-full"
-                  />
-                  <input
-                    type="date"
-                    value={childBirthday}
-                    onChange={(e) => setChildBirthday(e.target.value)}
                     className="field-premium w-full"
                   />
                 </div>
