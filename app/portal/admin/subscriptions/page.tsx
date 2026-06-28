@@ -92,17 +92,21 @@ export default async function SubscriptionsPage() {
     ...new Set((subsRes.data ?? []).map((s) => s.class_id).filter(Boolean) as string[]),
   ];
 
+  // Both lookups are independent — run in parallel.
+  const [profileRows, classRows] = await Promise.all([
+    profileIds.length
+      ? supabase.from("profiles").select("id, full_name").in("id", profileIds)
+      : Promise.resolve({ data: [] as { id: string; full_name: string | null }[] }),
+    classIds.length
+      ? supabase.from("classes").select("id, name").in("id", classIds)
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+  ]);
+
   const nameMap = new Map<string, string>();
-  if (profileIds.length) {
-    const { data } = await supabase.from("profiles").select("id, full_name").in("id", profileIds);
-    (data ?? []).forEach((p) => p.full_name && nameMap.set(p.id, p.full_name));
-  }
+  (profileRows.data ?? []).forEach((p) => p.full_name && nameMap.set(p.id, p.full_name));
 
   const classMap = new Map<string, string>();
-  if (classIds.length) {
-    const { data } = await supabase.from("classes").select("id, name").in("id", classIds);
-    (data ?? []).forEach((c) => classMap.set(c.id, c.name));
-  }
+  (classRows.data ?? []).forEach((c) => classMap.set(c.id, c.name));
 
   const studentsByParent = new Map<string, { id: string; name: string }[]>();
   for (const row of guardianshipsRes.data ?? []) {

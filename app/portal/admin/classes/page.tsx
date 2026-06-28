@@ -52,7 +52,6 @@ export default async function ClassesPage() {
       .order("full_name"),
   ]);
 
-  // Fetch teacher names for class rows (join via a separate select)
   const teacherIds = [
     ...new Set(
       (capacityRes.data ?? [])
@@ -60,32 +59,30 @@ export default async function ClassesPage() {
         .filter(Boolean) as string[],
     ),
   ];
+  const classIds = (capacityRes.data ?? []).map((c) => c.id as string);
+
+  // Fetch teacher names and price/group data in parallel — both depend on
+  // capacityRes but are independent of each other.
+  const [teacherNameRows, priceRows] = await Promise.all([
+    teacherIds.length
+      ? supabase.from("profiles").select("id, full_name").in("id", teacherIds)
+      : Promise.resolve({ data: [] as { id: string; full_name: string | null }[] }),
+    classIds.length
+      ? supabase.from("classes").select("id, price_cents, recurring_group_id").in("id", classIds)
+      : Promise.resolve({ data: [] as { id: string; price_cents: number | null; recurring_group_id: string | null }[] }),
+  ]);
 
   const teacherMap = new Map<string, string>();
-  if (teacherIds.length) {
-    const { data: teacherRows } = await supabase
-      .from("profiles")
-      .select("id, full_name")
-      .in("id", teacherIds);
-    (teacherRows ?? []).forEach((t) => {
-      if (t.full_name) teacherMap.set(t.id, t.full_name);
-    });
-  }
+  (teacherNameRows.data ?? []).forEach((t) => {
+    if (t.full_name) teacherMap.set(t.id, t.full_name);
+  });
 
-  // Fetch price_cents from the base classes table (not exposed in the view)
-  const classIds = (capacityRes.data ?? []).map((c) => c.id as string);
   const priceMap = new Map<string, number>();
   const groupMap = new Map<string, string | null>();
-  if (classIds.length) {
-    const { data: priceRows } = await supabase
-      .from("classes")
-      .select("id, price_cents, recurring_group_id")
-      .in("id", classIds);
-    (priceRows ?? []).forEach((r) => {
-      priceMap.set(r.id, r.price_cents ?? 0);
-      groupMap.set(r.id, (r.recurring_group_id as string | null) ?? null);
-    });
-  }
+  (priceRows.data ?? []).forEach((r) => {
+    priceMap.set(r.id, r.price_cents ?? 0);
+    groupMap.set(r.id, (r.recurring_group_id as string | null) ?? null);
+  });
 
   const classes: ClassRow[] = (capacityRes.data ?? []).map((c) => ({
     id:          c.id as string,
