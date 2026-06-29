@@ -5,12 +5,14 @@
       "title": "Si è verificato un errore imprevisto",
       "body": "Riprova o torna alla home se il problema persiste.",
       "retry": "Riprova",
+      "signInAgain": "Accedi di nuovo",
       "goHome": "Vai alla home"
     },
     "global": {
       "title": "Qualcosa è andato storto",
       "body": "L'app ha riscontrato un errore critico.",
-      "retry": "Riprova"
+      "retry": "Riprova",
+      "signInAgain": "Accedi di nuovo"
     },
     "notFound": {
       "eyebrow": "404",

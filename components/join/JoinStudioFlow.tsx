@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { completeStudioRegistration } from "@/app/join/actions";
@@ -25,11 +25,17 @@ export function JoinStudioFlow({
 }) {
   const t = useTranslations("join");
   const tAuth = useTranslations("auth");
-  const [path, setPath] = useState<Path | null>(() => {
-    if (typeof window === "undefined") return null;
-    const stored = sessionStorage.getItem("olune:join-path");
-    return stored === "parent" || stored === "adult_student" ? stored : null;
-  });
+  const [path, setPath] = useState<Path | null>(null);
+
+  // Restore path after mount so server and client initial HTML match (avoids hydration error).
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("olune:join-path");
+      if (stored === "parent" || stored === "adult_student") setPath(stored);
+    } catch {
+      /* ignore */
+    }
+  }, []);
   const [email, setEmail] = useState(userEmail);
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
