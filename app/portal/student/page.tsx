@@ -172,7 +172,7 @@ export default async function StudentPortal() {
         familyChildren={[selfChild]}
         invoices={invoices}
         selfManaged
-        childProgressHref={() => "/portal/student/progress"}
+        childProgressPath="/portal/student/progress"
       />
       {(events.length > 0 || products.length > 0) && (
         <div className="mx-auto max-w-5xl space-y-12 px-6 pb-16">
