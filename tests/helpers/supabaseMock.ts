@@ -25,7 +25,6 @@ export function makeSupabaseMock(
       const r = responses[table] ?? {};
       const listResult = r.list ?? { data: [], count: 0, error: null };
       const singleResult = r.single ?? { data: null, error: null };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const builder: any = {
         select: () => builder,
         eq: () => builder,
