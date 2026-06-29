@@ -113,6 +113,11 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
 
     try { sessionStorage.removeItem(ACCOUNT_KIND_KEY); } catch { /* ignore */ }
 
+    // Refresh the session so the new JWT carries the updated studio_id and
+    // account_kind claims set by custom_access_token_hook. Without this the
+    // middleware sees a stale token (studio_id: null) and redirect-loops.
+    await supabase.auth.refreshSession();
+
     go("done");
     const dest = isInstructor ? "/portal/teacher" : "/setup";
     setTimeout(() => { window.location.href = dest; }, 1300);
