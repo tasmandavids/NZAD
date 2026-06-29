@@ -9,6 +9,7 @@
   --color-brand-hot: var(--brand-hot);
   --color-brand-deep: var(--brand-deep);
   --color-base: var(--base);
+  --color-canvas: var(--base);
   --color-surface: var(--surface);
   --color-ink: var(--text);
   --color-muted: var(--muted);
