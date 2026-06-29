@@ -1,14 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 
-export default async function PublicInstructorPage({ params }: { params: { slug: string } }) {
+export default async function PublicInstructorPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const supabase = await createClient();
 
   // Find the studio by slug (instructor workspace), then get the profile
   const { data: studio } = await supabase
     .from("studios")
     .select("id, name, kind")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .eq("kind", "instructor")
     .single();
 

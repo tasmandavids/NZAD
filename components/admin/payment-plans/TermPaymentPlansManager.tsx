@@ -230,7 +230,7 @@ export function TermPaymentPlansManager({
 
       {plans.length === 0 && (
         <div className="text-center py-12 text-gray-400 text-sm">
-          No payment plans yet. Create one to split a family's balance into installments.
+          No payment plans yet. Create one to split a family&apos;s balance into installments.
         </div>
       )}
 
