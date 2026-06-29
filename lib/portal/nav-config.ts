@@ -128,6 +128,7 @@ export const PORTAL_NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
 export const SELF_MANAGED_STUDENT_NAV: NavItem[] = [
   { href: "/portal/student", labelKey: "nav.student.hub", exact: true },
   { href: "/portal/parent/billing", labelKey: "nav.parent.billing" },
+  { href: "/portal/parent/forms", labelKey: "nav.parent.forms" },
   { href: "/portal/student/progress", labelKey: "nav.student.progress" },
   { href: "/portal/student/messages", labelKey: "nav.student.messages" },
 ];
