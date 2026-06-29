@@ -70,6 +70,24 @@ async function getProfileFromDb(
   };
 }
 
+/**
+ * Resolve the user's access profile. JWT claims are authoritative ONLY when they
+ * carry a studio_id; otherwise the token is likely stale (minted at signup,
+ * before the user joined/created a studio — profiles.role defaults to 'parent',
+ * so the JWT has a role but no studio_id), and we must consult the DB. Trusting
+ * a studio-less JWT here short-circuited the DB fallback and caused
+ * post-registration redirect loops (/portal/* → /onboarding → /portal/* → …).
+ */
+async function resolveProfileAccess(
+  supabase: SupabaseClient,
+  accessToken: string | undefined,
+  userId: string,
+): Promise<ProfileAccess | null> {
+  const fromJwt = profileFromJwt(accessToken);
+  if (fromJwt?.studioId) return fromJwt;
+  return getProfileFromDb(supabase, userId);
+}
+
 export async function middleware(request: NextRequest) {
   const { supabase, response, user: sessionUser } = await refreshSession(request);
 
@@ -93,8 +111,7 @@ export async function middleware(request: NextRequest) {
     const isOperator = await checkPlatformOperator(supabase, user.id, user.email);
     if (!isOperator) {
       const { data: { session } } = await supabase.auth.getSession();
-      const profile =
-        profileFromJwt(session?.access_token) ?? await getProfileFromDb(supabase, user.id);
+      const profile = await resolveProfileAccess(supabase, session?.access_token, user.id);
       const dest = profile?.studioId ? resolveHome(profile) : "/onboarding";
       return mergeSessionCookies(NextResponse.redirect(new URL(dest, request.url)), response);
     }
@@ -107,11 +124,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (user) {
-    // Try JWT claims first (zero DB cost); fall back to DB for old tokens
-    // that pre-date the custom_access_token_hook being enabled.
+    // Try JWT claims first (zero DB cost); fall back to DB for old/stale tokens
+    // (pre-hook tokens, or tokens minted at signup before the user had a studio).
     const { data: { session } } = await supabase.auth.getSession();
-    const profile =
-      profileFromJwt(session?.access_token) ?? await getProfileFromDb(supabase, user.id);
+    const profile = await resolveProfileAccess(supabase, session?.access_token, user.id);
 
     if (!profile?.studioId) {
       if (inJoin) return response;

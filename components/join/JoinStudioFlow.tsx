@@ -90,6 +90,10 @@ export function JoinStudioFlow({
         setError(res.error);
         return;
       }
+      // Refresh the JWT so it carries the new studio_id / user_role claims.
+      // Without this the middleware sees a stale token (studio_id: null) and
+      // redirect-loops between /portal/* and /onboarding.
+      await createClient().auth.refreshSession();
       window.location.assign(path === "parent" ? "/portal/parent" : "/portal/student");
     });
   }
