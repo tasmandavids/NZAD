@@ -115,7 +115,7 @@ export function OnboardingWizard({ signedIn, email: initialEmail = "" }: { signe
 
     go("done");
     const dest = isInstructor ? "/portal/teacher" : "/setup";
-    setTimeout(() => { router.push(dest); router.refresh(); }, 1300);
+    setTimeout(() => { window.location.href = dest; }, 1300);
   }
 
   const progressKeys = isInstructor
