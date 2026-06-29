@@ -159,7 +159,7 @@ export async function addStudent(input: unknown): Promise<ActionResult> {
   if (d.email) {
     const { data: inviteData, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(d.email, {
       data: { full_name: d.fullName },
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/login`,
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/auth/callback?next=/welcome`,
     });
     if (inviteErr) return { ok: false, error: inviteErr.message };
     userId = inviteData.user.id;

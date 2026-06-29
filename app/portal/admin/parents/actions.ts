@@ -591,3 +591,97 @@ export async function deleteParent(parentId: string): Promise<ActionResult> {
   revalidateParentPaths();
   return { ok: true };
 }
+
+// ─── BULK INVITE ──────────────────────────────────────────────────────────────
+// Sends (or re-sends) invite emails to every parent and self-managed student
+// in the studio who has a real email address but has never signed in.
+// Safe to call multiple times — skips any account with last_sign_in_at set.
+
+export type BulkInviteResult =
+  | { ok: true; sent: number; skipped: number; failed: number; details: string[] }
+  | { ok: false; error: string };
+
+export async function bulkInviteMembers(): Promise<BulkInviteResult> {
+  const { error, studioId } = await getAdminStudio();
+  if (error || !studioId) return { ok: false, error: error ?? "Unknown error" };
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return { ok: false, error: "Requires SUPABASE_SERVICE_ROLE_KEY." };
+  }
+
+  // Dynamically import sendEmail — server-only, avoids bundling in edge runtimes
+  const { sendEmail } = await import("@/lib/notify/providers");
+
+  // Fetch all profiles with a real email (not ghost @*.olune.local addresses)
+  const { data: profiles, error: profilesErr } = await admin
+    .from("profiles")
+    .select("id, full_name, email, role")
+    .eq("studio_id", studioId)
+    .in("role", ["parent", "student"])
+    .not("email", "ilike", "%@%.olune.local")
+    .not("email", "is", null);
+
+  if (profilesErr) return { ok: false, error: profilesErr.message };
+  if (!profiles || profiles.length === 0) {
+    return { ok: true, sent: 0, skipped: 0, failed: 0, details: ["No members with email found."] };
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const redirectTo = `${appUrl}/auth/callback?next=/welcome`;
+
+  let sent = 0;
+  let skipped = 0;
+  let failed = 0;
+  const details: string[] = [];
+
+  for (const profile of profiles) {
+    if (!profile.email) continue;
+
+    // Check if they've already signed in (don't re-invite active accounts)
+    const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
+    if (authUser?.user?.last_sign_in_at) {
+      skipped++;
+      continue;
+    }
+
+    // Generate a new invite link — works for both unconfirmed and
+    // accounts created with email_confirm:true but never signed in
+    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+      type: "invite",
+      email: profile.email,
+      options: { redirectTo },
+    });
+
+    if (linkErr || !linkData?.properties?.action_link) {
+      failed++;
+      details.push(`${profile.email}: ${linkErr?.message ?? "no link generated"}`);
+      continue;
+    }
+
+    const inviteUrl = linkData.properties.action_link;
+    const name = profile.full_name ?? "there";
+
+    const result = await sendEmail({
+      to: profile.email,
+      subject: "You've been invited to Olune",
+      html: `<p>Hi ${name},</p>
+<p>You've been added to your studio's Olune portal. Click the link below to set your password and get started:</p>
+<p><a href="${inviteUrl}">Accept invitation &amp; set password</a></p>
+<p>This link expires in 24 hours.</p>
+<p>If you didn't expect this email, you can ignore it.</p>`,
+      text: `Hi ${name},\n\nYou've been added to your studio's Olune portal.\n\nAccept your invitation and set a password here:\n${inviteUrl}\n\nThis link expires in 24 hours.`,
+    });
+
+    if (!result.ok && !result.skipped) {
+      failed++;
+      details.push(`${profile.email}: ${result.error}`);
+    } else {
+      sent++;
+    }
+  }
+
+  return { ok: true, sent, skipped, failed, details };
+}

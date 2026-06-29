@@ -9,6 +9,7 @@ import type { Child, Invoice } from "@/app/portal/parent/page";
 import { EnrollModal } from "./EnrollModal";
 import { AddChildModal } from "./AddChildModal";
 import { PayInvoiceModal } from "./PayInvoiceModal";
+import { CommandCentre, type CommandCentreProps } from "./CommandCentre";
 
 const NZD = new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 2 });
 
@@ -43,6 +44,7 @@ export default function ParentHub({
   invoices,
   selfManaged = false,
   childProgressHref,
+  commandCentre,
 }: {
   parentName: string | null;
   familyChildren: Child[];
@@ -50,6 +52,7 @@ export default function ParentHub({
   selfManaged?: boolean;
   /** Override child card link (e.g. adult students use /portal/student/progress). */
   childProgressHref?: (studentId: string) => string;
+  commandCentre?: CommandCentreProps;
 }) {
   const t = useTranslations("parent.hub");
   const locale = useLocale();
@@ -79,6 +82,8 @@ export default function ParentHub({
       variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
       className="mx-auto max-w-5xl space-y-10 p-6"
     >
+      {commandCentre && <CommandCentre {...commandCentre} />}
+
       <motion.header
         variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}
         className="flex flex-wrap items-end justify-between gap-3"

@@ -132,7 +132,12 @@
       "fullStudioSchedule": "Полное расписание студии",
       "billing": "Счета и оплата",
       "studioChat": "Чат со студией",
-      "studioEmail": "Почта студии"
+      "studioEmail": "Почта студии",
+      "absences": "Пропуски и отработки",
+      "recital": "Костюмы и спектакль",
+      "notifications": "Уведомления",
+      "forms": "Формы и разрешения",
+      "wallet": "Семейный кошелёк"
     },
     "student": {
       "timetable": "Моё расписание"

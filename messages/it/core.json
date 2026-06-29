@@ -132,7 +132,12 @@
       "fullStudioSchedule": "Orario completo dello studio",
       "billing": "Fatturazione e pagamenti",
       "studioChat": "Chat studio",
-      "studioEmail": "Email dello studio"
+      "studioEmail": "Email dello studio",
+      "absences": "Assenze e Recuperi",
+      "recital": "Costumi e Saggio",
+      "notifications": "Notifiche",
+      "forms": "Moduli e Permessi",
+      "wallet": "Conto famiglia"
     },
     "student": {
       "timetable": "Il mio orario"

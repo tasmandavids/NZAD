@@ -1,10 +1,11 @@
 "use client";
 import { useTranslations } from "next-intl";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import AddFamilyPanel from "@/components/admin/parents/AddFamilyPanel";
+import { bulkInviteMembers } from "@/app/portal/admin/parents/actions";
 import type { ParentRow, StudentOption } from "@/lib/parents/types";
 
 function initials(name: string | null) {
@@ -82,6 +83,22 @@ export default function ParentsManager({
   const tCommon = useTranslations("common");
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [inviting, startInvite] = useTransition();
+  const [inviteResult, setInviteResult] = useState<string | null>(null);
+
+  function handleBulkInvite() {
+    if (!window.confirm("Send invite emails to all parents and students who have never logged in?")) return;
+    setInviteResult(null);
+    startInvite(async () => {
+      const res = await bulkInviteMembers();
+      if (!res.ok) {
+        setInviteResult(`Error: ${res.error}`);
+      } else {
+        const msg = `Invites sent: ${res.sent}. Already active: ${res.skipped}.${res.failed > 0 ? ` Failed: ${res.failed}.` : ""}`;
+        setInviteResult(msg);
+      }
+    });
+  }
 
   const filtered = parents.filter(
     (p) =>
@@ -105,14 +122,29 @@ export default function ParentsManager({
             {t("subtitle", { count: parents.length })}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowAdd(true)}
-          className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-paper"
-        >
-          {t("addFamilyButton")}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleBulkInvite}
+            disabled={inviting}
+            className="rounded-xl border border-[--hair] bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-canvas disabled:opacity-50"
+          >
+            {inviting ? "Sending invites…" : "Invite all"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAdd(true)}
+            className="rounded-xl bg-ink px-4 py-2 text-sm font-bold text-paper"
+          >
+            {t("addFamilyButton")}
+          </button>
+        </div>
       </div>
+      {inviteResult && (
+        <p className="rounded-xl border border-[--hair] bg-surface px-4 py-2.5 text-sm text-ink">
+          {inviteResult}
+        </p>
+      )}
 
       <input
         type="search"

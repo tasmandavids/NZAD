@@ -49,6 +49,11 @@ function InnerForm({
     const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
       elements,
       redirect: "if_required",
+      confirmParams: {
+        // Required for 3DS card authentication — Stripe redirects here then back.
+        // Uses the current page so the user lands on the same context after auth.
+        return_url: window.location.href,
+      },
     });
 
     if (confirmError) {

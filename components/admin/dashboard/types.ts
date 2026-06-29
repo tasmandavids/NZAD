@@ -63,13 +63,18 @@ export function normalizeTime(t: string | null | undefined): string | null {
   return t.slice(0, 5);
 }
 
-/** Common studio hours + every time already used by a class. */
+/** Common studio hours + every time already used by a class.
+ *  Seed covers a full studio day (8 am – 9 pm on the half-hour).
+ *  Any class with a start_time outside this range is added automatically.
+ */
 export function buildTimeSlots(classes: ScheduleClass[]): string[] {
-  const times = new Set<string>([
-    "09:00", "10:00", "11:00", "12:00",
-    "15:30", "16:00", "16:30", "17:00", "17:30",
-    "18:00", "18:30", "19:00", "19:30", "20:00",
-  ]);
+  const seed: string[] = [];
+  for (let h = 8; h <= 20; h++) {
+    seed.push(`${String(h).padStart(2, "0")}:00`);
+    seed.push(`${String(h).padStart(2, "0")}:30`);
+  }
+  seed.push("21:00");
+  const times = new Set<string>(seed);
   for (const cls of classes) {
     const t = normalizeTime(cls.startTime);
     if (t) times.add(t);
@@ -93,13 +98,19 @@ export const SCHEDULE_DAYS: ScheduleDay[] = [
   { dow: 6, label: "Sat" },
 ];
 
-export const SCHEDULE_SLOTS: ScheduleSlot[] = [
-  { id: "15:30", label: "3:30 pm" },
-  { id: "16:30", label: "4:30 pm" },
-  { id: "17:30", label: "5:30 pm" },
-  { id: "18:30", label: "6:30 pm" },
-  { id: "19:30", label: "7:30 pm" },
-];
+/** Reference slot list (8 am – 9 pm on the half-hour).
+ *  The ScheduleBoard derives its slots dynamically via buildTimeSlots —
+ *  this constant is kept as a static reference only. */
+export const SCHEDULE_SLOTS: ScheduleSlot[] = Array.from({ length: 27 }, (_, i) => {
+  const totalMins = 8 * 60 + i * 30;
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  const id = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  const period = h < 12 ? "am" : "pm";
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  const label = `${h12}:${String(m).padStart(2, "0")} ${period}`;
+  return { id, label };
+});
 
 // ─────────────────────────── mock data ───────────────────────────
 

@@ -337,39 +337,87 @@ function RefundButton({ invoice, onDone }: { invoice: InvoiceRow; onDone: (id: s
   const tShared = useTranslations("admin.shared");
   const [pending, startTransition] = useTransition();
   const [err, setErr] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const maxDollars = invoice.amountCents / 100;
+  const [amountStr, setAmountStr] = useState(maxDollars.toFixed(2));
 
   if (invoice.status !== "paid") return <span className="text-muted">{tShared("dash")}</span>;
   if (!invoice.stripePaymentIntentId) {
     return <span className="text-[0.7rem] text-muted">{tShared("noCardPayment")}</span>;
   }
 
-  return (
-    <div className="flex flex-col items-start gap-0.5">
+  function doRefund() {
+    const dollars = parseFloat(amountStr);
+    if (Number.isNaN(dollars) || dollars <= 0) {
+      setErr("Enter a valid amount.");
+      return;
+    }
+    const cents = Math.round(dollars * 100);
+    if (cents > invoice.amountCents) {
+      setErr(`Max refundable is ${NZD2.format(maxDollars)}.`);
+      return;
+    }
+    const isPartial = cents < invoice.amountCents;
+    const label = isPartial
+      ? `Issue partial refund of ${NZD2.format(dollars)} to ${invoice.payerName ?? "this payer"}?`
+      : `Fully refund ${NZD2.format(dollars)} to ${invoice.payerName ?? "this payer"}?`;
+    if (!window.confirm(label)) return;
+    setErr(null);
+    startTransition(async () => {
+      const res = await refundSale("invoice", invoice.id, isPartial ? cents : undefined);
+      if (res.ok) {
+        onDone(invoice.id);
+        setOpen(false);
+      } else {
+        setErr(res.error);
+      }
+    });
+  }
+
+  if (!open) {
+    return (
       <button
         type="button"
-        onClick={() => {
-          setErr(null);
-          if (
-            !window.confirm(
-              t("refundConfirm", {
-                amount: NZD2.format(invoice.amountCents / 100),
-                payer: invoice.payerName ?? tShared("unknown"),
-              }),
-            )
-          ) {
-            return;
-          }
-          startTransition(async () => {
-            const res = await refundSale("invoice", invoice.id);
-            if (res.ok) onDone(invoice.id);
-            else setErr(res.error);
-          });
-        }}
-        disabled={pending}
-        className="rounded-lg border border-[--hair] px-2.5 py-1 text-[0.7rem] font-semibold text-[#dc2626] hover:bg-[#fee2e2] disabled:opacity-50"
+        onClick={() => { setErr(null); setAmountStr(maxDollars.toFixed(2)); setOpen(true); }}
+        className="rounded-lg border border-[--hair] px-2.5 py-1 text-[0.7rem] font-semibold text-[#dc2626] hover:bg-[#fee2e2]"
       >
-        {pending ? tShared("refunding") : tShared("refund")}
+        {tShared("refund")}
       </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1">
+        <span className="text-[0.7rem] text-muted">$</span>
+        <input
+          type="number"
+          min="0.01"
+          max={maxDollars}
+          step="0.01"
+          value={amountStr}
+          onChange={(e) => setAmountStr(e.target.value)}
+          className="w-20 rounded border border-[--hair] px-1.5 py-0.5 text-[0.7rem] tabular-nums focus:outline-none focus:ring-1 focus:ring-brand"
+          autoFocus
+        />
+      </div>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={doRefund}
+          disabled={pending}
+          className="rounded-lg border border-[--hair] px-2 py-0.5 text-[0.7rem] font-semibold text-[#dc2626] hover:bg-[#fee2e2] disabled:opacity-50"
+        >
+          {pending ? tShared("refunding") : "Confirm"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="rounded-lg border border-[--hair] px-2 py-0.5 text-[0.7rem] text-muted hover:bg-surface"
+        >
+          Cancel
+        </button>
+      </div>
       {err && <span className="text-[0.65rem] text-[#dc2626]">{err}</span>}
     </div>
   );

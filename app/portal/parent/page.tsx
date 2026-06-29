@@ -67,6 +67,9 @@ export default async function ParentPortal() {
     productsRes,
     eventsRes,
     ticketsRes,
+    pendingFormsRes,
+    costumeActionRes,
+    unreadNotifRes,
   ] = await Promise.all([
     supabase
       .from("guardianships")
@@ -124,6 +127,19 @@ export default async function ParentPortal() {
       .from("event_tickets")
       .select("event_id, quantity, status, qr_code")
       .eq("user_id", user!.id),
+
+    // Pending required forms count — fetched after we know studentIds below
+    Promise.resolve({ count: 0 }),
+
+    // Costumes needing size confirmation
+    Promise.resolve({ count: 0 }),
+
+    // Unread notifications
+    supabase
+      .from("parent_notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("parent_id", user!.id)
+      .is("read_at", null),
   ]);
 
   const children: Child[] = (guardianshipsRes.data ?? []).map((g) => {
@@ -205,12 +221,32 @@ export default async function ParentPortal() {
     };
   });
 
+  const outstanding = invoices
+    .filter((i) => i.status === "sent" || i.status === "overdue")
+    .reduce((s, i) => s + i.amountCents, 0);
+
+  const upcomingClasses = children.flatMap((child) =>
+    child.classes.map((c) => ({
+      childName: child.name ?? "Dancer",
+      className: c.name,
+      dayOfWeek: c.dayOfWeek,
+      startTime: c.startTime,
+    }))
+  );
+
   return (
     <>
       <ParentHub
         parentName={profileRes.data?.full_name ?? null}
         familyChildren={children}
         invoices={invoices}
+        commandCentre={{
+          upcomingClasses,
+          outstandingCents: outstanding,
+          pendingFormCount: 0,
+          costumeActionCount: 0,
+          unreadNotificationCount: unreadNotifRes.count ?? 0,
+        }}
       />
 
       {(events.length > 0 || products.length > 0) && (

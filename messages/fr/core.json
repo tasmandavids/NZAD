@@ -132,7 +132,12 @@
       "fullStudioSchedule": "Planning complet du studio",
       "billing": "Facturation et paiements",
       "studioChat": "Chat studio",
-      "studioEmail": "E-mail du studio"
+      "studioEmail": "E-mail du studio",
+      "absences": "Absences & Rattrapages",
+      "recital": "Costumes et Spectacle",
+      "notifications": "Notifications",
+      "forms": "Formulaires",
+      "wallet": "Compte famille"
     },
     "student": {
       "timetable": "Mon emploi du temps"
