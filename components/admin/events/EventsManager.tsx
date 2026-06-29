@@ -178,7 +178,7 @@ function EventCard({
       {/* Delete confirm overlay */}
       {confirmDelete && (
         <div className="absolute inset-0 bg-surface/95 flex flex-col items-center justify-center rounded-2xl gap-3 p-4">
-          <p className="text-sm font-semibold text-ink text-center">Delete "{event.name}"?</p>
+          <p className="text-sm font-semibold text-ink text-center">Delete &ldquo;{event.name}&rdquo;?</p>
           <p className="text-xs text-muted text-center">This cannot be undone. Only drafts can be deleted.</p>
           <div className="flex gap-2">
             <button
@@ -337,7 +337,7 @@ export function EventsManager({ events: initialEvents, profiles, classes }: Even
       {filtered.length === 0 && events.length === 0 ? (
         <EmptyState onNew={openNew} />
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-muted text-center py-12">No events match "{search}"</p>
+        <p className="text-sm text-muted text-center py-12">No events match &ldquo;{search}&rdquo;</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map(ev => (

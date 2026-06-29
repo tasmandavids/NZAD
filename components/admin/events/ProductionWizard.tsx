@@ -612,7 +612,7 @@ function Step4Cast({
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="rounded-xl bg-[--subtle]/40 border border-[--hair] px-4 py-3">
         <p className="text-xs text-muted">
-          Organise performers into groups (e.g. "Junior Ensemble", "Senior Company"). Each cast member gets a role label and base costume note. You can override costumes per-act in the Builder.
+          Organise performers into groups (e.g. &ldquo;Junior Ensemble&rdquo;, &ldquo;Senior Company&rdquo;). Each cast member gets a role label and base costume note. You can override costumes per-act in the Builder.
         </p>
       </div>
 
