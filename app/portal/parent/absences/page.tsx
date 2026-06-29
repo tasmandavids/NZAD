@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { AbsenceManager } from "@/components/portal/parent/AbsenceManager";
-import { reportAbsence, requestMakeup } from "./actions";
+import { reportAbsence } from "./actions";
 
 export default async function AbsencesPage() {
   const supabase = await createClient();
@@ -24,25 +24,18 @@ export default async function AbsencesPage() {
 
   const studentIds = (guardianships ?? []).map((g) => g.student_id as string);
 
-  const [absencesResult, creditsResult] = await Promise.all([
+  const [absencesResult] = await Promise.all([
     studentIds.length
       ? supabase
           .from("student_absences")
           .select(`
-            id, absence_date, reason, makeup_status, makeup_date,
+            id, absence_date, reason,
             profiles!student_id ( full_name ),
             classes ( name )
           `)
           .in("student_id", studentIds)
           .order("absence_date", { ascending: false })
           .limit(50)
-      : Promise.resolve({ data: [] }),
-
-    studentIds.length
-      ? supabase
-          .from("makeup_credits")
-          .select("credits, used, expires_at, profiles!student_id ( full_name )")
-          .in("student_id", studentIds)
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -75,27 +68,13 @@ export default async function AbsencesPage() {
       className: c?.name ?? "Unknown class",
       absenceDate: a.absence_date as string,
       reason: a.reason as string,
-      makeupStatus: a.makeup_status as string,
-      makeupDate: (a.makeup_date as string | null) ?? null,
-    };
-  });
-
-  const makeupCredits = (creditsResult.data ?? []).map((c) => {
-    const p = c.profiles as unknown as { full_name: string | null } | null;
-    return {
-      studentName: p?.full_name ?? null,
-      credits: c.credits as number,
-      used: c.used as number,
-      expiresAt: (c.expires_at as string | null) ?? null,
     };
   });
 
   return (
     <AbsenceManager
       absences={absences}
-      makeupCredits={makeupCredits}
       onReport={reportAbsence}
-      onRequestMakeup={requestMakeup}
       dancers={children}
     />
   );

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { AnimatePresence, motion } from "framer-motion";
 import { signOut } from "@/app/portal/actions";
 import type { Role } from "@/lib/types";
 import { ADMIN_NAV, OFFICE_NAV, PORTAL_NAV, ROLE_BADGE_KEYS, SELF_MANAGED_STUDENT_NAV, type NavItem } from "@/lib/portal/nav-config";
@@ -87,7 +88,87 @@ function SidebarContent({
       ? pathname === item.href
       : pathname === item.href || pathname.startsWith(item.href + "/");
 
+  const isGroupActive = (item: NavItem) =>
+    isActive(item) || (item.children ?? []).some((c) => isActive(c));
+
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
+
+  const toggleGroup = (href: string) => {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(href)) next.delete(href);
+      else next.add(href);
+      return next;
+    });
+  };
+
   const renderNavItem = (item: NavItem) => {
+    if (item.children && item.children.length > 0) {
+      const groupActive = isGroupActive(item);
+      const open = openGroups.has(item.href) || groupActive;
+      return (
+        <div key={item.href}>
+          <div className="flex items-center gap-0.5">
+            <Link
+              href={item.href}
+              prefetch={false}
+              scroll={false}
+              onClick={onNavClick}
+              className={`flex flex-1 items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                isActive(item)
+                  ? "bg-[color-mix(in_srgb,var(--brand)_14%,var(--surface))] font-semibold text-ink"
+                  : "text-muted hover:bg-base hover:text-ink"
+              }`}
+            >
+              {t(item.labelKey as Parameters<typeof t>[0])}
+            </Link>
+            <button
+              type="button"
+              onClick={() => toggleGroup(item.href)}
+              aria-label="Toggle submenu"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-xs text-muted transition hover:bg-base hover:text-ink"
+            >
+              {open ? "▾" : "›"}
+            </button>
+          </div>
+          <AnimatePresence initial={false}>
+            {open && (
+              <motion.div
+                key="sub"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="overflow-hidden"
+              >
+                <div className="ml-3 mt-0.5 space-y-0.5 border-l border-[--hair] pl-3">
+                  {item.children.map((child) => {
+                    const childActive = isActive(child);
+                    return (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        prefetch={false}
+                        scroll={false}
+                        onClick={onNavClick}
+                        className={`flex items-center rounded-lg px-2.5 py-2 text-sm font-medium transition-colors duration-200 ${
+                          childActive
+                            ? "bg-[color-mix(in_srgb,var(--brand)_14%,var(--surface))] font-semibold text-ink"
+                            : "text-muted hover:bg-base hover:text-ink"
+                        }`}
+                      >
+                        {t(child.labelKey as Parameters<typeof t>[0])}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      );
+    }
+
     const active = isActive(item);
     return (
       <Link

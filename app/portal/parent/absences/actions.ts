@@ -9,7 +9,6 @@ export async function reportAbsence(data: {
   absenceDate: string;
   reason: string;
   notes: string;
-  requestMakeup: boolean;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -30,24 +29,9 @@ export async function reportAbsence(data: {
     reason: data.reason,
     notes: data.notes || null,
     reported_by: user.id,
-    makeup_status: data.requestMakeup ? "requested" : "not_requested",
+    makeup_status: "not_requested",
     studio_id: profile.studio_id,
   });
-
-  if (error) throw error;
-  revalidatePath("/portal/parent/absences");
-}
-
-export async function requestMakeup(absenceId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
-
-  const { error } = await supabase
-    .from("student_absences")
-    .update({ makeup_status: "requested" })
-    .eq("id", absenceId)
-    .eq("reported_by", user.id);
 
   if (error) throw error;
   revalidatePath("/portal/parent/absences");
