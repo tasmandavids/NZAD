@@ -85,7 +85,8 @@
       "clientManagement": "Клиенты",
       "finance": "Финансы",
       "digital": "Цифровое",
-      "communications": "Коммуникации"
+      "communications": "Коммуникации",
+      "staffing": "Персонал"
     },
     "admin": {
       "dashboard": "Панель",
@@ -104,11 +105,23 @@
       "email": "Почта",
       "messages": "Сообщения",
       "support": "Поддержка Olune",
-      "settings": "Настройки"
+      "settings": "Настройки",
+      "substitutes": "Замены",
+      "paymentPlans": "Планы оплаты",
+      "availability": "Расписание учителей"
     },
     "teacher": {
       "schedule": "Расписание и журнал",
-      "affiliations": "Аффилированные студии"
+      "affiliations": "Аффилированные студии",
+      "clients": "Частные клиенты",
+      "invoices": "Счета",
+      "messages": "Сообщения",
+      "availability": "Доступность",
+      "substitutes": "Замены",
+      "expenses": "Расходы",
+      "vault": "Хранилище документов",
+      "notifications": "Уведомления",
+      "profile": "Публичный профиль"
     },
     "office": {
       "dashboard": "Ресепшн"
@@ -136,6 +149,9 @@
       "auditLog": "Журнал аудита",
       "consoleTitle": "Платформа Olune",
       "consoleSubtitle": "Консоль оператора"
+    },
+    "shared": {
+      "notifications": "Уведомления"
     }
   },
   "auth": {

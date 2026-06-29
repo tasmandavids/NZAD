@@ -37,6 +37,7 @@ export const ADMIN_NAV: NavSection[] = [
       { href: "/portal/admin/billing", labelKey: "nav.admin.billing" },
       { href: "/portal/admin/accounting", labelKey: "nav.admin.accounting" },
       { href: "/portal/admin/subscriptions", labelKey: "nav.admin.subscriptions" },
+      { href: "/portal/admin/payment-plans", labelKey: "nav.admin.paymentPlans" },
     ],
   },
   {
@@ -53,6 +54,13 @@ export const ADMIN_NAV: NavSection[] = [
       { href: "/portal/admin/email", labelKey: "nav.admin.email" },
       { href: "/portal/admin/messages", labelKey: "nav.admin.messages" },
       { href: "/portal/admin/support", labelKey: "nav.admin.support" },
+    ],
+  },
+  {
+    titleKey: "nav.sections.staffing",
+    items: [
+      { href: "/portal/admin/substitutes", labelKey: "nav.admin.substitutes" },
+      { href: "/portal/admin/availability", labelKey: "nav.admin.availability" },
     ],
   },
   {
@@ -82,8 +90,16 @@ export const OFFICE_NAV: NavSection[] = [
 export const PORTAL_NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
   teacher: [
     { href: "/portal/teacher", labelKey: "nav.teacher.schedule", exact: true },
+    { href: "/portal/teacher/profile", labelKey: "nav.teacher.profile" },
+    { href: "/portal/teacher/clients", labelKey: "nav.teacher.clients" },
+    { href: "/portal/teacher/invoices", labelKey: "nav.teacher.invoices" },
+    { href: "/portal/teacher/expenses", labelKey: "nav.teacher.expenses" },
+    { href: "/portal/teacher/vault", labelKey: "nav.teacher.vault" },
+    { href: "/portal/teacher/availability", labelKey: "nav.teacher.availability" },
+    { href: "/portal/teacher/substitutes", labelKey: "nav.teacher.substitutes" },
     { href: "/portal/teacher/messages", labelKey: "nav.teacher.messages" },
     { href: "/portal/teacher/affiliations", labelKey: "nav.teacher.affiliations" },
+    { href: "/settings/notifications", labelKey: "nav.teacher.notifications" },
   ],
   office: [{ href: "/portal/office", labelKey: "nav.office.dashboard", exact: true }],
   parent: [
@@ -93,6 +109,7 @@ export const PORTAL_NAV: Record<Exclude<Role, "admin">, NavItem[]> = {
     { href: "/portal/parent/billing", labelKey: "nav.parent.billing" },
     { href: "/portal/parent/chat", labelKey: "nav.parent.studioChat" },
     { href: "/portal/parent/messages", labelKey: "nav.parent.studioEmail" },
+    { href: "/settings/notifications", labelKey: "nav.shared.notifications" },
   ],
   student: [
     { href: "/portal/student", labelKey: "nav.student.timetable", exact: true },

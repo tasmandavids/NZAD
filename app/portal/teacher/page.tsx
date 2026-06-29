@@ -34,7 +34,7 @@ export default async function TeacherPortal() {
   const today = new Date().toISOString().slice(0, 10);
   const todayDow = new Date().getDay();
 
-  const [profileRes, classesRes] = await Promise.all([
+  const [profileRes, classesRes, invoicesRes, clientsRes] = await Promise.all([
     supabase.from("profiles").select("full_name, account_kind").eq("id", user!.id).single(),
 
     supabase
@@ -51,6 +51,16 @@ export default async function TeacherPortal() {
       .eq("teacher_id", user!.id)
       .order("day_of_week")
       .order("start_time"),
+
+    supabase
+      .from("contractor_invoices")
+      .select("amount_cents, status")
+      .eq("instructor_id", user!.id),
+
+    supabase
+      .from("private_clients")
+      .select("id", { count: "exact", head: true })
+      .eq("instructor_id", user!.id),
   ]);
 
   const classIds = (classesRes.data ?? []).map((c) => c.id);
@@ -100,6 +110,12 @@ export default async function TeacherPortal() {
 
   const isInstructor = profileRes.data?.account_kind === "instructor";
 
+  const incomeSummary = isInstructor ? {
+    paidCents: (invoicesRes.data ?? []).filter((i) => i.status === "paid").reduce((s, i) => s + (i.amount_cents as number), 0),
+    outstandingCents: (invoicesRes.data ?? []).filter((i) => ["draft", "sent"].includes(i.status as string)).reduce((s, i) => s + (i.amount_cents as number), 0),
+    privateClients: clientsRes.count ?? 0,
+  } : null;
+
   return (
     <TeacherSchedule
       teacherName={profileRes.data?.full_name ?? null}
@@ -107,6 +123,7 @@ export default async function TeacherPortal() {
       todayDow={todayDow}
       todayDate={today}
       isInstructor={isInstructor}
+      incomeSummary={incomeSummary}
     />
   );
 }

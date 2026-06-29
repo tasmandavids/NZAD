@@ -184,6 +184,7 @@ export default function TeacherSchedule({
   todayDow,
   todayDate,
   isInstructor = false,
+  incomeSummary,
 }: {
   teacherName: string | null;
   classes: TeacherClass[];
@@ -191,6 +192,7 @@ export default function TeacherSchedule({
   todayDate: string;
   dayNames?: string[];
   isInstructor?: boolean;
+  incomeSummary?: { paidCents: number; outstandingCents: number; privateClients: number } | null;
 }) {
   const t = useTranslations("teacher.schedule");
   const locale = useLocale();
@@ -255,6 +257,30 @@ export default function TeacherSchedule({
             {otherClasses.map((cls) => (
               <ScheduleRow key={cls.id} cls={cls} dayName={dayNames[cls.dayOfWeek]} />
             ))}
+          </div>
+        </motion.section>
+      )}
+
+      {isInstructor && incomeSummary && (
+        <motion.section variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}>
+          <h2 className="mb-3 text-xs uppercase tracking-widest text-muted">Income overview</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <Link href="/portal/teacher/invoices" className="rounded-2xl border border-[--hair] bg-surface px-4 py-4 text-center hover:border-brand/40 transition-colors">
+              <p className="text-[0.7rem] text-muted uppercase tracking-wide">Paid</p>
+              <p className="text-lg font-bold text-green-600 mt-0.5">
+                {new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 0 }).format(incomeSummary.paidCents / 100)}
+              </p>
+            </Link>
+            <Link href="/portal/teacher/invoices" className="rounded-2xl border border-[--hair] bg-surface px-4 py-4 text-center hover:border-brand/40 transition-colors">
+              <p className="text-[0.7rem] text-muted uppercase tracking-wide">Outstanding</p>
+              <p className="text-lg font-bold text-brand mt-0.5">
+                {new Intl.NumberFormat("en-NZ", { style: "currency", currency: "NZD", maximumFractionDigits: 0 }).format(incomeSummary.outstandingCents / 100)}
+              </p>
+            </Link>
+            <Link href="/portal/teacher/clients" className="rounded-2xl border border-[--hair] bg-surface px-4 py-4 text-center hover:border-brand/40 transition-colors">
+              <p className="text-[0.7rem] text-muted uppercase tracking-wide">Private clients</p>
+              <p className="text-lg font-bold text-ink mt-0.5">{incomeSummary.privateClients}</p>
+            </Link>
           </div>
         </motion.section>
       )}

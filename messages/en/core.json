@@ -85,7 +85,8 @@
       "clientManagement": "Client management",
       "finance": "Finance",
       "digital": "Digital",
-      "communications": "Communications"
+      "communications": "Communications",
+      "staffing": "Staffing"
     },
     "admin": {
       "dashboard": "Dashboard",
@@ -104,12 +105,23 @@
       "email": "Email",
       "messages": "Messages",
       "support": "Olune Support",
-      "settings": "Settings"
+      "settings": "Settings",
+      "substitutes": "Substitutes",
+      "paymentPlans": "Payment plans",
+      "availability": "Teacher availability"
     },
     "teacher": {
       "schedule": "Schedule & Roll",
+      "clients": "Private clients",
+      "invoices": "Invoices",
       "messages": "Messages",
-      "affiliations": "Studio affiliations"
+      "affiliations": "Studio affiliations",
+      "availability": "Availability",
+      "substitutes": "Sub board",
+      "expenses": "Expenses",
+      "vault": "Compliance vault",
+      "notifications": "Notification settings",
+      "profile": "Public profile"
     },
     "office": {
       "dashboard": "Front desk"
@@ -140,6 +152,9 @@
       "auditLog": "Audit log",
       "consoleTitle": "Olune Platform",
       "consoleSubtitle": "Operator console"
+    },
+    "shared": {
+      "notifications": "Notification settings"
     }
   },
   "auth": {

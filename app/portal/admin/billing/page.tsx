@@ -144,30 +144,30 @@ export default async function BillingPage() {
 
     supabase
       .from("invoices")
-      .select("amount_cents, paid_at")
+      .select("amount_cents, refund_amount_cents, paid_at")
       .eq("studio_id", studioId)
-      .eq("status", "paid")
+      .in("status", ["paid", "refunded"])
       .not("paid_at", "is", null)
       .gte("paid_at", YEAR_AGO()),
 
     supabase
       .from("invoices")
-      .select("amount_cents")
+      .select("amount_cents, refund_amount_cents")
       .eq("studio_id", studioId)
-      .eq("status", "paid")
+      .in("status", ["paid", "refunded"])
       .gte("paid_at", YEAR_START()),
 
     supabase
       .from("orders")
-      .select("total_cents, updated_at")
+      .select("total_cents, refund_amount_cents, updated_at")
       .eq("studio_id", studioId)
-      .eq("status", "paid")
+      .in("status", ["paid", "refunded"])
       .gte("updated_at", YEAR_AGO()),
 
     supabase
       .from("event_tickets")
-      .select("total_cents, purchased_at, events!inner ( studio_id )")
-      .eq("status", "paid")
+      .select("total_cents, refund_amount_cents, purchased_at, events!inner ( studio_id )")
+      .in("status", ["paid", "refunded"])
       .eq("events.studio_id", studioId)
       .gte("purchased_at", YEAR_AGO()),
 
@@ -243,11 +243,14 @@ export default async function BillingPage() {
     (a, b) => b.overdueCents - a.overdueCents || b.totalCents - a.totalCents,
   );
 
+  const netCents = (r: { amount_cents: unknown; refund_amount_cents?: unknown }) =>
+    Math.max(0, (r.amount_cents as number) - ((r.refund_amount_cents as number) ?? 0));
+
   const monthMap = new Map<string, number>();
   for (const p of paidInvoicesRes.data ?? []) {
     if (!p.paid_at) continue;
     const month = (p.paid_at as string).slice(0, 7);
-    monthMap.set(month, (monthMap.get(month) ?? 0) + (p.amount_cents as number));
+    monthMap.set(month, (monthMap.get(month) ?? 0) + netCents(p));
   }
   const revenue: RevenueSeries = [];
   for (let i = 11; i >= 0; i--) {
@@ -262,9 +265,9 @@ export default async function BillingPage() {
     (rows ?? []).reduce((s, r) => s + (key(r) || 0), 0);
 
   const sources: SourceBreakdown = {
-    tuitionCents: sum(paidInvoicesRes.data, (r) => r.amount_cents as number),
-    shopCents: sum(ordersRes.data, (r) => r.total_cents as number),
-    eventsCents: sum(ticketsRes.data, (r) => r.total_cents as number),
+    tuitionCents: sum(paidInvoicesRes.data, netCents),
+    shopCents: sum(ordersRes.data, (r) => netCents({ amount_cents: r.total_cents, refund_amount_cents: r.refund_amount_cents })),
+    eventsCents: sum(ticketsRes.data, (r) => netCents({ amount_cents: r.total_cents, refund_amount_cents: r.refund_amount_cents })),
   };
 
   const subscriptions: BillingSubscriptionRow[] = (subsRes.data ?? []).map((s) => ({
@@ -287,7 +290,7 @@ export default async function BillingPage() {
 
   const totalOutstandingCents = unpaidInvoices.reduce((s, i) => s + i.amountCents, 0);
   const overdueCount = unpaidInvoices.filter((i) => i.status === "overdue").length;
-  const totalPaidCents = sum(ytdPaidRes.data, (r) => r.amount_cents as number);
+  const totalPaidCents = sum(ytdPaidRes.data, netCents);
 
   return (
     <BillingDashboard

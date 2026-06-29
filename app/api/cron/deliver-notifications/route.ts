@@ -85,18 +85,33 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: true, ranAt: new Date().toISOString(), summary });
   }
 
-  // 2. Resolve recipient contact details in one query.
+  // 2. Resolve recipient contact details + notification preferences in one go.
   const userIds = [...new Set(rows.map((r) => r.user_id as string))];
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, email, phone")
-    .in("id", userIds);
+  const [{ data: profiles }, { data: prefRows }] = await Promise.all([
+    supabase.from("profiles").select("id, email, phone").in("id", userIds),
+    supabase
+      .from("notification_preferences")
+      .select("user_id, notification_type, email_enabled, sms_enabled")
+      .in("user_id", userIds),
+  ]);
   const contacts = new Map<string, ProfileContact>(
     (profiles ?? []).map((p) => [
       p.id as string,
       { id: p.id as string, email: p.email as string | null, phone: p.phone as string | null },
     ]),
   );
+  // prefKey = `${userId}:${type}` → { emailEnabled, smsEnabled }
+  const prefMap = new Map<string, { emailEnabled: boolean; smsEnabled: boolean }>(
+    (prefRows ?? []).map((p) => [
+      `${p.user_id}:${p.notification_type}`,
+      { emailEnabled: Boolean(p.email_enabled), smsEnabled: Boolean(p.sms_enabled) },
+    ]),
+  );
+  function channelEnabled(userId: string, type: string, channel: "email" | "sms"): boolean {
+    const pref = prefMap.get(`${userId}:${type}`);
+    if (!pref) return true; // default on when no explicit preference saved
+    return channel === "email" ? pref.emailEnabled : pref.smsEnabled;
+  }
 
   const nowIso = new Date().toISOString();
 
@@ -126,7 +141,7 @@ export async function GET(req: NextRequest) {
     const errors: string[] = [];
     let retryable = false;
 
-    if (channels.includes("email")) {
+    if (channels.includes("email") && channelEnabled(row.user_id as string, row.type as string, "email")) {
       if (contact?.email) {
         const r = await sendEmail({ to: contact.email, ...renderNotificationEmail(notif) });
         if (r.ok) {
@@ -141,7 +156,7 @@ export async function GET(req: NextRequest) {
       // no email address → terminal for this channel.
     }
 
-    if (channels.includes("sms")) {
+    if (channels.includes("sms") && channelEnabled(row.user_id as string, row.type as string, "sms")) {
       if (contact?.phone) {
         const r = await sendSms({ to: contact.phone, body: renderNotificationSms(notif) });
         if (r.ok) {
