@@ -25,10 +25,16 @@ export default async function OnboardingPage() {
         redirect("/portal/teacher");
       }
 
+      // Only admins need to go through the setup flow. Students, parents, and
+      // teachers should go directly to their portal home.
+      if (role !== "admin") {
+        redirect(portalHomeForAccount(accountKind, role));
+      }
+
       const { state } = await fetchStudioSetupState(supabase, profile.studio_id);
       if (state?.setupCompletedAt) redirect("/portal/admin");
       if (state && !state.setupCompletedAt) redirect("/setup");
-      redirect(portalHomeForAccount(accountKind, role));
+      redirect("/portal/admin");
     }
   }
 
