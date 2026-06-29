@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import type { InstructorProfileData } from "@/app/portal/teacher/profile/page";
 import { updateInstructorProfile } from "@/app/portal/teacher/profile/actions";
 
@@ -369,8 +370,11 @@ export function InstructorProfileEditor({ profile }: { profile: InstructorProfil
             placeholder="https://…"
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           {form.avatarUrl && (
-            <img src={form.avatarUrl} alt="Preview"
-              className="mt-2 h-16 w-16 rounded-full object-cover border border-gray-200" />
+            <Image src={form.avatarUrl} alt="Preview"
+              className="mt-2 h-16 w-16 rounded-full object-cover border border-gray-200"
+              width={64}
+              height={64}
+            />
           )}
         </div>
       </div>

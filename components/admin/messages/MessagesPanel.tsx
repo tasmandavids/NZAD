@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { MessageThread, type ThreadMessage } from "@/components/admin/messages/MessageThread";
 import {
@@ -123,13 +123,13 @@ function MessagesPanelContent({
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [lastMessages, setLastMessages] = useState<Record<string, Message>>({});
 
-  function listKeyForMessage(m: Message) {
+  const listKeyForMessage = useCallback((m: Message) => {
     const peerId = peerIdForMessage(m, currentUserId);
     if (parentIds.has(peerId)) {
       return adminTopicThreadKey(normalizeMessageTopic(m.topic));
     }
     return peerId;
-  }
+  }, [currentUserId, parentIds]);
 
   function parentTopicKey(topic: MessageTopic, parentId: string) {
     return `${topic}:${parentId}`;
@@ -171,7 +171,7 @@ function MessagesPanelContent({
 
     setLastMessages(last);
     setUnreadCounts(unread);
-  }, [recentMessages, currentUserId, parentIds]);
+  }, [recentMessages, currentUserId, parentIds, listKeyForMessage]);
 
   useEffect(() => {
     if (!stream) return;

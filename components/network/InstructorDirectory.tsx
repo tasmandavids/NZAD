@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
+import Image from "next/image";
 import type { DirectoryInstructor } from "@/app/instructors/page";
 
 const DISCIPLINES = [
@@ -144,10 +145,12 @@ function InstructorCard({ instructor: i }: { instructor: DirectoryInstructor }) 
         <div className="-mt-8 mb-2 flex items-end justify-between">
           <div className="flex items-end gap-2">
             {i.avatarUrl ? (
-              <img
+              <Image
                 src={i.avatarUrl}
                 alt={i.fullName}
                 className="h-14 w-14 rounded-full border-4 border-white object-cover shadow-sm"
+                width={56}
+                height={56}
               />
             ) : (
               <div className="h-14 w-14 rounded-full border-4 border-white bg-indigo-100 flex items-center justify-center shadow-sm">

@@ -1,5 +1,6 @@
 import { requirePortalSession } from "@/lib/portal/session";
 import Link from "next/link";
+import Image from "next/image";
 
 const STATUS_LABELS: Record<string, string> = {
   sent:      "Sent",
@@ -71,10 +72,12 @@ export default async function NetworkInquiriesPage() {
                 className="flex items-start gap-4 bg-white border border-gray-200 rounded-xl p-4 hover:border-indigo-300 hover:shadow-sm transition-all"
               >
                 {instructor?.avatar_url ? (
-                  <img
+                  <Image
                     src={instructor.avatar_url}
                     alt={instructor.full_name ?? ""}
                     className="h-10 w-10 rounded-full object-cover shrink-0"
+                    width={40}
+                    height={40}
                   />
                 ) : (
                   <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
