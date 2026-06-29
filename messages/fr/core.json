@@ -176,7 +176,12 @@
     "redirecting": "Redirecting…",
     "orContinueWithEmail": "or continue with email",
     "googleForgotPassword": "Mot de passe Google oublié ?",
-    "googleForgotPasswordLink": "Réinitialiser sur Google"
+    "googleForgotPasswordLink": "Réinitialiser sur Google",
+    "forgotPassword": "Mot de passe oublié ?",
+    "sendResetLink": "Envoyer le lien",
+    "sendingResetLink": "Envoi…",
+    "resetLinkSent": "Vérifiez vos e-mails — nous avons envoyé un lien de réinitialisation.",
+    "resetLinkError": "Impossible d'envoyer l'e-mail. Veuillez réessayer."
   },
   "marketing": {
     "features": "Fonctionnalités",

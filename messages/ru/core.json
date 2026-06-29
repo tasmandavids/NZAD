@@ -176,7 +176,12 @@
     "redirecting": "Redirecting…",
     "orContinueWithEmail": "or continue with email",
     "googleForgotPassword": "Забыли пароль Google?",
-    "googleForgotPasswordLink": "Сбросить в Google"
+    "googleForgotPasswordLink": "Сбросить в Google",
+    "forgotPassword": "Забыли пароль?",
+    "sendResetLink": "Отправить ссылку",
+    "sendingResetLink": "Отправка…",
+    "resetLinkSent": "Проверьте почту — мы отправили ссылку для сброса пароля.",
+    "resetLinkError": "Не удалось отправить письмо. Попробуйте ещё раз."
   },
   "marketing": {
     "features": "Возможности",

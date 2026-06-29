@@ -22,6 +22,10 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loginFailed, setLoginFailed] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   async function signIn(e: React.FormEvent) {
     e.preventDefault();
@@ -32,9 +36,24 @@ function LoginForm() {
       password,
     });
     setBusy(false);
-    if (signInError) return setError(signInError.message);
+    if (signInError) {
+      setError(signInError.message);
+      setLoginFailed(true);
+      return;
+    }
     // Full navigation so middleware sees the fresh session cookie.
     window.location.assign(next);
+  }
+
+  async function sendResetLink() {
+    setResetBusy(true);
+    setResetError(null);
+    const { error: resetErr } = await createClient().auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+    setResetBusy(false);
+    if (resetErr) return setResetError(t("resetLinkError"));
+    setResetSent(true);
   }
 
   return (
@@ -88,6 +107,28 @@ function LoginForm() {
             {busy ? t("signingIn") : t("signInWithEmail")}
           </button>
         </form>
+
+        {loginFailed && (
+          <div className="mt-4 text-center">
+            {resetSent ? (
+              <p className="text-sm text-green-500">{t("resetLinkSent")}</p>
+            ) : (
+              <>
+                {resetError && (
+                  <p className="mb-2 text-sm text-red-400">{resetError}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={sendResetLink}
+                  disabled={resetBusy}
+                  className="text-sm text-muted underline underline-offset-2 hover:text-ink disabled:opacity-50"
+                >
+                  {resetBusy ? t("sendingResetLink") : t("forgotPassword")}
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         <p className="mt-4 text-center text-sm text-muted">
           {t("joinStudio")}{" "}
