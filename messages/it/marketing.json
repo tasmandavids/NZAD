@@ -41,7 +41,60 @@
       "eyebrow": "L'aspetto umano",
       "title": "Non hai aperto uno studio per fare amministrazione.",
       "body1": "L'hai aperto per fare un gran lavoro. Ma tra fatture, tracker di progetto, modifiche ai siti client e le e-mail «domanda veloce», il lavoro che ami è finito sepolto sotto quello che non ami.",
-      "body2": "Olune riunisce tutto in un unico posto — e fa il grosso del lavoro in silenzio in background, così le tue serate tornano tue."
+      "body2": "Olune riunisce tutto in un unico posto — e fa il grosso del lavoro in silenzio in background, così le tue serate tornano tue.",
+      "sceneCaption": "21:14 — fatture già inviate. Le serate, restituite.",
+      "oldWay": "Il vecchio modo",
+      "newWay": "Il modo Olune",
+      "oldWayItems": [
+        "Fogli di calcolo",
+        "Strumento PM",
+        "App di contabilità",
+        "Website builder",
+        "E-mail infinite",
+        "Post-it",
+        "Calendari",
+        "Documenti clienti"
+      ],
+      "newWayCaption": "Tutto, in un'unica casa serena."
+    },
+    "bento": {
+      "eyebrow": "Tutto, in un unico posto",
+      "title": "Un'unica casa per tutto.",
+      "cells": {
+        "liveSites": {
+          "title": "Siti client live",
+          "body": "Crea e modifica siti in tempo reale — senza sviluppatori, senza attese per una modifica al testo."
+        },
+        "invoicing": {
+          "title": "Fatturazione",
+          "body": "Invia, monitora e incassa senza uscire da Olune."
+        },
+        "cashFlow": {
+          "title": "Flusso di cassa",
+          "body": "Entrate e uscite, in tempo reale."
+        },
+        "quotes": {
+          "title": "Preventivi",
+          "body": "Da bozza ad accettato, in fretta."
+        },
+        "projects": {
+          "title": "Progetti e attività",
+          "body": "Ogni scadenza in una vista serena."
+        },
+        "expenses": {
+          "title": "Spese",
+          "body": "Registrale una volta. Fatto."
+        },
+        "clients": {
+          "title": "Clienti",
+          "body": "Tutto su tutti."
+        }
+      },
+      "stats": {
+        "logins": { "n": "1", "label": "accesso per tutto lo studio" },
+        "tools": { "n": "3–4", "label": "strumenti sostituiti da uno solo" },
+        "price": { "n": "19 $", "label": "dove lo stack costa 80–150 $" }
+      }
     },
     "whyChoose": {
       "eyebrow": "Perché gli studi scelgono Olune",
@@ -151,7 +204,13 @@
       "body3": "Olune esiste per un motivo: restituire tempo alle persone creative. Meno gestione. Più creazione. Questa è l'intera idea.",
       "meetTeam": "Incontra il team",
       "ourStory": "La nostra storia",
-      "quote": "Meno gestione. Più creazione."
+      "quote": "Meno gestione. Più creazione.",
+      "sceneCaption": "Progetti · Soldi · Siti — in orbita attorno al tuo studio.",
+      "principles": {
+        "studioRun": { "t": "Gestito da studi", "d": "Creato da persone che hanno davvero gestito studi." },
+        "calm": { "t": "Sereno per design", "d": "Ogni schermata pensata per essere aperta, non temuta." },
+        "allInOne": { "t": "Tutto in uno", "d": "Progetti, soldi e siti, insieme." }
+      }
     },
     "compareSection": {
       "eyebrow": "Confronta",

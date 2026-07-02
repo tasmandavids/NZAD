@@ -37,6 +37,15 @@
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-serif: "Fraunces", Georgia, serif;
+
+  /* Landing-page-only palette (2026 redesign) — scoped to the platform
+     marketing page so it never bleeds into tenant-branded studio sites or
+     the admin/portal UI, which still use the tokens above. */
+  --color-landing-accent: #8b7cf0;
+  --color-landing-navy: #1a1535;
+  --color-landing-paper: #f7f6fb;
+  --color-landing-ivory: #efeafb;
+  --color-landing-mist: rgba(26, 21, 53, 0.06);
 }
 
 /* Fallback tokens — used before the layout injects a tenant's values
@@ -74,8 +83,32 @@ body {
   }
 }
 
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+@keyframes bobY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(14px, -18px); }
+}
+
+@keyframes shimmerText {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-\[floatMoon_9s_ease-in-out_infinite\] {
+  .animate-\[floatMoon_9s_ease-in-out_infinite\],
+  [class*="animate-[twinkle"],
+  [class*="animate-[bobY"],
+  [class*="animate-[floatSlow"],
+  [class*="animate-[shimmerText"] {
     animation: none !important;
   }
 }

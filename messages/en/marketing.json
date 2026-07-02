@@ -41,7 +41,60 @@
       "eyebrow": "The human bit",
       "title": "You didn't start a studio to do admin.",
       "body1": "You started it to make great work. But somewhere between the invoices, the project trackers, the client website edits, and the \"quick question\" emails, the work you love got buried under the work you don't.",
-      "body2": "Olune pulls all of it into one place — and quietly does the heavy lifting in the background, so your evenings are yours again."
+      "body2": "Olune pulls all of it into one place — and quietly does the heavy lifting in the background, so your evenings are yours again.",
+      "sceneCaption": "9:14 pm — invoices already sent. Evenings, returned.",
+      "oldWay": "The old way",
+      "newWay": "The Olune way",
+      "oldWayItems": [
+        "Spreadsheets",
+        "PM tool",
+        "Accounting app",
+        "Website builder",
+        "Email threads",
+        "Sticky notes",
+        "Calendars",
+        "Client docs"
+      ],
+      "newWayCaption": "Everything, one calm home."
+    },
+    "bento": {
+      "eyebrow": "Everything, in one place",
+      "title": "One home for all of it.",
+      "cells": {
+        "liveSites": {
+          "title": "Live client sites",
+          "body": "Spin up and edit sites in real time — no dev, no waiting on a copy change."
+        },
+        "invoicing": {
+          "title": "Invoicing",
+          "body": "Send, track, and get paid without leaving Olune."
+        },
+        "cashFlow": {
+          "title": "Cash flow",
+          "body": "Money in and out, live."
+        },
+        "quotes": {
+          "title": "Quotes",
+          "body": "Draft to accepted, fast."
+        },
+        "projects": {
+          "title": "Projects & tasks",
+          "body": "Every deadline in one calm view."
+        },
+        "expenses": {
+          "title": "Expenses",
+          "body": "Log it once. Done."
+        },
+        "clients": {
+          "title": "Clients",
+          "body": "Everything about everyone."
+        }
+      },
+      "stats": {
+        "logins": { "n": "1", "label": "login for your whole studio" },
+        "tools": { "n": "3–4", "label": "tools replaced by one" },
+        "price": { "n": "$19", "label": "where the stack runs $80–150" }
+      }
     },
     "whyChoose": {
       "eyebrow": "Why studios choose Olune",
@@ -151,7 +204,13 @@
       "body3": "Olune exists for one reason: to give creative people their time back. Less managing. More making. That's the whole idea.",
       "meetTeam": "Meet the team",
       "ourStory": "Our story",
-      "quote": "Less managing. More making."
+      "quote": "Less managing. More making.",
+      "sceneCaption": "Projects · Money · Websites — in orbit around your studio.",
+      "principles": {
+        "studioRun": { "t": "Studio-run", "d": "Built by people who've actually run studios." },
+        "calm": { "t": "Calm by design", "d": "Every screen made to open, not dread." },
+        "allInOne": { "t": "All in one", "d": "Projects, money and sites, together." }
+      }
     },
     "compareSection": {
       "eyebrow": "Compare",

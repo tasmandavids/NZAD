@@ -49,8 +49,9 @@ export function LandingHero() {
 
   return (
     <header
+      id="hero"
       ref={ref}
-      className="relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-gradient-to-b from-paper via-ivory to-paper text-ink-black"
+      className="relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-gradient-to-b from-landing-ivory to-landing-paper text-landing-navy"
     >
       <ParticleBackground variant="light" />
 
@@ -62,7 +63,7 @@ export function LandingHero() {
           loop
           playsInline
           poster="/hero-poster.jpg"
-          className="h-full w-full object-cover opacity-[0.18]"
+          className="h-full w-full object-cover opacity-[0.16]"
         >
           <source src="/hero.webm" type="video/webm" />
           <source src="/hero.mp4" type="video/mp4" />
@@ -71,10 +72,10 @@ export function LandingHero() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(42vmax 42vmax at 50% 38%, rgba(107,102,201,.14), rgba(107,102,201,.04) 40%, transparent 68%)",
+              "radial-gradient(42vmax 42vmax at 50% 30%, rgba(139,124,240,.18), rgba(139,124,240,.05) 42%, transparent 68%)",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-paper/75 via-ivory/55 to-paper/85" />
+        <div className="absolute inset-0 bg-gradient-to-b from-landing-ivory/70 via-landing-paper/50 to-landing-paper/85" />
       </motion.div>
 
       <motion.div
@@ -82,55 +83,54 @@ export function LandingHero() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-10 mx-auto flex w-full max-w-[1320px] flex-1 flex-col justify-center px-[clamp(1.25rem,4vw,4rem)] pb-28 pt-[clamp(3rem,8vw,5rem)]"
+        className="relative z-10 mx-auto flex w-full max-w-[1120px] flex-1 flex-col items-center justify-center px-[clamp(1.25rem,4vw,3rem)] pb-24 pt-[clamp(6rem,10vw,7.5rem)] text-center"
       >
-        <motion.div variants={rise} className="mb-[clamp(1.25rem,3.5vw,2.25rem)]">
-          <OluneLogo variant="stacked" size="hero" animated className="items-start" />
+        <motion.div variants={rise} className="mb-9 motion-safe:animate-[bobY_7s_ease-in-out_infinite]">
+          <OluneLogo variant="mark" size="hero" />
         </motion.div>
 
-        <h1 className="font-display text-[clamp(2.6rem,9.5vw,7.5rem)] font-light leading-[0.95] tracking-[-0.02em] text-ink-black">
+        <h1 className="font-[family-name:var(--font-landing-display)] text-[clamp(46px,7.4vw,118px)] font-medium leading-[1.02] tracking-[-0.02em] text-landing-navy">
           <motion.span variants={rise} className="block">
             {t("hero.titleLine1")}
           </motion.span>
-          <motion.span variants={rise} className="block">
-            <span className="font-serif text-[1.05em] font-light italic text-iris">
-              {t("hero.titleLine2")}
-            </span>
+          <motion.span variants={rise} className="block italic text-landing-accent">
+            {t("hero.titleLine2")}
           </motion.span>
         </h1>
 
         <motion.p
           variants={rise}
-          className="mt-[clamp(1.4rem,3vw,2rem)] max-w-[48ch] text-[clamp(1.05rem,1.8vw,1.25rem)] leading-relaxed text-ink-black/75"
+          className="mx-auto mt-8 max-w-[40ch] text-xl leading-relaxed text-landing-navy/62"
         >
           {t("hero.subtitle")}
         </motion.p>
 
-        <motion.div variants={rise} className="mt-[clamp(2rem,4vw,2.6rem)] flex flex-wrap gap-4">
+        <motion.div variants={rise} className="mt-11 flex flex-wrap items-center justify-center gap-9">
           <PrimaryButton href="/onboarding">{t("startFree")}</PrimaryButton>
           <SecondaryButton href="#features">{t("hero.seeInAction")}</SecondaryButton>
         </motion.div>
 
-        <motion.blockquote
+        <motion.p
           variants={rise}
-          className="mt-[clamp(2.5rem,5vw,3.5rem)] max-w-[52ch] border-l-2 border-iris/40 pl-5 text-[clamp(.95rem,1.4vw,1.05rem)] italic leading-relaxed text-slate"
+          className="mx-auto mt-11 max-w-[620px] font-[family-name:var(--font-landing-display)] text-[clamp(17px,1.6vw,21px)] italic leading-snug text-landing-navy/40"
         >
-          {t("hero.quote")}
-        </motion.blockquote>
+          &ldquo;{t("hero.quote")}&rdquo;
+        </motion.p>
       </motion.div>
 
-      <div className="relative z-10 overflow-hidden border-t border-ink-black/10 bg-paper/60 py-[1.1rem] backdrop-blur-sm [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+      <div className="relative z-10 overflow-hidden border-t border-landing-navy/10 py-[1.9rem] [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
         <motion.div
-          className="flex w-max gap-12"
+          className="flex w-max gap-14"
           animate={reduce ? undefined : { x: ["0%", "-50%"] }}
           transition={{ duration: 32, ease: "linear", repeat: Infinity }}
         >
           {[...marqueeItems, ...marqueeItems].map((item, i) => (
             <span
               key={i}
-              className="flex items-center gap-12 whitespace-nowrap text-sm font-medium uppercase tracking-[0.28em] text-slate after:text-xs after:text-iris after:content-['✦']"
+              className="flex items-center gap-7 whitespace-nowrap font-[family-name:var(--font-landing-display)] text-[22px] italic text-landing-navy/34"
             >
               {item}
+              <span className="text-[13px] text-landing-accent">✦</span>
             </span>
           ))}
         </motion.div>

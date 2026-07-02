@@ -41,7 +41,60 @@
       "eyebrow": "L'aspect humain",
       "title": "Vous n'avez pas créé un studio pour faire de l'admin.",
       "body1": "Vous l'avez créé pour produire du beau travail. Mais entre les factures, les outils de suivi, les modifications de sites clients et les e-mails « petite question », le travail que vous aimez s'est retrouvé noyé sous celui que vous n'aimez pas.",
-      "body2": "Olune regroupe tout au même endroit — et s'occupe discrètement du gros du travail en arrière-plan, pour que vos soirées vous appartiennent à nouveau."
+      "body2": "Olune regroupe tout au même endroit — et s'occupe discrètement du gros du travail en arrière-plan, pour que vos soirées vous appartiennent à nouveau.",
+      "sceneCaption": "21 h 14 — factures déjà envoyées. Les soirées, retrouvées.",
+      "oldWay": "L'ancienne méthode",
+      "newWay": "La méthode Olune",
+      "oldWayItems": [
+        "Tableurs",
+        "Outil de gestion",
+        "Appli comptable",
+        "Créateur de site",
+        "Fils d'e-mails",
+        "Pense-bêtes",
+        "Calendriers",
+        "Documents clients"
+      ],
+      "newWayCaption": "Tout, dans un seul endroit serein."
+    },
+    "bento": {
+      "eyebrow": "Tout, au même endroit",
+      "title": "Un seul lieu pour tout.",
+      "cells": {
+        "liveSites": {
+          "title": "Sites clients en direct",
+          "body": "Lancez et modifiez des sites en temps réel — sans développeur, sans attendre un changement de texte."
+        },
+        "invoicing": {
+          "title": "Facturation",
+          "body": "Envoyez, suivez et soyez payé sans quitter Olune."
+        },
+        "cashFlow": {
+          "title": "Trésorerie",
+          "body": "L'argent qui entre et qui sort, en direct."
+        },
+        "quotes": {
+          "title": "Devis",
+          "body": "Du brouillon à l'acceptation, rapidement."
+        },
+        "projects": {
+          "title": "Projets et tâches",
+          "body": "Chaque échéance dans une vue sereine."
+        },
+        "expenses": {
+          "title": "Dépenses",
+          "body": "Enregistrez une fois. C'est fait."
+        },
+        "clients": {
+          "title": "Clients",
+          "body": "Tout sur tout le monde."
+        }
+      },
+      "stats": {
+        "logins": { "n": "1", "label": "identifiant pour tout le studio" },
+        "tools": { "n": "3–4", "label": "outils remplacés par un seul" },
+        "price": { "n": "19 $", "label": "là où la stack coûte 80–150 $" }
+      }
     },
     "whyChoose": {
       "eyebrow": "Pourquoi les studios choisissent Olune",
@@ -151,7 +204,13 @@
       "body3": "Olune existe pour une raison : redonner du temps aux créatifs. Moins de gestion. Plus de création. C'est toute l'idée.",
       "meetTeam": "Rencontrer l'équipe",
       "ourStory": "Notre histoire",
-      "quote": "Moins de gestion. Plus de création."
+      "quote": "Moins de gestion. Plus de création.",
+      "sceneCaption": "Projets · Argent · Sites — en orbite autour de votre studio.",
+      "principles": {
+        "studioRun": { "t": "Géré par des studios", "d": "Créé par des personnes qui ont vraiment géré des studios." },
+        "calm": { "t": "Conçu pour être serein", "d": "Chaque écran fait pour être ouvert, pas redouté." },
+        "allInOne": { "t": "Tout-en-un", "d": "Projets, argent et sites, réunis." }
+      }
     },
     "compareSection": {
       "eyebrow": "Comparer",
