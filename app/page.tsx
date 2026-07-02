@@ -4,6 +4,7 @@
 
 import dynamic from "next/dynamic";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { resolveStudio } from "@/lib/tenant";
 import { getBrandingCached } from "@/lib/branding";
 import { getPublishedHomeCached } from "@/lib/site/cached-queries";
@@ -14,9 +15,24 @@ import { ClientParticleBackground } from "@/components/landing/ClientParticleBac
 
 const OluneLanding = dynamic(() => import("@/components/marketing/OluneLanding"));
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ code?: string; next?: string }>;
+}) {
   const host = (await headers()).get("host");
   const studio = await resolveStudio(host);
+
+  // Safety net: if Supabase ever lands an OAuth redirect on the home page
+  // (e.g. a host not yet in the redirect allow-list falls back to the Site
+  // URL with ?code=…), hand it to the callback route so the code is actually
+  // exchanged instead of silently rendering the marketing page.
+  const { code, next } = await searchParams;
+  if (code) {
+    const params = new URLSearchParams({ code });
+    if (next) params.set("next", next);
+    redirect(`/auth/callback?${params.toString()}`);
+  }
 
   if (!studio) {
     // Root / apex domain — show the Olune platform page.

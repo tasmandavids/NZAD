@@ -30,20 +30,32 @@ function callbackUrls() {
     "http://localhost:3000/auth/callback",
     "http://127.0.0.1:3000/auth/callback",
     "https://127.0.0.1:3000/auth/callback",
+    // Local studio subdomains (e.g. nova.localhost:3000)
+    "http://*.localhost:3000/auth/callback",
   ]);
 
   if (APP_URL) {
     urls.add(`${APP_URL.replace(/\/$/, "")}/auth/callback`);
   }
 
-  // Production domains (always allow — safe to merge)
+  // Production apex hosts (always allow — safe to merge).
   for (const host of ["olune.co.nz", "www.olune.co.nz", "olune.app", "www.olune.app"]) {
     urls.add(`https://${host}/auth/callback`);
+  }
+
+  // Wildcard studio subdomains. Studio sites live on <slug>.olune.co.nz and
+  // OAuth must return to that same subdomain so the session cookie is set on
+  // the host the user signed in from. Without this, Supabase rejects the
+  // subdomain redirect and falls back to the Site URL (apex marketing page) —
+  // the exact bug where Google sign-in dumps studio users on olune.co.nz.
+  for (const domain of ["olune.co.nz", "olune.app"]) {
+    urls.add(`https://*.${domain}/auth/callback`);
   }
 
   if (ROOT && ROOT !== "localhost") {
     urls.add(`https://${ROOT}/auth/callback`);
     urls.add(`https://www.${ROOT}/auth/callback`);
+    urls.add(`https://*.${ROOT}/auth/callback`);
   }
 
   return [...urls];
