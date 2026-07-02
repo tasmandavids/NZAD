@@ -6,13 +6,13 @@ import { container, fadeIn, rise } from "./motion";
 import { Eyebrow } from "./ui";
 
 const CELLS = [
-  { key: "liveSites", span: "col-span-2 row-span-2", feature: true },
-  { key: "invoicing", span: "col-span-2 row-span-1", feature: false },
-  { key: "cashFlow", span: "col-span-1 row-span-1", feature: false },
-  { key: "quotes", span: "col-span-1 row-span-1", feature: false },
-  { key: "projects", span: "col-span-2 row-span-1", feature: false },
-  { key: "expenses", span: "col-span-1 row-span-1", feature: false },
-  { key: "clients", span: "col-span-1 row-span-1", feature: false },
+  { key: "liveSites", span: "md:col-span-2 md:row-span-2", feature: true },
+  { key: "invoicing", span: "md:col-span-2 md:row-span-1", feature: false },
+  { key: "cashFlow", span: "md:col-span-1 md:row-span-1", feature: false },
+  { key: "quotes", span: "md:col-span-1 md:row-span-1", feature: false },
+  { key: "projects", span: "md:col-span-2 md:row-span-1", feature: false },
+  { key: "expenses", span: "md:col-span-1 md:row-span-1", feature: false },
+  { key: "clients", span: "md:col-span-1 md:row-span-1", feature: false },
 ] as const;
 
 const STAT_KEYS = ["logins", "tools", "price"] as const;
@@ -21,9 +21,7 @@ function LivePreviewCard() {
   return (
     <div className="absolute right-[-6px] top-0 w-[74%] max-w-[320px] rotate-2 overflow-hidden rounded-xl border border-white/15 bg-[#faf5fb] shadow-[0_34px_70px_-26px_rgba(0,0,0,0.75)]">
       <div className="flex items-center justify-between border-b border-[#3a2040]/10 px-3.5 py-2.5">
-        <span className="font-[family-name:var(--font-landing-display)] text-[13px] text-[#3a2040]">
-          Tempo Dance Co.
-        </span>
+        <span className="font-[family-name:var(--font-landing-display)] text-[13px] text-[#3a2040]">Tempo Dance Co.</span>
         <span className="flex gap-2.5 text-[9px] font-bold text-[#3a2040]/60">
           <span>Classes</span>
           <span>Timetable</span>
@@ -31,12 +29,8 @@ function LivePreviewCard() {
         </span>
       </div>
       <div className="bg-[linear-gradient(135deg,#2a1a33_0%,#46284d_100%)] px-3.5 py-3.5 pb-3">
-        <div className="font-[family-name:var(--font-landing-display)] text-base italic leading-tight text-[#f3e4f6]">
-          Term 3 enrolments open.
-        </div>
-        <span className="mt-2 inline-block rounded-full bg-[#d4547e] px-2.5 py-1 text-[9px] font-bold text-white">
-          Book a trial class
-        </span>
+        <div className="font-[family-name:var(--font-landing-display)] text-base italic leading-tight text-[#f3e4f6]">Term 3 enrolments open.</div>
+        <span className="mt-2 inline-block rounded-full bg-[#d4547e] px-2.5 py-1 text-[9px] font-bold text-white">Book a trial class</span>
       </div>
       <div className="grid grid-cols-3 gap-2 px-3.5 py-2.5 pb-3">
         {["Ballet", "Hip hop", "Contemporary"].map((label) => (
@@ -55,29 +49,14 @@ export function BentoGrid() {
 
   return (
     <>
-      <motion.div
-        variants={container}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
-        className="mb-14 text-center"
-      >
+      <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }} className="mb-14 text-center">
         <Eyebrow>{t("bento.eyebrow")}</Eyebrow>
-        <motion.h2
-          variants={rise}
-          className="font-[family-name:var(--font-landing-display)] mt-2 text-[clamp(38px,5.2vw,78px)] font-medium leading-[1.05] tracking-[-0.02em] text-landing-navy"
-        >
+        <motion.h2 variants={rise} className="font-[family-name:var(--font-landing-display)] mt-2 text-[clamp(38px,5.2vw,78px)] font-medium leading-[1.05] tracking-[-0.02em] text-landing-navy">
           {t("bento.title")}
         </motion.h2>
       </motion.div>
 
-      <motion.div
-        variants={container}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
-        className="grid grid-flow-row-dense grid-cols-2 auto-rows-[190px] gap-5 sm:grid-cols-4"
-      >
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-4">
         {CELLS.map((cell, i) => (
           <motion.div key={cell.key} variants={fadeIn} custom={i} className={cell.span}>
             <div
@@ -88,52 +67,27 @@ export function BentoGrid() {
               }
             >
               <div className="relative min-h-[90px] flex-1">
-                <span
-                  className={`inline-block rounded-full bg-landing-accent shadow-[0_0_16px_var(--color-landing-accent)] ${
-                    cell.feature ? "h-4 w-4" : "h-2.5 w-2.5"
-                  }`}
-                />
+                <span className={`inline-block rounded-full bg-landing-accent shadow-[0_0_16px_var(--color-landing-accent)] ${cell.feature ? "h-4 w-4" : "h-2.5 w-2.5"}`} />
                 {cell.feature && <LivePreviewCard />}
               </div>
               <div>
-                <h3
-                  className={`font-[family-name:var(--font-landing-display)] mb-1.5 mt-3 leading-[1.15] ${
-                    cell.feature ? "text-[26px] text-white" : "text-[20px] text-landing-navy"
-                  }`}
-                >
+                <h3 className={`font-[family-name:var(--font-landing-display)] mb-1.5 mt-3 leading-[1.15] ${cell.feature ? "text-[26px] text-white" : "text-[20px] text-landing-navy"}`}>
                   {t(`bento.cells.${cell.key}.title`)}
                 </h3>
-                <p
-                  className={`max-w-[320px] leading-relaxed ${
-                    cell.feature ? "text-[15px] text-white/72" : "text-sm text-landing-navy/56"
-                  }`}
-                >
+                <p className={`max-w-[320px] leading-relaxed ${cell.feature ? "text-[15px] text-white/72" : "text-sm text-landing-navy/56"}`}>
                   {t(`bento.cells.${cell.key}.body`)}
                 </p>
               </div>
             </div>
           </motion.div>
         ))}
-      </motion.div>
+      </div>
 
-      <motion.div
-        variants={rise}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, margin: "-60px" }}
-        className="mx-auto mt-16 max-w-[940px] overflow-hidden rounded-[24px] bg-[linear-gradient(150deg,#241b4e_0%,#1a1535_55%,#2c2260_100%)] px-6 py-11 shadow-[0_50px_110px_-60px_var(--color-landing-accent)] sm:px-10"
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-3">
+      <motion.div variants={rise} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-60px" }} className="mx-auto mt-16 max-w-[940px] overflow-hidden rounded-[24px] bg-[linear-gradient(150deg,#241b4e_0%,#1a1535_55%,#2c2260_100%)] px-6 py-11 shadow-[0_50px_110px_-60px_var(--color-landing-accent)] sm:px-10">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
           {STAT_KEYS.map((key, i) => (
-            <div
-              key={key}
-              className={`px-6 py-2.5 text-center ${
-                i > 0 ? "sm:border-l sm:border-white/12" : ""
-              }`}
-            >
-              <div className="font-[family-name:var(--font-landing-display)] text-[clamp(44px,4.6vw,68px)] leading-none text-white">
-                {t(`bento.stats.${key}.n`)}
-              </div>
+            <div key={key} className={`px-6 py-2.5 text-center ${i > 0 ? "sm:border-l sm:border-white/12" : ""}`}>
+              <div className="font-[family-name:var(--font-landing-display)] text-[clamp(44px,4.6vw,68px)] leading-none text-white">{t(`bento.stats.${key}.n`)}</div>
               <div className="mx-auto my-3.5 h-0.5 w-16 rounded bg-[linear-gradient(90deg,transparent,var(--color-landing-accent),transparent)]" />
               <div className="text-[15px] text-white/60">{t(`bento.stats.${key}.label`)}</div>
             </div>

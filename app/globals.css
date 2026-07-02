@@ -104,11 +104,26 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-\[floatMoon_9s_ease-in-out_infinite\],
+  .animate-\[bobY_7s_ease-in-out_infinite\],
   [class*="animate-[twinkle"],
   [class*="animate-[bobY"],
   [class*="animate-[floatSlow"],
-  [class*="animate-[shimmerText"] {
+  .animate-\[floatMoon_9s_ease-in-out_infinite\],
+  [class*="animate-[countGlow"],
+  [class*="animate-[shootStar"] {
     animation: none !important;
   }
+}
+
+/* Accessibility: visible focus layer for keyboard users */
+.olune-logo__mark svg,
+a, button, select, input, [tabindex]:not([tabindex="-1"]) {
+  --olune-focus: 0 0 0 2px color-mix(in srgb, var(--tw-brand-hot, #6B66C9) 35%, transparent), 0 0 0 4px var(--tw-brand-hot, #6B66C9);
+}
+.olune-logo__mark svg:focus-visible,
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, [tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 3px solid var(--tw-brand-hot, #6B66C9) !important;
+  outline-offset: 3px !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
 }

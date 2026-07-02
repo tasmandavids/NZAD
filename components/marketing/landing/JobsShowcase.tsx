@@ -11,11 +11,14 @@ const ROWS = [
   { key: "liveSites", num: "03", url: "app.olune.co.nz/sites", demo: "sites" as const },
 ];
 
-function LiveBadge() {
+function LiveBadge({ pulse = true }: { pulse?: boolean }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-landing-accent/40 bg-landing-accent/[0.09] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-landing-accent">
-      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-landing-accent" />
-      Live
+      {pulse && <span className="relative flex h-2 w-2">
+        <span className="absolute inset-0 rounded-full bg-landing-accent/50 motion-safe:animate-[countGlow_2.2s_ease-in-out_infinite]" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-landing-accent" />
+      </span>}
+      <span>Live</span>
     </span>
   );
 }

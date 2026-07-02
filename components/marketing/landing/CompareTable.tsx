@@ -29,21 +29,23 @@ export function CompareTable() {
             <OluneLogo size="xs" className="inline-flex" />
           </div>
         </div>
-        {ROW_KEYS.map((key, i) => (
-          <div
-            key={key}
-            className={`grid grid-cols-[1.3fr_1fr_1fr] items-center px-7 py-5 transition-colors hover:bg-landing-accent/[0.05] ${
-              i === ROW_KEYS.length - 1 ? "" : "border-b border-landing-navy/[0.09]"
-            }`}
-          >
-            <div className="text-[16.5px] font-semibold text-landing-navy">{t(`rows.${key}.label`)}</div>
-            <div className="text-[15px] text-landing-navy/46">{t(`rows.${key}.stack`)}</div>
-            <div className="flex items-center gap-2.5 text-[15px] font-semibold text-landing-navy">
-              <span className="text-base text-landing-accent">✓</span>
-              {t(`rows.${key}.olune`)}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {ROW_KEYS.map((key, i) => (
+            <div
+              key={key}
+              className={`grid grid-cols-1 gap-1 px-6 py-5 sm:grid-cols-[1.3fr_1fr_1fr] sm:gap-4 ${
+                i === ROW_KEYS.length - 1 ? "" : "border-b border-landing-navy/[0.09]"
+              }`}
+            >
+              <div className="text-[15px] font-semibold text-landing-navy">{t(`rows.${key}.label`)}</div>
+              <div className="text-[14px] text-landing-navy/46">{t(`rows.${key}.stack`)}</div>
+              <div className="flex items-center gap-2.5 text-[14px] font-semibold text-landing-navy">
+                <span className="text-base text-landing-accent">✓</span>
+                {t(`rows.${key}.olune`)}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </motion.div>
 
       <motion.div

@@ -115,3 +115,13 @@
   .btn-glow:hover::before { animation: none; }
   .btn-glow, .field-premium { transition: none; }
 }
+
+/* landing-only birth animation variants */
+@keyframes bobY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes countGlow { 0%, 100% { text-shadow: 0 0 0 rgba(139,124,240,0); } 50% { text-shadow: 0 0 22px rgba(139,124,240,0.55); } }
+@keyframes shootStar {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  8%   { opacity: 0.9; }
+  18%  { transform: translate3d(300px, 160px, 0); opacity: 0; }
+  100% { transform: translate3d(300px, 160px, 0); opacity: 0; }
+}

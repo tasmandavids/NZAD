@@ -5,6 +5,7 @@
 //  Pure CSS animation, no JS timers, so it's cheap to render.
 // ============================================================================
 
+import { useEffect, useState } from "react";
 import { OluneLogo } from "@/components/brand/OluneLogo";
 
 // Fixed pseudo-random-looking positions so server and client markup match.
@@ -16,6 +17,14 @@ const STARS = Array.from({ length: 22 }, (_, i) => ({
   duration: `${2.4 + (i % 5) * 0.5}s`,
 }));
 
+const SHOOTERS = Array.from({ length: 3 }, (_, i) => ({
+  top: `${19 + i * 23}%`,
+  left: `${9 + i * 28}%`,
+  rotate: `${28 + i * 27}deg`,
+  delay: `${0.6 + i * 1.7}s`,
+  duration: `${1.7 + i * 0.6}s`,
+}));
+
 type NightSceneProps = {
   caption: React.ReactNode;
   variant?: "hills" | "orbit";
@@ -23,6 +32,12 @@ type NightSceneProps = {
 };
 
 export function NightScene({ caption, variant = "hills", className = "" }: NightSceneProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <div
       className={`relative overflow-hidden rounded-[22px] border border-white/[0.06] bg-[radial-gradient(circle_at_50%_42%,#221a4e_0%,#16112e_62%,#120e26_100%)] shadow-[0_50px_100px_-50px_rgba(26,21,53,0.8)] ${className}`}
@@ -70,6 +85,25 @@ export function NightScene({ caption, variant = "hills", className = "" }: Night
             aria-hidden
             className="absolute -bottom-[30%] -right-[30%] h-[44%] w-[120%] rounded-full bg-[#0e0b20]"
           />
+
+          {mounted &&
+            SHOOTERS.map((s, i) => (
+              <span
+                key={i}
+                aria-hidden
+                className="absolute h-[1.5px] w-[26px] origin-left rounded-full bg-gradient-to-r from-transparent via-white to-transparent motion-safe:animate-[shootStar_var(--dur)_linear_var(--delay)_infinite]"
+                style={
+                  {
+                    top: s.top,
+                    left: s.left,
+                    "--dur": s.duration,
+                    "--delay": s.delay,
+                    transform: `rotate(${s.rotate})`,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+
           <span
             aria-hidden
             className="absolute bottom-[17%] left-[38%] h-3 w-2 rounded-sm bg-[#ffd9a0] shadow-[0_0_16px_rgba(255,217,160,0.9)] motion-safe:animate-[twinkle_4s_ease-in-out_infinite]"
