@@ -26,36 +26,46 @@ const args = new Set(process.argv.slice(2));
 const enableGoogle = args.has("--enable-google") || Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID);
 
 function callbackUrls() {
-  const urls = new Set([
-    "http://localhost:3000/auth/callback",
-    "http://127.0.0.1:3000/auth/callback",
-    "https://127.0.0.1:3000/auth/callback",
-    // Local studio subdomains (e.g. nova.localhost:3000)
-    "http://*.localhost:3000/auth/callback",
-  ]);
+  const urls = new Set();
 
-  if (APP_URL) {
-    urls.add(`${APP_URL.replace(/\/$/, "")}/auth/callback`);
-  }
+  // Supabase globs the ENTIRE redirect URL against these patterns, including
+  // the ?next=… query string we send (e.g. /auth/callback?next=/join). A bare
+  // "/auth/callback" entry therefore does NOT match a request that carries a
+  // query — Supabase rejects it and falls back to the Site URL (apex). So each
+  // host is registered with a trailing "/**", which matches the path AND the
+  // query. This mirrors the working Vercel entries (…vercel.app/**).
+  const withGlob = (base) => {
+    urls.add(`${base}/auth/callback`); // explicit, for readability
+    urls.add(`${base}/**`); // the one that actually matches with a query string
+  };
 
-  // Production apex hosts (always allow — safe to merge).
+  // Local dev, including studio subdomains (e.g. nova.localhost:3000).
+  withGlob("http://localhost:3000");
+  withGlob("http://127.0.0.1:3000");
+  withGlob("https://127.0.0.1:3000");
+  withGlob("http://*.localhost:3000");
+
+  if (APP_URL) withGlob(APP_URL.replace(/\/$/, ""));
+
+  // Production apex hosts.
   for (const host of ["olune.co.nz", "www.olune.co.nz", "olune.app", "www.olune.app"]) {
-    urls.add(`https://${host}/auth/callback`);
+    withGlob(`https://${host}`);
   }
 
   // Wildcard studio subdomains. Studio sites live on <slug>.olune.co.nz and
   // OAuth must return to that same subdomain so the session cookie is set on
   // the host the user signed in from. Without this, Supabase rejects the
   // subdomain redirect and falls back to the Site URL (apex marketing page) —
-  // the exact bug where Google sign-in dumps studio users on olune.co.nz.
+  // the bug where Google sign-in dumps studio users on olune.co.nz and new
+  // users get routed to create-your-own-studio onboarding.
   for (const domain of ["olune.co.nz", "olune.app"]) {
-    urls.add(`https://*.${domain}/auth/callback`);
+    withGlob(`https://*.${domain}`);
   }
 
   if (ROOT && ROOT !== "localhost") {
-    urls.add(`https://${ROOT}/auth/callback`);
-    urls.add(`https://www.${ROOT}/auth/callback`);
-    urls.add(`https://*.${ROOT}/auth/callback`);
+    withGlob(`https://${ROOT}`);
+    withGlob(`https://www.${ROOT}`);
+    withGlob(`https://*.${ROOT}`);
   }
 
   return [...urls];
