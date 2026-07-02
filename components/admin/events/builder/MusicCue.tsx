@@ -5,6 +5,7 @@
 // ============================================================================
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import {
   fetchMusicMetadata,
   saveActMusic,
@@ -66,10 +67,12 @@ export function MusicCue({ actId, music, onSave, onRemove }: MusicCueProps) {
         <div className="flex items-center gap-3 p-3">
           {/* Thumbnail */}
           {music.thumbnailUrl ? (
-            <img
+            <Image
               src={music.thumbnailUrl}
               alt="Album art"
               className="w-12 h-12 rounded-lg object-cover shrink-0 shadow-sm"
+              width={48}
+              height={48}
             />
           ) : (
             <div className="w-12 h-12 rounded-lg bg-brand/10 flex items-center justify-center shrink-0 text-xl">

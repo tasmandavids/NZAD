@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../styles/micro-interactions.css";
+@import "../styles/landing-design.css";
 
 /* Map Tailwind v4 utilities to the tenant's runtime CSS variables.
    bg-brand, text-brand-hot, bg-surface, text-ink, etc. all follow the studio. */
@@ -9,6 +10,7 @@
   --color-brand-hot: var(--brand-hot);
   --color-brand-deep: var(--brand-deep);
   --color-base: var(--base);
+  --color-canvas: var(--base);
   --color-surface: var(--surface);
   --color-ink: var(--text);
   --color-muted: var(--muted);
@@ -36,6 +38,15 @@
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-serif: "Fraunces", Georgia, serif;
+
+  /* Landing-page-only palette (2026 redesign) — scoped to the platform
+     marketing page so it never bleeds into tenant-branded studio sites or
+     the admin/portal UI, which still use the tokens above. */
+  --color-landing-accent: #8b7cf0;
+  --color-landing-navy: #1a1535;
+  --color-landing-paper: #f7f6fb;
+  --color-landing-ivory: #efeafb;
+  --color-landing-mist: rgba(26, 21, 53, 0.06);
 }
 
 /* Fallback tokens — used before the layout injects a tenant's values
@@ -73,8 +84,39 @@ body {
   }
 }
 
+/* twinkle + bobY live in styles/landing-design.css (design-exact values). */
+
+@keyframes floatSlow {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(14px, -18px); }
+}
+
+@keyframes shimmerText {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-\[floatMoon_9s_ease-in-out_infinite\] {
+  .animate-\[bobY_7s_ease-in-out_infinite\],
+  [class*="animate-[twinkle"],
+  [class*="animate-[bobY"],
+  [class*="animate-[floatSlow"],
+  .animate-\[floatMoon_9s_ease-in-out_infinite\],
+  [class*="animate-[countGlow"],
+  [class*="animate-[shootStar"] {
     animation: none !important;
   }
+}
+
+/* Accessibility: visible focus layer for keyboard users */
+.olune-logo__mark svg,
+a, button, select, input, [tabindex]:not([tabindex="-1"]) {
+  --olune-focus: 0 0 0 2px color-mix(in srgb, var(--tw-brand-hot, #6B66C9) 35%, transparent), 0 0 0 4px var(--tw-brand-hot, #6B66C9);
+}
+.olune-logo__mark svg:focus-visible,
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, [tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 3px solid var(--tw-brand-hot, #6B66C9) !important;
+  outline-offset: 3px !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
 }

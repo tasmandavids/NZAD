@@ -4,7 +4,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import StudentTimetable from "@/components/portal/student/StudentTimetable";
-import ParentHub from "@/components/portal/parent/ParentHub";
+import AdultStudentHub from "@/components/portal/student/AdultStudentHub";
 import { ParentShop } from "@/components/portal/parent/ParentShop";
 import EventsTickets, { type ParentEvent } from "@/components/portal/parent/EventsTickets";
 import type { Child, Invoice, ShopProduct } from "@/app/portal/parent/page";
@@ -162,17 +162,12 @@ export default async function StudentPortal() {
 
   return (
     <>
-      <StudentTimetable
-        classes={classes}
+      <AdultStudentHub
         studentName={profile.full_name}
-        todayDow={todayDow}
-      />
-      <ParentHub
-        parentName={profile.full_name}
-        familyChildren={[selfChild]}
+        selfChild={selfChild}
+        classes={classes}
         invoices={invoices}
-        selfManaged
-        childProgressHref={() => "/portal/student/progress"}
+        todayDow={todayDow}
       />
       {(events.length > 0 || products.length > 0) && (
         <div className="mx-auto max-w-5xl space-y-12 px-6 pb-16">

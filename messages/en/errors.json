@@ -5,12 +5,14 @@
       "title": "We hit an unexpected error",
       "body": "Try again, or return home if the problem persists.",
       "retry": "Try again",
+      "signInAgain": "Sign in again",
       "goHome": "Go home"
     },
     "global": {
       "title": "Something went wrong",
       "body": "The app encountered a critical error.",
-      "retry": "Try again"
+      "retry": "Try again",
+      "signInAgain": "Sign in again"
     },
     "notFound": {
       "eyebrow": "404",

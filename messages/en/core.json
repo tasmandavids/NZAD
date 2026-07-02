@@ -181,7 +181,12 @@
     "redirecting": "Redirecting…",
     "orContinueWithEmail": "or continue with email",
     "googleForgotPassword": "Forgot your Google password?",
-    "googleForgotPasswordLink": "Reset it at Google"
+    "googleForgotPasswordLink": "Reset it at Google",
+    "forgotPassword": "Forgot password?",
+    "sendResetLink": "Send reset link",
+    "sendingResetLink": "Sending…",
+    "resetLinkSent": "Check your email — we've sent a password reset link.",
+    "resetLinkError": "Couldn't send reset email. Please try again."
   },
   "marketing": {
     "features": "Features",

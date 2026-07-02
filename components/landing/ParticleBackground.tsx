@@ -128,7 +128,7 @@ export function ParticleBackground({ variant = "light" }: { variant?: "dark" | "
   const light = variant === "light";
 
   return (
-    <div className={`fixed inset-0 -z-10 ${light ? "bg-ivory" : "bg-midnight"}`}>
+    <div className={`absolute inset-0 -z-10 ${light ? "bg-ivory" : "bg-midnight"}`}>
       <Canvas
         camera={{ position: [0, 0, 7], fov: 60 }}
         dpr={[1, 2]}

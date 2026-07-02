@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
   MessageThread,
@@ -88,13 +88,13 @@ function ParentChatPanelContent({
 
   const adminTopics = MESSAGE_TOPICS;
 
-  function messageListKey(m: ParentChatMessage) {
+  const messageListKey = useCallback((m: ParentChatMessage) => {
     const peerId = m.from_user_id === currentUserId ? m.to_user_id : m.from_user_id;
     if (admin && peerId === admin.id) {
       return adminTopicThreadKey(normalizeMessageTopic(m.topic));
     }
     return peerId;
-  }
+  }, [currentUserId, admin]);
 
   function selectionMatchesMessage(current: Selection | null, m: ParentChatMessage) {
     if (!current) return false;
@@ -120,7 +120,7 @@ function ParentChatPanelContent({
 
     setLastMessages(last);
     setUnreadCounts(unread);
-  }, [recentMessages, currentUserId, admin]);
+  }, [recentMessages, currentUserId, admin, messageListKey]);
 
   useEffect(() => {
     if (!stream) return;

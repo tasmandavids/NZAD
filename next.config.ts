@@ -45,6 +45,13 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Tree-shake heavy barrel-export libraries so each route only bundles the
+  // components it actually imports. framer-motion is pulled into ~66 client
+  // components; recharts into the admin dashboards. Build-time only — no
+  // runtime or auth behaviour change.
+  experimental: {
+    optimizePackageImports: ["framer-motion", "recharts"],
+  },
   images: {
     remotePatterns: supaHost
       ? [

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 function youtubeEmbedUrl(url: string): string | null {
   try {
@@ -80,10 +81,12 @@ export default async function PublicInstructorPage({
             <div className="-mt-12 flex items-end justify-between">
               <div className="flex items-end gap-4">
                 {profile.avatar_url ? (
-                  <img
+                  <Image
                     src={profile.avatar_url}
                     alt={profile.full_name ?? ""}
                     className="h-20 w-20 rounded-full border-4 border-white object-cover shadow-sm"
+                    width={80}
+                    height={80}
                   />
                 ) : (
                   <div className="h-20 w-20 rounded-full border-4 border-white bg-indigo-100 flex items-center justify-center shadow-sm">

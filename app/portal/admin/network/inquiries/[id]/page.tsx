@@ -1,6 +1,7 @@
 import { requirePortalSession } from "@/lib/portal/session";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { InquiryThread } from "@/components/network/InquiryThread";
 
 export default async function InquiryDetailPage({
@@ -66,7 +67,7 @@ export default async function InquiryDetailPage({
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             {instructor?.avatar_url ? (
-              <img src={instructor.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
+              <Image src={instructor.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" width={40} height={40} />
             ) : (
               <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
                 <span className="text-sm font-bold text-indigo-600">

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { InquiryForm } from "@/components/network/InquiryForm";
 
 export default async function InquirePage({
@@ -68,10 +69,12 @@ export default async function InquirePage({
         {/* Mini instructor card */}
         <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4">
           {instructor.avatar_url ? (
-            <img
+            <Image
               src={instructor.avatar_url}
               alt={instructor.full_name ?? ""}
               className="h-12 w-12 rounded-full object-cover"
+              width={48}
+              height={48}
             />
           ) : (
             <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">

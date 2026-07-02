@@ -115,3 +115,6 @@
   .btn-glow:hover::before { animation: none; }
   .btn-glow, .field-premium { transition: none; }
 }
+
+/* bobY / countGlow / shootStar live in styles/landing-design.css
+   (design-exact values, shared with the marketing landing). */

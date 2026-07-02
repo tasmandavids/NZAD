@@ -5,12 +5,14 @@
       "title": "Nous avons rencontré une erreur inattendue",
       "body": "Réessayez ou retournez à l'accueil si le problème persiste.",
       "retry": "Réessayer",
+      "signInAgain": "Se reconnecter",
       "goHome": "Retour à l'accueil"
     },
     "global": {
       "title": "Une erreur s'est produite",
       "body": "L'application a rencontré une erreur critique.",
-      "retry": "Réessayer"
+      "retry": "Réessayer",
+      "signInAgain": "Se reconnecter"
     },
     "notFound": {
       "eyebrow": "404",
