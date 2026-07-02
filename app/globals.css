@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../styles/micro-interactions.css";
+@import "../styles/landing-design.css";
 
 /* Map Tailwind v4 utilities to the tenant's runtime CSS variables.
    bg-brand, text-brand-hot, bg-surface, text-ink, etc. all follow the studio. */
@@ -83,15 +84,7 @@ body {
   }
 }
 
-@keyframes twinkle {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 1; }
-}
-
-@keyframes bobY {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
+/* twinkle + bobY live in styles/landing-design.css (design-exact values). */
 
 @keyframes floatSlow {
   0%, 100% { transform: translate(0, 0); }

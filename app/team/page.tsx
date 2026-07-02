@@ -1,11 +1,15 @@
+"use client";
+
 // ============================================================================
-//  app/team/page.tsx — Founder story for the Olune platform marketing site.
-//  Content sourced from the Claude Design Studio export; English only for
-//  now (rest of the marketing site is translated, this page isn't yet).
+//  app/team/page.tsx — Founder story. Design-exact (Claude Design Studio
+//  team.html export). English-only for now.
 // ============================================================================
 
 import { landingFontVars } from "@/components/marketing/landing/fonts";
-import { LandingNav, LandingFooter, SectionShell, Eyebrow, PrimaryButton, DevBanner } from "@/components/marketing/landing/ui";
+import { DevBanner, LandingNav, LandingFooter, Eyebrow, PrimaryButton, DISPLAY, BODY } from "@/components/marketing/landing/chrome";
+
+const ACCENT = "#8b7cf0";
+const NAVY = "#1a1535";
 
 const PRINCIPLES = [
   { t: "Studio-run", d: "Built by someone who's actually lived the freelance week." },
@@ -15,78 +19,67 @@ const PRINCIPLES = [
 
 export default function TeamPage() {
   return (
-    <div className={`${landingFontVars} relative min-h-screen scroll-smooth bg-landing-paper font-[family-name:var(--font-landing-body)] text-landing-navy`}>
+    <div id="olune-landing-root" className={landingFontVars} style={{ fontFamily: BODY, background: "#f7f6fb", color: NAVY, overflowX: "hidden", width: "100%", position: "relative" }}>
       <DevBanner />
       <LandingNav />
 
-      <SectionShell className="bg-gradient-to-b from-landing-ivory to-landing-paper pb-10 pt-[clamp(3rem,7vw,5rem)] text-center">
-        <Eyebrow>Meet the team</Eyebrow>
-        <h1 className="font-[family-name:var(--font-landing-display)] mx-auto max-w-[720px] text-[clamp(38px,5.6vw,72px)] font-medium leading-[1.08] tracking-[-0.02em] text-landing-navy">
-          The person behind <span className="italic text-landing-accent">Olune.</span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-[540px] text-lg leading-relaxed text-landing-navy/60">
-          Olune isn&rsquo;t built by a boardroom. It&rsquo;s built hands-on, every day, by someone who lived the problem it solves.
-        </p>
-      </SectionShell>
+      {/* HERO */}
+      <section className="dcl-section" style={{ position: "relative", background: "linear-gradient(180deg, #efeafb 0%, #f7f6fb 60%)", padding: "170px 48px 70px", textAlign: "center", overflow: "hidden" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 2 }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 4 }}><Eyebrow center>Meet the team</Eyebrow></div>
+          <h1 style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: "clamp(38px, 5.6vw, 72px)", lineHeight: 1.08, letterSpacing: "-0.02em", color: NAVY, margin: "14px 0 0" }}>
+            The person behind <span style={{ fontStyle: "italic", color: ACCENT }}>Olune.</span>
+          </h1>
+          <p style={{ fontSize: 18, lineHeight: 1.6, color: "rgba(26,21,53,0.6)", maxWidth: 540, margin: "24px auto 0" }}>
+            Olune isn&rsquo;t built by a boardroom. It&rsquo;s built hands-on, every day, by someone who lived the problem it solves.
+          </p>
+        </div>
+      </section>
 
-      <SectionShell className="bg-landing-paper pt-0">
-        <div className="mx-auto grid max-w-[1040px] items-start gap-16 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-            <span className="flex h-32 w-32 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#6b66c9,#1a1535)] font-[family-name:var(--font-landing-display)] text-4xl italic text-white shadow-[0_30px_60px_-24px_rgba(139,124,240,0.6)]">
-              TD
-            </span>
-            <p className="mt-6 font-[family-name:var(--font-landing-display)] text-[24px] text-landing-navy">Tasman Davids</p>
-            <p className="mt-1 text-[13px] font-bold uppercase tracking-[0.14em] text-landing-accent">Founder</p>
-            <p className="mt-1 text-sm text-landing-navy/56">New Zealand</p>
+      {/* BODY */}
+      <section className="dcl-section" style={{ position: "relative", overflow: "hidden", background: "#f7f6fb", padding: "116px 48px", borderRadius: "48px 48px 0 0", marginTop: -48, boxShadow: "0 -34px 70px -38px rgba(26,21,53,0.16)" }}>
+        <div className="dcl-grid-about" style={{ maxWidth: 1040, margin: "0 auto", display: "grid", gridTemplateColumns: "0.8fr 1.2fr", gap: 64, alignItems: "start", position: "relative", zIndex: 2 }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 128, height: 128, borderRadius: "50%", background: "radial-gradient(circle at 35% 30%, #6b66c9, #1a1535)", fontFamily: DISPLAY, fontStyle: "italic", fontSize: 40, color: "#fff", boxShadow: `0 30px 60px -24px ${ACCENT}99`, animation: "bobY 7s ease-in-out infinite" }}>TD</span>
+            <p style={{ marginTop: 24, fontFamily: DISPLAY, fontSize: 24, color: NAVY }}>Tasman Davids</p>
+            <p style={{ marginTop: 4, fontSize: 13, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: ACCENT }}>Founder</p>
+            <p style={{ marginTop: 4, fontSize: 14, color: "rgba(26,21,53,0.56)" }}>New Zealand</p>
           </div>
 
           <div>
-            <h2 className="font-[family-name:var(--font-landing-display)] mb-6 text-[clamp(28px,3.2vw,40px)] font-medium leading-[1.1] tracking-[-0.015em] text-landing-navy">
-              Why Olune exists
-            </h2>
-            <p className="mb-5 text-[17px] leading-relaxed text-landing-navy/64">
-              Olune started with frustration. Running client work meant living inside a patchwork — a project tool over here, an invoicing app over there, a website builder somewhere else, and spreadsheets quietly holding the whole thing together.
-            </p>
-            <p className="mb-5 text-[17px] leading-relaxed text-landing-navy/64">
-              The breaking point is familiar to anyone who&rsquo;s freelanced: evenings lost to chasing invoices, re-entering the same numbers in three places, and client websites where a one-line copy change meant waiting on a developer. Four subscriptions, none of them talking to each other — and the creative work getting buried under the admin.
-            </p>
-            <p className="mb-9 text-[17px] leading-relaxed text-landing-navy/64">
-              So Tasman stopped duct-taping and started building. Olune is the result: one calm home for the projects, the money, and the live client sites — built in New Zealand and shaped daily by the people using it.
-            </p>
+            <h2 style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: "clamp(28px, 3.2vw, 40px)", lineHeight: 1.1, letterSpacing: "-0.015em", color: NAVY, margin: "0 0 24px" }}>Why Olune exists</h2>
+            <p style={{ fontSize: 17, lineHeight: 1.75, color: "rgba(26,21,53,0.64)", margin: "0 0 20px" }}>Olune started with frustration. Running client work meant living inside a patchwork — a project tool over here, an invoicing app over there, a website builder somewhere else, and spreadsheets quietly holding the whole thing together.</p>
+            <p style={{ fontSize: 17, lineHeight: 1.75, color: "rgba(26,21,53,0.64)", margin: "0 0 20px" }}>The breaking point is familiar to anyone who&rsquo;s freelanced: evenings lost to chasing invoices, re-entering the same numbers in three places, and client websites where a one-line copy change meant waiting on a developer. Four subscriptions, none of them talking to each other — and the creative work getting buried under the admin.</p>
+            <p style={{ fontSize: 17, lineHeight: 1.75, color: "rgba(26,21,53,0.64)", margin: "0 0 36px" }}>So Tasman stopped duct-taping and started building. Olune is the result: one calm home for the projects, the money, and the live client sites — built in New Zealand and shaped daily by the people using it.</p>
 
-            <div className="mb-10 flex items-center gap-5 rounded-2xl border border-landing-navy/5 bg-white px-7 py-7 shadow-[0_30px_70px_-46px_rgba(26,21,53,0.45)]">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-landing-navy text-white drop-shadow-[0_6px_16px_rgba(139,124,240,0.5)]">
-                ✦
+            <div style={{ display: "flex", alignItems: "center", gap: 22, marginBottom: 40, padding: "28px 30px", background: "#ffffff", borderRadius: 16, boxShadow: "0 30px 70px -46px rgba(26,21,53,0.45)", border: "1px solid rgba(26,21,53,0.05)" }}>
+              <span style={{ position: "relative", width: 44, height: 44, flexShrink: 0, filter: "drop-shadow(0 6px 16px rgba(139,124,240,0.5))" }}>
+                <span style={{ position: "absolute", top: "16%", left: "17%", width: "76%", height: "76%", borderRadius: "50%", background: ACCENT }} />
+                <span style={{ position: "absolute", top: "6%", left: "6%", width: "76%", height: "76%", borderRadius: "50%", background: NAVY }} />
               </span>
-              <p className="font-[family-name:var(--font-landing-display)] text-[clamp(20px,2.2vw,26px)] italic leading-tight text-landing-navy">
-                &ldquo;I built Olune because the admin was eating the work I actually loved.&rdquo;
-              </p>
+              <p style={{ fontFamily: DISPLAY, fontStyle: "italic", fontSize: "clamp(20px, 2.2vw, 26px)", color: NAVY, margin: 0, lineHeight: 1.25 }}>&ldquo;I built Olune because the admin was eating the work I actually loved.&rdquo;</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-7 border-t border-landing-navy/[0.14] pt-10 sm:grid-cols-3">
+            <div className="dcl-grid-stats3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 28, paddingTop: 40, borderTop: "1px solid rgba(26,21,53,0.14)" }}>
               {PRINCIPLES.map((p) => (
                 <div key={p.t}>
-                  <div className="mb-2 font-[family-name:var(--font-landing-display)] text-[20px] italic text-landing-accent">{p.t}</div>
-                  <p className="text-sm leading-relaxed text-landing-navy/56">{p.d}</p>
+                  <div style={{ fontFamily: DISPLAY, fontStyle: "italic", fontSize: 20, color: ACCENT, marginBottom: 8 }}>{p.t}</div>
+                  <p style={{ fontSize: 14, lineHeight: 1.55, color: "rgba(26,21,53,0.56)", margin: 0 }}>{p.d}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="mx-auto mt-24 max-w-[640px] text-center">
-          <h2 className="font-[family-name:var(--font-landing-display)] text-[clamp(28px,3.4vw,42px)] font-medium leading-[1.1] tracking-[-0.015em] text-landing-navy">
-            Follow the build.
-          </h2>
-          <p className="mx-auto mt-4 max-w-[480px] text-base leading-relaxed text-landing-navy/56">
-            Olune ships in the open — try it free before general release in early August and help shape where it goes next.
-          </p>
-          <div className="mt-8">
+        <div style={{ maxWidth: 640, margin: "96px auto 0", textAlign: "center", position: "relative", zIndex: 2 }}>
+          <h2 style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: "clamp(28px, 3.4vw, 42px)", lineHeight: 1.1, letterSpacing: "-0.015em", color: NAVY, margin: 0 }}>Follow the build.</h2>
+          <p style={{ fontSize: 16, lineHeight: 1.6, color: "rgba(26,21,53,0.56)", maxWidth: 480, margin: "16px auto 0" }}>Olune ships in the open — try it free before general release in early August and help shape where it goes next.</p>
+          <div style={{ marginTop: 32 }}>
             <PrimaryButton href="/onboarding">Start free</PrimaryButton>
-            <p className="mt-4 text-sm text-landing-navy/48">No card needed. Set up in minutes.</p>
+            <p style={{ margin: "16px 0 0", fontSize: 14, color: "rgba(26,21,53,0.48)" }}>No card needed. Set up in minutes.</p>
           </div>
         </div>
-      </SectionShell>
+      </section>
 
       <LandingFooter />
     </div>

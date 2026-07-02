@@ -42,7 +42,7 @@
       "title": "Non hai aperto uno studio per fare amministrazione.",
       "body1": "L'hai aperto per fare un gran lavoro. Ma tra fatture, tracker di progetto, modifiche ai siti client e le e-mail «domanda veloce», il lavoro che ami è finito sepolto sotto quello che non ami.",
       "body2": "Olune riunisce tutto in un unico posto — e fa il grosso del lavoro in silenzio in background, così le tue serate tornano tue.",
-      "sceneCaption": "21:14 — fatture già inviate. Le serate, restituite.",
+      "sceneCaption": "21:14 — fatture già inviate. <i>Le serate, restituite.</i>",
       "oldWay": "Il vecchio modo",
       "newWay": "Il modo Olune",
       "oldWayItems": [
@@ -91,9 +91,18 @@
         }
       },
       "stats": {
-        "logins": { "n": "1", "label": "accesso per tutto lo studio" },
-        "tools": { "n": "3–4", "label": "strumenti sostituiti da uno solo" },
-        "price": { "n": "19 $", "label": "dove lo stack costa 80–150 $" }
+        "logins": {
+          "n": "1",
+          "label": "accesso per tutto lo studio"
+        },
+        "tools": {
+          "n": "3–4",
+          "label": "strumenti sostituiti da uno solo"
+        },
+        "price": {
+          "n": "19 $",
+          "label": "dove lo stack costa 80–150 $"
+        }
       }
     },
     "whyChoose": {
@@ -205,11 +214,20 @@
       "meetTeam": "Incontra il team",
       "ourStory": "La nostra storia",
       "quote": "Meno gestione. Più creazione.",
-      "sceneCaption": "Progetti · Soldi · Siti — in orbita attorno al tuo studio.",
+      "sceneCaption": "Progetti · Soldi · Siti — <i>in orbita attorno al tuo studio.</i>",
       "principles": {
-        "studioRun": { "t": "Gestito da studi", "d": "Creato da persone che hanno davvero gestito studi." },
-        "calm": { "t": "Sereno per design", "d": "Ogni schermata pensata per essere aperta, non temuta." },
-        "allInOne": { "t": "Tutto in uno", "d": "Progetti, soldi e siti, insieme." }
+        "studioRun": {
+          "t": "Gestito da studi",
+          "d": "Creato da persone che hanno davvero gestito studi."
+        },
+        "calm": {
+          "t": "Sereno per design",
+          "d": "Ogni schermata pensata per essere aperta, non temuta."
+        },
+        "allInOne": {
+          "t": "Tutto in uno",
+          "d": "Progetti, soldi e siti, insieme."
+        }
       }
     },
     "compareSection": {

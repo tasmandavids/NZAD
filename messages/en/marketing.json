@@ -42,7 +42,7 @@
       "title": "You didn't start a studio to do admin.",
       "body1": "You started it to make great work. But somewhere between the invoices, the project trackers, the client website edits, and the \"quick question\" emails, the work you love got buried under the work you don't.",
       "body2": "Olune pulls all of it into one place — and quietly does the heavy lifting in the background, so your evenings are yours again.",
-      "sceneCaption": "9:14 pm — invoices already sent. Evenings, returned.",
+      "sceneCaption": "9:14 pm — invoices already sent. <i>Evenings, returned.</i>",
       "oldWay": "The old way",
       "newWay": "The Olune way",
       "oldWayItems": [
@@ -91,9 +91,18 @@
         }
       },
       "stats": {
-        "logins": { "n": "1", "label": "login for your whole studio" },
-        "tools": { "n": "3–4", "label": "tools replaced by one" },
-        "price": { "n": "$19", "label": "where the stack runs $80–150" }
+        "logins": {
+          "n": "1",
+          "label": "login for your whole studio"
+        },
+        "tools": {
+          "n": "3–4",
+          "label": "tools replaced by one"
+        },
+        "price": {
+          "n": "$19",
+          "label": "where the stack runs $80–150"
+        }
       }
     },
     "whyChoose": {
@@ -174,7 +183,7 @@
       },
       "includes": "Every plan includes:",
       "includesBody": "real-time website building, integrated invoicing & expenses, project management, and free updates. No setup fees. No card to start. Cancel anytime.",
-      "honestMath": "The honest math:",
+      "honestMath": "The honest math",
       "honestMathBody": "A PM tool, an accounting app, and a website builder usually run $80–150/month combined. Olune does all three from $19.",
       "trialNote": "14 days, no card needed."
     },
@@ -200,16 +209,25 @@
       "title": "Built by studio people,",
       "titleEmphasis": "for studio people.",
       "body1": "We've run studios. We know the 11pm invoice scramble, the client website that's always a step behind, the spreadsheet that only one person understands. We got tired of duct-taping five tools together and hoping nothing fell through the cracks.",
-      "body2": "So we built the thing we wished we had — one calm system that holds the projects, the money, and the websites together, and does the busywork quietly in the background.",
+      "body2": "So we built the thing we wished we had — one calm system that holds the projects, the money, and the websites together, and does the busywork quietly in the background. Olune exists for one reason: to give creative people their time back.",
       "body3": "Olune exists for one reason: to give creative people their time back. Less managing. More making. That's the whole idea.",
       "meetTeam": "Meet the team",
       "ourStory": "Our story",
       "quote": "Less managing. More making.",
-      "sceneCaption": "Projects · Money · Websites — in orbit around your studio.",
+      "sceneCaption": "Projects · Money · Websites — <i>in orbit around your studio.</i>",
       "principles": {
-        "studioRun": { "t": "Studio-run", "d": "Built by people who've actually run studios." },
-        "calm": { "t": "Calm by design", "d": "Every screen made to open, not dread." },
-        "allInOne": { "t": "All in one", "d": "Projects, money and sites, together." }
+        "studioRun": {
+          "t": "Studio-run",
+          "d": "Built by people who've actually run studios."
+        },
+        "calm": {
+          "t": "Calm by design",
+          "d": "Every screen made to open, not dread."
+        },
+        "allInOne": {
+          "t": "All in one",
+          "d": "Projects, money and sites, together."
+        }
       }
     },
     "compareSection": {
