@@ -9,7 +9,7 @@ import { JobsShowcase } from "./landing/JobsShowcase";
 import { PricingTiers } from "./landing/PricingTiers";
 import { CompareTable } from "./landing/CompareTable";
 import { LandingHero } from "./landing/LandingHero";
-import { LandingNav, LandingFooter, SectionShell, Eyebrow, PrimaryButton, SecondaryButton } from "./landing/ui";
+import { LandingNav, LandingFooter, SectionShell, Eyebrow, PrimaryButton, SecondaryButton, DevBanner } from "./landing/ui";
 import { container, rise, fadeIn } from "./landing/motion";
 
 const WHY_KEYS = ["faster", "value", "craft"] as const;
@@ -25,10 +25,7 @@ export default function OluneLanding() {
     <div
       className={`${landingFontVars} relative min-h-screen scroll-smooth bg-landing-paper font-[family-name:var(--font-landing-body)] text-landing-navy`}
     >
-      <div className="bg-landing-ivory px-4 py-2.5 text-center text-sm text-landing-navy/60">
-        Olune is currently under development — general release is due in early August.{" "}
-        <span className="font-semibold">All plans are free to try as much as you like until then.</span>
-      </div>
+      <DevBanner />
 
       <LandingNav />
       <LandingHero />
@@ -332,8 +329,8 @@ export default function OluneLanding() {
             <p className="mb-5 text-[17.5px] leading-relaxed text-landing-navy/62">{t("aboutSection.body1")}</p>
             <p className="mb-10 text-[17.5px] leading-relaxed text-landing-navy/62">{t("aboutSection.body2")}</p>
             <div className="mb-12 flex flex-wrap gap-9">
-              <SecondaryButton href="#about">{t("aboutSection.meetTeam")}</SecondaryButton>
-              <SecondaryButton href="#about">{t("aboutSection.ourStory")}</SecondaryButton>
+              <SecondaryButton href="/team">{t("aboutSection.meetTeam")}</SecondaryButton>
+              <SecondaryButton href="/team">{t("aboutSection.ourStory")}</SecondaryButton>
             </div>
             <div className="grid grid-cols-3 gap-7 border-t border-landing-navy/[0.14] pt-10">
               {(["studioRun", "calm", "allInOne"] as const).map((key) => (

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactElement } from "react";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { container, fadeIn, rise } from "./motion";
@@ -16,6 +17,50 @@ const CELLS = [
 ] as const;
 
 const STAT_KEYS = ["logins", "tools", "price"] as const;
+
+const CELL_ICONS: Record<Exclude<(typeof CELLS)[number]["key"], "liveSites">, (props: { className?: string }) => ReactElement> = {
+  invoicing: ({ className }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M8.5 8h7M8.5 12h7M8.5 16h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  ),
+  cashFlow: ({ className }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M5 19V13M11 19V9M17 19V5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  quotes: ({ className }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path
+        d="M8.5 10.5c0-1.66-1.34-3-3-3v3c0 1.1.9 2 2 2h1v-2Zm8 0c0-1.66-1.34-3-3-3v3c0 1.1.9 2 2 2h1v-2Z"
+        fill="currentColor"
+      />
+      <path d="M5.5 14.5h2M14.5 14.5h2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  ),
+  projects: ({ className }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <rect x="4" y="7" width="16" height="3" rx="1.5" fill="currentColor" opacity="0.35" />
+      <rect x="4" y="7" width="10" height="3" rx="1.5" fill="currentColor" />
+      <rect x="4" y="14" width="16" height="3" rx="1.5" fill="currentColor" opacity="0.35" />
+      <rect x="4" y="14" width="6" height="3" rx="1.5" fill="currentColor" />
+    </svg>
+  ),
+  expenses: ({ className }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M9 8h6M9 12h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  ),
+  clients: ({ className }) => (
+    <svg viewBox="0 0 24 24" fill="none" className={className}>
+      <circle cx="8" cy="9" r="2.4" fill="currentColor" />
+      <circle cx="16" cy="8" r="1.8" fill="currentColor" opacity="0.6" />
+      <circle cx="15" cy="15" r="1.5" fill="currentColor" opacity="0.4" />
+    </svg>
+  ),
+};
 
 function LivePreviewCard() {
   return (
@@ -67,8 +112,16 @@ export function BentoGrid() {
               }
             >
               <div className="relative min-h-[90px] flex-1">
-                <span className={`inline-block rounded-full bg-landing-accent shadow-[0_0_16px_var(--color-landing-accent)] ${cell.feature ? "h-4 w-4" : "h-2.5 w-2.5"}`} />
-                {cell.feature && <LivePreviewCard />}
+                {cell.feature ? (
+                  <>
+                    <span className="inline-block h-4 w-4 rounded-full bg-landing-accent shadow-[0_0_16px_var(--color-landing-accent)]" />
+                    <LivePreviewCard />
+                  </>
+                ) : (
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] bg-landing-accent/10 text-landing-accent">
+                    {CELL_ICONS[cell.key]({ className: "h-5 w-5" })}
+                  </span>
+                )}
               </div>
               <div>
                 <h3 className={`font-[family-name:var(--font-landing-display)] mb-1.5 mt-3 leading-[1.15] ${cell.feature ? "text-[26px] text-white" : "text-[20px] text-landing-navy"}`}>

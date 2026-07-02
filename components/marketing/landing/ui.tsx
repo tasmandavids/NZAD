@@ -9,6 +9,15 @@ import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 
 const DISPLAY_FONT = "font-[family-name:var(--font-landing-display)]";
 
+export function DevBanner() {
+  return (
+    <div className="bg-landing-ivory px-4 py-2.5 text-center text-sm text-landing-navy/60">
+      Olune is currently under development — general release is due in early August.{" "}
+      <span className="font-semibold">All plans are free to try as much as you like until then.</span>
+    </div>
+  );
+}
+
 export function Eyebrow({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
   return (
     <div
@@ -99,10 +108,11 @@ export function LandingNav() {
   }, []);
 
   const links = [
-    { href: "#features", label: t("features") },
-    { href: "#pricing", label: t("pricing") },
-    { href: "#about", label: t("about") },
-    { href: "#compare", label: t("compare") },
+    { href: "/#features", label: t("features") },
+    { href: "/#pricing", label: t("pricing") },
+    { href: "/faq", label: "FAQ" },
+    { href: "/team", label: "Team" },
+    { href: "/#about", label: t("about") },
   ];
 
   return (
@@ -113,18 +123,18 @@ export function LandingNav() {
           : "border-b border-transparent bg-transparent py-5"
       }`}
     >
-      <a href="#hero" className="transition-opacity hover:opacity-80">
+      <Link href="/" className="transition-opacity hover:opacity-80">
         <OluneLogo size="lg" />
-      </a>
+      </Link>
       <div className="hidden items-center gap-9 md:flex">
         {links.map((l) => (
-          <a
+          <Link
             key={l.href}
             href={l.href}
             className="text-[15px] font-medium text-landing-navy/66 transition-colors hover:text-landing-accent"
           >
             {l.label}
-          </a>
+          </Link>
         ))}
       </div>
       <div className="flex items-center gap-5">
@@ -170,8 +180,10 @@ export function LandingFooter() {
         <div className="flex flex-wrap items-center justify-between gap-6 border-t border-white/12 pt-10">
           <LanguageSwitcher compact className="text-white/70" />
           <div className="flex flex-wrap gap-8 text-[14.5px] font-medium text-white/55">
-            <a href="#features" className="transition-colors hover:text-white">{t("features")}</a>
-            <a href="#pricing" className="transition-colors hover:text-white">{t("pricing")}</a>
+            <Link href="/#features" className="transition-colors hover:text-white">{t("features")}</Link>
+            <Link href="/#pricing" className="transition-colors hover:text-white">{t("pricing")}</Link>
+            <Link href="/faq" className="transition-colors hover:text-white">FAQ</Link>
+            <Link href="/team" className="transition-colors hover:text-white">Team</Link>
             <Link href="/login" className="transition-colors hover:text-white">{t("signIn")}</Link>
             <Link href="/onboarding" className="transition-colors hover:text-white">{t("startFree")}</Link>
           </div>
